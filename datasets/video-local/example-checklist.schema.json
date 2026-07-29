@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "id": "example-checklist",
+  "label": "Example checklist manifest (paths are placeholders)",
+  "metric": "qwk",
+  "notes": "Copy to a gitignored name under this folder and point framePaths outside the repo.",
+  "anchors": [
+    {
+      "label": "beginner",
+      "framePaths": ["/REPLACE/with/local/beginner_frame.png"]
+    },
+    {
+      "label": "skilled",
+      "framePaths": ["/REPLACE/with/local/skilled_frame.png"]
+    }
+  ],
+  "examples": [
+    {
+      "id": "ex1",
+      "framePaths": ["/REPLACE/with/local/clip1/frame_000.png"],
+      "label": "{\"items\":[1,0,1],\"total\":2}"
+    },
+    {
+      "id": "ex2",
+      "framePaths": ["/REPLACE/with/local/clip2/frame_000.png"],
+      "label": "{\"items\":[1,1,1],\"total\":3}"
+    },
+    {
+      "id": "ex3",
+      "framePaths": ["/REPLACE/with/local/clip3/frame_000.png"],
+      "label": "{\"items\":[0,0,1],\"total\":1}"
+    }
+  ]
+}

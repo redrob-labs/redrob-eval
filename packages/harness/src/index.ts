@@ -46,6 +46,24 @@ export {
   gsm8kExactMatch,
   meanGsm8kExact,
 } from './lib/metrics/gsm8k';
+export {
+  quadraticWeightedKappa,
+  qwkFromPairs,
+  qwkPairProxy,
+  isAbstention,
+  parseOrdinal,
+} from './lib/metrics/qwk';
+export {
+  cohensKappaBinary,
+  cohensKappaFromPair,
+  parseBinaryLabels,
+} from './lib/metrics/cohens-kappa';
+export {
+  checklistCompositeScore,
+  isotonicFit,
+  isotonicPredict,
+} from './lib/metrics/checklist-composite';
+export { abstentionRate, abstentionPairFeedback } from './lib/metrics/abstention';
 
 // Providers
 export {
@@ -58,6 +76,8 @@ export type {
   CallModelParams,
   CallModelResult,
   ProviderAdapter,
+  VisionImagePart,
+  VisionTokenControls,
 } from './lib/providers/types';
 
 // Catalog
@@ -147,6 +167,8 @@ export type {
 export {
   newCandidateId,
   seedCandidate,
+  resolveScriptPolicies,
+  resolveFramePolicy,
 } from './lib/optimizer/types';
 export { RandomSearch } from './lib/optimizer/random-search';
 export { Gepa } from './lib/optimizer/gepa/engine';
@@ -175,17 +197,64 @@ export {
   type ScriptPolicy,
   type ScriptPolicyBundle,
 } from './lib/script-policy';
-export { resolveScriptPolicies } from './lib/optimizer/types';
+export {
+  defaultFramePolicy,
+  fitFramesToBudget,
+  sampleFrames,
+  sampleUniform,
+  sampleMotionEnergy,
+  sampleEventDetect,
+  tokensPerFrameToPixels,
+  parseFramePolicy,
+  FRAME_SAMPLE_STRATEGIES,
+  FRAME_COUNTS,
+  TOKENS_PER_FRAME,
+  type FramePolicy,
+  type FrameSampleStrategy,
+  type FrameBuffer,
+  type FitFramesResult,
+  type FrameCount,
+  type TokensPerFrame,
+} from './lib/frame-policy';
 export {
   buildCustomGoalSpec,
   parseCustomExamples,
   defaultInstructionFromGoal,
   customGoalToLoadedDataset,
+  appendAnchorBlock,
   CUSTOM_GOAL_MIN_EXAMPLES,
   CUSTOM_GOAL_MAX_EXAMPLES,
   type CustomGoalSpec,
   type CustomGoalInput,
+  type CustomGoalMode,
+  type ReferenceAnchor,
 } from './lib/optimizer/custom-goal';
+export {
+  lintChecklistRubric,
+  type RubricLintResult,
+  type RubricLintHit,
+} from './lib/optimizer/rubric-lint';
+export {
+  loadVideoLocalManifest,
+  videoLocalToLoadedDataset,
+  videoLocalDir,
+  videoLocalManifestPath,
+  VIDEO_LOCAL_DIRNAME,
+  type VideoLocalManifest,
+  type VideoLocalExample,
+  type VideoLocalAnchor,
+} from './lib/datasets/video-local';
+export {
+  parseFrameSetInput,
+  loadFrameImages,
+  frameBuffersFromPaths,
+} from './lib/vision/frames';
+export {
+  buildPairwiseVisionContent,
+  splitVisionContent,
+  imagePartToContent,
+  type VisionContentPart,
+} from './lib/vision/pairwise';
 
 // Splits
 export type { SplitName, SplitBundle } from './lib/splits/types';

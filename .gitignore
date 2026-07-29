@@ -50,6 +50,11 @@ apps/web/.cache/
 # vendored NC / local-only datasets (do not commit)
 datasets/local/
 
+# human-labeled skill footage manifests (paths outside repo — not redistributable)
+datasets/video-local/*
+!datasets/video-local/README.md
+!datasets/video-local/example-checklist.schema.json
+
 # image preference run artifacts (generated images + ratings)
 eval/runs/
 

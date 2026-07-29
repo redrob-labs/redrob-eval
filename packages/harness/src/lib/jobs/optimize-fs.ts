@@ -48,12 +48,14 @@ export interface OptimizeRunMeta {
   seed: number;
   error?: string;
   optimizedAgainst: Array<'train' | 'val' | 'test'>;
-  mode?: 'catalog' | 'custom';
+  mode?: 'catalog' | 'custom' | 'checklist';
   customGoal?: {
     goal: string;
     rubric: string;
     exampleCount: number;
     exampleIds: string[];
+    /** Rubric-shape lint warning surfaced to Evolve runners */
+    rubricLint?: string;
   };
   judgeModelId?: string;
 }

@@ -127,11 +127,17 @@ export async function startOptimizeJob(
   let datasetId: string;
   let loaded: LoadedDataset;
   let customGoalFixed: { goal: string; rubric: string } | undefined;
+  let referenceAnchors: import('../optimizer/custom-goal').ReferenceAnchor[] | undefined;
+  let rubricLintMessage: string | undefined;
   let samples: Example[];
 
   if (isCustom) {
     const spec = buildCustomGoalSpec(req.customGoal!);
     customGoalFixed = { goal: spec.goal, rubric: spec.rubric };
+    referenceAnchors = spec.anchors;
+    if (!spec.rubricLint.ok) {
+      rubricLintMessage = spec.rubricLint.message;
+    }
     const synth = customGoalToLoadedDataset(spec);
     datasetId = synth.datasetId;
     task = synth.task;
@@ -173,7 +179,10 @@ export async function startOptimizeJob(
   const defaultInstruction =
     req.instruction?.trim() ||
     (isCustom && customGoalFixed
-      ? defaultInstructionFromGoal(customGoalFixed.goal)
+      ? defaultInstructionFromGoal(
+          customGoalFixed.goal,
+          task === 'checklist' ? 'checklist' : 'text',
+        )
       : defaultInstructionForTask(task));
 
   const seed = seedCandidate({
@@ -181,14 +190,20 @@ export async function startOptimizeJob(
     demos: isCustom ? [] : demoPool.slice(0, 2),
     model: modelCatalog[0]!,
     scriptPolicies: defaultScriptBundle('passthrough'),
+    framePolicy:
+      task === 'checklist'
+        ? { strategy: 'uniform', n_frames: 8, tokens_per_frame: 640 }
+        : undefined,
     maxPromptTokens: req.maxPromptTokens ?? 2048,
     demosRequested: isCustom ? 0 : 2,
+    framesRequested: task === 'checklist' ? 8 : undefined,
   });
 
   await ensureOptimizeDirs();
   const runId = makeOptimizeRunId(datasetId);
   const startedAt = new Date().toISOString();
-  const qualityFloor = req.qualityFloor ?? 0.5;
+  const qualityFloor =
+    req.qualityFloor ?? (metric === 'qwk' || task === 'checklist' ? 0.6 : 0.5);
   const maxRollouts = req.maxRollouts ?? 12;
   const optimizerName = req.optimizer ?? 'gepa';
 
@@ -198,7 +213,7 @@ export async function startOptimizeJob(
   const judgeResolved = req.judgeModelId
     ? await resolveEvalModel(req.judgeModelId)
     : reflectResolved ?? seedModel;
-  if (!judgeResolved && isCustom) {
+  if (!judgeResolved && isCustom && metric === 'llm_judge') {
     throw new Error('Judge model required for custom goals');
   }
 
@@ -212,13 +227,14 @@ export async function startOptimizeJob(
     maxRollouts,
     seed: req.seed ?? 42,
     optimizedAgainst,
-    mode: isCustom ? 'custom' : 'catalog',
+    mode: isCustom ? (task === 'checklist' ? 'checklist' : 'custom') : 'catalog',
     customGoal: customGoalFixed
       ? {
           goal: customGoalFixed.goal,
           rubric: customGoalFixed.rubric,
           exampleCount: samples.length,
           exampleIds: samples.map((s) => s.id),
+          rubricLint: rubricLintMessage,
         }
       : undefined,
     judgeModelId: isCustom ? judgeResolved!.id : undefined,
@@ -259,12 +275,14 @@ export async function startOptimizeJob(
           metric,
           signal: abort.signal,
           customGoal: customGoalFixed,
-          judge: isCustom
-            ? {
-                providerId: judgeResolved!.providerId as ProviderId,
-                modelId: judgeResolved!.modelId,
-              }
-            : undefined,
+          referenceAnchors,
+          judge:
+            isCustom && metric === 'llm_judge'
+              ? {
+                  providerId: judgeResolved!.providerId as ProviderId,
+                  modelId: judgeResolved!.modelId,
+                }
+              : undefined,
         });
 
       const optimizer =
@@ -386,6 +404,11 @@ function defaultInstructionForTask(task: DatasetTask): string {
       return 'You solve grade-school math carefully. Show brief steps and end with #### <number>.';
     case 'custom':
       return 'Follow the task instructions precisely.';
+    case 'checklist':
+      return (
+        'Score the skill from sampled frames using observable binary checklist items only. ' +
+        'Return JSON {"items":[0|1,...]} or ABSTAIN. No holistic ratings or causal explanations.'
+      );
     default: {
       const _e: never = task;
       return _e;

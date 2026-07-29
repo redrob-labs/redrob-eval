@@ -62,7 +62,7 @@ export function classifyComplexity(
       score += 0.25;
       reasons.push('multi-clause');
     }
-  } else if (task === 'custom') {
+  } else if (task === 'custom' || task === 'checklist') {
     if (len > 800) {
       score += 0.55;
       reasons.push('long input');

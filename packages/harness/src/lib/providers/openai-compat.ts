@@ -64,18 +64,42 @@ export function createOpenAICompatAdapter(
         process.env[cfg.baseUrlEnv ?? '']?.trim() || cfg.defaultBaseUrl;
       const started = Date.now();
 
-      const messages: { role: string; content: string }[] = [];
+      type ContentPart =
+        | { type: 'text'; text: string }
+        | { type: 'image_url'; image_url: { url: string } };
+
+      const userContent: string | ContentPart[] =
+        params.images && params.images.length > 0
+          ? [
+              { type: 'text', text: params.prompt },
+              ...params.images.map((img) => ({
+                type: 'image_url' as const,
+                image_url: {
+                  url: `data:${img.mimeType};base64,${img.base64}`,
+                },
+              })),
+            ]
+          : params.prompt;
+
+      const messages: { role: string; content: string | ContentPart[] }[] = [];
       if (params.systemPrompt?.trim()) {
         messages.push({ role: 'system', content: params.systemPrompt.trim() });
       }
-      messages.push({ role: 'user', content: params.prompt });
+      messages.push({ role: 'user', content: userContent });
 
-      const body = {
+      const body: Record<string, unknown> = {
         model: params.modelId,
         messages,
         max_tokens: params.maxTokens ?? 1024,
         temperature: params.temperature ?? 0,
       };
+      // Pass through Qwen-VL-family pixel budgets when the provider/model honors them
+      if (params.vision?.min_pixels != null) {
+        body.min_pixels = params.vision.min_pixels;
+      }
+      if (params.vision?.max_pixels != null) {
+        body.max_pixels = params.vision.max_pixels;
+      }
 
       const headers: Record<string, string> = {
         Authorization: `Bearer ${apiKey}`,

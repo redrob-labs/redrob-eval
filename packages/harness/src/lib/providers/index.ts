@@ -48,6 +48,8 @@ export async function callModel(
     systemPrompt: options?.systemPrompt,
     maxTokens: options?.maxTokens,
     temperature: options?.temperature,
+    images: options?.images,
+    vision: options?.vision,
   });
 }
 

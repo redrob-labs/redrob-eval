@@ -1,5 +1,18 @@
 import type { ProviderId } from '../../config/models';
 
+/** In-memory image for one multimodal call — discarded when the call returns. */
+export interface VisionImagePart {
+  mimeType: string;
+  /** Raw base64 without data: prefix */
+  base64: string;
+}
+
+export interface VisionTokenControls {
+  /** Qwen-VL-family style pixel budgets mapped from tokens_per_frame */
+  min_pixels?: number;
+  max_pixels?: number;
+}
+
 export interface CallModelParams {
   providerId: ProviderId;
   modelId: string;
@@ -7,6 +20,13 @@ export interface CallModelParams {
   systemPrompt?: string;
   maxTokens?: number;
   temperature?: number;
+  /**
+   * Optional vision frames for checklist / image judging.
+   * Held only for this call — never write these to logs or datasets.
+   */
+  images?: VisionImagePart[];
+  /** Provider vision token / resolution controls (e.g. min_pixels / max_pixels). */
+  vision?: VisionTokenControls;
 }
 
 export interface CallModelResult {

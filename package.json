@@ -22,10 +22,12 @@
     "verify:gepa": "tsx scripts/verify-gepa.mts",
     "verify:phase3": "tsx scripts/verify-phase3.mts",
     "verify:custom-goal": "tsx scripts/verify-custom-goal.mts",
+    "verify:video": "tsx scripts/verify-video.mts",
     "export:routing": "tsx scripts/export-routing.mts",
     "datasets:fetch": "tsx scripts/datasets/fetch.mts",
     "train:mlp": "python train/mlp_train.py --data train/fixtures/sample-flat.jsonl",
     "train:mlp:corpus": "python train/mlp_train.py --data exports/routing-flat.jsonl",
+    "train:event-detect": "python train/event_detect_train.py --data train/fixtures/sample-event-frames.jsonl",
     "train:compare": "python train/compare.py --data train/fixtures/sample-flat.jsonl",
     "train:slm": "python train/slm_train.py --data train/fixtures/sample-chat.jsonl --max-samples 8 --epochs 1"
   },

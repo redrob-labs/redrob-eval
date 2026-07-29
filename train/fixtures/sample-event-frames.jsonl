@@ -1,0 +1,8 @@
+{"motion_energy": 0.01, "luma_mean": 0.4, "luma_std": 0.05, "frame_index_norm": 0.0, "delta_luma_mean": 0.0, "event": 0}
+{"motion_energy": 0.02, "luma_mean": 0.41, "luma_std": 0.05, "frame_index_norm": 0.1, "delta_luma_mean": 0.01, "event": 0}
+{"motion_energy": 0.85, "luma_mean": 0.55, "luma_std": 0.2, "frame_index_norm": 0.4, "delta_luma_mean": 0.3, "event": 1}
+{"motion_energy": 0.9, "luma_mean": 0.58, "luma_std": 0.22, "frame_index_norm": 0.45, "delta_luma_mean": 0.35, "event": 1}
+{"motion_energy": 0.05, "luma_mean": 0.42, "luma_std": 0.06, "frame_index_norm": 0.7, "delta_luma_mean": 0.02, "event": 0}
+{"motion_energy": 0.7, "luma_mean": 0.5, "luma_std": 0.18, "frame_index_norm": 0.8, "delta_luma_mean": 0.25, "event": 1}
+{"motion_energy": 0.03, "luma_mean": 0.39, "luma_std": 0.04, "frame_index_norm": 0.9, "delta_luma_mean": 0.01, "event": 0}
+{"motion_energy": 0.95, "luma_mean": 0.6, "luma_std": 0.25, "frame_index_norm": 0.95, "delta_luma_mean": 0.4, "event": 1}

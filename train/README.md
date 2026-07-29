@@ -46,6 +46,25 @@ yarn train:compare
 
 Artifacts: `train/artifacts/mlp/model.joblib`, `metrics.json`.
 
+## 1b. Event-detect MLP (video frame sampling)
+
+Cheap first-pass for checklist `frame_policy.strategy = "event_detect"`. Same
+sklearn Pipeline conventions as the routing MLP; features are motion/luma
+fingerprints, label is binary “event-like frame”.
+
+```bash
+python train/event_detect_train.py --data train/fixtures/sample-event-frames.jsonl
+python train/event_detect_infer.py \
+  --model train/artifacts/event-detect/model.joblib \
+  --data train/fixtures/sample-event-frames.jsonl
+```
+
+```bash
+yarn train:event-detect
+```
+
+The harness falls back to motion-energy peaks when no event scores are supplied.
+
 ## 2. SLM LoRA (optional, heavier)
 
 ```bash

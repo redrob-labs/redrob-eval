@@ -1,13 +1,20 @@
 import type { MetricId } from '../../config/datasets';
 import { accuracyMatch } from './accuracy';
+import { checklistCompositeScore } from './checklist-composite';
 import { chrf } from './chrf';
+import { cohensKappaFromPair } from './cohens-kappa';
 import { gsm8kExactMatch } from './gsm8k';
+import { qwkFromPairs, qwkPairProxy } from './qwk';
+import { abstentionPairFeedback } from './abstention';
 
 export interface MetricFixture {
   id: string;
   metric: MetricId;
   gold: string;
   prediction: string;
+  /** Multi-pair golds for batch QWK fixtures */
+  golds?: string[];
+  predictions?: string[];
   /** Expected score; for chrf use approximate band via minScore/maxScore */
   expectScore?: number;
   minScore?: number;
@@ -105,6 +112,60 @@ export const METRIC_FIXTURES: MetricFixture[] = [
     expectScore: 0,
     note: 'Wrong numeric answer → 0',
   },
+  {
+    id: 'qwk-perfect',
+    metric: 'qwk',
+    gold: '0',
+    prediction: '0',
+    golds: ['0', '1', '2', '3', '4'],
+    predictions: ['0', '1', '2', '3', '4'],
+    expectScore: 1,
+    note: 'Identical ordinals → QWK = 1',
+  },
+  {
+    id: 'qwk-disagree',
+    metric: 'qwk',
+    gold: '0',
+    prediction: '4',
+    golds: ['0', '0', '0', '0'],
+    predictions: ['4', '4', '4', '4'],
+    maxScore: 0.05,
+    note: 'Systematic extreme disagreement → near-zero / negative QWK clipped',
+  },
+  {
+    id: 'qwk-abstain-excluded',
+    metric: 'qwk',
+    gold: '2',
+    prediction: 'ABSTAIN',
+    golds: ['0', '1', '2', '3'],
+    predictions: ['0', '1', 'ABSTAIN', '3'],
+    expectScore: 1,
+    note: 'Abstentions excluded from QWK; remaining exact matches → 1',
+  },
+  {
+    id: 'kappa-items',
+    metric: 'cohens_kappa',
+    gold: '{"items":[1,0,1,1]}',
+    prediction: '{"items":[1,0,1,1]}',
+    expectScore: 1,
+    note: 'Identical binary checklist → κ = 1',
+  },
+  {
+    id: 'checklist-composite-match',
+    metric: 'checklist_composite',
+    gold: '{"items":[1,1,0],"total":2,"weights":[1,1,1]}',
+    prediction: '{"items":[1,1,0]}',
+    expectScore: 1,
+    note: 'Weighted sum matches human total',
+  },
+  {
+    id: 'abstention-yes',
+    metric: 'abstention_rate',
+    gold: '2',
+    prediction: 'ABSTAIN',
+    expectScore: 1,
+    note: 'Single abstention → rate 1',
+  },
 ];
 
 export interface FixtureRunResult {
@@ -124,6 +185,17 @@ function scoreFixture(f: MetricFixture): number {
       return accuracyMatch(f.gold, f.prediction).score;
     case 'gsm8k_exact':
       return gsm8kExactMatch(f.gold, f.prediction).score;
+    case 'qwk':
+      if (f.golds && f.predictions) {
+        return qwkFromPairs(f.golds, f.predictions).score;
+      }
+      return qwkPairProxy(f.gold, f.prediction).score;
+    case 'cohens_kappa':
+      return cohensKappaFromPair(f.gold, f.prediction).score;
+    case 'checklist_composite':
+      return checklistCompositeScore(f.gold, f.prediction).score;
+    case 'abstention_rate':
+      return abstentionPairFeedback(f.prediction).score;
     case 'llm_judge':
       throw new Error('llm_judge fixtures are not supported in offline metric fixtures');
     default: {

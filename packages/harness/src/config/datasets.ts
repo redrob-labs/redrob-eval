@@ -3,9 +3,22 @@
  * Each entry maps a Hugging Face dataset (+ config/split) to a metric.
  */
 
-export type MetricId = 'chrf' | 'accuracy' | 'gsm8k_exact' | 'llm_judge';
+export type MetricId =
+  | 'chrf'
+  | 'accuracy'
+  | 'gsm8k_exact'
+  | 'llm_judge'
+  | 'qwk'
+  | 'cohens_kappa'
+  | 'checklist_composite'
+  | 'abstention_rate';
 
-export type DatasetTask = 'translation' | 'classification' | 'math' | 'custom';
+export type DatasetTask =
+  | 'translation'
+  | 'classification'
+  | 'math'
+  | 'custom'
+  | 'checklist';
 
 export interface HfSource {
   /** Hugging Face dataset id, e.g. openai/gsm8k */

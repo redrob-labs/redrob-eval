@@ -1,7 +1,11 @@
 import type { MetricId } from '../../config/datasets';
 import { accuracyMatch, meanAccuracy } from './accuracy';
+import { abstentionPairFeedback, abstentionRate } from './abstention';
+import { checklistCompositeScore } from './checklist-composite';
 import { chrf, meanChrF } from './chrf';
+import { cohensKappaFromPair } from './cohens-kappa';
 import { gsm8kExactMatch, meanGsm8kExact } from './gsm8k';
+import { qwkFromPairs, qwkPairProxy } from './qwk';
 
 export interface ScorePair {
   gold: string;
@@ -10,7 +14,7 @@ export interface ScorePair {
 
 export interface ScoreResult {
   metric: MetricId;
-  /** Aggregate score in [0, 1] */
+  /** Aggregate score in [0, 1] (abstention_rate is a rate in [0,1], not quality) */
   score: number;
   n: number;
   /**
@@ -78,6 +82,28 @@ export function scorePair(metric: MetricId, gold: string, prediction: string): S
         details: r,
       };
     }
+    case 'qwk': {
+      const r = qwkPairProxy(gold, prediction);
+      return { metric, score: r.score, n: r.n, feedback: r.feedback, details: r };
+    }
+    case 'cohens_kappa': {
+      const r = cohensKappaFromPair(gold, prediction);
+      return { metric, score: r.score, n: r.n, feedback: r.feedback, details: r };
+    }
+    case 'checklist_composite': {
+      const r = checklistCompositeScore(gold, prediction);
+      return {
+        metric,
+        score: r.score,
+        n: r.abstained ? 0 : 1,
+        feedback: r.feedback,
+        details: r,
+      };
+    }
+    case 'abstention_rate': {
+      const r = abstentionPairFeedback(prediction);
+      return { metric, score: r.score, n: r.n, feedback: r.feedback, details: r };
+    }
     case 'llm_judge':
       throw new Error(
         'llm_judge is async; use llmJudgeScore() from evaluateCandidate, not scorePair()',
@@ -115,6 +141,52 @@ export function scorePairs(metric: MetricId, pairs: ScorePair[]): ScoreResult {
         n: pairs.length,
         feedback: `Mean GSM8K exact-match over ${pairs.length} pairs.`,
       };
+    case 'qwk': {
+      const r = qwkFromPairs(
+        pairs.map((p) => p.gold),
+        pairs.map((p) => p.prediction),
+      );
+      return { metric, score: r.score, n: r.n, feedback: r.feedback, details: r };
+    }
+    case 'cohens_kappa': {
+      // Mean of per-pair κ (each pair is its own item vector)
+      let sum = 0;
+      let n = 0;
+      for (const p of pairs) {
+        const r = cohensKappaFromPair(p.gold, p.prediction);
+        if (r.n > 0) {
+          sum += r.score;
+          n += 1;
+        }
+      }
+      return {
+        metric,
+        score: n > 0 ? sum / n : 0,
+        n,
+        feedback: `Mean Cohen's κ over ${n} checklist pairs.`,
+      };
+    }
+    case 'checklist_composite': {
+      let sum = 0;
+      let n = 0;
+      for (const p of pairs) {
+        const r = checklistCompositeScore(p.gold, p.prediction);
+        if (!r.abstained) {
+          sum += r.score;
+          n += 1;
+        }
+      }
+      return {
+        metric,
+        score: n > 0 ? sum / n : 0,
+        n,
+        feedback: `Mean checklist composite agreement over ${n} clips.`,
+      };
+    }
+    case 'abstention_rate': {
+      const r = abstentionRate(pairs.map((p) => p.prediction));
+      return { metric, score: r.score, n: r.n, feedback: r.feedback, details: r };
+    }
     case 'llm_judge':
       throw new Error(
         'llm_judge aggregation is handled per-example in evaluateCandidate',
@@ -134,3 +206,17 @@ export {
   buildJudgePrompt,
   parseJudgeResponseForTest,
 } from './llm-judge';
+export {
+  quadraticWeightedKappa,
+  qwkFromPairs,
+  qwkPairProxy,
+  isAbstention,
+  parseOrdinal,
+} from './qwk';
+export { cohensKappaBinary, cohensKappaFromPair, parseBinaryLabels } from './cohens-kappa';
+export {
+  checklistCompositeScore,
+  isotonicFit,
+  isotonicPredict,
+} from './checklist-composite';
+export { abstentionRate, abstentionPairFeedback } from './abstention';

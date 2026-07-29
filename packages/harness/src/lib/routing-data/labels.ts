@@ -45,5 +45,8 @@ export function labelRoute(params: {
 export function defaultSmallOkThreshold(metric: string): number {
   if (metric === 'gsm8k_exact' || metric === 'accuracy') return 0.99;
   if (metric === 'chrf') return 0.55;
+  if (metric === 'qwk' || metric === 'cohens_kappa' || metric === 'checklist_composite') {
+    return 0.6;
+  }
   return 0.9;
 }

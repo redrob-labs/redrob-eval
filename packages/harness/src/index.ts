@@ -31,6 +31,11 @@ export type { EvalSample, LoadedDataset } from './lib/datasets/types';
 // Metrics
 export { scorePair, scorePairs, type ScorePair, type ScoreResult } from './lib/metrics';
 export {
+  llmJudgeScore,
+  buildJudgePrompt,
+  parseJudgeResponseForTest,
+} from './lib/metrics/llm-judge';
+export {
   METRIC_FIXTURES,
   runMetricFixtures,
 } from './lib/metrics/fixtures';
@@ -171,6 +176,16 @@ export {
   type ScriptPolicyBundle,
 } from './lib/script-policy';
 export { resolveScriptPolicies } from './lib/optimizer/types';
+export {
+  buildCustomGoalSpec,
+  parseCustomExamples,
+  defaultInstructionFromGoal,
+  customGoalToLoadedDataset,
+  CUSTOM_GOAL_MIN_EXAMPLES,
+  CUSTOM_GOAL_MAX_EXAMPLES,
+  type CustomGoalSpec,
+  type CustomGoalInput,
+} from './lib/optimizer/custom-goal';
 
 // Splits
 export type { SplitName, SplitBundle } from './lib/splits/types';

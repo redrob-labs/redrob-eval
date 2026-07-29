@@ -15,4 +15,10 @@ export interface RunManifest {
   maxRollouts: number | null;
   smallModelId: string | null;
   largeModelId: string | null;
+  /** Present for custom-goal / llm_judge optimize runs */
+  customGoal?: {
+    goal: string;
+    rubric: string;
+    examples: Array<{ id: string; input: string }>;
+  } | null;
 }

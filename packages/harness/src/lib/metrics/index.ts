@@ -78,6 +78,10 @@ export function scorePair(metric: MetricId, gold: string, prediction: string): S
         details: r,
       };
     }
+    case 'llm_judge':
+      throw new Error(
+        'llm_judge is async; use llmJudgeScore() from evaluateCandidate, not scorePair()',
+      );
     default: {
       const _exhaustive: never = metric;
       throw new Error(`Unknown metric: ${_exhaustive}`);
@@ -111,6 +115,10 @@ export function scorePairs(metric: MetricId, pairs: ScorePair[]): ScoreResult {
         n: pairs.length,
         feedback: `Mean GSM8K exact-match over ${pairs.length} pairs.`,
       };
+    case 'llm_judge':
+      throw new Error(
+        'llm_judge aggregation is handled per-example in evaluateCandidate',
+      );
     default: {
       const _exhaustive: never = metric;
       throw new Error(`Unknown metric: ${_exhaustive}`);
@@ -121,3 +129,8 @@ export function scorePairs(metric: MetricId, pairs: ScorePair[]): ScoreResult {
 export { accuracyMatch, meanAccuracy } from './accuracy';
 export { chrf, meanChrF } from './chrf';
 export { extractGsm8kAnswer, gsm8kExactMatch, meanGsm8kExact } from './gsm8k';
+export {
+  llmJudgeScore,
+  buildJudgePrompt,
+  parseJudgeResponseForTest,
+} from './llm-judge';

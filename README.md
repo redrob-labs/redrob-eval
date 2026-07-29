@@ -34,7 +34,7 @@ Nothing else is required for a clean checkout — evaluation runs offline agains
 
 | Mode | Purpose |
 |------|---------|
-| **Evolve** | GEPA search over instruction / demos / model / `script_policy` under a quality floor; minimize tokens; export baseline-vs-evolved report |
+| **Evolve** | GEPA search over instruction / demos / model / `script_policy` under a quality floor; catalog datasets or custom goal+rubric (LLM judge); export baseline-vs-evolved report |
 | **Text** | Dual-eval small+large collection for outcome-supervised routing labels; SSE jobs survive refresh |
 | **Image** | Side-by-side SFW preference (+ optional vision auto-judge) |
 
@@ -61,6 +61,8 @@ Workspace packages are marked `"private": true` (consumed in-repo; not published
 ## Attribution — GEPA
 
 This repo reimplements [GEPA](https://github.com/gepa-ai/gepa) (Genetic-Pareto) in TypeScript from the paper ([arXiv:2507.19457](https://arxiv.org/abs/2507.19457)). Cite as **agrawal2025gepa**. See [`NOTICE`](NOTICE). Implementation: `packages/harness/src/lib/optimizer/gepa/` — not a file-by-file port of `src/gepa/`.
+
+On **Evolve**, pick a catalog dataset or **Custom goal** (goal + rubric + input-only JSONL; LLM-as-judge). **Seed model** runs the candidate prompt; **reflect model** rewrites it from failure feedback; **judge** (custom mode) scores answers against your rubric. Offline: `yarn verify:gepa`, `yarn verify:phase3`, `yarn verify:custom-goal`. Export reports via `GET /api/optimize/runs/:id?export=md`.
 
 ## Docs
 
@@ -106,6 +108,7 @@ Also: `/api/models`, `/api/datasets`, `/api/image/*`, `/api/status`, …
 yarn verify:phase1   # datasets, splits, relative cost helpers
 yarn verify:gepa     # GEPA unit checks (offline)
 yarn verify:phase3   # script_policy, demo fit, report (offline)
+yarn verify:custom-goal  # custom goal parse + judge JSON (offline)
 yarn typecheck
 yarn build
 yarn probe

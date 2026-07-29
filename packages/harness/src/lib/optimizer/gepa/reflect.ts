@@ -41,6 +41,7 @@ export async function reflectAndMutate(params: {
   demoPool: Demo[];
   modelCatalog: ModelGene[];
   rand: () => number;
+  customGoal?: { goal: string; rubric: string };
 }): Promise<{ child: Candidate; lesson: string }> {
   const focused = prioritizeForReflection(params.reflectiveDataset);
   const asiBlock = focused
@@ -62,6 +63,17 @@ export async function reflectAndMutate(params: {
 
   const parentPolicies = resolveScriptPolicies(params.parent);
 
+  const goalBlock = params.customGoal
+    ? [
+        '',
+        '## Optimization goal (fixed — do not invent a new goal)',
+        params.customGoal.goal,
+        '',
+        '## Scoring rubric (fixed — improve the instruction so outputs score higher)',
+        params.customGoal.rubric,
+      ].join('\n')
+    : '';
+
   const meta = [
     'You are optimizing an LLM program for Indian-language / Indic-aware tasks.',
     'Given the current instruction, ancestor lessons, and Actionable Side Information',
@@ -80,6 +92,7 @@ export async function reflectAndMutate(params: {
     '',
     '## Current script_policies',
     JSON.stringify(parentPolicies),
+    goalBlock,
     '',
     '## Ancestor lessons',
     ancestorLessons,

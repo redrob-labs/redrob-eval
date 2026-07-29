@@ -97,6 +97,17 @@ export function EvalApp() {
   const [maxRollouts, setMaxRollouts] = useState(12);
   const [minibatchSize, setMinibatchSize] = useState(4);
   const [evolveInstruction, setEvolveInstruction] = useState('');
+  const [evolveSource, setEvolveSource] = useState<'catalog' | 'custom'>('catalog');
+  const [customGoalText, setCustomGoalText] = useState('');
+  const [customRubric, setCustomRubric] = useState('');
+  const [customExamplesRaw, setCustomExamplesRaw] = useState(
+    [
+      '{"id":"1","input":"Candidate: …\\nJob: …"}',
+      '{"id":"2","input":"Candidate: …\\nJob: …"}',
+      '{"id":"3","input":"Candidate: …\\nJob: …"}',
+    ].join('\n'),
+  );
+  const [evolveJudgeModelId, setEvolveJudgeModelId] = useState('');
   const [frontierPoints, setFrontierPoints] = useState<FrontierPoint[]>([]);
   const [bestCandidate, setBestCandidate] = useState<Candidate | null>(null);
   const [evolveLesson, setEvolveLesson] = useState<string | null>(null);
@@ -605,6 +616,16 @@ export function EvalApp() {
       setRunError('Pick a seed model');
       return;
     }
+    if (evolveSource === 'custom') {
+      if (!customGoalText.trim() || !customRubric.trim()) {
+        setRunError('Custom goal requires both goal and rubric');
+        return;
+      }
+      if (!customExamplesRaw.trim()) {
+        setRunError('Paste at least 3 JSONL examples with an "input" field');
+        return;
+      }
+    }
     const ac = new AbortController();
     abortRef.current = ac;
     setRunning(true);
@@ -618,28 +639,45 @@ export function EvalApp() {
     setStatusLine('Starting GEPA…');
 
     try {
+      const base = {
+        seedModelId: routerSmallId,
+        reflectModelId: routerLargeId || routerSmallId,
+        modelCatalogIds: selectedModels.length
+          ? selectedModels
+          : [routerSmallId, routerLargeId].filter(Boolean),
+        qualityFloor,
+        maxRollouts,
+        minibatchSize,
+        mergeEvery: 3,
+        seed,
+        maxPromptTokens,
+        instruction: evolveInstruction || undefined,
+        optimizer: 'gepa' as const,
+        optimizedAgainst: ['train', 'val'] as Array<'train' | 'val'>,
+      };
+      const body =
+        evolveSource === 'custom'
+          ? {
+              ...base,
+              customGoal: {
+                goal: customGoalText,
+                rubric: customRubric,
+                examplesRaw: customExamplesRaw,
+              },
+              judgeModelId:
+                evolveJudgeModelId || routerLargeId || routerSmallId,
+            }
+          : {
+              ...base,
+              datasetId,
+              sampleCount,
+            };
+
       const startRes = await fetch('/api/optimize', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         signal: ac.signal,
-        body: JSON.stringify({
-          datasetId,
-          sampleCount,
-          seedModelId: routerSmallId,
-          reflectModelId: routerLargeId || routerSmallId,
-          modelCatalogIds: selectedModels.length
-            ? selectedModels
-            : [routerSmallId, routerLargeId].filter(Boolean),
-          qualityFloor,
-          maxRollouts,
-          minibatchSize,
-          mergeEvery: 3,
-          seed,
-          maxPromptTokens,
-          instruction: evolveInstruction || undefined,
-          optimizer: 'gepa',
-          optimizedAgainst: ['train', 'val'],
-        }),
+        body: JSON.stringify(body),
       });
       const startBody = (await startRes.json().catch(() => ({}))) as {
         runId?: string;
@@ -1042,41 +1080,122 @@ export function EvalApp() {
             </>
           ) : mode === 'evolve' ? (
             <>
-              <label className="field">
-                <span>Dataset</span>
-                <select value={datasetId} onChange={(e) => setDatasetId(e.target.value)}>
-                  {datasets.map((d) => (
-                    <option key={d.id} value={d.id}>
-                      {d.label} · {d.metric}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <div className="sample-presets" style={{ marginBottom: '0.75rem' }}>
+                <button
+                  type="button"
+                  className={evolveSource === 'catalog' ? 'on' : undefined}
+                  onClick={() => setEvolveSource('catalog')}
+                >
+                  Catalog dataset
+                </button>
+                <button
+                  type="button"
+                  className={evolveSource === 'custom' ? 'on' : undefined}
+                  onClick={() => setEvolveSource('custom')}
+                >
+                  Custom goal
+                </button>
+              </div>
 
-              <label className="field">
-                <span>
-                  Samples <strong>{sampleCount}</strong>
-                </span>
-                <div className="sample-presets">
-                  {SAMPLE_PRESETS.map((n) => (
-                    <button
-                      key={n}
-                      type="button"
-                      className={sampleCount === n ? 'on' : undefined}
-                      onClick={() => setSampleCount(n)}
+              {evolveSource === 'catalog' ? (
+                <>
+                  <label className="field">
+                    <span>Dataset</span>
+                    <select value={datasetId} onChange={(e) => setDatasetId(e.target.value)}>
+                      {datasets.map((d) => (
+                        <option key={d.id} value={d.id}>
+                          {d.label} · {d.metric}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <label className="field">
+                    <span>
+                      Samples <strong>{sampleCount}</strong>
+                    </span>
+                    <div className="sample-presets">
+                      {SAMPLE_PRESETS.map((n) => (
+                        <button
+                          key={n}
+                          type="button"
+                          className={sampleCount === n ? 'on' : undefined}
+                          onClick={() => setSampleCount(n)}
+                        >
+                          {n}
+                        </button>
+                      ))}
+                    </div>
+                    <input
+                      type="range"
+                      min={5}
+                      max={80}
+                      value={Math.min(sampleCount, 80)}
+                      onChange={(e) => setSampleCount(Number(e.target.value))}
+                    />
+                  </label>
+                </>
+              ) : (
+                <>
+                  <label className="field">
+                    <span>Goal</span>
+                    <textarea
+                      rows={3}
+                      value={customGoalText}
+                      onChange={(e) => setCustomGoalText(e.target.value)}
+                      placeholder="e.g. Write the best system prompt for evaluating a hiring candidate against a job description."
+                      style={{ width: '100%', font: 'inherit', padding: '0.4rem' }}
+                    />
+                  </label>
+                  <label className="field">
+                    <span>Rubric</span>
+                    <textarea
+                      rows={4}
+                      value={customRubric}
+                      onChange={(e) => setCustomRubric(e.target.value)}
+                      placeholder="What should the judge score? List criteria (clarity, evidence, bias, …)."
+                      style={{ width: '100%', font: 'inherit', padding: '0.4rem' }}
+                    />
+                  </label>
+                  <label className="field">
+                    <span>Examples (JSONL or JSON array)</span>
+                    <textarea
+                      rows={6}
+                      value={customExamplesRaw}
+                      onChange={(e) => setCustomExamplesRaw(e.target.value)}
+                      placeholder={'{"id":"1","input":"…"}\n{"id":"2","input":"…"}'}
+                      style={{
+                        width: '100%',
+                        font: 'inherit',
+                        padding: '0.4rem',
+                        fontFamily: 'ui-monospace, monospace',
+                        fontSize: '0.75rem',
+                      }}
+                    />
+                    <span className="field-hint">
+                      Input-only · 3–80 rows · scored by an LLM judge (can be gamed — use a strong
+                      judge + floor you trust).
+                    </span>
+                  </label>
+                  <label className="field">
+                    <span>Judge model</span>
+                    <select
+                      value={evolveJudgeModelId || routerLargeId || routerSmallId}
+                      onChange={(e) => setEvolveJudgeModelId(e.target.value)}
                     >
-                      {n}
-                    </button>
-                  ))}
-                </div>
-                <input
-                  type="range"
-                  min={5}
-                  max={80}
-                  value={Math.min(sampleCount, 80)}
-                  onChange={(e) => setSampleCount(Number(e.target.value))}
-                />
-              </label>
+                      {routerOptions.map((m) => (
+                        <option key={m.id} value={m.id}>
+                          {m.label}
+                        </option>
+                      ))}
+                    </select>
+                    <span className="field-hint">
+                      Scores each answer against your fixed goal + rubric (quality signal for GEPA).
+                      Prefer a strong model; defaults to reflect if unset.
+                    </span>
+                  </label>
+                </>
+              )}
 
               <label className="field">
                 <span>
@@ -1132,6 +1251,9 @@ export function EvalApp() {
                       </option>
                     ))}
                   </select>
+                  <span className="field-hint">
+                    Runs the candidate prompt on your examples (the model you are optimizing for).
+                  </span>
                 </label>
                 <label className="field">
                   <span>Reflect model</span>
@@ -1145,6 +1267,10 @@ export function EvalApp() {
                       </option>
                     ))}
                   </select>
+                  <span className="field-hint">
+                    Meta-LLM: reads failures and rewrites the instruction (does not serve end users).
+                    A stronger model often mutates better.
+                  </span>
                 </label>
               </div>
 
@@ -1171,14 +1297,20 @@ export function EvalApp() {
                   rows={4}
                   value={evolveInstruction}
                   onChange={(e) => setEvolveInstruction(e.target.value)}
-                  placeholder="Optional — leave blank for a task default"
+                  placeholder={
+                    evolveSource === 'custom'
+                      ? 'Optional — blank derives a seed from your goal'
+                      : 'Optional — leave blank for a task default'
+                  }
                   style={{ width: '100%', font: 'inherit', padding: '0.4rem' }}
                 />
               </label>
 
               <p className="field-hint">
                 GEPA evolves instruction / demos / model / script_policy under a quality floor,
-                minimizing tokens. Train+val only; test is reported once at the end.
+                minimizing tokens. Seed runs the prompt; reflect rewrites it
+                {evolveSource === 'custom' ? '; judge scores outputs vs your rubric' : ''}.
+                Train+val only; test once at the end.
               </p>
             </>
           ) : (

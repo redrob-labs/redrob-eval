@@ -1,4 +1,5 @@
 import {
+  buildCustomGoalSpec,
   startOptimizeJob,
   type OptimizeJobRequest,
 } from '@redrob/harness';
@@ -10,6 +11,9 @@ export const maxDuration = 60;
 /**
  * POST /api/optimize — start GEPA (or RandomSearch) job.
  * Returns `{ runId }`; stream via GET /api/optimize/runs/:id/events
+ *
+ * Body: seedModelId required. Either datasetId (catalog) or customGoal
+ * { goal, rubric, examplesRaw }.
  */
 export async function POST(request: Request) {
   let body: OptimizeJobRequest;
@@ -22,11 +26,39 @@ export async function POST(request: Request) {
     });
   }
 
-  if (!body.datasetId || !body.seedModelId) {
+  if (!body.seedModelId) {
     return new Response(
-      JSON.stringify({ error: 'Provide datasetId and seedModelId' }),
+      JSON.stringify({ error: 'Provide seedModelId' }),
       { status: 400, headers: { 'Content-Type': 'application/json' } },
     );
+  }
+
+  const hasCustom = Boolean(body.customGoal);
+  const hasCatalog = Boolean(body.datasetId);
+  if (!hasCustom && !hasCatalog) {
+    return new Response(
+      JSON.stringify({ error: 'Provide datasetId or customGoal' }),
+      { status: 400, headers: { 'Content-Type': 'application/json' } },
+    );
+  }
+  if (hasCustom && hasCatalog) {
+    return new Response(
+      JSON.stringify({ error: 'Use either datasetId or customGoal, not both' }),
+      { status: 400, headers: { 'Content-Type': 'application/json' } },
+    );
+  }
+
+  if (hasCustom) {
+    try {
+      buildCustomGoalSpec(body.customGoal!);
+    } catch (e) {
+      return new Response(
+        JSON.stringify({
+          error: e instanceof Error ? e.message : 'Invalid customGoal',
+        }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } },
+      );
+    }
   }
 
   try {
@@ -37,9 +69,8 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to start optimize';
-    const status = message.includes('Refusing') ? 400 : 400;
     return new Response(JSON.stringify({ error: message }), {
-      status,
+      status: 400,
       headers: { 'Content-Type': 'application/json' },
     });
   }

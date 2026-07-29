@@ -3,9 +3,17 @@
  */
 import type { DatasetTask, MetricId } from '../../config/datasets';
 import { getDatasetById } from '../../config/datasets';
+import type { ProviderId } from '../../config/models';
 import { resolveEvalModel } from '../catalog/resolve';
 import { loadDataset } from '../datasets';
+import type { LoadedDataset } from '../datasets/types';
 import { evaluateCandidate } from '../optimizer/evaluate-candidate';
+import {
+  buildCustomGoalSpec,
+  customGoalToLoadedDataset,
+  defaultInstructionFromGoal,
+  type CustomGoalInput,
+} from '../optimizer/custom-goal';
 import { Gepa } from '../optimizer/gepa/engine';
 import { RandomSearch } from '../optimizer/random-search';
 import type {
@@ -34,8 +42,13 @@ import { buildOptimizeReport, reportToMarkdown } from '../optimizer/report';
 import { defaultScriptBundle } from '../script-policy';
 
 export interface OptimizeJobRequest {
-  datasetId: string;
-  sampleCount: number;
+  /** Catalog dataset id (omit when using customGoal) */
+  datasetId?: string;
+  sampleCount?: number;
+  /** Custom goal mode: goal + rubric + input-only examples */
+  customGoal?: CustomGoalInput;
+  /** Judge model for llm_judge (defaults to reflectModelId) */
+  judgeModelId?: string;
   /** Default instruction to evolve */
   instruction?: string;
   seedModelId: string;
@@ -75,11 +88,7 @@ export function abortOptimizeJob(runId: string): boolean {
 export async function startOptimizeJob(
   req: OptimizeJobRequest,
 ): Promise<{ runId: string }> {
-  const datasetRef = getDatasetById(req.datasetId);
-  if (!datasetRef) throw new Error(`Unknown dataset id: ${req.datasetId}`);
-
   const optimizedAgainst = req.optimizedAgainst ?? ['train', 'val'];
-  // Refuse to start a run that would optimize against test AND report test
   assertSplitIsolation({
     optimizedAgainst,
     reported: 'test',
@@ -112,68 +121,131 @@ export async function startOptimizeJob(
     });
   }
 
-  const sampleCount = Math.min(
-    Math.max(5, Math.floor(req.sampleCount || 20)),
-    datasetRef.maxSamples,
-  );
-  const loaded = await loadDataset(req.datasetId, { maxSamples: sampleCount });
-  const split = splitExamples(loaded.samples, { train: 0.6, val: 0.2, test: 0.2 }, req.seed ?? 42);
+  const isCustom = Boolean(req.customGoal);
+  let task: DatasetTask;
+  let metric: MetricId;
+  let datasetId: string;
+  let loaded: LoadedDataset;
+  let customGoalFixed: { goal: string; rubric: string } | undefined;
+  let samples: Example[];
 
-  // Demo pool from train gold pairs
-  const demoPool: Demo[] = split.train.slice(0, 8).map((s) => ({
-    input: s.input,
-    output: s.gold,
-  }));
+  if (isCustom) {
+    const spec = buildCustomGoalSpec(req.customGoal!);
+    customGoalFixed = { goal: spec.goal, rubric: spec.rubric };
+    const synth = customGoalToLoadedDataset(spec);
+    datasetId = synth.datasetId;
+    task = synth.task;
+    metric = synth.metric;
+    samples = spec.examples;
+    loaded = {
+      ...synth,
+      samples: spec.examples.map((e) => ({
+        id: e.id,
+        input: e.input,
+        gold: e.gold ?? '',
+      })),
+    };
+  } else {
+    if (!req.datasetId) throw new Error('Provide datasetId or customGoal');
+    const datasetRef = getDatasetById(req.datasetId);
+    if (!datasetRef) throw new Error(`Unknown dataset id: ${req.datasetId}`);
+    datasetId = datasetRef.id;
+    task = datasetRef.task;
+    metric = datasetRef.metric as MetricId;
+    const sampleCount = Math.min(
+      Math.max(5, Math.floor(req.sampleCount || 20)),
+      datasetRef.maxSamples,
+    );
+    loaded = await loadDataset(req.datasetId, { maxSamples: sampleCount });
+    samples = loaded.samples;
+  }
+
+  const split = splitExamples(samples, { train: 0.6, val: 0.2, test: 0.2 }, req.seed ?? 42);
+
+  // Catalog demos use gold; custom goals are input-only — start with empty demos.
+  const demoPool: Demo[] = isCustom
+    ? []
+    : split.train.slice(0, 8).map((s) => ({
+        input: s.input,
+        output: s.gold,
+      }));
 
   const defaultInstruction =
     req.instruction?.trim() ||
-    defaultInstructionForTask(datasetRef.task);
+    (isCustom && customGoalFixed
+      ? defaultInstructionFromGoal(customGoalFixed.goal)
+      : defaultInstructionForTask(task));
 
   const seed = seedCandidate({
     instruction: defaultInstruction,
-    demos: demoPool.slice(0, 2),
+    demos: isCustom ? [] : demoPool.slice(0, 2),
     model: modelCatalog[0]!,
     scriptPolicies: defaultScriptBundle('passthrough'),
     maxPromptTokens: req.maxPromptTokens ?? 2048,
-    demosRequested: 2,
+    demosRequested: isCustom ? 0 : 2,
   });
 
   await ensureOptimizeDirs();
-  const runId = makeOptimizeRunId(datasetRef.id);
+  const runId = makeOptimizeRunId(datasetId);
   const startedAt = new Date().toISOString();
   const qualityFloor = req.qualityFloor ?? 0.5;
   const maxRollouts = req.maxRollouts ?? 12;
   const optimizerName = req.optimizer ?? 'gepa';
 
+  const reflectResolved = req.reflectModelId
+    ? await resolveEvalModel(req.reflectModelId)
+    : seedModel;
+  const judgeResolved = req.judgeModelId
+    ? await resolveEvalModel(req.judgeModelId)
+    : reflectResolved ?? seedModel;
+  if (!judgeResolved && isCustom) {
+    throw new Error('Judge model required for custom goals');
+  }
+
   const meta: OptimizeRunMeta = {
     runId,
     createdAt: startedAt,
     status: 'queued',
-    datasetId: datasetRef.id,
+    datasetId,
     optimizer: optimizerName,
     qualityFloor,
     maxRollouts,
     seed: req.seed ?? 42,
     optimizedAgainst,
+    mode: isCustom ? 'custom' : 'catalog',
+    customGoal: customGoalFixed
+      ? {
+          goal: customGoalFixed.goal,
+          rubric: customGoalFixed.rubric,
+          exampleCount: samples.length,
+          exampleIds: samples.map((s) => s.id),
+        }
+      : undefined,
+    judgeModelId: isCustom ? judgeResolved!.id : undefined,
   };
   await writeOptimizeMeta(runId, meta);
   await writeOptimizeManifest(
     runId,
-    buildRunManifest({
-      seed: req.seed ?? 42,
-      temperature: 0,
-      small: seedModel,
-      large: null,
-      dataset: loaded,
-      startedAtUtc: startedAt,
-      finishedAtUtc: null,
-      maxRollouts,
-    }),
+    {
+      ...buildRunManifest({
+        seed: req.seed ?? 42,
+        temperature: 0,
+        small: seedModel,
+        large: null,
+        dataset: loaded,
+        startedAtUtc: startedAt,
+        finishedAtUtc: null,
+        maxRollouts,
+      }),
+      customGoal: customGoalFixed
+        ? {
+            goal: customGoalFixed.goal,
+            rubric: customGoalFixed.rubric,
+            examples: samples.map((s) => ({ id: s.id, input: s.input })),
+          }
+        : undefined,
+    },
   );
-
-  const reflectResolved = req.reflectModelId
-    ? await resolveEvalModel(req.reflectModelId)
-    : seedModel;
 
   const abort = new AbortController();
   const promise = (async () => {
@@ -183,9 +255,16 @@ export async function startOptimizeJob(
         evaluateCandidate({
           candidate,
           examples,
-          task: datasetRef.task,
-          metric: datasetRef.metric as MetricId,
+          task,
+          metric,
           signal: abort.signal,
+          customGoal: customGoalFixed,
+          judge: isCustom
+            ? {
+                providerId: judgeResolved!.providerId as ProviderId,
+                modelId: judgeResolved!.modelId,
+              }
+            : undefined,
         });
 
       const optimizer =
@@ -214,6 +293,7 @@ export async function startOptimizeJob(
         },
         optimizedAgainst,
         evaluate,
+        customGoal: customGoalFixed,
         signal: abort.signal,
       })) {
         const stamped =
@@ -230,7 +310,7 @@ export async function startOptimizeJob(
           const report = buildOptimizeReport({
             runId,
             qualityFloor,
-            datasetId: datasetRef.id,
+            datasetId,
             optimizer: optimizerName,
             baseline: event.baseline ?? seed,
             baselineVal: event.baselineVal,
@@ -253,16 +333,25 @@ export async function startOptimizeJob(
 
       await writeOptimizeManifest(
         runId,
-        buildRunManifest({
-          seed: req.seed ?? 42,
-          temperature: 0,
-          small: seedModel,
-          large: null,
-          dataset: loaded,
-          startedAtUtc: startedAt,
-          finishedAtUtc: new Date().toISOString(),
-          maxRollouts,
-        }),
+        {
+          ...buildRunManifest({
+            seed: req.seed ?? 42,
+            temperature: 0,
+            small: seedModel,
+            large: null,
+            dataset: loaded,
+            startedAtUtc: startedAt,
+            finishedAtUtc: new Date().toISOString(),
+            maxRollouts,
+          }),
+          customGoal: customGoalFixed
+            ? {
+                goal: customGoalFixed.goal,
+                rubric: customGoalFixed.rubric,
+                examples: samples.map((s) => ({ id: s.id, input: s.input })),
+              }
+            : undefined,
+        },
       );
       await patchOptimizeStatus(runId, 'ready');
       if (!doneEvent && lastFrontier) {
@@ -295,7 +384,11 @@ function defaultInstructionForTask(task: DatasetTask): string {
       return 'You are a Hindi sentiment classifier. Reply with only 0 (negative), 1 (neutral), or 2 (positive).';
     case 'math':
       return 'You solve grade-school math carefully. Show brief steps and end with #### <number>.';
-    default:
+    case 'custom':
       return 'Follow the task instructions precisely.';
+    default: {
+      const _e: never = task;
+      return _e;
+    }
   }
 }

@@ -62,6 +62,18 @@ export function classifyComplexity(
       score += 0.25;
       reasons.push('multi-clause');
     }
+  } else if (task === 'custom') {
+    if (len > 800) {
+      score += 0.55;
+      reasons.push('long input');
+    } else if (len > 300) {
+      score += 0.3;
+      reasons.push('medium input');
+    }
+    if ((text.match(/\n/g) ?? []).length >= 3) {
+      score += 0.2;
+      reasons.push('multi-paragraph');
+    }
   } else {
     // classification
     if (len > 500) {

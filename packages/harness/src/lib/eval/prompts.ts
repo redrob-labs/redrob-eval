@@ -55,6 +55,10 @@ export function buildEvalPrompt(
         input,
       );
       break;
+    case 'custom':
+      // Instruction (+ optional demos) already applied; user input is the task body.
+      parts.push(input);
+      break;
     default: {
       const _exhaustive: never = task;
       throw new Error(`Unknown task: ${_exhaustive}`);
@@ -72,6 +76,8 @@ export function maxTokensForTask(task: DatasetTask): number {
       return 16;
     case 'math':
       return 512;
+    case 'custom':
+      return 1024;
     default: {
       const _exhaustive: never = task;
       throw new Error(`Unknown task: ${_exhaustive}`);

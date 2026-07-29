@@ -1,8 +1,8 @@
 import { measureFertility, countTokens } from '@redrob/tokenizers';
 import type { DatasetTask, MetricId } from '../../config/datasets';
-import type { ModelRef } from '../../config/models';
+import type { ModelRef, ProviderId } from '../../config/models';
 import { buildEvalPrompt, maxTokensForTask } from '../eval/prompts';
-import { scorePair } from '../metrics';
+import { llmJudgeScore, scorePair } from '../metrics';
 import { callModel, ProviderError } from '../providers';
 import { applyScriptPolicy } from '../script-policy';
 import { fitDemosToBudget } from './fit-demos';
@@ -18,7 +18,7 @@ export function estimateTokens(text: string): number {
 
 function languageHintForTask(task: DatasetTask, text: string): string {
   if (/[\u0900-\u097F]/.test(text)) return 'hi';
-  if (task === 'math') return 'en';
+  if (task === 'math' || task === 'custom') return 'en';
   if (task === 'translation' || task === 'classification') return 'hi';
   return 'en';
 }
@@ -57,8 +57,20 @@ export async function evaluateCandidate(params: {
   task: DatasetTask;
   metric: MetricId;
   signal?: AbortSignal;
+  /** Required when metric === 'llm_judge' */
+  customGoal?: { goal: string; rubric: string };
+  judge?: { providerId: ProviderId; modelId: string };
 }): Promise<EvalBatch> {
   const { candidate, examples, task, metric, signal } = params;
+  if (metric === 'llm_judge') {
+    if (!params.customGoal?.goal.trim() || !params.customGoal?.rubric.trim()) {
+      throw new Error('llm_judge requires customGoal.goal and customGoal.rubric');
+    }
+    if (!params.judge?.modelId) {
+      throw new Error('llm_judge requires a judge model');
+    }
+  }
+
   const { providerId, modelId, relativeCostWeight } = resolveProviderCall(candidate.model);
   const maxTokens = maxTokensForTask(task);
   const policies = resolveScriptPolicies(candidate);
@@ -141,10 +153,30 @@ export async function evaluateCandidate(params: {
       latencyMs = 0;
     }
 
-    const scored = scorePair(metric, ex.gold, prediction);
-    const feedback = error ? `Provider error: ${error}` : scored.feedback;
+    let score = 0;
+    let feedback: string;
+    if (error) {
+      feedback = `Provider error: ${error}`;
+      score = 0;
+    } else if (metric === 'llm_judge') {
+      const judged = await llmJudgeScore({
+        goal: params.customGoal!.goal,
+        rubric: params.customGoal!.rubric,
+        input: userInput,
+        prediction,
+        judge: {
+          providerId: params.judge!.providerId,
+          modelId: params.judge!.modelId,
+        },
+      });
+      score = judged.score;
+      feedback = judged.feedback;
+    } else {
+      const scored = scorePair(metric, ex.gold, prediction);
+      score = scored.score;
+      feedback = scored.feedback;
+    }
 
-    // Fertility on the user-facing input under this script policy
     const lang = languageHintForTask(task, userInput);
     try {
       const fert = await measureFertility({
@@ -164,7 +196,7 @@ export async function evaluateCandidate(params: {
 
     outcomes.push({
       exampleId: ex.id,
-      score: error ? 0 : scored.score,
+      score,
       feedback,
       latencyMs,
       promptTokens,
@@ -177,10 +209,10 @@ export async function evaluateCandidate(params: {
     traces.push(
       [
         `example=${ex.id}`,
-        `score=${error ? 0 : scored.score}`,
+        `score=${score}`,
         `feedback=${feedback}`,
         `demos_fitted=${fitted.demosFitted}/${demosRequested}`,
-        `gold=${ex.gold.slice(0, 200)}`,
+        metric === 'llm_judge' ? 'metric=llm_judge' : `gold=${ex.gold.slice(0, 200)}`,
         `prediction=${prediction.slice(0, 400)}`,
       ].join('\n'),
     );

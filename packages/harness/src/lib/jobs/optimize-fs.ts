@@ -48,6 +48,14 @@ export interface OptimizeRunMeta {
   seed: number;
   error?: string;
   optimizedAgainst: Array<'train' | 'val' | 'test'>;
+  mode?: 'catalog' | 'custom';
+  customGoal?: {
+    goal: string;
+    rubric: string;
+    exampleCount: number;
+    exampleIds: string[];
+  };
+  judgeModelId?: string;
 }
 
 export async function writeOptimizeMeta(

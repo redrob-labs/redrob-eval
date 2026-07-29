@@ -124,6 +124,8 @@ function scoreFixture(f: MetricFixture): number {
       return accuracyMatch(f.gold, f.prediction).score;
     case 'gsm8k_exact':
       return gsm8kExactMatch(f.gold, f.prediction).score;
+    case 'llm_judge':
+      throw new Error('llm_judge fixtures are not supported in offline metric fixtures');
     default: {
       const _exhaustive: never = f.metric;
       throw new Error(`Unknown metric: ${_exhaustive}`);

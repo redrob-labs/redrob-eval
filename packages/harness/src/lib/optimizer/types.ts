@@ -117,6 +117,8 @@ export interface OptimizeContext {
    */
   optimizedAgainst: Array<'train' | 'val' | 'test'>;
   evaluate: (candidate: Candidate, examples: Example[]) => Promise<EvalBatch>;
+  /** Fixed user goal + rubric for custom / llm_judge runs */
+  customGoal?: { goal: string; rubric: string };
   /**
    * Reflective mutation: LLM proposes an improved candidate from ASI.
    * Injected so tests can stub without provider calls.

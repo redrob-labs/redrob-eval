@@ -156,6 +156,7 @@ export class Gepa implements Optimizer {
             demoPool,
             modelCatalog,
             rand,
+            customGoal: ctx.customGoal,
           });
           child = mutated.child;
           lesson = mutated.lesson;

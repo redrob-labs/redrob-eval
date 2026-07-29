@@ -1,0 +1,4 @@
+# MLP / classical router (lightweight)
+numpy>=1.26
+scikit-learn>=1.4
+joblib>=1.3

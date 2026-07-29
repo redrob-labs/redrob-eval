@@ -1,0 +1,9 @@
+# SLM LoRA fine-tune (heavier — install only when training)
+-r requirements-mlp.txt
+torch>=2.2
+transformers>=4.44
+datasets>=2.19
+peft>=0.12
+accelerate>=0.33
+sentencepiece>=0.2
+protobuf>=4.25

@@ -2,7 +2,13 @@
 
 Open-source **evolution harness** for Indian-language LLM configurations (Next.js App Router, Apache 2.0).
 
-Given a task, dataset, and quality floor, search for the cheapest configuration (prompt + demos + model + script handling) that serves Indic users at acceptable quality. Model selection is one gene in the search space — the harness is the product.
+Given a task, dataset, and quality floor, search for the cheapest configuration (prompt + demos + model + script handling) that serves Indic users at acceptable quality. Model selection is one gene in the search space - the harness is the product.
+
+## Findings
+
+- Hand-written routing rules (prompt length, keywords) agreed with dual-model labels only about 25% of the time on some GSM8K slices. Not usable as a production policy.
+- A learned router trained on those labels failed to beat chance on the labels we cared about, and was dropped. The labeling pipeline survived; the router did not.
+- Indic tokenizer fertility is a hard budget constraint: high fertility shrinks how many demonstrations fit, so `demos_requested` and `demos_fitted` diverge and the effective search space narrows on exactly the languages this targets.
 
 Port is fixed at **`3939`**.
 
@@ -28,20 +34,22 @@ yarn dev
 
 Open [http://localhost:3939](http://localhost:3939). Restart `yarn dev` after editing `.env`.
 
-Nothing else is required for a clean checkout — evaluation runs offline against vendored datasets; only provider API calls leave the machine.
+Nothing else is required for a clean checkout - evaluation runs offline against vendored datasets; only provider API calls leave the machine.
 
 ## What it does
 
 | Mode | Purpose |
 |------|---------|
-| **Evolve** | GEPA search over instruction / demos / model / `script_policy` under a quality floor; catalog datasets or custom goal+rubric (LLM judge); export baseline-vs-evolved report |
+| **Evolve** | GEPA search over instruction / demos / model / `script_policy` / `frame_policy` under a quality floor; catalog datasets or custom goal+rubric (LLM judge or checklist QWK); export baseline-vs-evolved report |
 | **Text** | Dual-eval small+large collection for outcome-supervised routing labels; SSE jobs survive refresh |
 | **Image** | Side-by-side SFW preference (+ optional vision auto-judge) |
+
+Checklist / video skill scoring (custom goal `mode: "checklist"` or `datasets/video-local/` manifests) evolves a judging prompt + `frame_policy` for agreement with human graders (QWK), not task accuracy. Frames are sampled in memory only — no video bytes are persisted.
 
 Shared rules:
 
 - Provider keys via server `.env` only (never sent to the browser)
-- Costs are **relative percentages** of a run baseline — never absolute currency
+- Costs are **relative percentages** of a run baseline - never absolute currency
 - Metrics return `{ score, feedback }` text alongside the number
 - Train/val may be optimized against; **test is reported once** and the API refuses reporting test if it was also optimized against
 
@@ -52,15 +60,15 @@ Shared rules:
 | `apps/web` | Next.js UI + API routes |
 | `packages/harness` | Optimizer, eval, metrics, datasets, providers (`@redrob/harness`) |
 | `packages/tokenizers` | Fertility via HF `AutoTokenizer` (`@redrob/tokenizers`) |
-| `datasets/` | Vendored eval subsets (Apache-compatible licenses only) |
-| `scripts/parity/` | Optional research comparison vs reference GEPA — **not** needed to run the app |
-| `train/` | Optional Python router training — **not** on the `yarn install && yarn dev` path |
+| `datasets/` | Vendored eval subsets (Apache-compatible licenses only); `video-local/` for non-redistributable checklist manifests |
+| `scripts/parity/` | Optional research comparison vs reference GEPA - **not** needed to run the app |
+| `train/` | Optional Python router training - **not** on the `yarn install && yarn dev` path |
 
 Workspace packages are marked `"private": true` (consumed in-repo; not published to npm).
 
-## Attribution — GEPA
+## Attribution - GEPA
 
-This repo reimplements [GEPA](https://github.com/gepa-ai/gepa) (Genetic-Pareto) in TypeScript from the paper ([arXiv:2507.19457](https://arxiv.org/abs/2507.19457)). Cite as **agrawal2025gepa**. See [`NOTICE`](NOTICE). Implementation: `packages/harness/src/lib/optimizer/gepa/` — not a file-by-file port of `src/gepa/`.
+This repo reimplements [GEPA](https://github.com/gepa-ai/gepa) (Genetic-Pareto) in TypeScript from the paper ([arXiv:2507.19457](https://arxiv.org/abs/2507.19457)). Cite as **agrawal2025gepa**. See [`NOTICE`](NOTICE). Implementation: `packages/harness/src/lib/optimizer/gepa/` - not a file-by-file port of `src/gepa/`.
 
 On **Evolve**, pick a catalog dataset or **Custom goal** (goal + rubric + input-only JSONL; LLM-as-judge). **Seed model** runs the candidate prompt; **reflect model** rewrites it from failure feedback; **judge** (custom mode) scores answers against your rubric. Offline: `yarn verify:gepa`, `yarn verify:phase3`, `yarn verify:custom-goal`. Export reports via `GET /api/optimize/runs/:id?export=md`.
 
@@ -68,8 +76,8 @@ On **Evolve**, pick a catalog dataset or **Custom goal** (goal + rubric + input-
 
 - [Contributing](CONTRIBUTING.md)
 - [Security](SECURITY.md)
-- [Methodology](docs/methodology.md) — routing labels, features, export
-- [Learnings](docs/learnings.md) — living design log
+- [Methodology](docs/methodology.md) - routing labels, features, export
+- [Learnings](docs/learnings.md) - living design log
 
 ## Environment
 
@@ -90,15 +98,15 @@ Keep `.env` at the **repo root**. Next loads it via `apps/web/next.config.ts`.
 **Optimize / Evolve**
 
 - `POST /api/optimize` → `{ runId }`
-- `GET /api/optimize/runs/:id/events` — SSE
-- `GET /api/optimize/runs/:id` — meta + result + report
-- `GET /api/optimize/runs/:id?export=md|json` — downloadable report
+- `GET /api/optimize/runs/:id/events` - SSE
+- `GET /api/optimize/runs/:id` - meta + result + report
+- `GET /api/optimize/runs/:id?export=md|json` - downloadable report
 
 **Routing collection**
 
 - `POST /api/routing/collect` → `{ runId }`
-- `GET /api/routing/runs/:id/events` — SSE
-- `GET /api/routing/export?format=chat|flat` — training JSONL
+- `GET /api/routing/runs/:id/events` - SSE
+- `GET /api/routing/export?format=chat|flat` - training JSONL
 
 Also: `/api/models`, `/api/datasets`, `/api/image/*`, `/api/status`, …
 
@@ -109,6 +117,7 @@ yarn verify:phase1   # datasets, splits, relative cost helpers
 yarn verify:gepa     # GEPA unit checks (offline)
 yarn verify:phase3   # script_policy, demo fit, report (offline)
 yarn verify:custom-goal  # custom goal parse + judge JSON (offline)
+yarn verify:video    # frame_policy, QWK, rubric lint (offline)
 yarn typecheck
 yarn build
 yarn probe
@@ -121,16 +130,17 @@ yarn export:routing
 ```bash
 pip install -r train/requirements-mlp.txt
 yarn train:mlp
+yarn train:event-detect
 ```
 
 See [`train/README.md`](train/README.md).
 
 ## Tips
 
-- Start with **5–20 samples** while iterating
+- Start with **5-20 samples** while iterating
 - Exact-match datasets default to threshold `0.99`
 - Oracle on the Pareto chart is the training-target upper bound for the labeling rule
-- High tokenizer fertility shrinks demos that fit — watch `demos_requested` vs `demos_fitted` on Evolve reports
+- High tokenizer fertility shrinks demos that fit - watch `demos_requested` vs `demos_fitted` on Evolve reports
 
 ## Author
 

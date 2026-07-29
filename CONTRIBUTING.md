@@ -23,12 +23,12 @@ Prefer changes in `packages/harness` for optimizer / metrics / providers; keep `
 
 ## Rules of the road
 
-1. **No absolute currency** in UI, APIs, logs, or caches — relative cost weights / percentages only.
-2. **No secrets** — keys stay in `.env` (gitignored). Rotate any key that was ever pasted into chat or a screenshot.
-3. **Split isolation** — do not optimize against `test` if you also report test metrics. The API must refuse that.
-4. **Datasets** — only Apache-2.0-compatible (or otherwise OSS-distributable) rows under `datasets/`. CC-BY-NC / gated material goes in `datasets/local/` (gitignored).
-5. **GEPA** — TypeScript reimplementation in `packages/harness`; do not add a Python GEPA dependency to the app run path. Optional parity lives in `scripts/parity/`.
-6. **Python** — `train/` and `scripts/parity/` are research-only; never required for `yarn install && yarn dev`.
+1. **No absolute currency** in UI, APIs, logs, or caches - relative cost weights / percentages only.
+2. **No secrets** - keys stay in `.env` (gitignored). Rotate any key that was ever pasted into chat or a screenshot.
+3. **Split isolation** - do not optimize against `test` if you also report test metrics. The API must refuse that.
+4. **Datasets** - only Apache-2.0-compatible (or otherwise OSS-distributable) rows under `datasets/`. CC-BY-NC / gated material goes in `datasets/local/` (gitignored).
+5. **GEPA** - TypeScript reimplementation in `packages/harness`; do not add a Python GEPA dependency to the app run path. Optional parity lives in `scripts/parity/`.
+6. **Python** - `train/` and `scripts/parity/` are research-only; never required for `yarn install && yarn dev`.
 
 ## Pull requests
 

@@ -4,7 +4,17 @@ Append dated notes as we collect data and train routers. Keep entries short and 
 
 ---
 
-## 2026-07-27 — Repo purpose lock-in
+## 2026-07-30 - Video / checklist skill scoring
+
+- **Process, not outcome.** Rubric items are observable binary checks; lint flags “why did”, “predict”, “rate 1–10”.
+- **Metric = human agreement (QWK)**; abstentions excluded from κ, tracked as `abstention_rate`.
+- **`frame_policy`** is a GEPA gene (`uniform` / `motion_energy` / `event_detect` × n_frames × tokens_per_frame) with `frames_requested` / `frames_fitted` mirroring demos.
+- **No video in the repo.** `datasets/video-local/` manifests point at outside frame-sets; eval holds sampled frames in memory only.
+- **Integrity / on-device runtime** stay out of this harness.
+
+---
+
+## 2026-07-27 - Repo purpose lock-in
 
 - **Purpose**: open-source evolution harness for Indic LLM configs; routing dual-eval is one data path for an optional routing SLM.
 - **Heuristic complexity ≠ good labels.** Early `oracle %` against “small scored ≥ 0.99 ⇒ should be small” exposed that length/keyword heuristics disagree with outcomes (e.g. ~25% agreement on some GSM8K slices).
@@ -24,11 +34,11 @@ Append dated notes as we collect data and train routers. Keep entries short and 
 
 ---
 
-## 2026-07-27 — Router input cost (full task tokens)
+## 2026-07-27 - Router input cost (full task tokens)
 
 **Question:** If the routing SLM sees the entire user task, aren’t we burning tokens anyway?
 
-**Answer:** Yes for *input length*, no for *relative spend* — if the router’s relative cost weight is much lower than the large model’s.
+**Answer:** Yes for *input length*, no for *relative spend* - if the router’s relative cost weight is much lower than the large model’s.
 
 - Dual-eval labels teach “will small be good enough?”
 - At inference, cost ≈ `router(input) + chosen_model(input [+ gen])`
@@ -39,16 +49,16 @@ Append dated notes as we collect data and train routers. Keep entries short and 
 
 **Mitigations (prefer in order):**
 
-1. **Feature-only / embedding router** — no full text to an LLM; use length, digits, task, embedding kNN/MLP. Cheapest.
-2. **Truncated prompt** — first N chars / first sentence + task tag to the SLM.
-3. **Full-text tiny SLM** — acceptable when router weight ≪ large (e.g. 0.5B–3B vs 70B+/frontier).
-4. **Avoid** a full-text router whose relative weight is near the large model — then routing barely helps.
+1. **Feature-only / embedding router** - no full text to an LLM; use length, digits, task, embedding kNN/MLP. Cheapest.
+2. **Truncated prompt** - first N chars / first sentence + task tag to the SLM.
+3. **Full-text tiny SLM** - acceptable when router weight ≪ large (e.g. 0.5B-3B vs 70B+/frontier).
+4. **Avoid** a full-text router whose relative weight is near the large model - then routing barely helps.
 
 **Corpus implication:** keep exporting both `flat` (features) and `chat` (full/truncated text) so we can train either style and compare router-overhead vs save-rate on Pareto.
 
 ---
 
-## 2026-07-27 — Train both MLP and SLM
+## 2026-07-27 - Train both MLP and SLM
 
 **Decision:** Build both learners on the same outcome labels.
 
@@ -62,7 +72,7 @@ Append dated notes as we collect data and train routers. Keep entries short and 
 ## Template for new entries
 
 ```md
-## YYYY-MM-DD — title
+## YYYY-MM-DD - title
 
 - Setup: dataset, n, small, large, threshold
 - Save rate / heuristic-agree / oracle quality / oracle cost%

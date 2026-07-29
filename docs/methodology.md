@@ -43,6 +43,7 @@ For each sample `(input, gold)`:
 |--------|----------------------------|-----------|
 | `gsm8k_exact`, `accuracy` | `0.99` | Exact tasks: small must essentially nail it |
 | `chrf` | `0.55` | Soft metric; “good enough” band |
+| `qwk`, `cohens_kappa`, `checklist_composite` | `0.6` | Human-agreement floors for checklist / video |
 | other | `0.9` | Conservative |
 
 Thresholds are configurable per collection run.
@@ -67,13 +68,39 @@ Or `GET /api/routing/export?format=chat|flat&runId=&datasetId=&label=`.
 
 ## Open-source constraints
 
-- Relative cost weights / percentages only — never absolute prices in UI or exports
+- Relative cost weights / percentages only - never absolute prices in UI or exports
 - Keys stay server-side
 - Exclude blocked / NSFW catalog endpoints (see catalog filters)
 - Vendored datasets must be license-compatible; NC material stays in `datasets/local/`
 
+## Video-local datasets (checklist / skill scoring)
+
+Human-labeled skill footage is **not** redistributable under the Apache-compatible
+vendored-dataset rule that covers GSM8K / IN22 / fixtures. Those clips stay on the
+operator's machine; the repo only documents a **local path schema**.
+
+Convention: `datasets/video-local/<id>.json` (gitignored except README + schema example).
+
+Each manifest (`schemaVersion: 1`) lists:
+
+- `examples[].framePaths` — pre-extracted **frame images** (never persist raw video here)
+- `examples[].label` — human ordinal / checklist JSON for QWK / κ / composite metrics
+- optional `anchors[]` — 2–3 fixed few-shot frame-sets (beginner/intermediate/skilled)
+
+Loaders: `loadVideoLocalManifest` → `videoLocalToLoadedDataset` in `@redrob/harness`.
+During eval, only the frames selected by `frame_policy` are read into memory for that
+scoring call; video bytes are never written to logs, `datasets/`, or `exports/`.
+
+Default Evolve metric for checklist / video goals is **quadratic weighted kappa (QWK)**
+against those human labels. `abstention_rate` is reported separately and excluded from
+the QWK denominator (abstaining on bad lighting/angle is correct, not an error).
+
+Quality floors for this category are QWK thresholds (default ~0.6), not % exact-match.
+
+See `datasets/video-local/README.md`.
+
 ## Related
 
-- [`docs/learnings.md`](learnings.md) — living design log
-- [`train/README.md`](../train/README.md) — optional MLP / SLM training
-- [`NOTICE`](../NOTICE) — attributions
+- [`docs/learnings.md`](learnings.md) - living design log
+- [`train/README.md`](../train/README.md) - optional MLP / SLM / event-detect training
+- [`NOTICE`](../NOTICE) - attributions

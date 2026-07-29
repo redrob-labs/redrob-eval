@@ -20,4 +20,5 @@ jobs:
       - run: yarn verify:gepa
       - run: yarn verify:phase3
       - run: yarn verify:custom-goal
+      - run: yarn verify:video
       - run: yarn build

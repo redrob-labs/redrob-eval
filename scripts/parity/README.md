@@ -13,7 +13,11 @@ yarn verify:gepa
 ```
 
 Covers frontier coverage sampling, accept-if-improved semantics, system-aware
-merge gene picking, and split-isolation refuse — without provider API calls.
+merge gene picking (instruction / demos / model / `scriptPolicies` / `framePolicy`),
+and split-isolation refuse — without provider API calls.
+
+Checklist/video `frame_policy` does not change minibatch formation; pair the
+offline `yarn verify:video` checks when extending genome merges further.
 
 ## Optional reference comparison
 

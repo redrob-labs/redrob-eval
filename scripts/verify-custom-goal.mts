@@ -7,6 +7,7 @@ import {
   buildEvalPrompt,
   buildJudgePrompt,
   defaultInstructionFromGoal,
+  lintChecklistRubric,
   parseCustomExamples,
   parseJudgeResponseForTest,
 } from '../packages/harness/src/index';
@@ -81,6 +82,11 @@ function main(): void {
   });
   assert(judgePrompt.includes('## Rubric'), 'judge prompt shaped');
   assert(judgePrompt.includes('Do NOT mention absolute prices'), 'currency policy present');
+  console.log('ok\n');
+
+  console.log('=== rubric lint smoke ===');
+  assert(!lintChecklistRubric('why did this fail').ok, 'why did flags');
+  assert(lintChecklistRubric('Did the tip wet the pad? 0/1').ok, 'binary check passes');
   console.log('ok\n');
 
   console.log('Custom goal verify passed.');

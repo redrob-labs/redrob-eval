@@ -112,6 +112,7 @@ async function main(): Promise<void> {
   });
   assert(report.tokenDelta === -80, 'token delta');
   assert(report.relativeCostPct != null && report.relativeCostPct < 100, 'cheaper relative cost');
+  assert(report.frames.baselineRequested === 0 || report.frames != null, 'frames block present');
   assert(!/\$|USD|dollar/i.test(reportToMarkdown(report)), 'no currency in markdown');
   console.log('ok\n');
 

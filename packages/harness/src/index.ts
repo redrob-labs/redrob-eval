@@ -1,0 +1,207 @@
+/**
+ * @redrob/harness — evolution / routing eval library (pure TypeScript, no DOM).
+ */
+
+// Config
+export {
+  EVAL_DATASETS,
+  getDatasetById,
+  listDatasets,
+  type MetricId,
+  type DatasetTask,
+  type DatasetRef,
+  type HfSource,
+} from './config/datasets';
+export {
+  EVAL_MODELS,
+  PROVIDER_LABELS,
+  getModelById,
+  type ModelRef,
+  type ProviderId,
+} from './config/models';
+
+// Datasets
+export {
+  loadDataset,
+  previewDatasets,
+  HfDatasetError,
+} from './lib/datasets';
+export type { EvalSample, LoadedDataset } from './lib/datasets/types';
+
+// Metrics
+export { scorePair, scorePairs, type ScorePair, type ScoreResult } from './lib/metrics';
+export {
+  METRIC_FIXTURES,
+  runMetricFixtures,
+} from './lib/metrics/fixtures';
+export { accuracyMatch, meanAccuracy } from './lib/metrics/accuracy';
+export { chrf, meanChrF } from './lib/metrics/chrf';
+export {
+  extractGsm8kAnswer,
+  gsm8kExactMatch,
+  meanGsm8kExact,
+} from './lib/metrics/gsm8k';
+
+// Providers
+export {
+  callModel,
+  getProvider,
+  listProviders,
+  ProviderError,
+} from './lib/providers';
+export type {
+  CallModelParams,
+  CallModelResult,
+  ProviderAdapter,
+} from './lib/providers/types';
+
+// Catalog
+export { resolveEvalModel, resolveEvalModels } from './lib/catalog/resolve';
+export {
+  getOpenRouterCatalog,
+  findOpenRouterEntry,
+  toPublicModel,
+  OR_ID_PREFIX,
+  OR_MODALITIES,
+  type OrModality,
+  type OpenRouterCatalogEntry,
+} from './lib/catalog/openrouter';
+// Router
+export { routeSample, classifyComplexity, type RouteDecision } from './lib/router';
+
+// Eval
+export { runEval, type EvalRunRequest } from './lib/eval/run';
+export type {
+  EvalRunResult,
+  EvalStreamEvent,
+  EvalTargetSummary,
+  EvalSampleResult,
+  EvalRunMeta,
+} from './lib/eval/types';
+export { ROUTER_TARGET_ID } from './lib/eval/types';
+export { summarizeTarget, enrichSummaries, pickLargeBaseline, mean } from './lib/eval/aggregate';
+export { buildEvalPrompt, maxTokensForTask } from './lib/eval/prompts';
+
+// Routing data
+export type {
+  RoutingExample,
+  RoutingRunMeta,
+  RoutingRunSummary,
+  CorpusStats,
+  RouteLabel,
+  RoutingFeatures,
+  ModelCallRecord,
+} from './lib/routing-data/types';
+export { runRoutingCollection, type RoutingCollectRequest } from './lib/routing-data/collect';
+export { extractRoutingFeatures } from './lib/routing-data/features';
+export { labelRoute, defaultSmallOkThreshold } from './lib/routing-data/labels';
+export {
+  listRoutingRunIds,
+  readRoutingMeta,
+  readRoutingExamples,
+  readRoutingSummary,
+  readCorpusStats,
+  computeAndWriteCorpusStats,
+  readAllCorpusExamples,
+  ensureRoutingDirs,
+  writeRoutingMeta,
+  writeRoutingSummary,
+  appendRoutingExample,
+  makeRoutingRunId,
+  routingRunDir,
+  assertSafeRunId,
+  EVAL_ROOT,
+  ROUTING_RUNS_DIR,
+  ROUTING_CORPUS_DIR,
+} from './lib/routing-data/fs';
+export { exportTrainJsonl, toChatTrainRow, toFlatTrainRow } from './lib/routing-data/export';
+export {
+  replayPolicy,
+  modelAloneSummary,
+  ROUTER_HEURISTIC_ID,
+  ROUTER_ORACLE_ID,
+  ROUTER_CASCADE_ID,
+} from './lib/routing-data/replay';
+
+// Paths
+export { getRepoRoot, datasetsDir, evalRoot } from './lib/paths';
+
+// Optimizer (RandomSearch + GEPA)
+export type {
+  Candidate,
+  Demo,
+  ModelGene,
+  OptimizeContext,
+  OptimizeEvent,
+  Optimizer,
+  EvalBatch,
+  Example,
+  FrontierPoint,
+  ReflectiveRecord,
+} from './lib/optimizer/types';
+export {
+  newCandidateId,
+  seedCandidate,
+} from './lib/optimizer/types';
+export { RandomSearch } from './lib/optimizer/random-search';
+export { Gepa } from './lib/optimizer/gepa/engine';
+export {
+  makeReflectiveDataset,
+  InstanceFrontier,
+  sampleMinibatch,
+  systemAwareMerge,
+  pickMergeParents,
+  isFeasible,
+  betterFeasible,
+  toFrontierPoint,
+} from './lib/optimizer/gepa/engine';
+export { evaluateCandidate, estimateTokens } from './lib/optimizer/evaluate-candidate';
+export { fitDemosToBudget } from './lib/optimizer/fit-demos';
+export {
+  buildOptimizeReport,
+  reportToMarkdown,
+  type OptimizeReport,
+  type CandidateSnapshot,
+} from './lib/optimizer/report';
+export {
+  applyScriptPolicy,
+  defaultScriptBundle,
+  SCRIPT_POLICIES,
+  type ScriptPolicy,
+  type ScriptPolicyBundle,
+} from './lib/script-policy';
+export { resolveScriptPolicies } from './lib/optimizer/types';
+
+// Splits
+export type { SplitName, SplitBundle } from './lib/splits/types';
+export { assertSplitIsolation, splitExamples } from './lib/splits';
+
+// Jobs / manifest
+export type { RunManifest } from './lib/jobs/manifest';
+export {
+  writeRunManifest,
+  readRunManifest,
+  appendProgressEvent,
+  readProgressEvents,
+  writeJobStatus,
+} from './lib/jobs/fs';
+export { startRoutingCollectJob, abortJob, getActiveJob } from './lib/jobs/runner';
+export { buildRunManifest, tryGitSha } from './lib/jobs/manifest-helpers';
+export {
+  startOptimizeJob,
+  abortOptimizeJob,
+  getActiveOptimizeJob,
+  type OptimizeJobRequest,
+} from './lib/jobs/optimize-runner';
+export {
+  assertSafeOptimizeRunId,
+  makeOptimizeRunId,
+  readOptimizeMeta,
+  readOptimizeEvents,
+  readOptimizeResult,
+  readOptimizeReport,
+  readOptimizeReportMarkdown,
+  listOptimizeRunIds,
+  writeOptimizeMeta,
+  type OptimizeRunMeta,
+} from './lib/jobs/optimize-fs';

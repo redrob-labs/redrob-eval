@@ -1,0 +1,63 @@
+{
+  "version": 1,
+  "suite": "sfw-image",
+  "description": "SFW photoreal preference bake-off: Korean/Indian portraits and one cinematic street shot. Models come from the UI selection (OpenRouter image generators).",
+  "rating": "sfw",
+  "path": "sfw",
+  "modality": "image",
+  "scoring": "preference",
+  "notes": [
+    "Human N-way preference (winner / tie) plus optional vision-LLM auto-judge.",
+    "No Krea / NSFW endpoints — SFW prompts only."
+  ],
+  "prompts": [
+    {
+      "id": "sfw-kr-cafe",
+      "style": "photography",
+      "subject": "portrait",
+      "difficulty": "medium",
+      "tags": ["korean", "photoreal", "cafe", "portrait"],
+      "prompt": "Photorealistic candid photo of a young Korean woman in her mid-20s sitting by a cafe window in Seoul, soft overcast daylight on her face. Straight black hair with soft bangs, fair skin with natural texture and subtle freckles across the nose, brown almond-shaped eyes, small nose, gentle closed-mouth smile. Wearing a cream knit sweater and a thin gold necklace. Shallow depth of field, 50mm lens, natural skin detail, no makeup overload, clearly East Asian Korean features."
+    },
+    {
+      "id": "sfw-kr-street",
+      "style": "photography",
+      "subject": "portrait",
+      "difficulty": "medium",
+      "tags": ["korean", "photoreal", "street", "night"],
+      "prompt": "Photorealistic night street portrait of a Korean woman in her early 20s on a busy Hongdae sidewalk. Neon cyan and magenta reflections on her cheeks, shoulder-length dark brown hair slightly windswept, sharp jawline, double eyelids, light natural makeup. Oversized black blazer over a white tee, tote bag on one shoulder. Handheld documentary feel, slight motion in background pedestrians, clearly Korean facial features, SFW fashion photo."
+    },
+    {
+      "id": "sfw-kr-office",
+      "style": "photography",
+      "subject": "portrait",
+      "difficulty": "medium",
+      "tags": ["korean", "photoreal", "office", "professional"],
+      "prompt": "Photorealistic corporate headshot of a Korean woman in her late 20s in a modern glass office. Low bun with a few loose strands, clear fair skin, refined Korean features, soft brown eyes looking at camera. Charcoal blazer, white blouse, small pearl earrings. Clean window light from the left, shallow depth of field, LinkedIn-style professional photography, no westernized beauty defaults."
+    },
+    {
+      "id": "sfw-in-market",
+      "style": "photography",
+      "subject": "portrait",
+      "difficulty": "medium",
+      "tags": ["indian", "photoreal", "street", "market"],
+      "prompt": "Photorealistic candid photo of a young Indian woman in her mid-20s walking through a colorful outdoor spice market in Jaipur. Warm brown skin with natural texture, dark brown eyes, thick black wavy hair loosely tied back, small nose stud, bright marigold and turquoise printed cotton kurta. Golden late-afternoon sun, shallow depth of field, documentary street photography, clearly South Asian Indian features, SFW."
+    },
+    {
+      "id": "sfw-in-cafe",
+      "style": "photography",
+      "subject": "portrait",
+      "difficulty": "medium",
+      "tags": ["indian", "photoreal", "cafe", "portrait"],
+      "prompt": "Photorealistic portrait of an Indian woman in her mid-20s sitting in a modern Mumbai cafe with a laptop open. Medium-deep brown skin, long straight black hair over one shoulder, expressive dark eyes, soft natural makeup, thin gold jhumka earrings. Olive green linen shirt, relaxed smile toward the camera. Soft window light, 85mm portrait lens, realistic skin pores and highlights, clearly Indian features, SFW."
+    },
+    {
+      "id": "sfw-in-office",
+      "style": "photography",
+      "subject": "portrait",
+      "difficulty": "medium",
+      "tags": ["indian", "photoreal", "office", "professional"],
+      "prompt": "Photorealistic professional portrait of an Indian woman in her late 20s in a tech-office lobby. Medium brown skin, shoulder-length black hair with a side part, confident half-smile, thin-rimmed glasses. Navy blazer over a cream blouse, simple gold stud earrings. Clean architectural background, soft diffused daylight, corporate photography style, clearly South Asian Indian features, SFW."
+    }
+  ]
+}

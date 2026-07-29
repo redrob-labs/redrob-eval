@@ -1,0 +1,42 @@
+{
+  "id": "accuracy-fixture",
+  "label": "Synthetic Hindi sentiment (Apache-2.0 fixture)",
+  "task": "classification",
+  "metric": "accuracy",
+  "source": "synthetic:redrob-eval",
+  "revision": "f0e92fdcc31b71d3e678ce2e81efecd93d788a12",
+  "retrieved_at": "2026-07-28T02:33:15.214Z",
+  "license": "Apache-2.0",
+  "seed": 42,
+  "maxSamples": 5,
+  "hfDataset": "synthetic",
+  "hfConfig": "default",
+  "hfSplit": "test",
+  "samples": [
+    {
+      "id": "accuracy-fixture-0",
+      "input": "यह फिल्म बहुत अच्छी है।",
+      "gold": "2"
+    },
+    {
+      "id": "accuracy-fixture-1",
+      "input": "बहुत खराब अनुभव रहा।",
+      "gold": "0"
+    },
+    {
+      "id": "accuracy-fixture-2",
+      "input": "ठीक-ठाक है, कुछ खास नहीं।",
+      "gold": "1"
+    },
+    {
+      "id": "accuracy-fixture-3",
+      "input": "शानदार अभिनय और संगीत।",
+      "gold": "2"
+    },
+    {
+      "id": "accuracy-fixture-4",
+      "input": "समय की बर्बादी।",
+      "gold": "0"
+    }
+  ]
+}

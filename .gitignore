@@ -2,6 +2,8 @@
 
 # dependencies
 /node_modules
+apps/*/node_modules
+packages/*/node_modules
 /.pnp
 .pnp.*
 .yarn/*
@@ -15,6 +17,7 @@
 
 # next.js
 /.next/
+apps/web/.next/
 /out/
 
 # production
@@ -22,7 +25,12 @@
 
 # misc
 .DS_Store
+Thumbs.db
 *.pem
+.idea/
+.vscode/
+*.swp
+*.swo
 
 # debug
 npm-debug.log*
@@ -30,8 +38,44 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# env files (never commit secrets)
+.env
+.env.*
+!.env.example
+
+# caches (OpenRouter catalog, HF tokenizers, etc.)
+.cache/
+apps/web/.cache/
+
+# vendored NC / local-only datasets (do not commit)
+datasets/local/
+
+# image preference run artifacts (generated images + ratings)
+eval/runs/
+
+# routing-SLM collection (generated — keep .gitkeep)
+eval/routing-runs/*
+!eval/routing-runs/.gitkeep
+
+# optimize runs (GEPA)
+eval/optimize-runs/*
+!eval/optimize-runs/.gitkeep
+eval/routing-corpus/*
+!eval/routing-corpus/.gitkeep
+!eval/routing-corpus/README.md
+
+# local training exports
+exports/*
+!exports/.gitkeep
+
+# router training artifacts / venv
+train/artifacts/
+.venv-train/
+**/__pycache__/
+*.py[cod]
+*.pt
+*.bin
+*.safetensors
 
 # vercel
 .vercel
@@ -39,3 +83,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+apps/web/next-env.d.ts
+
+# parity research outputs (keep README + requirements)
+scripts/parity/results/

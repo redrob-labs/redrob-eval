@@ -1,0 +1,32 @@
+{
+  "id": "in22-gen-hi-en",
+  "label": "IN22-Gen Hindi→English",
+  "task": "translation",
+  "metric": "chrf",
+  "source": "huggingface:mteb/IN22-Gen",
+  "revision": "ff51a67244231d44d5890aca35a14b3796342115",
+  "retrieved_at": "2026-07-28T02:33:15.220Z",
+  "license": "CC-BY-4.0",
+  "seed": 42,
+  "maxSamples": 3,
+  "hfDataset": "mteb/IN22-Gen",
+  "hfConfig": "default",
+  "hfSplit": "test",
+  "samples": [
+    {
+      "id": "in22-gen-hi-en-0",
+      "input": "फिर एक वर्णसंकर राजा था, डारियस नोथोस; नोथोस का अर्थ है ऐसे व्यक्ति की संतान जो अवैध है, जैसे विलियम विजयी।",
+      "gold": "Then there was a bastard king, Darius Nothos; Nothos means the son of somebody who is illegitimate, like William the Conqueror."
+    },
+    {
+      "id": "in22-gen-hi-en-1",
+      "input": "मई 1994 में भारत संयुक्त राष्ट्र जैविक विविधता सम्मेलन 1992 का, और अक्टूबर 2014 में आनुवांशिक संसाधनों तक पहुँच और उनसे उत्पन्न होने वाले लाभों के उचित और न्यायसंगत साझाकरण 2010 पर नागोया घोषणा-पत्र का हस्ताक्षरकर्ता बना।",
+      "gold": "India became a signatory to the United Nations Convention on Biological Diversity, 1992 in May 1994, and the Nagoya Protocol on Access to Genetic Resources and the Fair and Equitable Sharing of Benefits Arising from their Utilization 2010 in October 2014."
+    },
+    {
+      "id": "in22-gen-hi-en-2",
+      "input": "इस प्रकार की उदात्त क्षमा मेरे पिता के लिए सहज नहीं थी।",
+      "gold": "This sort of sublime forgiveness was not natural to my father."
+    }
+  ]
+}

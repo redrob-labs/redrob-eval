@@ -1,36 +1,138 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# redrob-eval
 
-## Getting Started
+Open-source **evolution harness** for Indian-language LLM configurations (Next.js App Router, Apache 2.0).
 
-First, run the development server:
+Given a task, dataset, and quality floor, search for the cheapest configuration (prompt + demos + model + script handling) that serves Indic users at acceptable quality. Model selection is one gene in the search space — the harness is the product.
+
+Port is fixed at **`3939`**.
+
+## Requirements
+
+- **Node.js** 20+ (tested on 22)
+- **Yarn** Classic 1.22 (`yarn` via Corepack is fine)
+- An [OpenRouter](https://openrouter.ai/) API key (recommended) or another supported provider key
+
+## Quick start
 
 ```bash
-npm run dev
-# or
+git clone <this-repo> redrob-eval
+cd redrob-eval
+cp .env.example .env
+# Edit .env and set OPENROUTER_API_KEY=...
+yarn install
+yarn verify:phase1
+yarn verify:gepa
+yarn verify:phase3
 yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3939](http://localhost:3939). Restart `yarn dev` after editing `.env`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Nothing else is required for a clean checkout — evaluation runs offline against vendored datasets; only provider API calls leave the machine.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## What it does
 
-## Learn More
+| Mode | Purpose |
+|------|---------|
+| **Evolve** | GEPA search over instruction / demos / model / `script_policy` under a quality floor; minimize tokens; export baseline-vs-evolved report |
+| **Text** | Dual-eval small+large collection for outcome-supervised routing labels; SSE jobs survive refresh |
+| **Image** | Side-by-side SFW preference (+ optional vision auto-judge) |
 
-To learn more about Next.js, take a look at the following resources:
+Shared rules:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- Provider keys via server `.env` only (never sent to the browser)
+- Costs are **relative percentages** of a run baseline — never absolute currency
+- Metrics return `{ score, feedback }` text alongside the number
+- Train/val may be optimized against; **test is reported once** and the API refuses reporting test if it was also optimized against
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Monorepo layout
 
-## Deploy on Vercel
+| Path | Role |
+|------|------|
+| `apps/web` | Next.js UI + API routes |
+| `packages/harness` | Optimizer, eval, metrics, datasets, providers (`@redrob/harness`) |
+| `packages/tokenizers` | Fertility via HF `AutoTokenizer` (`@redrob/tokenizers`) |
+| `datasets/` | Vendored eval subsets (Apache-compatible licenses only) |
+| `scripts/parity/` | Optional research comparison vs reference GEPA — **not** needed to run the app |
+| `train/` | Optional Python router training — **not** on the `yarn install && yarn dev` path |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Workspace packages are marked `"private": true` (consumed in-repo; not published to npm).
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Attribution — GEPA
+
+This repo reimplements [GEPA](https://github.com/gepa-ai/gepa) (Genetic-Pareto) in TypeScript from the paper ([arXiv:2507.19457](https://arxiv.org/abs/2507.19457)). Cite as **agrawal2025gepa**. See [`NOTICE`](NOTICE). Implementation: `packages/harness/src/lib/optimizer/gepa/` — not a file-by-file port of `src/gepa/`.
+
+## Docs
+
+- [Contributing](CONTRIBUTING.md)
+- [Security](SECURITY.md)
+- [Methodology](docs/methodology.md) — routing labels, features, export
+- [Learnings](docs/learnings.md) — living design log
+
+## Environment
+
+| Variable | Provider |
+|----------|----------|
+| `OPENROUTER_API_KEY` | OpenRouter (recommended) |
+| `OPENAI_API_KEY` | OpenAI |
+| `ANTHROPIC_API_KEY` | Anthropic |
+| `GOOGLE_API_KEY` | Google Gemini |
+| `TOGETHER_API_KEY` | Together |
+| `FIREWORKS_API_KEY` | Fireworks |
+| `HF_TOKEN` | Hugging Face (optional; dataset fetcher only) |
+
+Keep `.env` at the **repo root**. Next loads it via `apps/web/next.config.ts`.
+
+## API (high level)
+
+**Optimize / Evolve**
+
+- `POST /api/optimize` → `{ runId }`
+- `GET /api/optimize/runs/:id/events` — SSE
+- `GET /api/optimize/runs/:id` — meta + result + report
+- `GET /api/optimize/runs/:id?export=md|json` — downloadable report
+
+**Routing collection**
+
+- `POST /api/routing/collect` → `{ runId }`
+- `GET /api/routing/runs/:id/events` — SSE
+- `GET /api/routing/export?format=chat|flat` — training JSONL
+
+Also: `/api/models`, `/api/datasets`, `/api/image/*`, `/api/status`, …
+
+## CLI
+
+```bash
+yarn verify:phase1   # datasets, splits, relative cost helpers
+yarn verify:gepa     # GEPA unit checks (offline)
+yarn verify:phase3   # script_policy, demo fit, report (offline)
+yarn typecheck
+yarn build
+yarn probe
+yarn datasets:fetch  # regenerate vendored JSON (not needed at runtime)
+yarn export:routing
+```
+
+### Optional: train routers (Python research)
+
+```bash
+pip install -r train/requirements-mlp.txt
+yarn train:mlp
+```
+
+See [`train/README.md`](train/README.md).
+
+## Tips
+
+- Start with **5–20 samples** while iterating
+- Exact-match datasets default to threshold `0.99`
+- Oracle on the Pareto chart is the training-target upper bound for the labeling rule
+- High tokenizer fertility shrinks demos that fit — watch `demos_requested` vs `demos_fitted` on Evolve reports
+
+## Author
+
+Janghoon Lee
+
+## License
+
+Apache-2.0. See [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE).

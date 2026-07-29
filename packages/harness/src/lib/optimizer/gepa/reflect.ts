@@ -1,4 +1,12 @@
 import type { ProviderId } from '../../../config/models';
+import {
+  FRAME_COUNTS,
+  FRAME_SAMPLE_STRATEGIES,
+  TOKENS_PER_FRAME,
+  defaultFramePolicy,
+  parseFramePolicy,
+  type FramePolicy,
+} from '../../frame-policy';
 import { callModel } from '../../providers';
 import {
   SCRIPT_POLICIES,
@@ -7,7 +15,7 @@ import {
   type ScriptPolicyBundle,
 } from '../../script-policy';
 import type { Candidate, Demo, ModelGene, ReflectiveRecord } from '../types';
-import { newCandidateId, resolveScriptPolicies } from '../types';
+import { newCandidateId, resolveFramePolicy, resolveScriptPolicies } from '../types';
 import { prioritizeForReflection } from './make-reflective-dataset';
 
 function parseJsonObject(text: string): Record<string, unknown> | null {
@@ -74,24 +82,36 @@ export async function reflectAndMutate(params: {
       ].join('\n')
     : '';
 
+  const parentFrame = params.parent.framePolicy
+    ? resolveFramePolicy(params.parent)
+    : undefined;
+
   const meta = [
-    'You are optimizing an LLM program for Indian-language / Indic-aware tasks.',
+    'You are optimizing an LLM program for Indian-language / Indic-aware tasks',
+    '(and optionally video/checklist skill scoring).',
     'Given the current instruction, ancestor lessons, and Actionable Side Information',
     '(diagnostic feedback from failed cases), propose an improved instruction.',
     'Consider script_policy: native | romanize | normalize_to_native | passthrough.',
     'Apply policies independently to instruction, demos, and user input when useful.',
+    'For checklist/video, also consider frame_policy:',
+    'strategy=uniform|motion_energy|event_detect; n_frames=4|8|16; tokens_per_frame=256|640|1280.',
+    'Do NOT drop fixed reference anchors if present in the instruction.',
     'Do NOT mention absolute prices or dollar costs.',
     '',
     'Return ONLY a JSON object:',
     '{"lesson":"<one sentence diagnosis>","instruction":"<full improved instruction>",',
     '"demoCount":<0-4 integer how many demos to request>,',
-    '"scriptPolicies":{"instruction":"<policy>","demos":"<policy>","input":"<policy>"}}',
+    '"scriptPolicies":{"instruction":"<policy>","demos":"<policy>","input":"<policy>"},',
+    '"framePolicy":{"strategy":"<s>","n_frames":<n>,"tokens_per_frame":<t>}}',
     '',
     '## Current instruction',
     params.parent.instruction || '(empty)',
     '',
     '## Current script_policies',
     JSON.stringify(parentPolicies),
+    '',
+    '## Current frame_policy',
+    parentFrame ? JSON.stringify(parentFrame) : '(none — text-only candidate)',
     goalBlock,
     '',
     '## Ancestor lessons',
@@ -106,6 +126,9 @@ export async function reflectAndMutate(params: {
   let demoCount =
     params.parent.demosRequested ?? params.parent.demos.length;
   let scriptPolicies: ScriptPolicyBundle = { ...parentPolicies };
+  let framePolicy: FramePolicy | undefined = parentFrame
+    ? { ...parentFrame }
+    : undefined;
 
   try {
     const result = await callModel(
@@ -139,6 +162,8 @@ export async function reflectAndMutate(params: {
         const single = parseScriptPolicy(parsed.scriptPolicy);
         if (single) scriptPolicies = defaultScriptBundle(single);
       }
+      const fp = parseFramePolicy(parsed.framePolicy);
+      if (fp) framePolicy = fp;
     } else if (result.text.trim().length > 20) {
       instruction = result.text.trim().slice(0, 2000);
       lesson = 'Reflector returned non-JSON; used text as instruction.';
@@ -156,6 +181,22 @@ export async function reflectAndMutate(params: {
     scriptPolicies = { ...scriptPolicies, [part]: pick };
   }
 
+  // Light stochastic exploration of frame_policy for checklist candidates
+  if (framePolicy && params.rand() < 0.2) {
+    const next = { ...framePolicy };
+    const which = Math.floor(params.rand() * 3);
+    if (which === 0) {
+      next.strategy =
+        FRAME_SAMPLE_STRATEGIES[Math.floor(params.rand() * FRAME_SAMPLE_STRATEGIES.length)]!;
+    } else if (which === 1) {
+      next.n_frames = FRAME_COUNTS[Math.floor(params.rand() * FRAME_COUNTS.length)]!;
+    } else {
+      next.tokens_per_frame =
+        TOKENS_PER_FRAME[Math.floor(params.rand() * TOKENS_PER_FRAME.length)]!;
+    }
+    framePolicy = defaultFramePolicy(next);
+  }
+
   const demos = pickDemos(params.demoPool, demoCount, params.rand, params.parent.demos);
   const model = maybeSwapModel(params.parent.model, params.modelCatalog, params.rand);
 
@@ -166,8 +207,10 @@ export async function reflectAndMutate(params: {
     model,
     scriptPolicy: scriptPolicies.instruction,
     scriptPolicies,
+    framePolicy,
     maxPromptTokens: params.parent.maxPromptTokens ?? null,
     demosRequested: demoCount,
+    framesRequested: framePolicy?.n_frames,
     parentIds: [params.parent.id],
     lessons: [...params.parent.lessons, lesson].slice(-12),
   };

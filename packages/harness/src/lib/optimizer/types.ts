@@ -1,4 +1,6 @@
 import type { EvalSample } from '../datasets/types';
+import type { FramePolicy } from '../frame-policy';
+import { defaultFramePolicy } from '../frame-policy';
 import type { ScriptPolicy, ScriptPolicyBundle } from '../script-policy';
 import { defaultScriptBundle } from '../script-policy';
 
@@ -18,7 +20,7 @@ export interface ModelGene {
 }
 
 /**
- * Program candidate. Phase 3 evolves instruction + demos + model + script_policy.
+ * Program candidate. Evolves instruction + demos + model + script_policy + frame_policy.
  */
 export interface Candidate {
   id: string;
@@ -29,9 +31,13 @@ export interface Candidate {
   scriptPolicy?: ScriptPolicy;
   /** Independent policies for instruction / demos / input */
   scriptPolicies?: ScriptPolicyBundle;
+  /** Frame sampling gene for checklist / video scoring */
+  framePolicy?: FramePolicy;
   maxPromptTokens?: number | null;
   /** How many demos the genome requests before context fitting */
   demosRequested?: number;
+  /** How many frames the genome requests before visual-token fitting */
+  framesRequested?: number;
   /** Ancestor candidate ids (lineage for merge) */
   parentIds: string[];
   /** Accumulated Actionable Side Information lessons from ancestors */
@@ -70,6 +76,10 @@ export interface EvalBatch {
   tokensMeasured?: boolean;
   demosRequested?: number;
   demosFitted?: number;
+  framesRequested?: number;
+  framesFitted?: number;
+  /** Fraction of clips the model declined to score (not folded into QWK) */
+  abstentionRate?: number;
   /** Tokens/word by language hint (measured when possible) */
   fertilityByLanguage?: Record<string, FertilitySummary>;
   /** Per-example outcomes */
@@ -83,6 +93,8 @@ export interface EvalBatch {
     prediction?: string;
     prompt?: string;
     demosFitted?: number;
+    framesFitted?: number;
+    abstained?: boolean;
   }>;
   /** Free-form traces for reflection */
   traces?: string[];
@@ -119,6 +131,10 @@ export interface OptimizeContext {
   evaluate: (candidate: Candidate, examples: Example[]) => Promise<EvalBatch>;
   /** Fixed user goal + rubric for custom / llm_judge runs */
   customGoal?: { goal: string; rubric: string };
+  /**
+   * Fixed few-shot frame-set anchors for checklist scoring (not rewritten by GEPA).
+   */
+  referenceAnchors?: Array<{ label: string; framePaths: string[] }>;
   /**
    * Reflective mutation: LLM proposes an improved candidate from ASI.
    * Injected so tests can stub without provider calls.
@@ -207,15 +223,24 @@ export function resolveScriptPolicies(c: Candidate): ScriptPolicyBundle {
   return defaultScriptBundle(c.scriptPolicy ?? 'passthrough');
 }
 
+export function resolveFramePolicy(c: Candidate): FramePolicy {
+  return defaultFramePolicy(c.framePolicy);
+}
+
 export function seedCandidate(partial: {
   instruction: string;
   demos?: Demo[];
   model: ModelGene;
   scriptPolicies?: ScriptPolicyBundle;
+  framePolicy?: FramePolicy;
   maxPromptTokens?: number | null;
   demosRequested?: number;
+  framesRequested?: number;
 }): Candidate {
   const demos = partial.demos ?? [];
+  const framePolicy = partial.framePolicy
+    ? defaultFramePolicy(partial.framePolicy)
+    : undefined;
   return {
     id: newCandidateId('seed'),
     instruction: partial.instruction,
@@ -223,8 +248,10 @@ export function seedCandidate(partial: {
     model: partial.model,
     scriptPolicy: partial.scriptPolicies?.instruction ?? 'passthrough',
     scriptPolicies: partial.scriptPolicies ?? defaultScriptBundle('passthrough'),
+    framePolicy,
     maxPromptTokens: partial.maxPromptTokens ?? null,
     demosRequested: partial.demosRequested ?? demos.length,
+    framesRequested: partial.framesRequested ?? framePolicy?.n_frames,
     parentIds: [],
     lessons: [],
   };

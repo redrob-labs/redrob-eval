@@ -59,6 +59,16 @@ export function buildEvalPrompt(
       // Instruction (+ optional demos) already applied; user input is the task body.
       parts.push(input);
       break;
+    case 'checklist':
+      parts.push(
+        'Score this skill demonstration from the provided frames.',
+        'Return ONLY JSON with per-item binary judgments, e.g. {"items":[0,1,0,...]}',
+        'or ABSTAIN if lighting/angle/focus make the clip unscorable.',
+        'Do not give a holistic 1–10 score or causal explanation.',
+        '',
+        input,
+      );
+      break;
     default: {
       const _exhaustive: never = task;
       throw new Error(`Unknown task: ${_exhaustive}`);
@@ -78,6 +88,8 @@ export function maxTokensForTask(task: DatasetTask): number {
       return 512;
     case 'custom':
       return 1024;
+    case 'checklist':
+      return 512;
     default: {
       const _exhaustive: never = task;
       throw new Error(`Unknown task: ${_exhaustive}`);

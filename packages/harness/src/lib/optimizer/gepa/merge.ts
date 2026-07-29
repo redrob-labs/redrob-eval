@@ -1,5 +1,9 @@
 import type { Candidate } from '../types';
-import { newCandidateId, resolveScriptPolicies } from '../types';
+import {
+  newCandidateId,
+  resolveFramePolicy,
+  resolveScriptPolicies,
+} from '../types';
 
 /**
  * System-aware merge: combine genes from two frontier candidates that excel
@@ -51,6 +55,21 @@ export function systemAwareMerge(a: Candidate, b: Candidate): Candidate {
     demos.length,
   );
 
+  // Frame policy: prefer fewer frames / cheaper tokens when both set; else keep A's
+  const af = a.framePolicy ? resolveFramePolicy(a) : undefined;
+  const bf = b.framePolicy ? resolveFramePolicy(b) : undefined;
+  let framePolicy = af ?? bf;
+  if (af && bf) {
+    const aCost = af.n_frames * af.tokens_per_frame;
+    const bCost = bf.n_frames * bf.tokens_per_frame;
+    framePolicy = aCost <= bCost ? af : bf;
+  }
+  const framesRequested =
+    framePolicy?.n_frames ??
+    (a.framesRequested != null || b.framesRequested != null
+      ? Math.max(a.framesRequested ?? 0, b.framesRequested ?? 0)
+      : undefined);
+
   const lesson = `Merged ${a.id} + ${b.id}: instruction from ${
     instruction === a.instruction ? a.id : b.id
   }, model ${model.modelId}.`;
@@ -62,8 +81,10 @@ export function systemAwareMerge(a: Candidate, b: Candidate): Candidate {
     model: { ...model },
     scriptPolicy: scriptPolicies.instruction,
     scriptPolicies,
+    framePolicy,
     maxPromptTokens: a.maxPromptTokens ?? b.maxPromptTokens ?? null,
     demosRequested,
+    framesRequested: framesRequested || undefined,
     parentIds: [a.id, b.id],
     lessons: [...new Set([...a.lessons, ...b.lessons, lesson])].slice(-12),
   };

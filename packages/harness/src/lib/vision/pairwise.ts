@@ -57,7 +57,8 @@ export function splitVisionContent(parts: VisionContentPart[]): {
       textBits.push(p.text);
     } else {
       const url = p.image_url.url;
-      const m = /^data:([^;]+);base64,(.+)$/s.exec(url);
+      // Avoid /s (dotAll) — Next web tsconfig targets below ES2018.
+      const m = /^data:([^;]+);base64,([\s\S]+)$/.exec(url);
       if (m) {
         images.push({ mimeType: m[1]!, base64: m[2]! });
       }

@@ -1,14 +1,36 @@
 # redrob-eval
 
+[![CI](https://github.com/savagemanage/redrob-eval/actions/workflows/ci.yml/badge.svg)](https://github.com/savagemanage/redrob-eval/actions/workflows/ci.yml)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
+
 Open-source **evolution harness** for Indian-language LLM configurations (Next.js App Router, Apache 2.0).
 
 Given a task, dataset, and quality floor, search for the cheapest configuration (prompt + demos + model + script handling) that serves Indic users at acceptable quality. Model selection is one gene in the search space - the harness is the product.
 
 ## Findings
 
-- Hand-written routing rules (prompt length, keywords) agreed with dual-model labels only about 25% of the time on some GSM8K slices. Not usable as a production policy.
+- Hand-written routing rules (prompt length, keywords) agreed with dual-model labels only about 25% of the time on some GSM8K slices. Not usable as a production policy. (See [`docs/learnings.md`](docs/learnings.md); dual-eval corpora stay under gitignored `eval/routing-runs/`.)
 - A learned router trained on those labels failed to beat chance on the labels we cared about, and was dropped. The labeling pipeline survived; the router did not.
 - Indic tokenizer fertility is a hard budget constraint: high fertility shrinks how many demonstrations fit, so `demos_requested` and `demos_fitted` diverge and the effective search space narrows on exactly the languages this targets.
+
+## Sample results (committed)
+
+Regenerate offline with `yarn export:samples` (no API keys). Full files live in [`exports/samples/`](exports/samples/).
+
+**Baseline vs evolved (excerpt):**
+
+```text
+Dataset: in22-gen-hi-en · Optimizer: gepa · Quality floor: 0.5
+
+Baseline  val quality 0.6000 · val tokens 200 · demos 3/2
+Evolved   val quality 0.7000 · val tokens 120 · demos 3/3
+
+Token Δ (val): -80
+Quality Δ (val): +0.1000
+Relative cost vs baseline: 62.5%
+```
+
+![Pareto: relative cost % vs val quality for baseline and evolved](exports/samples/pareto.svg)
 
 Port is fixed at **`3939`**.
 
@@ -21,7 +43,7 @@ Port is fixed at **`3939`**.
 ## Quick start
 
 ```bash
-git clone <this-repo> redrob-eval
+git clone https://github.com/savagemanage/redrob-eval.git
 cd redrob-eval
 cp .env.example .env
 # Edit .env and set OPENROUTER_API_KEY=...
@@ -29,12 +51,13 @@ yarn install
 yarn verify:phase1
 yarn verify:gepa
 yarn verify:phase3
+yarn export:samples
 yarn dev
 ```
 
 Open [http://localhost:3939](http://localhost:3939). Restart `yarn dev` after editing `.env`.
 
-Nothing else is required for a clean checkout - evaluation runs offline against vendored datasets; only provider API calls leave the machine.
+Nothing else is required for a clean checkout - evaluation runs offline against vendored datasets; only provider API calls leave the machine. CI runs every `yarn verify:*` plus `yarn export:samples` and `yarn build` on each push.
 
 ## What it does
 
@@ -44,7 +67,7 @@ Nothing else is required for a clean checkout - evaluation runs offline against 
 | **Text** | Dual-eval small+large collection for outcome-supervised routing labels; SSE jobs survive refresh |
 | **Image** | Side-by-side SFW preference (+ optional vision auto-judge) |
 
-Checklist / video skill scoring (custom goal `mode: "checklist"` or `datasets/video-local/` manifests) evolves a judging prompt + `frame_policy` for agreement with human graders (QWK), not task accuracy. Frames are sampled in memory only — no video bytes are persisted.
+Checklist / video skill scoring (custom goal `mode: "checklist"` or `datasets/video-local/` manifests) evolves a judging prompt + `frame_policy` for agreement with human graders (QWK), not task accuracy. Frames are sampled in memory only - no video bytes are persisted.
 
 Shared rules:
 
@@ -61,6 +84,7 @@ Shared rules:
 | `packages/harness` | Optimizer, eval, metrics, datasets, providers (`@redrob/harness`) |
 | `packages/tokenizers` | Fertility via HF `AutoTokenizer` (`@redrob/tokenizers`) |
 | `datasets/` | Vendored eval subsets (Apache-compatible licenses only); `video-local/` for non-redistributable checklist manifests |
+| `exports/samples/` | Committed, regenerable sample Evolve report + Pareto SVG |
 | `scripts/parity/` | Optional research comparison vs reference GEPA - **not** needed to run the app |
 | `train/` | Optional Python router training - **not** on the `yarn install && yarn dev` path |
 
@@ -78,6 +102,7 @@ On **Evolve**, pick a catalog dataset or **Custom goal** (goal + rubric + input-
 - [Security](SECURITY.md)
 - [Methodology](docs/methodology.md) - routing labels, features, export
 - [Learnings](docs/learnings.md) - living design log
+- [Sample exports](exports/samples/README.md) - regenerable report + Pareto
 
 ## Environment
 
@@ -118,6 +143,7 @@ yarn verify:gepa     # GEPA unit checks (offline)
 yarn verify:phase3   # script_policy, demo fit, report (offline)
 yarn verify:custom-goal  # custom goal parse + judge JSON (offline)
 yarn verify:video    # frame_policy, QWK, rubric lint (offline)
+yarn export:samples  # write exports/samples report + Pareto SVG
 yarn typecheck
 yarn build
 yarn probe

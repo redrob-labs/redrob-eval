@@ -1,0 +1,149 @@
+{
+  "schemaVersion": 1,
+  "runId": "sample_offline_in22-hi-en",
+  "createdAt": "2026-07-31T00:00:00.000Z",
+  "qualityFloor": 0.5,
+  "datasetId": "in22-gen-hi-en",
+  "optimizer": "gepa",
+  "baseline": {
+    "candidate": {
+      "id": "seed_ms8don5d_u4zqex",
+      "instruction": "Translate carefully.",
+      "demos": [
+        {
+          "input": "एक",
+          "output": "one"
+        },
+        {
+          "input": "दो",
+          "output": "two"
+        },
+        {
+          "input": "तीन",
+          "output": "three"
+        }
+      ],
+      "model": {
+        "modelId": "test/model",
+        "providerId": "openrouter",
+        "relativeCostWeight": 40
+      },
+      "scriptPolicy": "romanize",
+      "scriptPolicies": {
+        "instruction": "romanize",
+        "demos": "romanize",
+        "input": "romanize"
+      },
+      "maxPromptTokens": 80,
+      "demosRequested": 3,
+      "parentIds": [],
+      "lessons": []
+    },
+    "val": {
+      "quality": 0.6,
+      "meanRelativeCost": 40,
+      "promptTokens": 100,
+      "completionTokens": 100,
+      "totalTokens": 200,
+      "latencyP50": 100,
+      "demosRequested": 3,
+      "demosFitted": 2,
+      "outcomes": [
+        {
+          "exampleId": "e0",
+          "score": 0.6,
+          "feedback": "ok"
+        }
+      ]
+    },
+    "test": null
+  },
+  "evolved": {
+    "candidate": {
+      "id": "evolved_1",
+      "instruction": "Improved instruction for Indic translation under a token budget.",
+      "demos": [
+        {
+          "input": "एक",
+          "output": "one"
+        },
+        {
+          "input": "दो",
+          "output": "two"
+        },
+        {
+          "input": "तीन",
+          "output": "three"
+        }
+      ],
+      "model": {
+        "modelId": "test/model",
+        "providerId": "openrouter",
+        "relativeCostWeight": 25
+      },
+      "scriptPolicy": "romanize",
+      "scriptPolicies": {
+        "instruction": "romanize",
+        "demos": "romanize",
+        "input": "romanize"
+      },
+      "maxPromptTokens": 80,
+      "demosRequested": 3,
+      "parentIds": [],
+      "lessons": []
+    },
+    "val": {
+      "quality": 0.7,
+      "meanRelativeCost": 25,
+      "promptTokens": 60,
+      "completionTokens": 60,
+      "totalTokens": 120,
+      "latencyP50": 100,
+      "demosRequested": 3,
+      "demosFitted": 3,
+      "outcomes": [
+        {
+          "exampleId": "e0",
+          "score": 0.7,
+          "feedback": "ok"
+        }
+      ]
+    },
+    "test": null
+  },
+  "relativeCostPct": 62.5,
+  "tokenDelta": -80,
+  "qualityDeltaVal": 0.09999999999999998,
+  "qualityDeltaTest": null,
+  "demos": {
+    "baselineRequested": 3,
+    "baselineFitted": 2,
+    "evolvedRequested": 3,
+    "evolvedFitted": 3
+  },
+  "frames": {
+    "baselineRequested": 0,
+    "baselineFitted": 0,
+    "evolvedRequested": 0,
+    "evolvedFitted": 0
+  },
+  "frontier": [
+    {
+      "candidateId": "seed_ms8don5d_u4zqex",
+      "quality": 0.6,
+      "meanRelativeCost": 40,
+      "totalTokens": 200,
+      "feasible": true
+    },
+    {
+      "candidateId": "evolved_1",
+      "quality": 0.7,
+      "meanRelativeCost": 25,
+      "totalTokens": 120,
+      "feasible": true
+    }
+  ],
+  "notes": [
+    "Some token counts were estimated (tokenizer unavailable)."
+  ]
+}

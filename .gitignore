@@ -72,6 +72,8 @@ eval/routing-corpus/*
 # local training exports
 exports/*
 !exports/.gitkeep
+!exports/samples/
+!exports/samples/**
 
 # router training artifacts / venv
 train/artifacts/

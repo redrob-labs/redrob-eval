@@ -2,8 +2,6 @@
 
 import type { AppMode } from '@/lib/modules';
 
-type SwitchTarget = AppMode | 'compare' | 'preference';
-
 type Step = {
   n: number;
   title: string;
@@ -25,7 +23,6 @@ type Props = {
   runBlockedReason: string | null;
   onApplyStarter: () => void;
   onLoadSampleReport: () => void;
-  onSwitchMode: (mode: SwitchTarget) => void;
   onDismiss: () => void;
   sampleLoading?: boolean;
 };
@@ -149,7 +146,6 @@ export function GettingStartedPanel(props: Props) {
     runBlockedReason,
     onApplyStarter,
     onLoadSampleReport,
-    onSwitchMode,
     onDismiss,
     sampleLoading,
   } = props;
@@ -165,13 +161,16 @@ export function GettingStartedPanel(props: Props) {
     hasImageModels,
   });
 
+  const modeLabel =
+    mode === 'evolve' ? 'Evolve' : mode === 'image' ? 'Image' : 'Route';
+
   return (
     <div className="getting-started" role="region" aria-label="Getting started">
       <div className="getting-started-head">
         <div>
-          <strong>First run</strong>
+          <strong>{modeLabel} guide</strong>
           <span className="getting-started-sub">
-            Sample workflow · keys {configuredCount}/{providerTotal}
+            {configuredCount}/{providerTotal} keys · use titlebar modules to switch
           </span>
         </div>
         <button type="button" className="getting-started-dismiss" onClick={onDismiss}>
@@ -179,49 +178,14 @@ export function GettingStartedPanel(props: Props) {
         </button>
       </div>
 
-      {!canRun ? (
+      {!canRun && mode !== 'image' ? (
         <p className="getting-started-alert">
-          No provider keys detected. Copy <code>.env.example</code> → <code>.env</code>, set{' '}
-          <code>OPENROUTER_API_KEY</code>, restart <code>yarn dev</code>, then Refresh.
+          Add a provider key to repo-root <code>.env</code> (recommended:{' '}
+          <code>OPENROUTER_API_KEY</code>), restart <code>yarn dev</code>, then Refresh.
         </p>
       ) : runBlockedReason ? (
         <p className="getting-started-alert">{runBlockedReason}</p>
       ) : null}
-
-      <div className="getting-started-modes" role="group" aria-label="Choose a workflow">
-        <button
-          type="button"
-          className={mode === 'evolve' ? 'on' : undefined}
-          onClick={() => onSwitchMode('evolve')}
-        >
-          Evolve
-          <span>recommended</span>
-        </button>
-        <button
-          type="button"
-          className={mode === 'text' ? 'on' : undefined}
-          onClick={() => onSwitchMode('text')}
-        >
-          Text
-          <span>routing labels</span>
-        </button>
-        <button
-          type="button"
-          className={mode === 'image' ? 'on' : undefined}
-          onClick={() => onSwitchMode('image')}
-        >
-          Image
-          <span>preference</span>
-        </button>
-        <button type="button" onClick={() => onSwitchMode('compare')}>
-          Compare
-          <span>multi-axis</span>
-        </button>
-        <button type="button" onClick={() => onSwitchMode('preference')}>
-          Preference
-          <span>task votes</span>
-        </button>
-      </div>
 
       <ol className="getting-started-steps">
         {steps.map((s) => (
@@ -253,7 +217,11 @@ export function GettingStartedPanel(props: Props) {
 
       <p className="getting-started-foot">
         Offline sample needs no keys. Live runs call your provider. Methodology:{' '}
-        <a href="https://github.com/savagemanage/redrob-eval/blob/main/docs/methodology.md" target="_blank" rel="noreferrer">
+        <a
+          href="https://github.com/savagemanage/redrob-eval/blob/main/docs/methodology.md"
+          target="_blank"
+          rel="noreferrer"
+        >
           docs/methodology.md
         </a>
         .

@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import type {
   CompareResult,
   PublicModelEntry,
@@ -62,6 +63,7 @@ function loadStoredWeights(): Weights {
 }
 
 export function ComparePanel() {
+  const searchParams = useSearchParams();
   const [models, setModels] = useState<PublicModelEntry[]>([]);
   const [selected, setSelected] = useState<string[]>([]);
   const [baselineModelId, setBaselineModelId] = useState('');
@@ -77,10 +79,24 @@ export function ComparePanel() {
   const [sortKey, setSortKey] = useState<SortKey>('rank');
   const [sortAsc, setSortAsc] = useState(true);
   const [note, setNote] = useState<string | null>(null);
+  const [handoffNote, setHandoffNote] = useState<string | null>(null);
+  const [registryLoaded, setRegistryLoaded] = useState(false);
 
   useEffect(() => {
     setWeights(loadStoredWeights());
   }, []);
+
+  useEffect(() => {
+    const qSource = searchParams.get('qualitySource');
+    const qRun = searchParams.get('runId');
+    if (qSource === 'run' && qRun) {
+      setQualitySource('run');
+      setRunId(qRun);
+      setHandoffNote(
+        `Quality from Evolve run ${qRun} — adjust models/weights if needed, then Rank models.`,
+      );
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     try {
@@ -103,6 +119,8 @@ export function ComparePanel() {
         setBaselineModelId(preferred?.id ?? list[0]?.id ?? '');
       } catch (e) {
         setError(e instanceof Error ? e.message : 'Failed to load registry');
+      } finally {
+        setRegistryLoaded(true);
       }
     })();
   }, []);
@@ -195,6 +213,10 @@ export function ComparePanel() {
     );
   }
 
+  function selectAllModels() {
+    setSelected(models.map((m) => m.id));
+  }
+
   const exportHref =
     result != null
       ? null // use POST download
@@ -249,6 +271,13 @@ export function ComparePanel() {
             type="button"
             className="app-run-btn"
             disabled={loading || selected.length === 0 || !baselineModelId}
+            title={
+              selected.length === 0
+                ? 'Select at least one model'
+                : !baselineModelId
+                  ? 'Pick a baseline model'
+                  : undefined
+            }
             onClick={() => void runCompare()}
           >
             {loading ? 'Scoring…' : 'Rank models'}
@@ -264,12 +293,39 @@ export function ComparePanel() {
         </div>
       </div>
 
+      {handoffNote ? <div className="app-banner warn">{handoffNote}</div> : null}
       {note ? <p className="text-xs text-amber-800/80">{note}</p> : null}
       {error ? <div className="app-banner error">{error}</div> : null}
 
+      {registryLoaded && models.length === 0 ? (
+        <div className="pref-empty">
+          <p>No registry models loaded.</p>
+          <button type="button" className="app-run-btn" onClick={() => window.location.reload()}>
+            Reload page
+          </button>
+        </div>
+      ) : null}
+
+      {registryLoaded && models.length > 0 && selected.length === 0 ? (
+        <div className="app-banner warn">
+          No models selected —{' '}
+          <button type="button" className="underline" onClick={selectAllModels}>
+            select all
+          </button>{' '}
+          then Rank models.
+        </div>
+      ) : null}
+
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
         <section className="space-y-3 rounded-lg border border-slate-200 bg-white/60 p-3">
-          <div className="pane-label">Models</div>
+          <div className="flex items-center justify-between gap-2">
+            <div className="pane-label">Models</div>
+            {models.length > 0 ? (
+              <button type="button" className="app-ghost-btn text-xs" onClick={selectAllModels}>
+                Select all
+              </button>
+            ) : null}
+          </div>
           <ul className="max-h-56 space-y-1 overflow-auto text-sm">
             {models.map((m) => (
               <li key={m.id} className="flex items-start gap-2">
@@ -542,11 +598,23 @@ export function ComparePanel() {
               ) : null}
             </>
           ) : (
-            <p className="text-sm text-slate-500">
-              Select models, set a baseline, then Rank. Extend the registry via{' '}
-              <code className="text-xs">packages/harness/src/lib/compare/registry/models.json</code>
-              {' '}(see SOURCES.md).
-            </p>
+            <div className="pref-empty">
+              <p>No ranking yet. Select models, set a baseline, then rank.</p>
+              <button
+                type="button"
+                className="app-run-btn"
+                disabled={loading || selected.length === 0 || !baselineModelId}
+                onClick={() => void runCompare()}
+              >
+                Rank models
+              </button>
+              <p className="field-hint">
+                Registry:{' '}
+                <code className="text-xs">
+                  packages/harness/src/lib/compare/registry/models.json
+                </code>
+              </p>
+            </div>
           )}
         </section>
       </div>

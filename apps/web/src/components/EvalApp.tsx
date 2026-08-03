@@ -1676,7 +1676,7 @@ export function EvalApp({ mode }: { mode: AppMode }) {
               ? 'Routing collection'
               : mode === 'evolve'
                 ? 'GEPA evolution'
-                : 'Preference'}
+                : 'Image prefs'}
           </div>
 
           {showGuide ? (
@@ -1697,15 +1697,6 @@ export function EvalApp({ mode }: { mode: AppMode }) {
               sampleLoading={sampleLoading}
               onApplyStarter={applyStarterSettings}
               onLoadSampleReport={() => void loadSampleReport()}
-              onSwitchMode={(m) => {
-                const href =
-                  m === 'compare'
-                    ? '/compare'
-                    : m === 'preference'
-                      ? '/preference'
-                      : `/${m}`;
-                router.push(href);
-              }}
               onDismiss={dismissGuide}
             />
           ) : null}
@@ -1875,6 +1866,13 @@ export function EvalApp({ mode }: { mode: AppMode }) {
                   </p>
                   {activeOptRunRef.current || evolveReport.runId ? (
                     <p className="field-hint">
+                      <a
+                        href={`/compare?qualitySource=run&runId=${encodeURIComponent(evolveReport.runId)}`}
+                        className="export-link"
+                      >
+                        Open in Compare
+                      </a>
+                      {' · '}
                       <a
                         href={`/api/optimize/runs/${encodeURIComponent(evolveReport.runId)}?export=md`}
                         download

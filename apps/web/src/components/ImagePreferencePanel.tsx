@@ -198,6 +198,7 @@ export function ImagePreferencePanel(props: {
     return (
       <p className="empty">
         Select image models → run preference. Side-by-side ratings land here.
+        Open Guide for a sample workflow if this is your first run.
       </p>
     );
   }

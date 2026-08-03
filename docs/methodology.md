@@ -102,6 +102,7 @@ See `datasets/video-local/README.md`.
 ## Related
 
 - [`docs/compare.md`](compare.md) - multi-axis model comparison (relative cost, fan-out latency)
+- [`docs/preference.md`](preference.md) - task-grounded preference generation (Stage 1)
 - [`docs/learnings.md`](learnings.md) - living design log
 - [`train/README.md`](../train/README.md) - optional MLP / SLM / event-detect training
 - [`NOTICE`](../NOTICE) - attributions

@@ -104,6 +104,7 @@ On **Evolve**, pick a catalog dataset or **Custom goal** (goal + rubric + input-
 - [Security](SECURITY.md)
 - [Methodology](docs/methodology.md) - routing labels, features, export
 - [Compare](docs/compare.md) - multi-axis model ranking (relative cost only)
+- [Preference](docs/preference.md) - task-grounded generation for blind preference (Stage 1)
 - [Learnings](docs/learnings.md) - living design log
 - [Sample exports](exports/samples/README.md) - regenerable report + Pareto
 

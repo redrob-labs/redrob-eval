@@ -35,7 +35,15 @@ export interface CallModelResult {
   modelId: string;
   latencyMs: number;
   inputTokens?: number;
+  /** Visible completion tokens when reasoning is separable; else provider total */
   outputTokens?: number;
+  cachedInputTokens?: number;
+  /** Billed as output but not in the response body — never fold into outputTokens downstream */
+  reasoningTokens?: number;
+  /** Verbatim provider finish/stop reason when available */
+  finishReason?: string;
+  /** Only when streaming measured TTFT; omit for non-streaming calls */
+  timeToFirstTokenMs?: number;
 }
 
 export interface ProviderAdapter {

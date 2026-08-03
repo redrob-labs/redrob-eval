@@ -63,10 +63,13 @@ export const googleAdapter: ProviderAdapter = {
           error?: { message?: string };
           candidates?: {
             content?: { parts?: { text?: string }[] };
+            finishReason?: string;
           }[];
           usageMetadata?: {
             promptTokenCount?: number;
             candidatesTokenCount?: number;
+            thoughtsTokenCount?: number;
+            cachedContentTokenCount?: number;
           };
         };
 
@@ -87,13 +90,26 @@ export const googleAdapter: ProviderAdapter = {
           throw new ProviderError('Empty model response', 'google');
         }
 
+        const reasoningTokens = json.usageMetadata?.thoughtsTokenCount;
+        let outputTokens = json.usageMetadata?.candidatesTokenCount;
+        if (
+          reasoningTokens != null &&
+          outputTokens != null &&
+          outputTokens >= reasoningTokens
+        ) {
+          outputTokens = outputTokens - reasoningTokens;
+        }
+
         return {
           text,
           providerId: 'google' as const,
           modelId: params.modelId,
           latencyMs: Date.now() - started,
           inputTokens: json.usageMetadata?.promptTokenCount,
-          outputTokens: json.usageMetadata?.candidatesTokenCount,
+          outputTokens,
+          cachedInputTokens: json.usageMetadata?.cachedContentTokenCount,
+          reasoningTokens: reasoningTokens ?? undefined,
+          finishReason: json.candidates?.[0]?.finishReason,
         };
       } catch (error) {
         lastError = error;

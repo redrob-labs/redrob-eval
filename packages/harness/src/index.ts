@@ -316,6 +316,55 @@ export {
   deriveTokenProfileFromTexts,
 } from './lib/compare';
 
+// Preference generation (Stage 1 — task-grounded outputs for later blind voting)
+export type {
+  CellStatus,
+  CompletionMatrix,
+  Generation,
+  GenerationUsage,
+  ModelRunStats,
+  PreferenceGenerationParams,
+  PreferenceProgressEvent,
+  PreferenceRun,
+  PreferenceRunSummary,
+  SectionGeneration,
+} from './lib/preference';
+export {
+  DEFAULT_PREFERENCE_GENERATION_PARAMS,
+  assertIdenticalGenerationParams,
+  promptFingerprint,
+  taskIdFromSpecParts,
+  buildPreferencePrompt,
+  preferencePromptFingerprint,
+  exampleSections,
+  splitUsageFromProvider,
+  emptyUsage,
+  sumUsage,
+  isLengthTruncation,
+  truncationRate,
+  sectionLengthStats,
+  emptyMatrix,
+  cellStatusFromGeneration,
+  markCell,
+  matrixFromGenerations,
+  summarizePreferenceRun,
+  planPreferenceCells,
+  runPreferenceGeneration,
+  callerResultFromProvider,
+  assertSafePreferenceRunId,
+  makePreferenceRunId,
+  readPreferenceMeta,
+  readPreferenceGenerations,
+  readPreferenceSummary,
+  readPreferenceEvents,
+  listPreferenceRunIds,
+  startPreferenceJob,
+  abortPreferenceJob,
+  getActivePreferenceJob,
+  type PreferenceCaller,
+  type PreferenceJobRequest,
+} from './lib/preference';
+
 // Jobs / manifest
 export type { RunManifest } from './lib/jobs/manifest';
 export {

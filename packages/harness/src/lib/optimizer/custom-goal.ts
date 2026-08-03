@@ -88,11 +88,19 @@ export function parseCustomExamples(raw: string): Example[] {
         : typeof rec.label === 'string'
           ? rec.label
           : '';
+    const meta: Record<string, unknown> = {};
+    if (Array.isArray(rec.sections)) {
+      const sections = rec.sections
+        .filter((s): s is string => typeof s === 'string' && Boolean(s.trim()))
+        .map((s) => s.trim());
+      if (sections.length > 0) meta.sections = sections;
+    }
     examples.push({
       id,
       input,
       gold,
       split: undefined,
+      meta: Object.keys(meta).length ? meta : undefined,
     });
   }
 
@@ -209,6 +217,7 @@ export function customGoalToLoadedDataset(spec: CustomGoalSpec): {
       id: e.id,
       input: e.input,
       gold: e.gold ?? '',
+      meta: e.meta,
     })),
     hfDataset: isChecklist ? 'local/custom-checklist' : 'local/custom-goal',
     hfConfig: 'default',

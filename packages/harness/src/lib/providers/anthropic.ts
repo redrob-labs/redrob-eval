@@ -48,7 +48,12 @@ export const anthropicAdapter: ProviderAdapter = {
         const json = (await res.json()) as {
           error?: { message?: string };
           content?: { type: string; text?: string }[];
-          usage?: { input_tokens?: number; output_tokens?: number };
+          stop_reason?: string | null;
+          usage?: {
+            input_tokens?: number;
+            output_tokens?: number;
+            cache_read_input_tokens?: number;
+          };
         };
 
         if (!res.ok) {
@@ -76,6 +81,8 @@ export const anthropicAdapter: ProviderAdapter = {
           latencyMs: Date.now() - started,
           inputTokens: json.usage?.input_tokens,
           outputTokens: json.usage?.output_tokens,
+          cachedInputTokens: json.usage?.cache_read_input_tokens,
+          finishReason: json.stop_reason ?? undefined,
         };
       } catch (error) {
         lastError = error;

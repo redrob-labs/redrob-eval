@@ -132,8 +132,16 @@ export function createOpenAICompatAdapter(
 
           const json = (await res.json()) as {
             error?: { message?: string };
-            choices?: { message?: { content?: string | null } }[];
-            usage?: { prompt_tokens?: number; completion_tokens?: number };
+            choices?: {
+              message?: { content?: string | null };
+              finish_reason?: string | null;
+            }[];
+            usage?: {
+              prompt_tokens?: number;
+              completion_tokens?: number;
+              prompt_tokens_details?: { cached_tokens?: number };
+              completion_tokens_details?: { reasoning_tokens?: number };
+            };
           };
 
           if (!res.ok) {
@@ -149,13 +157,27 @@ export function createOpenAICompatAdapter(
             throw new ProviderError('Empty model response', providerId);
           }
 
+          const reasoningTokens = json.usage?.completion_tokens_details?.reasoning_tokens;
+          const completionTotal = json.usage?.completion_tokens;
+          let outputTokens = completionTotal;
+          if (
+            reasoningTokens != null &&
+            completionTotal != null &&
+            completionTotal >= reasoningTokens
+          ) {
+            outputTokens = completionTotal - reasoningTokens;
+          }
+
           return {
             text,
             providerId,
             modelId: params.modelId,
             latencyMs: Date.now() - started,
             inputTokens: json.usage?.prompt_tokens,
-            outputTokens: json.usage?.completion_tokens,
+            outputTokens,
+            cachedInputTokens: json.usage?.prompt_tokens_details?.cached_tokens,
+            reasoningTokens: reasoningTokens ?? undefined,
+            finishReason: json.choices?.[0]?.finish_reason ?? undefined,
           } satisfies CallModelResult;
         } catch (error) {
           lastError = error;

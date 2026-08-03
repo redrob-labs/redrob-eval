@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react';
 import { ImagePreferencePanel } from '@/components/ImagePreferencePanel';
+import { ComparePanel } from '@/components/ComparePanel';
 import { ModelPicker, type CatalogModel } from '@/components/ModelPicker';
 import { ParetoChart } from '@/components/ParetoChart';
 import { EvolutionParetoChart } from '@/components/EvolutionParetoChart';
@@ -63,7 +64,7 @@ type RunProgressRow = {
 const SAMPLE_PRESETS = [5, 20, 50, 100, 200] as const;
 const PROMPT_PRESETS = [2, 3, 6] as const;
 
-type AppMode = 'text' | 'image' | 'evolve';
+type AppMode = 'text' | 'image' | 'evolve' | 'compare';
 type DragPane = 'config' | 'models';
 
 function isAbortError(e: unknown): boolean {
@@ -845,6 +846,7 @@ export function EvalApp() {
   const configuredCount = status?.providers.filter((p) => p.configured).length ?? 0;
 
   const runDisabled =
+    mode === 'compare' ||
     running ||
     !canRun ||
     (mode === 'text'
@@ -888,6 +890,15 @@ export function EvalApp() {
             >
               Image
             </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={mode === 'compare'}
+              className={mode === 'compare' ? 'on' : undefined}
+              onClick={() => setMode('compare')}
+            >
+              Compare
+            </button>
           </div>
         </div>
         <div className="app-titlebar-center" aria-live="polite">
@@ -910,6 +921,10 @@ export function EvalApp() {
             <button type="button" className="app-stop-btn" onClick={stopRun}>
               Stop
             </button>
+          ) : mode === 'compare' ? (
+            <a href="/compare" className="app-ghost-btn" title="Open Compare as a standalone page">
+              /compare
+            </a>
           ) : (
             <button
               type="button"
@@ -936,6 +951,9 @@ export function EvalApp() {
       {loadError ? <div className="app-banner error">{loadError}</div> : null}
       {runError ? <div className="app-banner error">{runError}</div> : null}
 
+      {mode === 'compare' ? (
+        <ComparePanel />
+      ) : (
       <div
         className="app-body"
         style={
@@ -1696,6 +1714,7 @@ export function EvalApp() {
           ) : null}
         </section>
       </div>
+      )}
     </div>
   );
 }

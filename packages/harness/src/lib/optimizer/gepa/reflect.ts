@@ -87,7 +87,7 @@ export async function reflectAndMutate(params: {
     : undefined;
 
   const meta = [
-    'You are optimizing an LLM program for Indian-language / Indic-aware tasks',
+    'You are optimizing an LLM program for real user tasks (including multilingual / high-fertility tokenizers when relevant)',
     '(and optionally video/checklist skill scoring).',
     'Given the current instruction, ancestor lessons, and Actionable Side Information',
     '(diagnostic feedback from failed cases), propose an improved instruction.',

@@ -16,7 +16,7 @@ Append dated notes as we collect data and train routers. Keep entries short and 
 
 ## 2026-07-27 - Repo purpose lock-in
 
-- **Purpose**: open-source evolution harness for Indic LLM configs; routing dual-eval is one data path for an optional routing SLM.
+- **Purpose**: open-source LLM eval workbench (Evolve / Text / Image / Compare / Preference); routing dual-eval is one data path for an optional routing SLM.
 - **Heuristic complexity ≠ good labels.** Early `oracle %` against “small scored ≥ 0.99 ⇒ should be small” exposed that length/keyword heuristics disagree with outcomes (e.g. ~25% agreement on some GSM8K slices).
 - **Dual-eval first.** Always call small *and* large per sample, then label. Replay heuristic/oracle/cascade offline for Pareto without extra provider spend.
 - **Persist everything.** Text routing runs must hit disk (`eval/routing-runs/`, `eval/routing-corpus/`). Session-only results cannot train a model.

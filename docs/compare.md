@@ -95,5 +95,5 @@ open-weights field, add `{ field, url, retrieved }` in `sources[]`. Document pro
 
 ## Fertility
 
-Token counting / fertility for Indic workloads continues to use `@redrob/tokenizers`.
+Token counting / fertility for high-fertility workloads continues to use `@redrob/tokenizers`.
 Compare does not add a second tokenizer path.

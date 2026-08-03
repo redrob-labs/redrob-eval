@@ -17,7 +17,7 @@ const plex = IBM_Plex_Sans({
 export const metadata: Metadata = {
   title: 'redrob-eval',
   description:
-    'Open-source evolution harness for Indian-language LLM configurations — GEPA optimize, routing dual-eval, relative cost vs quality.',
+    'Open-source LLM eval workbench: Compare shortlist, GEPA Evolve, Route dual-eval, Image prefs, and Preference (preview) — relative cost only.',
 };
 
 export default function RootLayout({

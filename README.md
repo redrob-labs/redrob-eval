@@ -3,15 +3,15 @@
 [![CI](https://github.com/savagemanage/redrob-eval/actions/workflows/ci.yml/badge.svg)](https://github.com/savagemanage/redrob-eval/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 
-Open-source **evolution harness** for Indian-language LLM configurations (Next.js App Router, Apache 2.0).
+Open-source **LLM evaluation workbench** (Next.js App Router, Apache 2.0): evolve configurations under a quality floor, collect routing and preference evidence on *your* task, and shortlist models across quality, preference, relative cost, and latency.
 
-Given a task, dataset, and quality floor, search for the cheapest configuration (prompt + demos + model + script handling) that serves Indic users at acceptable quality. Model selection is one gene in the search space - the harness is the product.
+Model selection is one gene in the GEPA search space — but the product is the full loop: **Evolve · Text · Image · Compare · Preference**. Costs are always **% of a baseline**, never absolute currency. Provider keys stay server-side.
 
 ## Findings
 
 - Hand-written routing rules (prompt length, keywords) agreed with dual-model labels only about 25% of the time on some GSM8K slices. Not usable as a production policy. (See [`docs/learnings.md`](docs/learnings.md); dual-eval corpora stay under gitignored `eval/routing-runs/`.)
 - A learned router trained on those labels failed to beat chance on the labels we cared about, and was dropped. The labeling pipeline survived; the router did not.
-- Indic tokenizer fertility is a hard budget constraint: high fertility shrinks how many demonstrations fit, so `demos_requested` and `demos_fitted` diverge and the effective search space narrows on exactly the languages this targets.
+- Tokenizer fertility is a hard budget constraint on high-fertility languages: it shrinks how many demonstrations fit, so `demos_requested` and `demos_fitted` diverge and the effective search space narrows.
 
 ## Sample results (committed)
 
@@ -56,7 +56,7 @@ yarn export:samples
 yarn dev
 ```
 
-Open [http://localhost:3939](http://localhost:3939). Modules are separate pages: `/evolve`, `/text`, `/image`, `/compare`, `/preference`. Restart `yarn dev` after editing `.env`.
+Open [http://localhost:3939](http://localhost:3939). Modules are separate pages: `/compare`, `/evolve`, `/preference`, `/route` (`/text` redirects), `/image`. Restart `yarn dev` after editing `.env`.
 
 Nothing else is required for a clean checkout - evaluation runs offline against vendored datasets; only provider API calls leave the machine. CI runs every `yarn verify:*` plus `yarn export:samples` and `yarn build` on each push.
 
@@ -64,11 +64,13 @@ Nothing else is required for a clean checkout - evaluation runs offline against 
 
 | Mode | Path | Purpose |
 |------|------|---------|
-| **Evolve** | `/evolve` | GEPA search over instruction / demos / model / `script_policy` / `frame_policy` under a quality floor; catalog datasets or custom goal+rubric (LLM judge or checklist QWK); export baseline-vs-evolved report |
-| **Text** | `/text` | Dual-eval small+large collection for outcome-supervised routing labels; SSE jobs survive refresh |
-| **Image** | `/image` | Side-by-side SFW preference (+ optional vision auto-judge) |
 | **Compare** | `/compare` | Multi-axis shortlist (quality / preference / relative cost / latency) under a token profile; Pareto + markdown export; offline `yarn verify:compare` |
-| **Preference** | `/preference` | Task-grounded generation for blind pairwise votes (Stage 1); truncation warnings before voting |
+| **Evolve** | `/evolve` | GEPA search over instruction / demos / model / `script_policy` / `frame_policy` under a quality floor; catalog datasets or custom goal+rubric (LLM judge or checklist QWK); export baseline-vs-evolved report |
+| **Preference** | `/preference` | Task-grounded generation for blind pairwise votes (Stage 1 preview); truncation warnings before voting |
+| **Route** | `/route` | Dual-eval small+large collection for outcome-supervised routing labels; SSE jobs survive refresh (`/text` redirects here) |
+| **Image** | `/image` | Side-by-side SFW image prefs (+ optional vision auto-judge) |
+
+Typical loop: **Compare** to shortlist → **Evolve** under a quality floor → **Preference** / **Route** / **Image** when you need task-grounded evidence instead of public Elo alone.
 
 Checklist / video skill scoring (custom goal `mode: "checklist"` or `datasets/video-local/` manifests) evolves a judging prompt + `frame_policy` for agreement with human graders (QWK), not task accuracy. Frames are sampled in memory only - no video bytes are persisted.
 

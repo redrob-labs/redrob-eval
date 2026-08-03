@@ -12,6 +12,7 @@ import type {
 import { CompareParetoChart } from '@/components/CompareParetoChart';
 
 const WEIGHTS_KEY = 'redrob-compare-weights';
+const GUIDE_KEY = 'redrob.compareGuideDismissed';
 
 const PRESETS: Record<WeightPresetId, Weights> = {
   balanced: { quality: 0.3, preference: 0.2, cost: 0.3, speed: 0.2 },
@@ -28,6 +29,21 @@ const DEFAULT_PROFILE: TokenProfile = {
   failureRate: 0,
   label: 'illustrative default — replace with your own trace',
 };
+
+function weightSum(w: Weights): number {
+  return w.quality + w.preference + w.cost + w.speed;
+}
+
+function normalizeWeights(w: Weights): Weights {
+  const sum = weightSum(w);
+  if (sum <= 0) return { ...PRESETS.balanced };
+  return {
+    quality: w.quality / sum,
+    preference: w.preference / sum,
+    cost: w.cost / sum,
+    speed: w.speed / sum,
+  };
+}
 
 type SortKey =
   | 'rank'
@@ -81,9 +97,24 @@ export function ComparePanel() {
   const [note, setNote] = useState<string | null>(null);
   const [handoffNote, setHandoffNote] = useState<string | null>(null);
   const [registryLoaded, setRegistryLoaded] = useState(false);
+  const [showGuide, setShowGuide] = useState(true);
 
   useEffect(() => {
     setWeights(loadStoredWeights());
+    try {
+      if (localStorage.getItem(GUIDE_KEY) === '1') setShowGuide(false);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  const dismissGuide = useCallback(() => {
+    setShowGuide(false);
+    try {
+      localStorage.setItem(GUIDE_KEY, '1');
+    } catch {
+      /* ignore */
+    }
   }, []);
 
   useEffect(() => {
@@ -129,6 +160,8 @@ export function ComparePanel() {
     setLoading(true);
     setError(null);
     try {
+      const normalized = normalizeWeights(weights);
+      setWeights(normalized);
       const res = await fetch('/api/compare', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -136,7 +169,7 @@ export function ComparePanel() {
           modelIds: selected,
           baselineModelId,
           tokenProfile: profile,
-          weights,
+          weights: normalized,
           qualitySource,
           runId: qualitySource === 'run' ? runId.trim() || undefined : undefined,
           split: qualitySource === 'run' ? split : undefined,
@@ -223,6 +256,8 @@ export function ComparePanel() {
       : null;
 
   async function downloadMd() {
+    const normalized = normalizeWeights(weights);
+    setWeights(normalized);
     const res = await fetch('/api/compare?export=md', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -230,7 +265,7 @@ export function ComparePanel() {
         modelIds: selected,
         baselineModelId,
         tokenProfile: profile,
-        weights,
+        weights: normalized,
         qualitySource,
         runId: qualitySource === 'run' ? runId.trim() || undefined : undefined,
         split: qualitySource === 'run' ? split : undefined,
@@ -254,6 +289,16 @@ export function ComparePanel() {
 
   void exportHref;
 
+  const weightsTotal = weightSum(weights);
+  const weightsNormalized = Math.abs(weightsTotal - 1) < 0.001;
+  const rankBlockedReason = loading
+    ? 'Scoring…'
+    : selected.length === 0
+      ? 'Select at least one model.'
+      : !baselineModelId
+        ? 'Pick a baseline model.'
+        : null;
+
   return (
     <div className="compare-panel flex min-h-0 flex-1 flex-col gap-4 overflow-auto p-4">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -266,32 +311,47 @@ export function ComparePanel() {
             Cost is always % of baseline — never absolute currency.
           </p>
         </div>
-        <div className="flex gap-2">
-          <button
-            type="button"
-            className="app-run-btn"
-            disabled={loading || selected.length === 0 || !baselineModelId}
-            title={
-              selected.length === 0
-                ? 'Select at least one model'
-                : !baselineModelId
-                  ? 'Pick a baseline model'
-                  : undefined
-            }
-            onClick={() => void runCompare()}
-          >
-            {loading ? 'Scoring…' : 'Rank models'}
-          </button>
-          <button
-            type="button"
-            className="app-ghost-btn"
-            disabled={!result}
-            onClick={() => void downloadMd()}
-          >
-            Export md
-          </button>
+        <div className="flex flex-col items-end gap-1">
+          <div className="flex gap-2">
+            <button
+              type="button"
+              className="app-run-btn"
+              disabled={Boolean(rankBlockedReason)}
+              title={rankBlockedReason ?? undefined}
+              onClick={() => void runCompare()}
+            >
+              {loading ? 'Scoring…' : 'Rank models'}
+            </button>
+            <button
+              type="button"
+              className="app-ghost-btn"
+              disabled={!result}
+              onClick={() => void downloadMd()}
+            >
+              Export md
+            </button>
+          </div>
+          {rankBlockedReason && !loading ? (
+            <p className="cta-disabled-hint text-right">{rankBlockedReason}</p>
+          ) : null}
         </div>
       </div>
+
+      {showGuide ? (
+        <div className="module-guide" role="region" aria-label="Compare guide">
+          <div className="module-guide-head">
+            <strong>Compare guide</strong>
+            <button type="button" className="app-ghost-btn" onClick={dismissGuide}>
+              Dismiss
+            </button>
+          </div>
+          <ol>
+            <li>Select models and a baseline (100% cost).</li>
+            <li>Adjust weight presets or sliders — Σ normalizes when you Rank.</li>
+            <li>Set a token profile that matches your workload, then Rank models.</li>
+          </ol>
+        </div>
+      ) : null}
 
       {handoffNote ? <div className="app-banner warn">{handoffNote}</div> : null}
       {note ? <p className="text-xs text-amber-800/80">{note}</p> : null}
@@ -374,7 +434,26 @@ export function ComparePanel() {
             </select>
           </label>
 
-          <div className="pane-label">Weights</div>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="pane-label">Weights</div>
+            <span className="text-[11px] text-slate-500">
+              Σ {weightsTotal.toFixed(2)}
+              {weightsNormalized ? (
+                ' · normalized'
+              ) : (
+                <>
+                  {' · '}
+                  <button
+                    type="button"
+                    className="underline"
+                    onClick={() => setWeights(normalizeWeights(weights))}
+                  >
+                    normalize to 1
+                  </button>
+                </>
+              )}
+            </span>
+          </div>
           <div className="flex flex-wrap gap-1">
             {(Object.keys(PRESETS) as WeightPresetId[]).map((id) => (
               <button

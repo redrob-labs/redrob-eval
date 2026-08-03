@@ -170,7 +170,7 @@ export function GettingStartedPanel(props: Props) {
         <div>
           <strong>{modeLabel} guide</strong>
           <span className="getting-started-sub">
-            {configuredCount}/{providerTotal} keys · use titlebar modules to switch
+            {configuredCount}/{providerTotal} keys · steps for this module
           </span>
         </div>
         <button type="button" className="getting-started-dismiss" onClick={onDismiss}>

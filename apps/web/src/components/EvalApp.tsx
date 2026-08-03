@@ -1097,25 +1097,27 @@ export function EvalApp({ mode }: { mode: AppMode }) {
               Stop
             </button>
           ) : (
-            <button
-              type="button"
-              className="app-run-btn"
-              disabled={runDisabled}
-              title={runBlockedReason ?? undefined}
-              onClick={() =>
-                void (mode === 'text'
-                  ? runTextEval()
+            <span className="app-titlebar-run">
+              <button
+                type="button"
+                className="app-run-btn"
+                disabled={runDisabled}
+                title={runBlockedReason ?? undefined}
+                onClick={() =>
+                  void (mode === 'text'
+                    ? runTextEval()
+                    : mode === 'evolve'
+                      ? runEvolve()
+                      : runImageEval())
+                }
+              >
+                {mode === 'text'
+                  ? 'Collect routing data'
                   : mode === 'evolve'
-                    ? runEvolve()
-                    : runImageEval())
-              }
-            >
-              {mode === 'text'
-                ? 'Collect routing data'
-                : mode === 'evolve'
-                  ? 'Run GEPA'
-                  : 'Run image'}
-            </button>
+                    ? 'Run GEPA'
+                    : 'Run image'}
+              </button>
+            </span>
           )}
         </>
       }
@@ -1123,7 +1125,7 @@ export function EvalApp({ mode }: { mode: AppMode }) {
 
       {loadError ? <div className="app-banner error">{loadError}</div> : null}
       {runError ? <div className="app-banner error">{runError}</div> : null}
-      {runBlockedReason && !showGuide ? (
+      {runBlockedReason ? (
         <div className="app-banner warn">{runBlockedReason}</div>
       ) : null}
 
@@ -1138,6 +1140,28 @@ export function EvalApp({ mode }: { mode: AppMode }) {
       >
         <aside className="app-pane app-pane-config">
           <div className="pane-label">Config</div>
+
+          {showGuide ? (
+            <GettingStartedPanel
+              mode={mode}
+              canRun={canRun}
+              openrouterReady={openrouterReady}
+              configuredCount={configuredCount}
+              providerTotal={status?.providers.length ?? 0}
+              hasSmall={Boolean(routerSmallId)}
+              hasLarge={Boolean(routerLargeId)}
+              smallDiffersLarge={Boolean(
+                routerSmallId && routerLargeId && routerSmallId !== routerLargeId,
+              )}
+              hasSeed={Boolean(routerSmallId)}
+              hasImageModels={selectedImageModels.length > 0}
+              runBlockedReason={runBlockedReason}
+              sampleLoading={sampleLoading}
+              onApplyStarter={applyStarterSettings}
+              onLoadSampleReport={() => void loadSampleReport()}
+              onDismiss={dismissGuide}
+            />
+          ) : null}
 
           {mode === 'text' ? (
             <>
@@ -1679,28 +1703,6 @@ export function EvalApp({ mode }: { mode: AppMode }) {
                 : 'Image prefs'}
           </div>
 
-          {showGuide ? (
-            <GettingStartedPanel
-              mode={mode}
-              canRun={canRun}
-              openrouterReady={openrouterReady}
-              configuredCount={configuredCount}
-              providerTotal={status?.providers.length ?? 0}
-              hasSmall={Boolean(routerSmallId)}
-              hasLarge={Boolean(routerLargeId)}
-              smallDiffersLarge={Boolean(
-                routerSmallId && routerLargeId && routerSmallId !== routerLargeId,
-              )}
-              hasSeed={Boolean(routerSmallId)}
-              hasImageModels={selectedImageModels.length > 0}
-              runBlockedReason={runBlockedReason}
-              sampleLoading={sampleLoading}
-              onApplyStarter={applyStarterSettings}
-              onLoadSampleReport={() => void loadSampleReport()}
-              onDismiss={dismissGuide}
-            />
-          ) : null}
-
           {runProgress.length > 0 ? (
             <div className="run-progress">
               <div className="pane-label">Progress</div>
@@ -1798,7 +1800,7 @@ export function EvalApp({ mode }: { mode: AppMode }) {
                   </p>
                   <p className="empty">
                     {showGuide
-                      ? 'Apply starter settings above, then Run GEPA — or Preview sample report (offline).'
+                      ? 'Apply starter settings in Config, then Run GEPA — or Preview sample report (offline).'
                       : 'Open Guide for a sample workflow, or set quality floor + seed → Run GEPA.'}
                   </p>
                 </>
@@ -1894,7 +1896,7 @@ export function EvalApp({ mode }: { mode: AppMode }) {
           ) : displayTargets.length === 0 && runProgress.length === 0 ? (
             <p className="empty">
               {showGuide
-                ? 'Apply starter settings above, then Collect routing data.'
+                ? 'Apply starter settings in Config, then Collect routing data.'
                 : 'Open Guide for a sample workflow, or pick small/large → Collect routing data.'}
             </p>
           ) : displayTargets.length === 0 ? null : (

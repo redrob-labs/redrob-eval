@@ -28,7 +28,7 @@ const GUIDE_STEPS = [
     n: 4,
     title: 'Prefer your task over public Elo',
     detail:
-      'Preference generates on your Custom Goal; later votes ground that axis. Fix truncation warnings before voting.',
+      'Preference Stage 1 generates on your Custom Goal so you can inspect outputs and truncation. Pairwise voting comes later (Stage 2).',
   },
 ] as const;
 
@@ -88,11 +88,11 @@ export function HomeHub() {
               not a public leaderboard alone.
             </p>
             <div className="home-saas-cta">
-              <Link href="/evolve" className="home-saas-primary">
-                Start with Evolve
+              <Link href="/compare" className="home-saas-primary">
+                Start with Compare
               </Link>
-              <Link href="/compare" className="home-saas-secondary">
-                Open Compare
+              <Link href="/evolve" className="home-saas-secondary">
+                Open Evolve
               </Link>
             </div>
             <p className="home-saas-status">

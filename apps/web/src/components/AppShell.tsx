@@ -34,17 +34,20 @@ type ShellProps = {
 
 /**
  * Shared chrome for every modality page — modules are routes, not tabs.
+ * Port stays in the brand tooltip only (local workbench hint, not chrome noise).
  */
 export function AppShell({ module, port = 3939, center, right, children }: ShellProps) {
   return (
     <div className="app">
       <header className="app-titlebar">
         <div className="app-titlebar-left">
-          <Link href="/" className="app-name" title="Home">
+          <Link
+            href="/"
+            className="app-name"
+            title={`Home · localhost:${port}`}
+          >
             redrob-eval
           </Link>
-          <span className="app-sep" />
-          <span className="app-muted">:{port}</span>
           <ModuleNav current={module} />
         </div>
         <div className="app-titlebar-center" aria-live="polite">

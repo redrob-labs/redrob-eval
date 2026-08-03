@@ -1,5 +1,6 @@
-import { EvalApp } from '@/components/EvalApp';
+import { redirect } from 'next/navigation';
 
-export default function TextPage() {
-  return <EvalApp mode="text" />;
+/** Legacy path — Route module lives at /route. */
+export default function TextRedirectPage() {
+  redirect('/route');
 }

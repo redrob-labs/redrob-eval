@@ -6,17 +6,16 @@ import { MODULES, type ModuleId } from '@/lib/modules';
 export function ModuleNav({ current }: { current: ModuleId }) {
   return (
     <nav className="mode-switch" aria-label="Modules">
-      <Link href="/" className={current === 'home' ? 'on' : undefined} aria-current={current === 'home' ? 'page' : undefined}>
-        Home
-      </Link>
       {MODULES.filter((m) => m.nav).map((m) => (
         <Link
           key={m.id}
           href={m.href}
           className={current === m.id ? 'on' : undefined}
           aria-current={current === m.id ? 'page' : undefined}
+          title={m.badge ? `${m.label} (${m.badge})` : m.label}
         >
           {m.label}
+          {m.badge ? <span className="mode-switch-badge">{m.badge}</span> : null}
         </Link>
       ))}
     </nav>
@@ -37,22 +36,15 @@ type ShellProps = {
  * Shared chrome for every modality page — modules are routes, not tabs.
  */
 export function AppShell({ module, port = 3939, center, right, children }: ShellProps) {
-  const mod = MODULES.find((m) => m.id === module);
   return (
     <div className="app">
       <header className="app-titlebar">
         <div className="app-titlebar-left">
-          <Link href="/" className="app-name">
+          <Link href="/" className="app-name" title="Home">
             redrob-eval
           </Link>
           <span className="app-sep" />
           <span className="app-muted">:{port}</span>
-          {mod && module !== 'home' ? (
-            <>
-              <span className="app-sep" />
-              <span className="app-muted">{mod.label}</span>
-            </>
-          ) : null}
           <ModuleNav current={module} />
         </div>
         <div className="app-titlebar-center" aria-live="polite">

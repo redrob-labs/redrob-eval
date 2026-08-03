@@ -1,0 +1,198 @@
+[
+  {
+    "id": "or/openai/gpt-4o",
+    "label": "GPT-4o",
+    "provider": "openai",
+    "contextWindow": 128000,
+    "rates": { "input": 2.5, "output": 10, "cachedInput": 1.25 },
+    "published": {
+      "tokensPerSecond": 80,
+      "timeToFirstToken": 0.4,
+      "arenaElo": 1260,
+      "benchmarkComposite": 0.82
+    },
+    "sources": [
+      { "field": "rates", "url": "https://openai.com/api/pricing/", "retrieved": "2026-08-01" },
+      { "field": "published.arenaElo", "url": "https://lmarena.ai/", "retrieved": "2026-08-01" },
+      { "field": "published.benchmarkComposite", "url": "https://example.invalid/illustrative-composite", "retrieved": "2026-08-01" }
+    ]
+  },
+  {
+    "id": "or/openai/gpt-4o-mini",
+    "label": "GPT-4o mini",
+    "provider": "openai",
+    "contextWindow": 128000,
+    "rates": { "input": 0.15, "output": 0.6, "cachedInput": 0.075 },
+    "published": {
+      "tokensPerSecond": 120,
+      "timeToFirstToken": 0.25,
+      "arenaElo": 1210,
+      "benchmarkComposite": 0.72
+    },
+    "sources": [
+      { "field": "rates", "url": "https://openai.com/api/pricing/", "retrieved": "2026-08-01" },
+      { "field": "published.arenaElo", "url": "https://lmarena.ai/", "retrieved": "2026-08-01" },
+      { "field": "published.benchmarkComposite", "url": "https://example.invalid/illustrative-composite", "retrieved": "2026-08-01" }
+    ]
+  },
+  {
+    "id": "or/anthropic/claude-sonnet-4",
+    "label": "Claude Sonnet 4",
+    "provider": "anthropic",
+    "contextWindow": 200000,
+    "rates": { "input": 3, "output": 15, "cachedInput": 0.3 },
+    "published": {
+      "tokensPerSecond": 55,
+      "timeToFirstToken": 0.9,
+      "arenaElo": 1285,
+      "benchmarkComposite": 0.86
+    },
+    "sources": [
+      { "field": "rates", "url": "https://www.anthropic.com/pricing", "retrieved": "2026-08-01" },
+      { "field": "published.arenaElo", "url": "https://lmarena.ai/", "retrieved": "2026-08-01" },
+      { "field": "published.benchmarkComposite", "url": "https://example.invalid/illustrative-composite", "retrieved": "2026-08-01" }
+    ]
+  },
+  {
+    "id": "or/anthropic/claude-haiku-4.5",
+    "label": "Claude Haiku 4.5",
+    "provider": "anthropic",
+    "contextWindow": 200000,
+    "rates": { "input": 1, "output": 5, "cachedInput": 0.1 },
+    "published": {
+      "tokensPerSecond": 100,
+      "timeToFirstToken": 0.35,
+      "arenaElo": 1180,
+      "benchmarkComposite": 0.68
+    },
+    "sources": [
+      { "field": "rates", "url": "https://www.anthropic.com/pricing", "retrieved": "2026-08-01" },
+      { "field": "published.arenaElo", "url": "https://lmarena.ai/", "retrieved": "2026-08-01" },
+      { "field": "published.benchmarkComposite", "url": "https://example.invalid/illustrative-composite", "retrieved": "2026-08-01" }
+    ]
+  },
+  {
+    "id": "or/google/gemini-2.0-flash-001",
+    "label": "Gemini 2.0 Flash",
+    "provider": "google",
+    "contextWindow": 1048576,
+    "rates": { "input": 0.1, "output": 0.4, "cachedInput": 0.025 },
+    "published": {
+      "tokensPerSecond": 150,
+      "timeToFirstToken": 0.2,
+      "arenaElo": 1225,
+      "benchmarkComposite": 0.74
+    },
+    "sources": [
+      { "field": "rates", "url": "https://ai.google.dev/pricing", "retrieved": "2026-08-01" },
+      { "field": "published.arenaElo", "url": "https://lmarena.ai/", "retrieved": "2026-08-01" },
+      { "field": "published.benchmarkComposite", "url": "https://example.invalid/illustrative-composite", "retrieved": "2026-08-01" }
+    ]
+  },
+  {
+    "id": "or/meta-llama/llama-3.3-70b-instruct",
+    "label": "Llama 3.3 70B",
+    "provider": "meta",
+    "contextWindow": 128000,
+    "rates": { "input": 0.4, "output": 0.4 },
+    "openWeights": {
+      "license": "Llama 3.3 Community License",
+      "url": "https://www.llama.com/llama3_3/license/"
+    },
+    "published": {
+      "tokensPerSecond": 45,
+      "timeToFirstToken": 0.5,
+      "arenaElo": 1205,
+      "benchmarkComposite": 0.7
+    },
+    "sources": [
+      { "field": "rates", "url": "https://openrouter.ai/meta-llama/llama-3.3-70b-instruct", "retrieved": "2026-08-01" },
+      { "field": "openWeights", "url": "https://www.llama.com/llama3_3/license/", "retrieved": "2026-08-01" },
+      { "field": "published.arenaElo", "url": "https://lmarena.ai/", "retrieved": "2026-08-01" },
+      { "field": "published.benchmarkComposite", "url": "https://example.invalid/illustrative-composite", "retrieved": "2026-08-01" }
+    ]
+  },
+  {
+    "id": "or/meta-llama/llama-3.1-8b-instruct",
+    "label": "Llama 3.1 8B",
+    "provider": "meta",
+    "contextWindow": 128000,
+    "rates": { "input": 0.06, "output": 0.06 },
+    "openWeights": {
+      "license": "Llama 3.1 Community License",
+      "url": "https://www.llama.com/llama3_1/license/"
+    },
+    "published": {
+      "tokensPerSecond": 90,
+      "timeToFirstToken": 0.15,
+      "arenaElo": 1120,
+      "benchmarkComposite": 0.55
+    },
+    "sources": [
+      { "field": "rates", "url": "https://openrouter.ai/meta-llama/llama-3.1-8b-instruct", "retrieved": "2026-08-01" },
+      { "field": "openWeights", "url": "https://www.llama.com/llama3_1/license/", "retrieved": "2026-08-01" },
+      { "field": "published.arenaElo", "url": "https://lmarena.ai/", "retrieved": "2026-08-01" },
+      { "field": "published.benchmarkComposite", "url": "https://example.invalid/illustrative-composite", "retrieved": "2026-08-01" }
+    ]
+  },
+  {
+    "id": "or/qwen/qwen-2.5-72b-instruct",
+    "label": "Qwen2.5 72B",
+    "provider": "qwen",
+    "contextWindow": 131072,
+    "rates": { "input": 0.35, "output": 0.4 },
+    "openWeights": {
+      "license": "Apache-2.0",
+      "url": "https://huggingface.co/Qwen/Qwen2.5-72B-Instruct"
+    },
+    "published": {
+      "tokensPerSecond": 40,
+      "timeToFirstToken": 0.55,
+      "arenaElo": 1195,
+      "benchmarkComposite": 0.69
+    },
+    "sources": [
+      { "field": "rates", "url": "https://openrouter.ai/qwen/qwen-2.5-72b-instruct", "retrieved": "2026-08-01" },
+      { "field": "openWeights", "url": "https://huggingface.co/Qwen/Qwen2.5-72B-Instruct", "retrieved": "2026-08-01" },
+      { "field": "published.arenaElo", "url": "https://lmarena.ai/", "retrieved": "2026-08-01" },
+      { "field": "published.benchmarkComposite", "url": "https://example.invalid/illustrative-composite", "retrieved": "2026-08-01" }
+    ]
+  },
+  {
+    "id": "or/deepseek/deepseek-chat",
+    "label": "DeepSeek Chat",
+    "provider": "deepseek",
+    "contextWindow": 64000,
+    "rates": { "input": 0.14, "output": 0.28, "cachedInput": 0.014 },
+    "published": {
+      "tokensPerSecond": 35,
+      "timeToFirstToken": 1.8,
+      "arenaElo": 1240,
+      "benchmarkComposite": 0.78
+    },
+    "sources": [
+      { "field": "rates", "url": "https://openrouter.ai/deepseek/deepseek-chat", "retrieved": "2026-08-01" },
+      { "field": "published.arenaElo", "url": "https://lmarena.ai/", "retrieved": "2026-08-01" },
+      { "field": "published.benchmarkComposite", "url": "https://example.invalid/illustrative-composite", "retrieved": "2026-08-01" }
+    ]
+  },
+  {
+    "id": "or/mistralai/mistral-small-3.1-24b-instruct",
+    "label": "Mistral Small 3.1 24B",
+    "provider": "mistral",
+    "contextWindow": 128000,
+    "rates": { "input": 0.1, "output": 0.3 },
+    "openWeights": {
+      "license": "Apache-2.0",
+      "url": "https://mistral.ai/news/mistral-small-3-1"
+    },
+    "published": {
+      "benchmarkComposite": 0.62
+    },
+    "sources": [
+      { "field": "rates", "url": "https://openrouter.ai/mistralai/mistral-small-3.1-24b-instruct", "retrieved": "2026-08-01" },
+      { "field": "openWeights", "url": "https://mistral.ai/news/mistral-small-3-1", "retrieved": "2026-08-01" },
+      { "field": "published.benchmarkComposite", "url": "https://example.invalid/illustrative-composite", "retrieved": "2026-08-01" }
+    ]
+  }
+]

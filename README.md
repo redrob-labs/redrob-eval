@@ -51,6 +51,7 @@ yarn install
 yarn verify:phase1
 yarn verify:gepa
 yarn verify:phase3
+yarn verify:compare
 yarn export:samples
 yarn dev
 ```
@@ -66,6 +67,7 @@ Nothing else is required for a clean checkout - evaluation runs offline against 
 | **Evolve** | GEPA search over instruction / demos / model / `script_policy` / `frame_policy` under a quality floor; catalog datasets or custom goal+rubric (LLM judge or checklist QWK); export baseline-vs-evolved report |
 | **Text** | Dual-eval small+large collection for outcome-supervised routing labels; SSE jobs survive refresh |
 | **Image** | Side-by-side SFW preference (+ optional vision auto-judge) |
+| **Compare** | Multi-axis shortlist (quality / preference / relative cost / latency) under a token profile; Pareto + markdown export; offline `yarn verify:compare` |
 
 Checklist / video skill scoring (custom goal `mode: "checklist"` or `datasets/video-local/` manifests) evolves a judging prompt + `frame_policy` for agreement with human graders (QWK), not task accuracy. Frames are sampled in memory only - no video bytes are persisted.
 
@@ -101,6 +103,7 @@ On **Evolve**, pick a catalog dataset or **Custom goal** (goal + rubric + input-
 - [Contributing](CONTRIBUTING.md)
 - [Security](SECURITY.md)
 - [Methodology](docs/methodology.md) - routing labels, features, export
+- [Compare](docs/compare.md) - multi-axis model ranking (relative cost only)
 - [Learnings](docs/learnings.md) - living design log
 - [Sample exports](exports/samples/README.md) - regenerable report + Pareto
 

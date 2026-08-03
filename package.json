@@ -23,6 +23,7 @@
     "verify:phase3": "tsx scripts/verify-phase3.mts",
     "verify:custom-goal": "tsx scripts/verify-custom-goal.mts",
     "verify:video": "tsx scripts/verify-video.mts",
+    "verify:compare": "tsx scripts/verify-compare.mts",
     "export:samples": "tsx scripts/export-samples.mts",
     "export:routing": "tsx scripts/export-routing.mts",
     "datasets:fetch": "tsx scripts/datasets/fetch.mts",

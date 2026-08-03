@@ -21,5 +21,6 @@ jobs:
       - run: yarn verify:phase3
       - run: yarn verify:custom-goal
       - run: yarn verify:video
+      - run: yarn verify:compare
       - run: yarn export:samples
       - run: yarn build

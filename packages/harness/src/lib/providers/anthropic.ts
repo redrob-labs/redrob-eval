@@ -1,6 +1,9 @@
 import type { ProviderAdapter } from './types';
 import { ProviderError } from './types';
 
+/** Anthropic requires max_tokens; high ceiling when caller asks for unlimited. */
+const UNLIMITED_MAX_TOKENS = 128_000;
+
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -19,6 +22,10 @@ export const anthropicAdapter: ProviderAdapter = {
     const started = Date.now();
     const maxAttempts = 3;
     let lastError: unknown;
+    const maxTokens =
+      params.maxTokens === null
+        ? UNLIMITED_MAX_TOKENS
+        : (params.maxTokens ?? 1024);
 
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
@@ -31,7 +38,7 @@ export const anthropicAdapter: ProviderAdapter = {
           },
           body: JSON.stringify({
             model: params.modelId,
-            max_tokens: params.maxTokens ?? 1024,
+            max_tokens: maxTokens,
             temperature: params.temperature ?? 0,
             system: params.systemPrompt?.trim() || undefined,
             messages: [{ role: 'user', content: params.prompt }],

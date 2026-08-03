@@ -90,9 +90,14 @@ export function createOpenAICompatAdapter(
       const body: Record<string, unknown> = {
         model: params.modelId,
         messages,
-        max_tokens: params.maxTokens ?? 1024,
         temperature: params.temperature ?? 0,
       };
+      // null = unlimited (omit); undefined = legacy default 1024
+      if (params.maxTokens === null) {
+        // omit max_tokens — provider/model allowed max
+      } else {
+        body.max_tokens = params.maxTokens ?? 1024;
+      }
       // Pass through Qwen-VL-family pixel budgets when the provider/model honors them
       if (params.vision?.min_pixels != null) {
         body.min_pixels = params.vision.min_pixels;

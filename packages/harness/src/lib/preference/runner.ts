@@ -63,7 +63,7 @@ function liveCaller(): PreferenceCaller {
     }
     const result = await callModel(resolved.providerId, resolved.modelId, user, {
       systemPrompt: system,
-      maxTokens: params.maxTokens,
+      maxTokens: params.maxTokens, // null = unlimited
       temperature: params.temperature,
     });
     return callerResultFromProvider({

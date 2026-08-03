@@ -48,10 +48,10 @@ export function summarizePreferenceRun(params: {
       meanReasoningTokens,
     };
     if (run.generationParams.parallelSections > 1 && allSections.length > 0) {
-      stats.sectionLengthDistribution = sectionLengthStats(
-        allSections,
-        run.generationParams.maxTokens,
-      );
+      const cap = run.generationParams.maxTokens;
+      if (cap != null) {
+        stats.sectionLengthDistribution = sectionLengthStats(allSections, cap);
+      }
     }
     byModel.push(stats);
   }
@@ -66,7 +66,7 @@ export function summarizePreferenceRun(params: {
     const parts: string[] = [];
     if (anyTrunc) {
       parts.push(
-        'Non-zero truncationRate: some outputs stopped on a length/token cap. Preference votes on truncated text measure the cap, not the model.',
+        'Non-zero truncationRate: some outputs stopped on a length/token cap (finishReason length/max_tokens). Raise generationParams.maxTokens — especially for reasoning models that share the budget — or shorten the task before voting.',
       );
     }
     if (nearCap) {

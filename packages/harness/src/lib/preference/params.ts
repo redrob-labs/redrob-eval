@@ -3,7 +3,8 @@ import type { PreferenceGenerationParams } from './types';
 
 export const DEFAULT_PREFERENCE_GENERATION_PARAMS: PreferenceGenerationParams = {
   temperature: 0,
-  maxTokens: 1024,
+  /** No explicit cap — providers omit/raise to model-allowed max. */
+  maxTokens: null,
   parallelSections: 1,
 };
 
@@ -11,9 +12,24 @@ export function assertIdenticalGenerationParams(
   params: Partial<PreferenceGenerationParams> | PreferenceGenerationParams,
 ): PreferenceGenerationParams {
   const temperature =
-    params.temperature != null ? Number(params.temperature) : DEFAULT_PREFERENCE_GENERATION_PARAMS.temperature;
-  const maxTokens =
-    params.maxTokens != null ? Number(params.maxTokens) : DEFAULT_PREFERENCE_GENERATION_PARAMS.maxTokens;
+    params.temperature != null
+      ? Number(params.temperature)
+      : DEFAULT_PREFERENCE_GENERATION_PARAMS.temperature;
+
+  let maxTokens: number | null;
+  if (params.maxTokens === null) {
+    maxTokens = null;
+  } else if (params.maxTokens === undefined) {
+    maxTokens = DEFAULT_PREFERENCE_GENERATION_PARAMS.maxTokens;
+  } else {
+    maxTokens = Number(params.maxTokens);
+    if (!Number.isFinite(maxTokens) || maxTokens < 1) {
+      throw new Error(
+        'generationParams.maxTokens must be null (unlimited) or a finite number ≥ 1',
+      );
+    }
+  }
+
   const parallelSections = Math.max(
     1,
     Math.floor(
@@ -24,9 +40,6 @@ export function assertIdenticalGenerationParams(
   );
   if (!Number.isFinite(temperature) || temperature < 0) {
     throw new Error('generationParams.temperature must be a finite number ≥ 0');
-  }
-  if (!Number.isFinite(maxTokens) || maxTokens < 1) {
-    throw new Error('generationParams.maxTokens must be a finite number ≥ 1');
   }
   const out: PreferenceGenerationParams = {
     temperature,

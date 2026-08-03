@@ -46,8 +46,10 @@ export const googleAdapter: ProviderAdapter = {
           body: JSON.stringify({
             contents,
             generationConfig: {
-              maxOutputTokens: params.maxTokens ?? 1024,
               temperature: params.temperature ?? 0,
+              ...(params.maxTokens === null
+                ? {}
+                : { maxOutputTokens: params.maxTokens ?? 1024 }),
             },
           }),
         });

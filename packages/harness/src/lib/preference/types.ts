@@ -9,7 +9,11 @@ export type PreferenceRunStatus = 'queued' | 'running' | 'ready' | 'failed' | 's
 
 export type PreferenceGenerationParams = {
   temperature: number;
-  maxTokens: number;
+  /**
+   * Max completion tokens, identical for every model in the run.
+   * `null` = no explicit cap (provider/model allowed max).
+   */
+  maxTokens: number | null;
   seed?: number;
   /** 1 = single call; N = fan-out over Example.meta.sections */
   parallelSections: number;

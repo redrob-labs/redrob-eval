@@ -18,7 +18,7 @@ export interface CallModelParams {
   modelId: string;
   prompt: string;
   systemPrompt?: string;
-  maxTokens?: number;
+  maxTokens?: number | null;
   temperature?: number;
   /**
    * Optional vision frames for checklist / image judging.

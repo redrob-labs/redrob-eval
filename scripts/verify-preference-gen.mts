@@ -51,6 +51,10 @@ async function main(): Promise<void> {
   assert(params.maxTokens === 256, 'maxTokens');
   assert(params.parallelSections === 1, 'parallelSections');
   assert(params.seed === 7, 'seed');
+  const unlimited = assertIdenticalGenerationParams({ maxTokens: null });
+  assert(unlimited.maxTokens === null, 'null maxTokens = unlimited');
+  const byDefault = assertIdenticalGenerationParams({});
+  assert(byDefault.maxTokens === null, 'default maxTokens is unlimited');
   let threw = false;
   try {
     assertIdenticalGenerationParams({ temperature: -1, maxTokens: 10 });
@@ -58,6 +62,13 @@ async function main(): Promise<void> {
     threw = true;
   }
   assert(threw, 'negative temperature must throw');
+  threw = false;
+  try {
+    assertIdenticalGenerationParams({ maxTokens: 0 });
+  } catch {
+    threw = true;
+  }
+  assert(threw, 'maxTokens 0 must throw');
   console.log('ok\n');
 
   console.log('=== Reasoning tokens kept separate from output tokens ===');

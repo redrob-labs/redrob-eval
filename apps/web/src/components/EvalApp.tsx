@@ -1,11 +1,18 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react';
+import { useRouter } from 'next/navigation';
+import { AppShell } from '@/components/AppShell';
+import { GettingStartedPanel } from '@/components/GettingStartedPanel';
 import { ImagePreferencePanel } from '@/components/ImagePreferencePanel';
-import { ComparePanel } from '@/components/ComparePanel';
 import { ModelPicker, type CatalogModel } from '@/components/ModelPicker';
 import { ParetoChart } from '@/components/ParetoChart';
 import { EvolutionParetoChart } from '@/components/EvolutionParetoChart';
+import {
+  EvolutionProgressChart,
+  appendRolloutStep,
+  type EvolveRolloutStep,
+} from '@/components/EvolutionProgressChart';
 import type {
   Candidate,
   EvalRunResult,
@@ -18,6 +25,7 @@ import type {
 import type { ImageRunMeta, ImageRunStreamEvent } from '@/lib/image-eval/types';
 import type { CorpusStats, RoutingRunMeta, RoutingRunSummary } from '@redrob/harness';
 import { fmtMs, pct } from '@/lib/utils';
+import type { AppMode, ModuleId } from '@/lib/modules';
 
 type StatusResponse = {
   port: number;
@@ -63,8 +71,8 @@ type RunProgressRow = {
 
 const SAMPLE_PRESETS = [5, 20, 50, 100, 200] as const;
 const PROMPT_PRESETS = [2, 3, 6] as const;
+const GUIDE_KEY = 'redrob.guideDismissed';
 
-type AppMode = 'text' | 'image' | 'evolve' | 'compare';
 type DragPane = 'config' | 'models';
 
 function isAbortError(e: unknown): boolean {
@@ -73,8 +81,12 @@ function isAbortError(e: unknown): boolean {
     : e instanceof Error && e.name === 'AbortError';
 }
 
-export function EvalApp() {
-  const [mode, setMode] = useState<AppMode>('text');
+function moduleIdForMode(mode: AppMode): ModuleId {
+  return mode;
+}
+
+export function EvalApp({ mode }: { mode: AppMode }) {
+  const router = useRouter();
   const [status, setStatus] = useState<StatusResponse | null>(null);
   const [datasets, setDatasets] = useState<DatasetInfo[]>([]);
   const [imageSuites, setImageSuites] = useState<ImageSuiteInfo[]>([]);
@@ -110,6 +122,8 @@ export function EvalApp() {
   );
   const [evolveJudgeModelId, setEvolveJudgeModelId] = useState('');
   const [frontierPoints, setFrontierPoints] = useState<FrontierPoint[]>([]);
+  const [evolveHistory, setEvolveHistory] = useState<EvolveRolloutStep[]>([]);
+  const [evolveView, setEvolveView] = useState<'progress' | 'frontier'>('progress');
   const [bestCandidate, setBestCandidate] = useState<Candidate | null>(null);
   const [evolveLesson, setEvolveLesson] = useState<string | null>(null);
   const [evolveTestQuality, setEvolveTestQuality] = useState<number | null>(null);
@@ -134,6 +148,8 @@ export function EvalApp() {
   const [statusLine, setStatusLine] = useState('Idle');
   const [configWidth, setConfigWidth] = useState(300);
   const [modelsWidth, setModelsWidth] = useState(420);
+  const [showGuide, setShowGuide] = useState(true);
+  const [sampleLoading, setSampleLoading] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
   const canRun = Boolean(status?.providers.some((p) => p.configured));
@@ -241,6 +257,164 @@ export function EvalApp() {
   useEffect(() => {
     void bootstrap();
   }, [bootstrap]);
+
+  useEffect(() => {
+    try {
+      if (window.localStorage.getItem(GUIDE_KEY) === '1') setShowGuide(false);
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const dismissGuide = useCallback(() => {
+    setShowGuide(false);
+    try {
+      window.localStorage.setItem(GUIDE_KEY, '1');
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const openGuide = useCallback(() => {
+    setShowGuide(true);
+    try {
+      window.localStorage.removeItem(GUIDE_KEY);
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const applyStarterSettings = useCallback(() => {
+    setRunError(null);
+    if (mode === 'evolve') {
+      setEvolveSource('catalog');
+      setDatasetId(
+        datasets.some((d) => d.id === 'gsm8k-main') ? 'gsm8k-main' : (datasets[0]?.id ?? 'gsm8k-main'),
+      );
+      setSampleCount(5);
+      setMaxRollouts(6);
+      setMinibatchSize(2);
+      setQualityFloor(0.55);
+      setMaxPromptTokens(2048);
+      setEvolveInstruction('');
+      if (!routerSmallId && routerOptions[0]) setRouterSmallId(routerOptions[0].id);
+      setStatusLine('Starter applied — click Run GEPA');
+      return;
+    }
+    if (mode === 'image') {
+      setSuiteId(
+        imageSuites.some((s) => s.id === 'sfw-image')
+          ? 'sfw-image'
+          : (imageSuites[0]?.id ?? 'sfw-image'),
+      );
+      setPromptLimit(2);
+      setSeed(42);
+      setAutoJudge(true);
+      setStatusLine(
+        selectedImageModels.length
+          ? 'Starter applied — click Run image'
+          : 'Starter applied — pick ≥1 image model, then Run',
+      );
+      return;
+    }
+    setDatasetId(
+      datasets.some((d) => d.id === 'gsm8k-main') ? 'gsm8k-main' : (datasets[0]?.id ?? 'gsm8k-main'),
+    );
+    setSampleCount(5);
+    setSmallOkThreshold(0.99);
+    const small =
+      smallOptions[0] ??
+      routerOptions.slice().sort((a, b) => a.relativeCostWeight - b.relativeCostWeight)[0];
+    const large =
+      largeOptions[0] ??
+      routerOptions.slice().sort((a, b) => b.relativeCostWeight - a.relativeCostWeight)[0];
+    if (small) setRouterSmallId(small.id);
+    if (large && large.id !== small?.id) setRouterLargeId(large.id);
+    else if (routerOptions.length > 1) {
+      const other = routerOptions.find((m) => m.id !== small?.id);
+      if (other) setRouterLargeId(other.id);
+    }
+    setStatusLine('Starter applied — click Collect routing data');
+  }, [
+    mode,
+    datasets,
+    imageSuites,
+    routerSmallId,
+    routerOptions,
+    smallOptions,
+    largeOptions,
+    selectedImageModels.length,
+  ]);
+
+  const loadSampleReport = useCallback(async () => {
+    setSampleLoading(true);
+    setRunError(null);
+    try {
+      const res = await fetch('/api/samples/optimize-report');
+      const json = (await res.json()) as OptimizeReport & { error?: string };
+      if (!res.ok) throw new Error(json.error || `HTTP ${res.status}`);
+      if (mode !== 'evolve') {
+        router.push('/evolve');
+        return;
+      }
+      setEvolveView('progress');
+      setEvolveReport(json);
+      setFrontierPoints(json.frontier ?? []);
+      // Offline sample has no rollout stream — synthesize seed → evolved timeline.
+      const sampleSteps: EvolveRolloutStep[] = [];
+      const baseVal = json.baseline?.val;
+      const evoVal = json.evolved?.val;
+      if (json.baseline?.candidate && baseVal) {
+        sampleSteps.push({
+          index: 0,
+          candidateId: json.baseline.candidate.id,
+          quality: baseVal.quality,
+          totalTokens: baseVal.totalTokens,
+          meanRelativeCost: baseVal.meanRelativeCost,
+          feasible: baseVal.quality >= json.qualityFloor,
+          bestQualitySoFar: null,
+          bestTokensSoFar: null,
+        });
+      }
+      if (json.evolved?.candidate && evoVal) {
+        sampleSteps.push({
+          index: sampleSteps.length,
+          candidateId: json.evolved.candidate.id,
+          quality: evoVal.quality,
+          totalTokens: evoVal.totalTokens,
+          meanRelativeCost: evoVal.meanRelativeCost,
+          feasible: evoVal.quality >= json.qualityFloor,
+          bestQualitySoFar: null,
+          bestTokensSoFar: null,
+        });
+      }
+      let rebuilt: EvolveRolloutStep[] = [];
+      for (const s of sampleSteps) {
+        rebuilt = appendRolloutStep(rebuilt, {
+          index: s.index,
+          candidateId: s.candidateId,
+          quality: s.quality,
+          totalTokens: s.totalTokens,
+          meanRelativeCost: s.meanRelativeCost,
+          feasible: s.feasible,
+        });
+      }
+      setEvolveHistory(rebuilt);
+      setBestCandidate(json.evolved?.candidate ?? null);
+      setEvolveLesson(null);
+      setEvolveTestQuality(json.evolved?.test?.quality ?? null);
+      setQualityFloor(json.qualityFloor);
+      if (json.datasetId) setDatasetId(json.datasetId);
+      setResult(null);
+      setLiveTargets([]);
+      setRunProgress([]);
+      setStatusLine('Sample report (offline) — no API calls');
+    } catch (e) {
+      setRunError(e instanceof Error ? e.message : 'Failed to load sample report');
+    } finally {
+      setSampleLoading(false);
+    }
+  }, [mode, router]);
 
   const startResize = useCallback(
     (pane: DragPane, event: ReactPointerEvent<HTMLDivElement>) => {
@@ -534,12 +708,24 @@ export function EvalApp() {
         const event = JSON.parse(dataLine.slice(5).trim()) as OptimizeEvent;
         if (event.type === 'start') {
           setProgress({ done: 0, total: event.maxRollouts });
+          setEvolveHistory([]);
+          setEvolveView('progress');
           setStatusLine(`GEPA ${event.runId ?? runId}`);
         } else if (event.type === 'rollout') {
           setProgress((p) => ({
             done: Math.min(p.total || event.index + 1, event.index + 1),
             total: p.total || maxRollouts,
           }));
+          setEvolveHistory((prev) =>
+            appendRolloutStep(prev, {
+              index: event.index,
+              candidateId: event.candidate.id,
+              quality: event.val.quality,
+              totalTokens: event.val.totalTokens,
+              meanRelativeCost: event.val.meanRelativeCost,
+              feasible: event.feasible,
+            }),
+          );
           setStatusLine(
             `${event.feasible ? 'ok' : 'infeasible'} · ${event.candidate.id} · q=${pct(event.val.quality)}`,
           );
@@ -586,7 +772,10 @@ export function EvalApp() {
     const ac = new AbortController();
     abortRef.current = ac;
     activeOptRunRef.current = runId;
-    setMode('evolve');
+    if (mode !== 'evolve') {
+      router.push('/evolve');
+      return;
+    }
     setRunning(true);
     setStatusLine(`Reconnecting GEPA · ${runId}`);
     void (async () => {
@@ -609,7 +798,7 @@ export function EvalApp() {
       cancelled = true;
       ac.abort();
     };
-  }, [consumeOptimizeEvents]);
+  }, [consumeOptimizeEvents, mode, router]);
 
   const runEvolve = async () => {
     if (running) return;
@@ -632,6 +821,8 @@ export function EvalApp() {
     setRunning(true);
     setRunError(null);
     setFrontierPoints([]);
+    setEvolveHistory([]);
+    setEvolveView('progress');
     setBestCandidate(null);
     setEvolveLesson(null);
     setEvolveTestQuality(null);
@@ -846,7 +1037,6 @@ export function EvalApp() {
   const configuredCount = status?.providers.filter((p) => p.configured).length ?? 0;
 
   const runDisabled =
-    mode === 'compare' ||
     running ||
     !canRun ||
     (mode === 'text'
@@ -855,53 +1045,29 @@ export function EvalApp() {
         ? !routerSmallId
         : !openrouterReady || selectedImageModels.length < 1);
 
+  const runBlockedReason = (() => {
+    if (running || !runDisabled) return null;
+    if (!canRun) {
+      return 'Add a provider key to repo-root .env, restart yarn dev, then Refresh.';
+    }
+    if (mode === 'text') {
+      if (!routerSmallId || !routerLargeId) return 'Pick both Small and Large models in Config.';
+      if (routerSmallId === routerLargeId) return 'Small and Large must be different models.';
+    }
+    if (mode === 'evolve' && !routerSmallId) return 'Pick a Seed model in Config.';
+    if (mode === 'image') {
+      if (!openrouterReady) return 'Image mode needs OPENROUTER_API_KEY in repo-root .env.';
+      if (selectedImageModels.length < 1) return 'Select at least one image generator in the catalog.';
+    }
+    return null;
+  })();
+
   return (
-    <div className="app">
-      <header className="app-titlebar">
-        <div className="app-titlebar-left">
-          <span className="app-name">redrob-eval</span>
-          <span className="app-sep" />
-          <span className="app-muted">:{status?.port ?? 3939}</span>
-          <div className="mode-switch" role="tablist" aria-label="Eval mode">
-            <button
-              type="button"
-              role="tab"
-              aria-selected={mode === 'text'}
-              className={mode === 'text' ? 'on' : undefined}
-              onClick={() => setMode('text')}
-            >
-              Text
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={mode === 'evolve'}
-              className={mode === 'evolve' ? 'on' : undefined}
-              onClick={() => setMode('evolve')}
-            >
-              Evolve
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={mode === 'image'}
-              className={mode === 'image' ? 'on' : undefined}
-              onClick={() => setMode('image')}
-            >
-              Image
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={mode === 'compare'}
-              className={mode === 'compare' ? 'on' : undefined}
-              onClick={() => setMode('compare')}
-            >
-              Compare
-            </button>
-          </div>
-        </div>
-        <div className="app-titlebar-center" aria-live="polite">
+    <AppShell
+      module={moduleIdForMode(mode)}
+      port={status?.port ?? 3939}
+      center={
+        <>
           <div className="app-progress-track">
             <div className="app-progress-bar" style={{ width: `${progressPct}%` }} />
           </div>
@@ -909,11 +1075,20 @@ export function EvalApp() {
             {statusLine}
             {progress.total > 0 ? ` · ${progress.done}/${progress.total}` : ''}
           </span>
-        </div>
-        <div className="app-titlebar-right">
-          <span className="app-muted">
+        </>
+      }
+      right={
+        <>
+          <span className="app-muted" title="Configured provider keys / total providers">
             keys {configuredCount}/{status?.providers.length ?? 0}
           </span>
+          <button
+            type="button"
+            className="app-ghost-btn"
+            onClick={() => (showGuide ? dismissGuide() : openGuide())}
+          >
+            {showGuide ? 'Hide guide' : 'Guide'}
+          </button>
           <button type="button" className="app-ghost-btn" onClick={() => void bootstrap()}>
             Refresh
           </button>
@@ -921,15 +1096,12 @@ export function EvalApp() {
             <button type="button" className="app-stop-btn" onClick={stopRun}>
               Stop
             </button>
-          ) : mode === 'compare' ? (
-            <a href="/compare" className="app-ghost-btn" title="Open Compare as a standalone page">
-              /compare
-            </a>
           ) : (
             <button
               type="button"
               className="app-run-btn"
               disabled={runDisabled}
+              title={runBlockedReason ?? undefined}
               onClick={() =>
                 void (mode === 'text'
                   ? runTextEval()
@@ -945,15 +1117,16 @@ export function EvalApp() {
                   : 'Run image'}
             </button>
           )}
-        </div>
-      </header>
+        </>
+      }
+    >
 
       {loadError ? <div className="app-banner error">{loadError}</div> : null}
       {runError ? <div className="app-banner error">{runError}</div> : null}
+      {runBlockedReason && !showGuide ? (
+        <div className="app-banner warn">{runBlockedReason}</div>
+      ) : null}
 
-      {mode === 'compare' ? (
-        <ComparePanel />
-      ) : (
       <div
         className="app-body"
         style={
@@ -1008,7 +1181,15 @@ export function EvalApp() {
               </label>
 
               <p className="field-hint">
-                Dual-eval small + large → outcome labels for routing-SLM training. See docs/methodology.md.
+                Dual-eval small + large → outcome labels for routing-SLM training. See{' '}
+                <a
+                  href="https://github.com/savagemanage/redrob-eval/blob/main/docs/methodology.md"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  docs/methodology.md
+                </a>
+                .
               </p>
 
               <div className="router-pair">
@@ -1498,6 +1679,37 @@ export function EvalApp() {
                 : 'Preference'}
           </div>
 
+          {showGuide ? (
+            <GettingStartedPanel
+              mode={mode}
+              canRun={canRun}
+              openrouterReady={openrouterReady}
+              configuredCount={configuredCount}
+              providerTotal={status?.providers.length ?? 0}
+              hasSmall={Boolean(routerSmallId)}
+              hasLarge={Boolean(routerLargeId)}
+              smallDiffersLarge={Boolean(
+                routerSmallId && routerLargeId && routerSmallId !== routerLargeId,
+              )}
+              hasSeed={Boolean(routerSmallId)}
+              hasImageModels={selectedImageModels.length > 0}
+              runBlockedReason={runBlockedReason}
+              sampleLoading={sampleLoading}
+              onApplyStarter={applyStarterSettings}
+              onLoadSampleReport={() => void loadSampleReport()}
+              onSwitchMode={(m) => {
+                const href =
+                  m === 'compare'
+                    ? '/compare'
+                    : m === 'preference'
+                      ? '/preference'
+                      : `/${m}`;
+                router.push(href);
+              }}
+              onDismiss={dismissGuide}
+            />
+          ) : null}
+
           {runProgress.length > 0 ? (
             <div className="run-progress">
               <div className="pane-label">Progress</div>
@@ -1534,18 +1746,71 @@ export function EvalApp() {
             <ImagePreferencePanel runId={activeImageRunId} />
           ) : mode === 'evolve' ? (
             <div className="results-stack">
-              <p className="field-hint">
-                Quality (y) vs tokens (x). Feasible points meet the quality floor.
-              </p>
-              {frontierPoints.length > 0 ? (
-                <EvolutionParetoChart
-                  points={frontierPoints}
-                  highlightId={bestCandidate?.id}
-                />
+              {frontierPoints.length > 0 || evolveHistory.length > 0 ? (
+                <>
+                  <div className="evolve-view-switch" role="tablist" aria-label="Evolve chart">
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={evolveView === 'progress'}
+                      className={evolveView === 'progress' ? 'on' : undefined}
+                      onClick={() => setEvolveView('progress')}
+                    >
+                      Progress
+                      {evolveHistory.length > 0
+                        ? ` · ${evolveHistory.length}`
+                        : ''}
+                    </button>
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={evolveView === 'frontier'}
+                      className={evolveView === 'frontier' ? 'on' : undefined}
+                      onClick={() => setEvolveView('frontier')}
+                    >
+                      Frontier
+                      {frontierPoints.length > 0
+                        ? ` · ${frontierPoints.length}`
+                        : ''}
+                    </button>
+                  </div>
+                  {evolveView === 'progress' ? (
+                    evolveHistory.length > 0 ? (
+                      <EvolutionProgressChart
+                        steps={evolveHistory}
+                        qualityFloor={evolveReport?.qualityFloor ?? qualityFloor}
+                      />
+                    ) : (
+                      <p className="empty">
+                        Waiting for the first rollout… Progress plots quality over time as
+                        candidates evaluate.
+                      </p>
+                    )
+                  ) : frontierPoints.length > 0 ? (
+                    <EvolutionParetoChart
+                      points={frontierPoints}
+                      highlightId={bestCandidate?.id}
+                      baselineId={evolveReport?.baseline?.candidate?.id ?? null}
+                      qualityFloor={evolveReport?.qualityFloor ?? qualityFloor}
+                    />
+                  ) : (
+                    <p className="empty">
+                      Frontier updates after rollouts. Switch to Progress to watch the run.
+                    </p>
+                  )}
+                </>
               ) : (
-                <p className="empty">
-                  Set quality floor + seed model → Run GEPA. Frontier streams over SSE.
-                </p>
+                <>
+                  <p className="field-hint">
+                    Progress shows quality over rollout time. Frontier shows the final
+                    quality-vs-tokens tradeoff. Prefer higher quality and fewer tokens.
+                  </p>
+                  <p className="empty">
+                    {showGuide
+                      ? 'Apply starter settings above, then Run GEPA — or Preview sample report (offline).'
+                      : 'Open Guide for a sample workflow, or set quality floor + seed → Run GEPA.'}
+                  </p>
+                </>
               )}
               {evolveLesson ? (
                 <p className="field-hint">
@@ -1630,7 +1895,9 @@ export function EvalApp() {
             </div>
           ) : displayTargets.length === 0 && runProgress.length === 0 ? (
             <p className="empty">
-              Pick small/large → set samples → Collect routing data. Dual scores + oracle labels stream here.
+              {showGuide
+                ? 'Apply starter settings above, then Collect routing data.'
+                : 'Open Guide for a sample workflow, or pick small/large → Collect routing data.'}
             </p>
           ) : displayTargets.length === 0 ? null : (
             <div className="table-scroll">
@@ -1714,7 +1981,6 @@ export function EvalApp() {
           ) : null}
         </section>
       </div>
-      )}
-    </div>
+    </AppShell>
   );
 }

@@ -56,18 +56,19 @@ yarn export:samples
 yarn dev
 ```
 
-Open [http://localhost:3939](http://localhost:3939). Restart `yarn dev` after editing `.env`.
+Open [http://localhost:3939](http://localhost:3939). Modules are separate pages: `/evolve`, `/text`, `/image`, `/compare`, `/preference`. Restart `yarn dev` after editing `.env`.
 
 Nothing else is required for a clean checkout - evaluation runs offline against vendored datasets; only provider API calls leave the machine. CI runs every `yarn verify:*` plus `yarn export:samples` and `yarn build` on each push.
 
 ## What it does
 
-| Mode | Purpose |
-|------|---------|
-| **Evolve** | GEPA search over instruction / demos / model / `script_policy` / `frame_policy` under a quality floor; catalog datasets or custom goal+rubric (LLM judge or checklist QWK); export baseline-vs-evolved report |
-| **Text** | Dual-eval small+large collection for outcome-supervised routing labels; SSE jobs survive refresh |
-| **Image** | Side-by-side SFW preference (+ optional vision auto-judge) |
-| **Compare** | Multi-axis shortlist (quality / preference / relative cost / latency) under a token profile; Pareto + markdown export; offline `yarn verify:compare` |
+| Mode | Path | Purpose |
+|------|------|---------|
+| **Evolve** | `/evolve` | GEPA search over instruction / demos / model / `script_policy` / `frame_policy` under a quality floor; catalog datasets or custom goal+rubric (LLM judge or checklist QWK); export baseline-vs-evolved report |
+| **Text** | `/text` | Dual-eval small+large collection for outcome-supervised routing labels; SSE jobs survive refresh |
+| **Image** | `/image` | Side-by-side SFW preference (+ optional vision auto-judge) |
+| **Compare** | `/compare` | Multi-axis shortlist (quality / preference / relative cost / latency) under a token profile; Pareto + markdown export; offline `yarn verify:compare` |
+| **Preference** | `/preference` | Task-grounded generation for blind pairwise votes (Stage 1); truncation warnings before voting |
 
 Checklist / video skill scoring (custom goal `mode: "checklist"` or `datasets/video-local/` manifests) evolves a judging prompt + `frame_policy` for agreement with human graders (QWK), not task accuracy. Frames are sampled in memory only - no video bytes are persisted.
 

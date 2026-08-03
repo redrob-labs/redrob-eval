@@ -65,6 +65,8 @@ eval/routing-runs/*
 # optimize runs (GEPA)
 eval/optimize-runs/*
 !eval/optimize-runs/.gitkeep
+eval/preference-runs/*
+!eval/preference-runs/.gitkeep
 eval/routing-corpus/*
 !eval/routing-corpus/.gitkeep
 !eval/routing-corpus/README.md

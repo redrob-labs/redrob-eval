@@ -86,8 +86,11 @@ code {
   justify-self: center;
 }
 
-.app-titlebar-right {
-  justify-content: flex-end;
+.app-titlebar-run {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0;
 }
 
 .app-name {
@@ -2053,11 +2056,11 @@ body.is-pane-resizing * {
   }
 }
 
-/* Preference page */
+/* Preference page — page scroll; do not crush the form into empty flex space */
 .pref-page {
   flex: 1;
   min-height: 0;
-  overflow: hidden;
+  overflow: auto;
   padding: 1rem 1.1rem 1.5rem;
   display: flex;
   flex-direction: column;
@@ -2121,14 +2124,13 @@ body.is-pane-resizing * {
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
   gap: 1rem;
   align-items: stretch;
-  flex: 1 1 0;
-  min-height: 0;
-  overflow: hidden;
+  flex: none;
+  min-height: 22rem;
 }
 
 .pref-panel {
   min-width: 0;
-  min-height: 0;
+  min-height: 22rem;
   display: flex;
   flex-direction: column;
   gap: 0.65rem;
@@ -2136,7 +2138,7 @@ body.is-pane-resizing * {
   border: 1px solid rgba(15, 23, 42, 0.1);
   border-radius: 8px;
   background: rgba(248, 250, 252, 0.85);
-  overflow: hidden;
+  overflow: auto;
 }
 
 .pref-panel-task .field {
@@ -2144,43 +2146,38 @@ body.is-pane-resizing * {
 }
 
 .pref-panel-task .pref-examples-field {
-  flex: 1 1 0;
-  min-height: 0;
+  flex: 1 1 auto;
+  min-height: 10rem;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
 }
 
 .pref-panel-task .pref-examples-field textarea {
-  flex: 1 1 0;
-  min-height: 0;
+  flex: 1 1 auto;
+  min-height: 8rem;
   overflow: auto;
 }
 
 .pref-panel-models {
   background: #fff;
-  min-height: 0;
-  overflow: hidden;
 }
 
 .pref-panel-models .pref-models-block {
   margin-top: 0;
-  flex: 1 1 0;
-  min-height: 0;
+  flex: 1 1 auto;
+  min-height: 14rem;
   display: flex;
   flex-direction: column;
   gap: 0.55rem;
-  overflow: hidden;
 }
 
 .pref-panel-models .or-models-embed {
-  flex: 1 1 0;
-  min-height: 0;
+  flex: 1 1 auto;
+  min-height: 12rem;
   height: auto;
   display: flex;
   flex-direction: column;
   gap: 0.55rem;
-  overflow: hidden;
 }
 
 .pref-panel-models .or-models-tools,
@@ -2191,49 +2188,26 @@ body.is-pane-resizing * {
 }
 
 .pref-panel-models .or-model-list {
-  flex: 1 1 0;
-  min-height: 0;
-  max-height: none;
+  flex: 1 1 auto;
+  min-height: 10rem;
+  max-height: 22rem;
   height: auto;
   overflow: auto;
 }
 
 @media (max-width: 960px) {
-  .pref-page {
-    overflow: auto;
-  }
-
   .pref-panels {
     grid-template-columns: 1fr;
-    flex: none;
     min-height: 0;
-    overflow: visible;
   }
 
   .pref-panel {
-    overflow: visible;
-  }
-
-  .pref-panel-models .pref-models-block,
-  .pref-panel-models .or-models-embed {
-    flex: none;
-    overflow: visible;
+    min-height: 0;
   }
 
   .pref-panel-models .or-model-list {
-    flex: none;
-    min-height: 18rem;
-    max-height: 24rem;
-    height: auto;
-  }
-
-  .pref-card:has(.pref-panels) {
-    flex: none;
-    overflow: visible;
-  }
-
-  .pref-past {
-    max-height: none;
+    min-height: 14rem;
+    max-height: 20rem;
   }
 }
 
@@ -2254,16 +2228,61 @@ body.is-pane-resizing * {
 .pref-card:has(.pref-panels) {
   display: flex;
   flex-direction: column;
-  flex: 1 1 0;
+  flex: none;
   min-height: 0;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .pref-card.pref-past {
-  flex: 0 1 auto;
-  max-height: 28vh;
+  flex: none;
   min-height: 0;
   overflow: auto;
+}
+
+.cta-disabled-hint {
+  margin: 0.35rem 0 0;
+  font-size: 0.75rem;
+  color: var(--warn);
+  max-width: 28rem;
+}
+
+.module-guide {
+  margin: 0 0 0.75rem;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.module-guide-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.module-guide-head strong {
+  font-size: 0.85rem;
+}
+
+.module-guide ol {
+  margin: 0;
+  padding-left: 1.15rem;
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  color: #475569;
+  line-height: 1.4;
+}
+
+.module-guide li::marker {
+  font-weight: 600;
+  color: var(--teal);
+}
+
+.app-pane-config .getting-started {
+  margin-bottom: 0.75rem;
 }
 
 .pref-empty {

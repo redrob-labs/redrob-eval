@@ -37,6 +37,7 @@ function PreferencePageInner() {
   const [maxTokens, setMaxTokens] = useState<number | null>(null);
   const [starting, setStarting] = useState(false);
   const [formOpen, setFormOpen] = useState(true);
+  const [showGuide, setShowGuide] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const mergeKnown = useCallback((models: CatalogModel[]) => {
@@ -145,12 +146,24 @@ function PreferencePageInner() {
   }
 
   const canGenerate = selectedModels.length >= 2 && !starting;
+  const generateBlockedReason = starting
+    ? 'Starting run…'
+    : selectedModels.length < 2
+      ? 'Select at least two models from the catalog.'
+      : null;
 
   return (
     <AppShell
       module="preference"
       right={
         <>
+          <button
+            type="button"
+            className="app-ghost-btn"
+            onClick={() => setShowGuide((v) => !v)}
+          >
+            {showGuide ? 'Hide guide' : 'Guide'}
+          </button>
           <button
             type="button"
             className="app-ghost-btn"
@@ -177,11 +190,33 @@ function PreferencePageInner() {
               <span className="pref-preview-badge">Preview · Stage 1</span>
             </div>
             <p className="pref-page-lede">
-              Run each selected model on your Custom Goal inputs. Generate opens a detail page
-              with the live output matrix. Do not vote while truncation is warned.
+              Stage 1 generates one completion per model × input on your Custom Goal, then opens
+              a live output matrix. Inspect truncation before any future pairwise voting (Stage 2 —
+              not in this UI yet).
             </p>
           </div>
         </div>
+
+        {showGuide ? (
+          <div className="module-guide" role="region" aria-label="Preference guide">
+            <div className="module-guide-head">
+              <strong>Preference guide</strong>
+              <button
+                type="button"
+                className="app-ghost-btn"
+                onClick={() => setShowGuide(false)}
+              >
+                Dismiss
+              </button>
+            </div>
+            <ol>
+              <li>Write a goal and rubric, then confirm ≥3 JSONL examples with an &quot;input&quot; field.</li>
+              <li>Pick at least two models (chips above the catalog).</li>
+              <li>Generate outputs — results open on their own page with a live matrix.</li>
+              <li>If truncation is warned, raise max tokens or shorten the task before Stage 2 votes.</li>
+            </ol>
+          </div>
+        ) : null}
 
         {error ? <div className="app-banner error">{error}</div> : null}
 
@@ -336,19 +371,20 @@ function PreferencePageInner() {
             </div>
 
             <div className="pref-form-actions">
-              <button
-                type="button"
-                className="app-run-btn"
-                disabled={!canGenerate}
-                title={
-                  selectedModels.length < 2
-                    ? 'Select at least two models'
-                    : undefined
-                }
-                onClick={() => void startRun()}
-              >
-                {starting ? 'Starting…' : 'Generate outputs'}
-              </button>
+              <div>
+                <button
+                  type="button"
+                  className="app-run-btn"
+                  disabled={!canGenerate}
+                  title={generateBlockedReason ?? undefined}
+                  onClick={() => void startRun()}
+                >
+                  {starting ? 'Starting…' : 'Generate outputs'}
+                </button>
+                {generateBlockedReason && !starting ? (
+                  <p className="cta-disabled-hint">{generateBlockedReason}</p>
+                ) : null}
+              </div>
               <button
                 type="button"
                 className="app-ghost-btn"

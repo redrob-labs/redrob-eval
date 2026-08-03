@@ -1,7 +1,9 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { AppShell } from '@/components/AppShell';
+import { ModelPicker, type CatalogModel } from '@/components/ModelPicker';
 
 type RunRow = {
   id: string;
@@ -14,19 +16,36 @@ type RunRow = {
   truncationWarning?: boolean;
 };
 
-/**
- * Stage 1 preference generation — list runs + truncation warnings.
- * Voting UI arrives in Stage 2.
- */
-export default function PreferencePage() {
+const EXAMPLE_JSONL = `{"id":"ex1","input":"Summarize this product brief for a PM.\\n\\nBrief: Acme Ship is a B2B dashboard that consolidates carrier rates, ETA predictions, and exception alerts. Target buyers are logistics managers at mid-market retailers. Differentiation is proactive delay alerts (not static tracking pages). Launch goal: 50 paid pilots in Q3."}
+{"id":"ex2","input":"List three risks for shipping a mobile checkout redesign without a staging environment. Keep each risk to one sentence."}
+{"id":"ex3","input":"Rewrite this error for non-engineers: \\"ECONNRESET while flushing batch to payments-ledger (timeout=5s).\\""}`;
+
+function PreferencePageInner() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   const [runs, setRuns] = useState<RunRow[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [selected, setSelected] = useState<string | null>(null);
-  const [detail, setDetail] = useState<{
-    truncationWarning?: boolean;
-    truncationWarningMessage?: string;
-    summary?: unknown;
-  } | null>(null);
+  const [goal, setGoal] = useState('Write a clear, correct answer for the user task.');
+  const [rubric, setRubric] = useState(
+    'Prefer factual accuracy, then clarity, then brevity. Penalize hedging when the answer is knowable.',
+  );
+  const [examplesRaw, setExamplesRaw] = useState(EXAMPLE_JSONL);
+  const [examplesFileName, setExamplesFileName] = useState<string | null>(null);
+  const [selectedModels, setSelectedModels] = useState<string[]>([]);
+  const [knownModels, setKnownModels] = useState<Record<string, CatalogModel>>({});
+  const [maxTokens, setMaxTokens] = useState<number | null>(null);
+  const [starting, setStarting] = useState(false);
+  const [formOpen, setFormOpen] = useState(true);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const mergeKnown = useCallback((models: CatalogModel[]) => {
+    setKnownModels((prev) => {
+      const next = { ...prev };
+      for (const m of models) next[m.id] = m;
+      return next;
+    });
+  }, []);
 
   const refresh = useCallback(async () => {
     try {
@@ -40,103 +59,398 @@ export default function PreferencePage() {
     }
   }, []);
 
+  const openRun = useCallback(
+    (id: string) => {
+      router.push(`/preference/${encodeURIComponent(id)}`);
+    },
+    [router],
+  );
+
   useEffect(() => {
     void refresh();
   }, [refresh]);
 
-  async function openRun(id: string) {
-    setSelected(id);
-    const res = await fetch(`/api/preference/runs/${encodeURIComponent(id)}`);
-    const json = await res.json();
-    if (!res.ok) {
-      setError(json.error || `HTTP ${res.status}`);
+  useEffect(() => {
+    const legacy = searchParams.get('runId');
+    if (legacy) {
+      router.replace(`/preference/${encodeURIComponent(legacy)}`);
       return;
     }
-    setDetail(json);
+    const mt = searchParams.get('maxTokens');
+    if (mt != null && mt !== '') {
+      const n = Number(mt);
+      if (Number.isFinite(n) && n >= 1) setMaxTokens(n);
+    }
+  }, [searchParams, router]);
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        const res = await fetch('/api/models?source=curated&limit=50');
+        const json = (await res.json()) as { models?: CatalogModel[] };
+        const callables = (json.models ?? []).filter(
+          (m) => m.callable && m.evalEligible !== false,
+        );
+        mergeKnown(callables);
+        setSelectedModels((prev) =>
+          prev.length ? prev : callables.slice(0, 2).map((m) => m.id),
+        );
+      } catch {
+        // ModelPicker can still load OpenRouter catalog
+      }
+    })();
+  }, [mergeKnown]);
+
+  async function startRun() {
+    if (selectedModels.length < 2) {
+      setError('Pick at least two models to compare.');
+      return;
+    }
+    setStarting(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/preference/runs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          modelIds: selectedModels,
+          customGoal: { goal, rubric, examplesRaw },
+          generationParams: { maxTokens, temperature: 0, parallelSections: 1 },
+        }),
+      });
+      const json = (await res.json()) as { runId?: string; error?: string };
+      if (!res.ok) throw new Error(json.error || `HTTP ${res.status}`);
+      if (json.runId) {
+        await refresh();
+        openRun(json.runId);
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to start run');
+    } finally {
+      setStarting(false);
+    }
   }
+
+  function onExamplesFile(file: File | null) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const text = typeof reader.result === 'string' ? reader.result : '';
+      setExamplesRaw(text);
+      setExamplesFileName(file.name);
+      setError(null);
+    };
+    reader.onerror = () => setError(`Could not read ${file.name}`);
+    reader.readAsText(file);
+  }
+
+  const canGenerate = selectedModels.length >= 2 && !starting;
 
   return (
     <AppShell
       module="preference"
       right={
-        <button type="button" className="app-ghost-btn" onClick={() => void refresh()}>
-          Refresh
-        </button>
+        <>
+          <button
+            type="button"
+            className="app-ghost-btn"
+            onClick={() => {
+              setFormOpen(true);
+              window.requestAnimationFrame(() => {
+                document.getElementById('pref-start')?.scrollIntoView({ behavior: 'smooth' });
+              });
+            }}
+          >
+            New run
+          </button>
+          <button type="button" className="app-ghost-btn" onClick={() => void refresh()}>
+            Refresh
+          </button>
+        </>
       }
     >
-      <main className="compare-panel flex min-h-0 flex-1 flex-col gap-4 overflow-auto p-4">
-        <div>
-          <h1 className="font-[family-name:var(--font-display)] text-xl font-bold text-slate-900">
-            Preference
-          </h1>
-          <p className="mt-1 max-w-2xl text-sm text-slate-600">
-            Stage 1: task-grounded generation (Custom Goal × K models). Start runs via{' '}
-            <code className="text-xs">POST /api/preference/runs</code>. Do not collect votes while{' '}
-            <span className="text-amber-800">truncationWarning</span> is set — that measures the
-            token cap, not the model. See <code className="text-xs">docs/preference.md</code>.
-          </p>
+      <main className="pref-page">
+        <div className="pref-page-head">
+          <div>
+            <div className="pref-page-title-row">
+              <h1>Preference</h1>
+              <span className="pref-preview-badge">Preview · Stage 1</span>
+            </div>
+            <p className="pref-page-lede">
+              Run each selected model on your Custom Goal inputs. Generate opens a detail page
+              with the live output matrix. Do not vote while truncation is warned.
+            </p>
+          </div>
         </div>
+
         {error ? <div className="app-banner error">{error}</div> : null}
-        <div className="table-scroll">
-          <table className="data-table text-xs">
-            <thead>
-              <tr>
-                <th>Run</th>
-                <th>Status</th>
-                <th>Models</th>
-                <th>Inputs</th>
-                <th>Truncation</th>
-              </tr>
-            </thead>
-            <tbody>
-              {runs.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="text-slate-500">
-                    No preference runs yet.
-                  </td>
-                </tr>
-              ) : (
-                runs.map((r) => (
-                  <tr key={r.id}>
-                    <td>
-                      <button
-                        type="button"
-                        className="underline-offset-2 hover:underline"
-                        onClick={() => void openRun(r.id)}
-                      >
-                        {r.id}
-                      </button>
-                    </td>
-                    <td>{r.status}</td>
-                    <td>{r.modelCount}</td>
-                    <td>{r.inputCount}</td>
-                    <td>
-                      {r.truncationWarning ? (
-                        <span className="rounded bg-amber-100 px-1 text-amber-900">warn</span>
-                      ) : (
-                        '—'
-                      )}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-        {selected && detail ? (
-          <section className="rounded-lg border border-slate-200 bg-white/60 p-3 text-sm">
-            <div className="pane-label">{selected}</div>
-            {detail.truncationWarning ? (
-              <div className="app-banner warn mt-2">
-                {detail.truncationWarningMessage ||
-                  'Truncation detected — fix maxTokens before voting.'}
+
+        {formOpen ? (
+          <section className="pref-card" id="pref-start">
+            <div className="pane-label">New generation run</div>
+            <p className="field-hint pref-form-intro">
+              Fills <code>eval/preference-runs/</code> with one completion per model × input.
+              Results open on their own page.
+            </p>
+
+            <div className="pref-panels">
+              <div className="pref-panel pref-panel-task">
+                <div className="pane-label">Task</div>
+                <label className="field">
+                  <span>Goal</span>
+                  <textarea
+                    rows={3}
+                    value={goal}
+                    onChange={(e) => setGoal(e.target.value)}
+                  />
+                </label>
+                <label className="field">
+                  <span>Rubric</span>
+                  <textarea
+                    rows={3}
+                    value={rubric}
+                    onChange={(e) => setRubric(e.target.value)}
+                  />
+                </label>
+                <div className="field pref-examples-field">
+                  <span>Examples (JSON array or JSONL · ≥3 · each needs &quot;input&quot;)</span>
+                  <div className="pref-examples-toolbar">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".jsonl,.json,text/plain,application/json"
+                      className="sr-only"
+                      onChange={(e) => onExamplesFile(e.target.files?.[0] ?? null)}
+                    />
+                    <button
+                      type="button"
+                      className="app-ghost-btn"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      Upload JSON / JSONL
+                    </button>
+                    <button
+                      type="button"
+                      className="app-ghost-btn"
+                      onClick={() => {
+                        setExamplesRaw(EXAMPLE_JSONL);
+                        setExamplesFileName(null);
+                        if (fileInputRef.current) fileInputRef.current.value = '';
+                      }}
+                    >
+                      Use sample
+                    </button>
+                    {examplesFileName ? (
+                      <span className="field-hint">{examplesFileName}</span>
+                    ) : null}
+                  </div>
+                  <textarea
+                    rows={10}
+                    value={examplesRaw}
+                    onChange={(e) => {
+                      setExamplesRaw(e.target.value);
+                      setExamplesFileName(null);
+                    }}
+                    spellCheck={false}
+                  />
+                </div>
+                <div className="field">
+                  <span>Max output tokens</span>
+                  <label className="pref-unlimited-row">
+                    <input
+                      type="checkbox"
+                      checked={maxTokens === null}
+                      onChange={(e) =>
+                        setMaxTokens(e.target.checked ? null : 4096)
+                      }
+                    />
+                    <span>Unlimited (provider / model allowed max)</span>
+                  </label>
+                  {maxTokens !== null ? (
+                    <input
+                      type="number"
+                      min={256}
+                      step={256}
+                      value={maxTokens}
+                      onChange={(e) =>
+                        setMaxTokens(Math.max(1, Number(e.target.value) || 1))
+                      }
+                    />
+                  ) : (
+                    <p className="field-hint">
+                      No explicit cap is sent (Anthropic uses a high ceiling because the API
+                      requires a number).
+                    </p>
+                  )}
+                </div>
               </div>
-            ) : (
-              <p className="text-xs text-slate-500">No truncation warning on this summary.</p>
-            )}
+
+              <div className="pref-panel pref-panel-models">
+                <div className="pref-models-block">
+                  <div className="pref-models-heading">
+                    <div className="pane-label">Models</div>
+                    <span className="pref-models-count">
+                      {selectedModels.length} selected
+                      {selectedModels.length < 2 ? ' · pick ≥2' : ''}
+                    </span>
+                  </div>
+                  {selectedModels.length > 0 ? (
+                    <ul className="pref-selected-chips">
+                      {selectedModels.map((id) => {
+                        const m = knownModels[id];
+                        return (
+                          <li key={id}>
+                            <button
+                              type="button"
+                              className="pref-selected-chip"
+                              title={`Remove ${m?.label ?? id}`}
+                              onClick={() =>
+                                setSelectedModels((prev) =>
+                                  prev.filter((x) => x !== id),
+                                )
+                              }
+                            >
+                              <span>{m?.label ?? id}</span>
+                              <span aria-hidden>×</span>
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  ) : (
+                    <p className="field-hint">
+                      Select at least two models from the catalog.
+                    </p>
+                  )}
+                  <ModelPicker
+                    selectedIds={selectedModels}
+                    onChange={setSelectedModels}
+                    knownModels={knownModels}
+                    onKnown={mergeKnown}
+                    selectMode="text"
+                    hideHeader
+                    fillHeight
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="pref-form-actions">
+              <button
+                type="button"
+                className="app-run-btn"
+                disabled={!canGenerate}
+                title={
+                  selectedModels.length < 2
+                    ? 'Select at least two models'
+                    : undefined
+                }
+                onClick={() => void startRun()}
+              >
+                {starting ? 'Starting…' : 'Generate outputs'}
+              </button>
+              <button
+                type="button"
+                className="app-ghost-btn"
+                onClick={() => setFormOpen(false)}
+              >
+                Hide form
+              </button>
+            </div>
           </section>
         ) : null}
+
+        <section className="pref-card pref-past">
+          <div className="pane-label">Past runs</div>
+          {runs.length === 0 ? (
+            <div className="pref-empty">
+              <p>
+                {formOpen
+                  ? 'No runs yet. Complete the form above, then Generate outputs.'
+                  : 'No runs yet.'}
+              </p>
+              {!formOpen ? (
+                <button
+                  type="button"
+                  className="app-run-btn"
+                  onClick={() => {
+                    setFormOpen(true);
+                    window.requestAnimationFrame(() => {
+                      document
+                        .getElementById('pref-start')
+                        ?.scrollIntoView({ behavior: 'smooth' });
+                    });
+                  }}
+                >
+                  New run
+                </button>
+              ) : null}
+            </div>
+          ) : (
+            <div className="table-scroll">
+              <table className="data-table text-xs">
+                <thead>
+                  <tr>
+                    <th>Run</th>
+                    <th>Status</th>
+                    <th>Models</th>
+                    <th>Inputs</th>
+                    <th>Truncation</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {runs.map((r) => (
+                    <tr
+                      key={r.id}
+                      className="pref-run-row"
+                      onClick={() => openRun(r.id)}
+                    >
+                      <td>
+                        <button
+                          type="button"
+                          className="pref-run-link"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openRun(r.id);
+                          }}
+                        >
+                          {r.id}
+                        </button>
+                      </td>
+                      <td>{r.status}</td>
+                      <td>{r.modelCount}</td>
+                      <td>{r.inputCount}</td>
+                      <td>
+                        {r.truncationWarning ? (
+                          <span className="pref-trunc-warn">warn</span>
+                        ) : (
+                          '—'
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
       </main>
     </AppShell>
+  );
+}
+
+export default function PreferencePage() {
+  return (
+    <Suspense
+      fallback={
+        <AppShell module="preference">
+          <main className="pref-page">
+            <p className="field-hint">Loading Preference…</p>
+          </main>
+        </AppShell>
+      }
+    >
+      <PreferencePageInner />
+    </Suspense>
   );
 }

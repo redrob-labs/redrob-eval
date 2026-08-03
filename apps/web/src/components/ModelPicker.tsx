@@ -55,6 +55,8 @@ export function ModelPicker(props: {
   fillHeight?: boolean;
   /** Driven by header Text / Image — filters catalog; no separate modality tabs */
   selectMode?: 'text' | 'image';
+  /** Hide catalog title; put Sync beside search (Preference embed) */
+  hideHeader?: boolean;
 }) {
   const {
     selectedIds,
@@ -62,6 +64,7 @@ export function ModelPicker(props: {
     onKnown,
     fillHeight,
     selectMode = 'text',
+    hideHeader = false,
   } = props;
   const [q, setQ] = useState('');
   const [debouncedQ, setDebouncedQ] = useState('');
@@ -164,44 +167,61 @@ export function ModelPicker(props: {
     }
   }, [debouncedQ, modality, sort, selectMode, onKnown]);
 
-  return (
-    <div className={cn('or-models', fillHeight && 'fill')}>
-      <div className="or-models-head">
-        <div>
-          <h3 className="or-models-title">{catalogLabel}</h3>
-          <p className="or-models-sub">
-            OpenRouter
-            {!orReady ? ' · key missing' : ''}
-            {' · '}
-            {loading ? 'loading…' : `${total}`}
-          </p>
-        </div>
-        <button type="button" className="app-ghost-btn" onClick={() => void refreshCatalog()}>
-          Sync
-        </button>
+  const tools = (
+    <div className="or-models-tools">
+      <div className="or-search-wrap">
+        <input
+          type="search"
+          placeholder="Search models…"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          className="or-search"
+        />
       </div>
+      <select
+        value={sort}
+        onChange={(e) => setSort(e.target.value as typeof sort)}
+        className="or-sort"
+        aria-label="Sort"
+      >
+        <option value="newest">Newest</option>
+        <option value="name">Name</option>
+        <option value="weight">Rel. weight</option>
+      </select>
+      {hideHeader ? (
+        <>
+          <span className="or-models-embed-status">
+            {loading ? 'Loading…' : `${total}`}
+            {!orReady ? ' · no key' : ''}
+          </span>
+          <button type="button" className="app-ghost-btn" onClick={() => void refreshCatalog()}>
+            Sync
+          </button>
+        </>
+      ) : null}
+    </div>
+  );
 
-      <div className="or-models-tools">
-        <div className="or-search-wrap">
-          <input
-            type="search"
-            placeholder="Search models…"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            className="or-search"
-          />
+  return (
+    <div className={cn('or-models', fillHeight && 'fill', hideHeader && 'or-models-embed')}>
+      {!hideHeader ? (
+        <div className="or-models-head">
+          <div>
+            <h3 className="or-models-title">{catalogLabel}</h3>
+            <p className="or-models-sub">
+              OpenRouter
+              {!orReady ? ' · key missing' : ''}
+              {' · '}
+              {loading ? 'loading…' : `${total}`}
+            </p>
+          </div>
+          <button type="button" className="app-ghost-btn" onClick={() => void refreshCatalog()}>
+            Sync
+          </button>
         </div>
-        <select
-          value={sort}
-          onChange={(e) => setSort(e.target.value as typeof sort)}
-          className="or-sort"
-          aria-label="Sort"
-        >
-          <option value="newest">Newest</option>
-          <option value="name">Name</option>
-          <option value="weight">Rel. weight</option>
-        </select>
-      </div>
+      ) : null}
+
+      {tools}
 
       {error ? <p className="eval-error">{error}</p> : null}
 

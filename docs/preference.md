@@ -18,7 +18,9 @@ order of **thousands of pairwise votes** on that pair. Generation quality
 - Storage: `eval/preference-runs/<runId>/` (`meta.json`, `generations.jsonl`,
   `summary.json`, `progress.jsonl`, `run_manifest.json`).
 - **Identical generation params** for every model in a run (temperature, maxTokens,
-  seed, parallelSections). Different prompts → different run.
+  seed, parallelSections). Default `maxTokens` is **`null` (unlimited)** — providers
+  omit the cap or use a high model-allowed ceiling. Set an explicit number to force a
+  shared budget (needed to diagnose truncation). Different prompts → different run.
 - **`finishReason` is stored verbatim.** Length/token-cap stops contribute to
   per-model `truncationRate`. If any rate is non-zero (or section lengths cluster
   near `maxTokens`), the summary sets `truncationWarning` — do not vote on that
@@ -29,8 +31,10 @@ order of **thousands of pairwise votes** on that pair. Generation quality
 - **Fail soft:** one cell error does not abort the run; the completion matrix
   records `ok | error | truncated | pending`.
 
-### API
+### API / UI
 
+- Web UI: `/preference` — start generation; `/preference/<runId>` — results matrix
+  (live SSE + tables)
 - `POST /api/preference/runs` — `{ customGoal, modelIds, inputIds?, generationParams?, baselineModelId? }`
 - `GET /api/preference/runs` — list
 - `GET /api/preference/runs/:id` — meta + summary (truncation warning)

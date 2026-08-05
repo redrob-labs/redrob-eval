@@ -1,5 +1,7 @@
 # redrob-eval
 
+[English](README.md) · [한국어](README.ko.md)
+
 [![CI](https://github.com/savagemanage/redrob-eval/actions/workflows/ci.yml/badge.svg)](https://github.com/savagemanage/redrob-eval/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 
@@ -177,7 +179,7 @@ See [`train/README.md`](train/README.md).
 
 ## Author
 
-Janghoon Lee
+Janghoon Lee (이장훈)
 
 ## License
 

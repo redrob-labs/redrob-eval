@@ -179,8 +179,8 @@ See [`train/README.md`](train/README.md).
 
 ## Author
 
-Janghoon Lee (이장훈)
+Built by Janghoon Lee (이장훈)
 
 ## License
 
-Apache-2.0. See [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE).
+Apache-2.0. Copyright 2026 Redrob. See [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE).

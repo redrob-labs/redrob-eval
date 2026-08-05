@@ -2,7 +2,7 @@
 
 ## Reporting vulnerabilities
 
-Please report security issues privately to the repository author (Janghoon Lee / 이장훈) via the contact method listed on the GitHub profile or by opening a **private** security advisory if this repository is hosted on GitHub.
+Please report security issues privately to the repository maintainer (Janghoon Lee / 이장훈) via the contact method listed on the GitHub profile or by opening a **private** security advisory if this repository is hosted on GitHub.
 
 Do not file public issues that include secrets, API keys, or exploit details.
 

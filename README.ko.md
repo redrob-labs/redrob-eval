@@ -179,8 +179,8 @@ yarn train:event-detect
 
 ## 작성자
 
-이장훈 (Janghoon Lee)
+Built by Janghoon Lee (이장훈)
 
 ## 라이선스
 
-Apache-2.0. [`LICENSE`](LICENSE)와 [`NOTICE`](NOTICE)를 보세요.
+Apache-2.0. Copyright 2026 Redrob. [`LICENSE`](LICENSE)와 [`NOTICE`](NOTICE)를 보세요.

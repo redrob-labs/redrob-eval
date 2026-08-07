@@ -10,6 +10,7 @@ const PROVIDER_IDS = new Set<ProviderId>([
   'google',
   'together',
   'fireworks',
+  'vllm',
 ]);
 
 type ProbeBody = {

@@ -1,9 +1,13 @@
 import { NextResponse } from 'next/server';
 import { EVAL_MODELS } from '@redrob/harness';
 import {
+  canonicalIdForRef,
   getOpenRouterCatalog,
+  normalizeModelId,
   OR_MODALITIES,
+  sourceForProvider,
   toPublicModel,
+  type ModelSource,
   type OrModality,
 } from '@redrob/harness';
 import { listProviders } from '@redrob/harness';
@@ -11,6 +15,7 @@ import { listProviders } from '@redrob/harness';
 export const runtime = 'nodejs';
 
 type Public = {
+  /** Canonical `<providerId>/<modelId>` — the same model has one id everywhere. */
   id: string;
   label: string;
   providerId: string;
@@ -24,8 +29,16 @@ type Public = {
   evalEligible: boolean;
   imageGenEligible?: boolean;
   description: string | null;
-  source: 'curated' | 'openrouter';
+  /** Grouping for the picker: where you get this model from. */
+  source: ModelSource;
   callable: boolean;
+  selfHosted?: {
+    axis: 'S' | 'L';
+    precision: string;
+    license: string;
+    hfRepoId: string;
+    maxModelLen: number;
+  } | null;
 };
 
 /**
@@ -33,11 +46,14 @@ type Public = {
  * Data source: OpenRouter https://openrouter.ai/api/v1/models?output_modalities=…
  * plus curated entries from packages/harness/src/config/models.ts
  *
- * ?source=curated|openrouter|all
+ * ?source=curated|openrouter|selfhosted|frontier|all
  * ?modality=all|text|image|embeddings|audio|video|speech|transcription|rerank
  * ?q=search&sort=newest|name|weight
  * ?evalOnly=1 — only chat-eval-eligible models
  * ?limit=&offset=&refresh=1&tier=small|large
+ *
+ * Ids are canonical (`<providerId>/<modelId>`) so Compare can mix a frontier
+ * API model, an OpenRouter model and a self-hosted vLLM endpoint in one list.
  */
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -59,21 +75,30 @@ export async function GET(request: Request) {
   const curated: Public[] = EVAL_MODELS.map((m) => {
     const provider = providers.find((p) => p.id === m.providerId);
     return {
-      id: m.id,
+      id: canonicalIdForRef(m),
       label: m.label,
       providerId: m.providerId,
       modelId: m.modelId,
       relativeCostWeight: m.relativeCostWeight,
       tier: m.tier ?? null,
-      contextLength: null,
+      contextLength: m.selfHosted?.maxModelLen ?? null,
       created: null,
       author: m.providerId,
       modalities: ['text'],
       evalEligible: true,
       imageGenEligible: false,
       description: null,
-      source: 'curated' as const,
+      source: sourceForProvider(m.providerId),
       callable: Boolean(provider?.configured),
+      selfHosted: m.selfHosted
+        ? {
+            axis: m.selfHosted.axis,
+            precision: m.selfHosted.precision,
+            license: m.selfHosted.license,
+            hfRepoId: m.selfHosted.hfRepoId,
+            maxModelLen: m.selfHosted.maxModelLen,
+          }
+        : null,
     };
   });
 
@@ -85,7 +110,8 @@ export async function GET(request: Request) {
     OR_MODALITIES.map((m) => [m, 0]),
   );
 
-  if (source === 'openrouter' || source === 'all') {
+  const wantsOpenRouter = source === 'openrouter' || source === 'all';
+  if (wantsOpenRouter) {
     try {
       const catalog = await getOpenRouterCatalog({ forceRefresh: refresh });
       fetchedAt = catalog.fetchedAt;
@@ -95,6 +121,7 @@ export async function GET(request: Request) {
         const pub = toPublicModel(e);
         return {
           ...pub,
+          id: normalizeModelId(pub.id),
           callable:
             openrouterConfigured && (pub.evalEligible || pub.imageGenEligible),
           source: 'openrouter' as const,
@@ -108,20 +135,24 @@ export async function GET(request: Request) {
     }
   }
 
-  let models: Public[] =
-    source === 'curated'
-      ? curated
-      : source === 'openrouter'
-        ? openrouter
-        : [
-            ...curated,
-            ...openrouter.filter(
-              (o) =>
-                !curated.some(
-                  (c) => c.modelId === o.modelId && c.providerId === 'openrouter',
-                ),
-            ),
-          ];
+  // Canonical ids make dedupe exact — the curated row wins because it carries
+  // the nicer label plus self-hosted metadata.
+  const curatedIds = new Set(curated.map((c) => c.id));
+  const merged: Public[] = [
+    ...curated,
+    ...openrouter.filter((o) => !curatedIds.has(o.id)),
+  ];
+
+  let models: Public[];
+  if (source === 'curated') {
+    models = curated;
+  } else if (source === 'openrouter') {
+    models = openrouter;
+  } else if (source === 'selfhosted' || source === 'frontier') {
+    models = curated.filter((c) => c.source === source);
+  } else {
+    models = merged;
+  }
 
   if (modality !== 'all' && OR_MODALITIES.includes(modality as OrModality)) {
     models = models.filter((m) => m.modalities.includes(modality));
@@ -170,6 +201,11 @@ export async function GET(request: Request) {
     modalityCounts: {
       all: openrouter.length || modalityCounts.text,
       ...modalityCounts,
+    },
+    sourceCounts: {
+      selfhosted: merged.filter((m) => m.source === 'selfhosted').length,
+      frontier: merged.filter((m) => m.source === 'frontier').length,
+      openrouter: merged.filter((m) => m.source === 'openrouter').length,
     },
     models: page,
   });

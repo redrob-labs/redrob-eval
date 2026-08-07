@@ -99,7 +99,17 @@ export type {
 } from './lib/providers/types';
 
 // Catalog
-export { resolveEvalModel, resolveEvalModels } from './lib/catalog/resolve';
+export { resolveEvalModel, resolveEvalModels, resolveModel } from './lib/catalog/resolve';
+export type { ResolvedModel } from './lib/catalog/resolve';
+export {
+  canonicalModelId,
+  canonicalIdForRef,
+  normalizeModelId,
+  parseCanonicalModelId,
+  sameModel,
+  sourceForProvider,
+} from './lib/catalog/model-id';
+export type { ModelSource } from './lib/catalog/model-id';
 export {
   getOpenRouterCatalog,
   findOpenRouterEntry,

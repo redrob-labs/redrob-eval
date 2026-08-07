@@ -1,10 +1,12 @@
 import { getDatasetById, type MetricId } from '../../config/datasets';
 import type { ModelRef } from '../../config/models';
+import { resolveModelCostWeight } from '../../config/models';
 import { resolveEvalModel } from '../catalog/resolve';
 import { loadDataset } from '../datasets/index';
 import type { EvalRunResult, EvalStreamEvent } from '../eval/types';
 import { enrichSummaries } from '../eval/aggregate';
 import { buildEvalPrompt, maxTokensForTask } from '../eval/prompts';
+import { ensureResultCaveats, withMandatoryCaveat } from '../eval/results';
 import { scorePair } from '../metrics/index';
 import { callModel, ProviderError } from '../providers/index';
 import { routeSample } from '../router/index';
@@ -49,7 +51,9 @@ async function callAndScore(params: {
   gold: string;
   metric: MetricId;
   maxTokens: number;
+  largeBaseline: ModelRef;
 }): Promise<ModelCallRecord> {
+  const { weight } = resolveModelCostWeight(params.model, params.largeBaseline);
   try {
     const result = await callModel(params.model.providerId, params.model.modelId, params.prompt, {
       maxTokens: params.maxTokens,
@@ -59,11 +63,14 @@ async function callAndScore(params: {
     return {
       modelId: params.model.id,
       modelLabel: params.model.label,
-      relativeCostWeight: params.model.relativeCostWeight,
+      relativeCostWeight: weight,
       prediction: result.text,
       score: scored.score,
       feedback: scored.feedback,
       latencyMs: result.latencyMs,
+      timeToFirstTokenMs: result.timeToFirstTokenMs,
+      inputTokens: result.inputTokens,
+      outputTokens: result.outputTokens,
     };
   } catch (error) {
     const message =
@@ -75,7 +82,7 @@ async function callAndScore(params: {
     return {
       modelId: params.model.id,
       modelLabel: params.model.label,
-      relativeCostWeight: params.model.relativeCostWeight,
+      relativeCostWeight: weight,
       prediction: '',
       score: 0,
       latencyMs: 0,
@@ -216,7 +223,7 @@ export async function* runRoutingCollection(
 
   const examples: RoutingExample[] = [];
   const promptMax = maxTokensForTask(datasetRef.task);
-  const largeBaselineWeight = large.relativeCostWeight;
+  const largeBaselineWeight = resolveModelCostWeight(large, large).weight;
   let done = 0;
 
   try {
@@ -231,6 +238,7 @@ export async function* runRoutingCollection(
         gold: sample.gold,
         metric: datasetRef.metric,
         maxTokens: promptMax,
+        largeBaseline: large,
       });
       done += 1;
       yield {
@@ -252,6 +260,7 @@ export async function* runRoutingCollection(
         gold: sample.gold,
         metric: datasetRef.metric,
         maxTokens: promptMax,
+        largeBaseline: large,
       });
       done += 1;
       yield {
@@ -342,15 +351,76 @@ export async function* runRoutingCollection(
       largeBaselineWeight,
     });
 
-    yield { type: 'target_done', target: smallSum };
-    yield { type: 'target_done', target: largeSum };
-    yield { type: 'target_done', target: heuristicSum };
-    yield { type: 'target_done', target: oracleSum };
-    yield { type: 'target_done', target: cascadeSum };
+    const meanTtft = (tier: 'small' | 'large') => {
+      const vals = examples
+        .map((e) => (tier === 'small' ? e.small : e.large).timeToFirstTokenMs)
+        .filter((n): n is number => n != null && Number.isFinite(n));
+      if (!vals.length) return null;
+      return vals.reduce((a, b) => a + b, 0) / vals.length;
+    };
+    const meanTokPerSec = (tier: 'small' | 'large') => {
+      const rates: number[] = [];
+      for (const e of examples) {
+        const c = tier === 'small' ? e.small : e.large;
+        if (c.error || !c.outputTokens || c.latencyMs <= 0) continue;
+        rates.push((c.outputTokens / c.latencyMs) * 1000);
+      }
+      if (!rates.length) return null;
+      return rates.reduce((a, b) => a + b, 0) / rates.length;
+    };
 
-    const targets = enrichSummaries(
-      [smallSum, largeSum, heuristicSum, oracleSum, cascadeSum],
-      { largeBaselineId: large.id, smallModelId: small.id },
+    const smallReported = withMandatoryCaveat(smallSum, {
+      model: small,
+      sampleCount: samples.length,
+      meanTtftMs: meanTtft('small'),
+      tokensPerSec: small.selfHosted?.measuredTokPerSec ?? meanTokPerSec('small'),
+      costSource: resolveModelCostWeight(small, large).costSource,
+    });
+    const largeReported = withMandatoryCaveat(largeSum, {
+      model: large,
+      sampleCount: samples.length,
+      meanTtftMs: meanTtft('large'),
+      tokensPerSec: large.selfHosted?.measuredTokPerSec ?? meanTokPerSec('large'),
+      costSource: resolveModelCostWeight(large, large).costSource,
+    });
+    const routerCaveat = (label: string) =>
+      withMandatoryCaveat(
+        label === 'heuristic'
+          ? heuristicSum
+          : label === 'oracle'
+            ? oracleSum
+            : cascadeSum,
+        {
+          sampleCount: samples.length,
+          extraCaveat: `router=${label}; small=${small.id}; large=${large.id}`,
+        },
+      );
+
+    yield { type: 'target_done', target: smallReported };
+    yield { type: 'target_done', target: largeReported };
+    yield { type: 'target_done', target: routerCaveat('heuristic') };
+    yield { type: 'target_done', target: routerCaveat('oracle') };
+    yield { type: 'target_done', target: routerCaveat('cascade') };
+
+    const targets = ensureResultCaveats(
+      enrichSummaries(
+        [
+          smallReported,
+          largeReported,
+          routerCaveat('heuristic'),
+          routerCaveat('oracle'),
+          routerCaveat('cascade'),
+        ],
+        { largeBaselineId: large.id, smallModelId: small.id },
+      ),
+      {
+        modelsById: new Map([
+          [small.id, small],
+          [large.id, large],
+        ]),
+        sampleCount: samples.length,
+        datasetId: datasetRef.id,
+      },
     );
 
     meta.status = 'ready';

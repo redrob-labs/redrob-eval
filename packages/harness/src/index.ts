@@ -165,7 +165,14 @@ export { runRoutingCollection, type RoutingCollectRequest } from './lib/routing-
 export { extractRoutingFeatures } from './lib/routing-data/features';
 export { labelRoute, defaultSmallOkThreshold } from './lib/routing-data/labels';
 export {
+  labelsFromPreference,
+  preferenceRunMeta,
+  type PreferenceLabelInput,
+  type PreferenceLabelResult,
+} from './lib/routing-data/labels-from-preference';
+export {
   listRoutingRunIds,
+  appendRoutingExamples,
   readRoutingMeta,
   readRoutingExamples,
   readRoutingSummary,

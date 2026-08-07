@@ -85,6 +85,19 @@ export async function appendRoutingExample(
   await fs.appendFile(corpusExamplesPath(), `${JSON.stringify(example)}\n`, 'utf8');
 }
 
+export async function appendRoutingExamples(
+  runId: string,
+  examples: RoutingExample[],
+): Promise<void> {
+  if (!examples.length) return;
+  const body = `${examples.map((e) => JSON.stringify(e)).join('\n')}\n`;
+  const dir = routingRunDir(runId);
+  await fs.mkdir(dir, { recursive: true });
+  await fs.appendFile(path.join(dir, 'examples.jsonl'), body, 'utf8');
+  await fs.mkdir(corpusDir(), { recursive: true });
+  await fs.appendFile(corpusExamplesPath(), body, 'utf8');
+}
+
 export async function readRoutingExamples(runId: string): Promise<RoutingExample[]> {
   try {
     const raw = await fs.readFile(path.join(routingRunDir(runId), 'examples.jsonl'), 'utf8');

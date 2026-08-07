@@ -15,6 +15,10 @@ export interface ModelCallRecord {
   /** Why the score is what it is (metric feedback text) */
   feedback?: string;
   latencyMs: number;
+  /** Self-hosted: time to first token when streaming */
+  timeToFirstTokenMs?: number;
+  inputTokens?: number;
+  outputTokens?: number;
   error?: string;
 }
 

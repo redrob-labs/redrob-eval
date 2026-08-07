@@ -21,7 +21,6 @@ jobs:
       - run: yarn verify:phase3
       - run: yarn verify:custom-goal
       - run: yarn verify:video
-      - run: yarn verify:compare
       - run: yarn verify:tournament
       - run: yarn verify:selfhosted
       - run: yarn verify:preference-gen

@@ -311,61 +311,8 @@ export {
 export type { SplitName, SplitBundle } from './lib/splits/types';
 export { assertSplitIsolation, splitExamples } from './lib/splits';
 
-// Multi-axis model comparison
-export type {
-  AxisId,
-  AxisScore,
-  CompareRequest,
-  CompareResult,
-  ModelAxisScores,
-  ModelEntry,
-  PublicModelEntry,
-  QualitySource,
-  RankedModel,
-  TokenProfile,
-  WeightPresetId,
-  Weights,
-} from './lib/compare';
-export {
-  DEFAULT_GOOD_ENOUGH_SECONDS,
-  DEFAULT_WEIGHTS,
-  ILLUSTRATIVE_TOKEN_PROFILE,
-  WEIGHT_PRESETS,
-  assertTokenProfile,
-  deriveTokenProfileFromRunTelemetry,
-  attemptCostRaw,
-  acceptedCostRaw,
-  relativeCostPct,
-  wallClockSeconds,
-  normalizeQuality,
-  normalizePreferenceElo,
-  normalizeCostLog,
-  normalizeSpeed,
-  COMPARE_AXES,
-  compositeScore,
-  presentAxesFromScores,
-  renormalizeWeights,
-  dominates,
-  nonDominatedSet,
-  pearsonR,
-  rankSwing,
-  breakEvenForRank,
-  compareModels,
-  rerankWithWeights,
-  compareResultToMarkdown,
-  assertNoCurrency,
-  assertNoCurrencyInValue,
-  containsCurrency,
-  loadCompareRegistry,
-  getCompareModel,
-  toPublicRegistryEntry,
-  listPublicCompareRegistry,
-  compareRegistryPath,
-  qualitiesFromEvalRun,
-  qualitiesFromOptimizeReport,
-  tokenProfileFromEvalBatch,
-  deriveTokenProfileFromTexts,
-} from './lib/compare';
+// Reporting guards — absolute currency must never reach UI or exports
+export { containsCurrency } from './lib/reporting/no-currency';
 
 // Blind World Cup preference tournament
 export {

@@ -79,18 +79,22 @@ function paretoSvg(points: { id: string; x: number; y: number; fill: string }[])
 async function main(): Promise<void> {
   await mkdir(outDir, { recursive: true });
 
-  const baseline = seedCandidate({
-    instruction: 'Translate carefully.',
-    demos: [
-      { input: 'एक', output: 'one' },
-      { input: 'दो', output: 'two' },
-      { input: 'तीन', output: 'three' },
-    ],
-    model: { modelId: 'test/model', providerId: 'openrouter', relativeCostWeight: 40 },
-    scriptPolicies: defaultScriptBundle('romanize'),
-    maxPromptTokens: 80,
-    demosRequested: 3,
-  });
+  const baseline = {
+    ...seedCandidate({
+      instruction: 'Translate carefully.',
+      demos: [
+        { input: 'एक', output: 'one' },
+        { input: 'दो', output: 'two' },
+        { input: 'तीन', output: 'three' },
+      ],
+      model: { modelId: 'test/model', providerId: 'openrouter', relativeCostWeight: 40 },
+      scriptPolicies: defaultScriptBundle('romanize'),
+      maxPromptTokens: 80,
+      demosRequested: 3,
+    }),
+    // seedCandidate mints a time+random id; pin it so the committed sample is byte-stable
+    id: 'baseline_1',
+  };
   const evolved = {
     ...baseline,
     id: 'evolved_1',

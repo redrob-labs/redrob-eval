@@ -7,7 +7,7 @@
   "optimizer": "gepa",
   "baseline": {
     "candidate": {
-      "id": "seed_ms8don5d_u4zqex",
+      "id": "baseline_1",
       "instruction": "Translate carefully.",
       "demos": [
         {
@@ -129,7 +129,7 @@
   },
   "frontier": [
     {
-      "candidateId": "seed_ms8don5d_u4zqex",
+      "candidateId": "baseline_1",
       "quality": 0.6,
       "meanRelativeCost": 40,
       "totalTokens": 200,

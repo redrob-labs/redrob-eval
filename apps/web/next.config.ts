@@ -33,6 +33,8 @@ const nextConfig: NextConfig = {
   transpilePackages: ['@redrob/harness', '@redrob/tokenizers'],
   // Monorepo: eval artifacts and datasets live at repo root
   outputFileTracingRoot: path.join(__dirname, '../..'),
+  // ssh2 has optional native deps — keep it external to the server bundle
+  serverExternalPackages: ['ssh2'],
 };
 
 export default nextConfig;

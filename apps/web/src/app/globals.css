@@ -50,6 +50,12 @@ code {
   overflow: hidden;
 }
 
+.app:has(.app-body),
+.app:has(.deploy-shell-layout) {
+  height: 100vh;
+  overflow: hidden;
+}
+
 .app-titlebar {
   flex: none;
   height: 44px;
@@ -2749,6 +2755,318 @@ body.is-pane-resizing * {
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border: 0;
+}
+
+/* ---- Deploy (self-hosted) ---- */
+.deploy-shell-layout {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: minmax(320px, 400px) minmax(0, 1fr);
+  gap: 0;
+  padding: 0;
+}
+.deploy-toolbar {
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 18px 20px;
+  background: var(--panel);
+  border-right: 1px solid var(--line);
+}
+/* The column already spaces children with gap — drop the stacked margins. */
+.deploy-toolbar > *,
+.deploy-toolbar-top > * {
+  margin-bottom: 0;
+}
+.deploy-shell-layout .app-ghost-btn {
+  border-radius: 0;
+}
+.deploy-toolbar-top {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: stretch;
+}
+.deploy-notice {
+  margin: 0;
+  font-size: 12px;
+  color: var(--brand-ink);
+  background: var(--brand-tint);
+  border-radius: 0;
+  padding: 6px 10px;
+}
+.deploy-h1 {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0 0 6px;
+}
+.deploy-lede {
+  color: var(--muted);
+  font-size: 13px;
+  margin: 0 0 14px;
+}
+.deploy-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+.deploy-section h2 {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.deploy-callout {
+  margin: 0;
+  padding: 8px 10px;
+  font-size: 12px;
+  line-height: 1.45;
+  border: 1px solid color-mix(in srgb, var(--warn) 45%, var(--line));
+  background: color-mix(in srgb, var(--warn) 7%, transparent);
+}
+.deploy-callout.is-error {
+  border-color: color-mix(in srgb, var(--danger) 45%, var(--line));
+  background: color-mix(in srgb, var(--danger) 7%, transparent);
+}
+.deploy-callout a {
+  color: var(--brand-deep);
+  font-weight: 600;
+}
+.deploy-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.deploy-step {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+.deploy-step:last-child {
+  border-bottom: 0;
+}
+.deploy-step-num {
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  border: 1px solid var(--line);
+}
+.deploy-step.is-done .deploy-step-num {
+  color: var(--ok);
+  border-color: color-mix(in srgb, var(--ok) 45%, var(--line));
+  background: color-mix(in srgb, var(--ok) 10%, transparent);
+}
+.deploy-step.is-running .deploy-step-num {
+  color: var(--brand);
+  border-color: color-mix(in srgb, var(--brand) 55%, var(--line));
+  background: color-mix(in srgb, var(--brand) 12%, transparent);
+  animation: deploy-step-pulse 1.4s ease-in-out infinite;
+}
+@keyframes deploy-step-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+.deploy-step-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.deploy-step-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+.deploy-step-desc {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+.deploy-step-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.deploy-op-btn.is-primary {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #fff;
+}
+.deploy-facts {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+.deploy-facts > div {
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr);
+  gap: 8px;
+}
+.deploy-facts dt {
+  color: var(--muted);
+}
+.deploy-facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.deploy-models {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.deploy-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.deploy-field select {
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: 0;
+  font-size: 13px;
+  background: #fff;
+}
+.deploy-hf-link {
+  font-size: 11px;
+  color: var(--brand-deep);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+.deploy-hf-link:hover {
+  text-decoration: underline;
+}
+.deploy-add-hf-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.deploy-hf-input {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 0;
+  font-size: 13px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  background: #fff;
+}
+.deploy-hf-input:focus {
+  outline: none;
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 18%, transparent);
+}
+.deploy-ops {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.deploy-op-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 0;
+  border: 1px solid var(--brand);
+  color: var(--brand-deep);
+  background: color-mix(in srgb, var(--brand) 8%, #fff);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.deploy-op-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.deploy-empty {
+  color: var(--muted);
+  font-size: 13px;
+}
+.deploy-error {
+  color: var(--danger);
+  font-size: 12px;
+}
+.deploy-terminal {
+  background: var(--panel);
+  border: 0;
+  border-radius: 0;
+  padding: 12px 14px 14px;
+}
+.deploy-terminal-main {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.deploy-terminal-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.deploy-terminal-title {
+  font-size: 13px;
+  font-weight: 600;
+}
+.deploy-terminal-hint {
+  flex: 1;
+  font-size: 11px;
+  color: var(--muted);
+}
+.deploy-terminal-surface {
+  height: 320px;
+  background: #0b0f14;
+  border-radius: 0;
+  overflow: hidden;
+  position: relative;
+}
+.deploy-terminal-main .deploy-terminal-surface {
+  flex: 1 1 auto;
+  height: auto;
+  min-height: 0;
+}
+.deploy-terminal-surface[data-empty='true'] {
+  display: flex;
+}
+.deploy-terminal-surface .xterm,
+.deploy-terminal-surface .xterm-screen {
+  height: 100%;
+}
+/* xterm owns its scrollback viewport — let it show a scrollbar */
+.deploy-terminal-surface .xterm-viewport {
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #3a4658 transparent;
+}
+.deploy-terminal-surface .xterm-viewport::-webkit-scrollbar {
+  width: 10px;
+}
+.deploy-terminal-surface .xterm-viewport::-webkit-scrollbar-thumb {
+  background: #3a4658;
+  border-radius: 0;
 }
 
 /* ---- Settings ---- */

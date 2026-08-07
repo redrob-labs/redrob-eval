@@ -1,7 +1,6 @@
 import { promises as fs } from 'node:fs';
 import { ProviderError } from '@redrob/harness';
 import { resolveRunFile } from './fs';
-import type { ImagePreferenceRating } from './types';
 
 function openRouterHeaders(): Record<string, string> {
   const apiKey = process.env.OPENROUTER_API_KEY?.trim();
@@ -51,7 +50,7 @@ function extractJson(text: string): unknown {
   }
 }
 
-export type AutoJudgeCandidate = {
+type AutoJudgeCandidate = {
   modelId: string;
   relativePath: string;
 };
@@ -200,25 +199,5 @@ export async function judgePreference(params: {
     winner,
     rationale: parsed.rationale ?? '',
     scores,
-  };
-}
-
-export function applyAutoJudgeToRating(
-  row: ImagePreferenceRating,
-  auto: AutoJudgeResult,
-): ImagePreferenceRating {
-  const humanSet = Boolean(row.winner);
-  return {
-    ...row,
-    winner: humanSet ? row.winner : auto.winner,
-    notes: humanSet
-      ? row.notes
-      : auto.rationale || row.notes,
-    source: humanSet ? (row.source === 'auto' ? 'mixed' : row.source ?? 'human') : 'auto',
-    auto: {
-      winner: auto.winner,
-      rationale: auto.rationale,
-      scores: auto.scores,
-    },
   };
 }

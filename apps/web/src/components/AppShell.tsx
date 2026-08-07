@@ -2,20 +2,19 @@
 
 import Link from 'next/link';
 import { MODULES, type ModuleId } from '@/lib/modules';
+import { RedrobLogo } from '@/components/RedrobLogo';
 
 export function ModuleNav({ current }: { current: ModuleId }) {
   return (
     <nav className="mode-switch" aria-label="Modules">
-      {MODULES.filter((m) => m.nav).map((m) => (
+      {MODULES.map((m) => (
         <Link
           key={m.id}
           href={m.href}
           className={current === m.id ? 'on' : undefined}
           aria-current={current === m.id ? 'page' : undefined}
-          title={m.badge ? `${m.label} (${m.badge})` : m.label}
         >
           {m.label}
-          {m.badge ? <span className="mode-switch-badge">{m.badge}</span> : null}
         </Link>
       ))}
     </nav>
@@ -46,14 +45,25 @@ export function AppShell({ module, port = 3939, center, right, children }: Shell
             className="app-name"
             title={`Home · localhost:${port}`}
           >
-            redrob-eval
+            <RedrobLogo size={16} className="app-logo" />
+            <span>redrob-eval</span>
           </Link>
+          <span className="app-sep" aria-hidden />
           <ModuleNav current={module} />
         </div>
         <div className="app-titlebar-center" aria-live="polite">
           {center}
         </div>
-        <div className="app-titlebar-right">{right}</div>
+        <div className="app-titlebar-right">
+          {right}
+          <Link
+            href="/settings"
+            className={`app-settings-link${module === 'settings' ? ' on' : ''}`}
+            aria-current={module === 'settings' ? 'page' : undefined}
+          >
+            Settings
+          </Link>
+        </div>
       </header>
       {children}
     </div>

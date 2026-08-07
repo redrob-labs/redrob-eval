@@ -1,7 +1,7 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { getRepoRoot } from '@redrob/harness';
-import type { ImageArtifact, ImagePreferenceRating, ImageRunMeta } from './types';
+import type { ImageArtifact, ImageRunMeta } from './types';
 
 export const EVAL_ROOT = path.join(getRepoRoot(), 'eval');
 export const SUITES_DIR = path.join(EVAL_ROOT, 'suites');
@@ -67,30 +67,6 @@ export async function readRunMeta(runId: string): Promise<ImageRunMeta> {
   return JSON.parse(raw) as ImageRunMeta;
 }
 
-export async function writeRatings(
-  runId: string,
-  ratings: ImagePreferenceRating[],
-): Promise<void> {
-  const dir = runDir(runId);
-  await fs.mkdir(dir, { recursive: true });
-  const body = ratings.map((row) => JSON.stringify(row)).join('\n');
-  await fs.writeFile(path.join(dir, 'ratings.jsonl'), body ? `${body}\n` : '', 'utf8');
-}
-
-export async function readRatings(runId: string): Promise<ImagePreferenceRating[]> {
-  try {
-    const raw = await fs.readFile(path.join(runDir(runId), 'ratings.jsonl'), 'utf8');
-    return raw
-      .split('\n')
-      .map((line) => line.trim())
-      .filter(Boolean)
-      .map((line) => JSON.parse(line) as ImagePreferenceRating);
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException)?.code === 'ENOENT') return [];
-    throw error;
-  }
-}
-
 export async function writeArtifacts(
   runId: string,
   artifacts: ImageArtifact[],
@@ -150,41 +126,4 @@ export function resolveRunFile(runId: string, relativePath: string): string {
     throw new Error('Invalid file path');
   }
   return abs;
-}
-
-export async function listRunIds(): Promise<string[]> {
-  await ensureRunsDir();
-  const entries = await fs.readdir(RUNS_DIR, { withFileTypes: true });
-  return entries
-    .filter((e) => e.isDirectory() && RUN_ID_RE.test(e.name))
-    .map((e) => e.name)
-    .sort()
-    .reverse();
-}
-
-export async function listRunImagePaths(runId: string): Promise<
-  { modelDir: string; relativePath: string; filename: string }[]
-> {
-  const root = runDir(runId);
-  const out: { modelDir: string; relativePath: string; filename: string }[] = [];
-  let entries;
-  try {
-    entries = await fs.readdir(root, { withFileTypes: true });
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException)?.code === 'ENOENT') return [];
-    throw error;
-  }
-  for (const entry of entries) {
-    if (!entry.isDirectory()) continue;
-    const files = await fs.readdir(path.join(root, entry.name));
-    for (const filename of files) {
-      if (!/\.(png|jpe?g|webp)$/i.test(filename)) continue;
-      out.push({
-        modelDir: entry.name,
-        filename,
-        relativePath: `${entry.name}/${filename}`,
-      });
-    }
-  }
-  return out;
 }

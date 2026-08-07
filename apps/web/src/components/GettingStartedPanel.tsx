@@ -1,7 +1,5 @@
 'use client';
 
-import type { AppMode } from '@/lib/modules';
-
 type Step = {
   n: number;
   title: string;
@@ -10,16 +8,10 @@ type Step = {
 };
 
 type Props = {
-  mode: AppMode;
   canRun: boolean;
-  openrouterReady: boolean;
   configuredCount: number;
   providerTotal: number;
-  hasSmall: boolean;
-  hasLarge: boolean;
-  smallDiffersLarge: boolean;
   hasSeed: boolean;
-  hasImageModels: boolean;
   runBlockedReason: string | null;
   onApplyStarter: () => void;
   onLoadSampleReport: () => void;
@@ -27,122 +19,41 @@ type Props = {
   sampleLoading?: boolean;
 };
 
-function stepsForMode(params: {
-  mode: AppMode;
-  canRun: boolean;
-  openrouterReady: boolean;
-  hasSmall: boolean;
-  hasLarge: boolean;
-  smallDiffersLarge: boolean;
-  hasSeed: boolean;
-  hasImageModels: boolean;
-}): Step[] {
-  const {
-    mode,
-    canRun,
-    openrouterReady,
-    hasSmall,
-    hasLarge,
-    smallDiffersLarge,
-    hasSeed,
-    hasImageModels,
-  } = params;
-
-  if (mode === 'evolve') {
-    return [
-      {
-        n: 1,
-        title: 'Provider key',
-        detail: 'Set OPENROUTER_API_KEY in repo-root .env, restart yarn dev, then Refresh.',
-        done: canRun,
-      },
-      {
-        n: 2,
-        title: 'Starter settings',
-        detail: 'Apply cheap defaults: 5 samples, 6 rollouts, catalog dataset.',
-        done: hasSeed,
-      },
-      {
-        n: 3,
-        title: 'Seed model',
-        detail: 'Confirm Seed in Config (auto-picked from callable models).',
-        done: hasSeed,
-      },
-      {
-        n: 4,
-        title: 'Run GEPA',
-        detail: 'Click Run GEPA in the title bar. Frontier streams into Results.',
-      },
-    ];
-  }
-
-  if (mode === 'image') {
-    return [
-      {
-        n: 1,
-        title: 'OpenRouter key',
-        detail: 'Image mode needs OPENROUTER_API_KEY specifically.',
-        done: openrouterReady,
-      },
-      {
-        n: 2,
-        title: 'Pick generators',
-        detail: 'Select ≥1 image model in the catalog pane.',
-        done: hasImageModels,
-      },
-      {
-        n: 3,
-        title: 'Starter settings',
-        detail: 'Apply defaults: 2 prompts, SFW suite, seed 42.',
-        done: hasImageModels,
-      },
-      {
-        n: 4,
-        title: 'Run image',
-        detail: 'Generate side-by-side, then pick a human preference winner.',
-      },
-    ];
-  }
-
+function evolveSteps(params: { canRun: boolean; hasSeed: boolean }): Step[] {
+  const { canRun, hasSeed } = params;
   return [
     {
       n: 1,
       title: 'Provider key',
-      detail: 'Set a provider key in repo-root .env, restart yarn dev, then Refresh.',
+      detail: 'Set OPENROUTER_API_KEY in repo-root .env, restart yarn dev, then Refresh.',
       done: canRun,
     },
     {
       n: 2,
       title: 'Starter settings',
-      detail: 'Apply cheap defaults: GSM8K, 5 samples, Small ≠ Large.',
-      done: hasSmall && hasLarge,
+      detail: 'Apply cheap defaults: 5 samples, 6 rollouts, catalog dataset.',
+      done: hasSeed,
     },
     {
       n: 3,
-      title: 'Small + Large',
-      detail: 'Dual-eval both models; oracle labels go to the routing corpus.',
-      done: hasSmall && hasLarge && smallDiffersLarge,
+      title: 'Seed model',
+      detail: 'Confirm Seed in Config (auto-picked from callable models).',
+      done: hasSeed,
     },
     {
       n: 4,
-      title: 'Collect routing data',
-      detail: 'Click Collect in the title bar. Scores and Pareto appear in Results.',
+      title: 'Run GEPA',
+      detail: 'Click Run GEPA in the title bar. Frontier streams into Results.',
     },
   ];
 }
 
 export function GettingStartedPanel(props: Props) {
   const {
-    mode,
     canRun,
-    openrouterReady,
     configuredCount,
     providerTotal,
-    hasSmall,
-    hasLarge,
-    smallDiffersLarge,
     hasSeed,
-    hasImageModels,
     runBlockedReason,
     onApplyStarter,
     onLoadSampleReport,
@@ -150,25 +61,13 @@ export function GettingStartedPanel(props: Props) {
     sampleLoading,
   } = props;
 
-  const steps = stepsForMode({
-    mode,
-    canRun,
-    openrouterReady,
-    hasSmall,
-    hasLarge,
-    smallDiffersLarge,
-    hasSeed,
-    hasImageModels,
-  });
-
-  const modeLabel =
-    mode === 'evolve' ? 'Evolve' : mode === 'image' ? 'Image' : 'Route';
+  const steps = evolveSteps({ canRun, hasSeed });
 
   return (
     <div className="getting-started" role="region" aria-label="Getting started">
       <div className="getting-started-head">
         <div>
-          <strong>{modeLabel} guide</strong>
+          <strong>Evolve guide</strong>
           <span className="getting-started-sub">
             {configuredCount}/{providerTotal} keys · steps for this module
           </span>
@@ -178,7 +77,7 @@ export function GettingStartedPanel(props: Props) {
         </button>
       </div>
 
-      {!canRun && mode !== 'image' ? (
+      {!canRun ? (
         <p className="getting-started-alert">
           Add a provider key to repo-root <code>.env</code> (recommended:{' '}
           <code>OPENROUTER_API_KEY</code>), restart <code>yarn dev</code>, then Refresh.
@@ -203,22 +102,20 @@ export function GettingStartedPanel(props: Props) {
         <button type="button" className="getting-started-primary" onClick={onApplyStarter}>
           Apply starter settings
         </button>
-        {mode === 'evolve' ? (
-          <button
-            type="button"
-            className="getting-started-secondary"
-            disabled={sampleLoading}
-            onClick={onLoadSampleReport}
-          >
-            {sampleLoading ? 'Loading…' : 'Preview sample report'}
-          </button>
-        ) : null}
+        <button
+          type="button"
+          className="getting-started-secondary"
+          disabled={sampleLoading}
+          onClick={onLoadSampleReport}
+        >
+          {sampleLoading ? 'Loading…' : 'Preview sample report'}
+        </button>
       </div>
 
       <p className="getting-started-foot">
         Offline sample needs no keys. Live runs call your provider. Methodology:{' '}
         <a
-          href="https://github.com/savagemanage/redrob-eval/blob/main/docs/methodology.md"
+          href="https://github.com/redrob-labs/redrob-eval/blob/main/docs/methodology.md"
           target="_blank"
           rel="noreferrer"
         >

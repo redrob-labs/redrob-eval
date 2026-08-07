@@ -1,11 +1,19 @@
 # Routing methodology
 
-This document describes the **text routing collection** path: outcome-supervised
-labels for training a small router that chooses `small` vs `large` before answering.
+This document describes the **routing label** path: outcome-supervised labels for
+training a small router that chooses `small` vs `large` before answering.
 
-The product as a whole is an **evolution harness** (see the README Evolve tab /
-GEPA). Routing data collection is one mode that feeds optional research training
-under `train/`.
+There are two ways to produce those labels, and they land in the same
+`RoutingExample` shape:
+
+- **Metric-derived** (below) - call small and large, score both against gold,
+  label `small` when it clears a threshold. Needs a task with reference answers.
+- **Preference-derived** - run a blind bracket in Compare and label `small` when
+  the fast model beat or tied the fallback. Needs no gold at all. See
+  [`docs/preference.md`](preference.md).
+
+Because both write the same rows, the corpus, replay, export and training paths
+below apply unchanged to either source.
 
 Designed for open-source publication: absolute currency is never required; we
 use unitless relative cost weights.
@@ -101,8 +109,7 @@ See `datasets/video-local/README.md`.
 
 ## Related
 
-- [`docs/compare.md`](compare.md) - multi-axis model comparison (relative cost, fan-out latency)
-- [`docs/preference.md`](preference.md) - task-grounded preference generation (Stage 1)
+- [`docs/preference.md`](preference.md) - blind brackets, and preference-derived labels
 - [`docs/learnings.md`](learnings.md) - living design log
 - [`train/README.md`](../train/README.md) - optional MLP / SLM / event-detect training
 - [`NOTICE`](../NOTICE) - attributions

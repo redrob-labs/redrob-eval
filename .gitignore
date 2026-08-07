@@ -43,6 +43,11 @@ yarn-error.log*
 .env.*
 !.env.example
 
+# deploy secrets + measured GPU util (never commit)
+deploy/.env
+deploy/measured.env
+deploy/measured.json
+
 # caches (OpenRouter catalog, HF tokenizers, etc.)
 .cache/
 apps/web/.cache/
@@ -55,8 +60,9 @@ datasets/video-local/*
 !datasets/video-local/README.md
 !datasets/video-local/example-checklist.schema.json
 
-# image preference run artifacts (generated images + ratings)
+# Compare run artifacts (generated images) + preference tournaments
 eval/runs/
+eval/tournaments/
 
 # routing-SLM collection (generated — keep .gitkeep)
 eval/routing-runs/*

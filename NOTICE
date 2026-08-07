@@ -56,10 +56,3 @@ Third-party datasets (vendored subsets)
 IndicGLUE IITP-MR rows are NOT committed to this repository (CC-BY-NC / external
 terms). Contributors who accept those terms may regenerate them locally via
 `yarn datasets:fetch --id=indic-glue-iitp-mr-hi` into datasets/local/.
-
----------------------------------------------------------------------------
-Compare model registry (illustrative)
-
-Capability snapshots under packages/harness/src/lib/compare/registry/ are
-illustrative only (relative-cost math). Provenance: registry/SOURCES.md.
-Raw rates are never rendered or exported.

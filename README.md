@@ -2,12 +2,12 @@
 
 [English](README.md) · [한국어](README.ko.md)
 
-[![CI](https://github.com/savagemanage/redrob-eval/actions/workflows/ci.yml/badge.svg)](https://github.com/savagemanage/redrob-eval/actions/workflows/ci.yml)
+[![CI](https://github.com/redrob-labs/redrob-eval/actions/workflows/ci.yml/badge.svg)](https://github.com/redrob-labs/redrob-eval/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 
-Open-source **LLM evaluation workbench** (Next.js App Router, Apache 2.0): evolve configurations under a quality floor, collect routing and preference evidence on *your* task, and shortlist models across quality, preference, relative cost, and latency.
+Open-source **LLM evaluation workbench** (Next.js App Router, Apache 2.0): compare any model from any source on your own task, settle quality by blind human preference, evolve configurations under a quality floor, and serve self-hosted models on your GPU.
 
-Model selection is one gene in the GEPA search space — but the product is the full loop: **Evolve · Text · Image · Compare · Preference**. Costs are always **% of a baseline**, never absolute currency. Provider keys stay server-side.
+The product is three modules plus settings: **Compare · Evolve · Deploy**. Compare is the front door - frontier APIs, OpenRouter, and your own vLLM endpoints all sit in the same list, on text or image, with audio slotting in as one more modality. Costs, where they appear at all, are **% of a baseline**, never absolute currency. Provider keys stay server-side.
 
 ## Findings
 
@@ -45,7 +45,7 @@ Port is fixed at **`3939`**.
 ## Quick start
 
 ```bash
-git clone https://github.com/savagemanage/redrob-eval.git
+git clone https://github.com/redrob-labs/redrob-eval.git
 cd redrob-eval
 cp .env.example .env
 # Edit .env and set OPENROUTER_API_KEY=...
@@ -53,26 +53,33 @@ yarn install
 yarn verify:phase1
 yarn verify:gepa
 yarn verify:phase3
-yarn verify:compare
 yarn export:samples
 yarn dev
 ```
 
-Open [http://localhost:3939](http://localhost:3939). Modules are separate pages: `/compare`, `/evolve`, `/preference`, `/route` (`/text` redirects), `/image`. Restart `yarn dev` after editing `.env`.
+Open [http://localhost:3939](http://localhost:3939), which lands on Compare. The other pages are `/evolve`, `/deploy` and `/settings`. Restart `yarn dev` after editing `.env`.
 
 Nothing else is required for a clean checkout - evaluation runs offline against vendored datasets; only provider API calls leave the machine. CI runs every `yarn verify:*` plus `yarn export:samples` and `yarn build` on each push.
 
 ## What it does
 
-| Mode | Path | Purpose |
+| Module | Path | Purpose |
 |------|------|---------|
-| **Compare** | `/compare` | Multi-axis shortlist (quality / preference / relative cost / latency) under a token profile; Pareto + markdown export; offline `yarn verify:compare` |
+| **Compare** | `/` or `/compare` | Run any model from any source live on a catalog dataset or your own prompts, on text or image; rank by measured quality, latency, TTFT and throughput; settle unscored tasks with a blind preference tournament; turn those votes into a routing policy |
 | **Evolve** | `/evolve` | GEPA search over instruction / demos / model / `script_policy` / `frame_policy` under a quality floor; catalog datasets or custom goal+rubric (LLM judge or checklist QWK); export baseline-vs-evolved report |
-| **Preference** | `/preference` | Task-grounded generation for blind pairwise votes (Stage 1 preview); truncation warnings before voting |
-| **Route** | `/route` | Dual-eval small+large collection for outcome-supervised routing labels; SSE jobs survive refresh (`/text` redirects here) |
-| **Image** | `/image` | Side-by-side SFW image prefs (+ optional vision auto-judge) |
+| **Deploy** | `/deploy` | Serve self-hosted S+L on your GPU host over SSH - measure, start, health, benchmark, resumable terminal |
+| **Settings** | `/settings` | Provider keys and GPU host config, written to the gitignored root `.env` |
 
-Typical loop: **Compare** to shortlist → **Evolve** under a quality floor → **Preference** / **Route** / **Image** when you need task-grounded evidence instead of public Elo alone.
+Typical loop: **Compare** to pick a model → **Evolve** under a quality floor → **Deploy** what you chose, then compare the served endpoint against the frontier again.
+
+### Compare's four stages
+
+1. **Setup** - pick a modality, pick models across every source (curated, OpenRouter, direct frontier, self-hosted vLLM), then a catalog dataset, an image prompt suite, or your own prompts pasted or uploaded as JSONL.
+2. **Run** - streams live over SSE. Quality is scored only when the task has reference answers; latency, TTFT and throughput are always measured on this run. No cost column, because published pricing is never real time.
+3. **Preference** - one single-elimination bracket per prompt. Two answers at a time with model names hidden, winner advances, champion takes the prompt. Non-power-of-two fields pad with byes; a model that errored on a prompt loses by walkover. For image, "let the judge decide" hands a match to a vision model and you can still vote the rest. Votes append to `eval/tournaments/{runId}/votes.jsonl`.
+4. **Optimize route** - name a fast model and a fallback. Every prompt the fast one won or tied becomes a `small` label, the rest escalate. These land in the same `RoutingExample` corpus the metric-derived collector fills, so `/api/routing/export` and the training path are unchanged - the supervision is just human now instead of metric.
+
+Offline check for the bracket and label logic: `yarn verify:tournament`.
 
 Checklist / video skill scoring (custom goal `mode: "checklist"` or `datasets/video-local/` manifests) evolves a judging prompt + `frame_policy` for agreement with human graders (QWK), not task accuracy. Frames are sampled in memory only - no video bytes are persisted.
 
@@ -108,8 +115,7 @@ On **Evolve**, pick a catalog dataset or **Custom goal** (goal + rubric + input-
 - [Contributing](CONTRIBUTING.md)
 - [Security](SECURITY.md)
 - [Methodology](docs/methodology.md) - routing labels, features, export
-- [Compare](docs/compare.md) - multi-axis model ranking (relative cost only)
-- [Preference](docs/preference.md) - task-grounded generation for blind preference (Stage 1)
+- [Preference](docs/preference.md) - blind brackets, and how votes become routing labels
 - [Learnings](docs/learnings.md) - living design log
 - [Sample exports](exports/samples/README.md) - regenerable report + Pareto
 
@@ -123,7 +129,21 @@ On **Evolve**, pick a catalog dataset or **Custom goal** (goal + rubric + input-
 | `GOOGLE_API_KEY` | Google Gemini |
 | `TOGETHER_API_KEY` | Together |
 | `FIREWORKS_API_KEY` | Fireworks |
-| `HF_TOKEN` | Hugging Face (optional; dataset fetcher only) |
+| `HF_TOKEN` | Hugging Face (dataset fetcher; required for GPU deploy downloads) |
+| `VLLM_API_KEY` | Self-hosted vLLM bearer (auto-issued by `/deploy` if unset) |
+| `VLLM_S_BASE_URL` / `VLLM_L_BASE_URL` | OpenAI-compatible endpoints for axis S / L (defaults: loopback ports via tunnel) |
+
+Set every key at `/settings` in the app, or via the environment. GPU deploy details (`GPU_HOST`, `GPU_USER`, `GPU_SSH_KEY`, …) never leave the gitignored root `.env` — see [`deploy/README.md`](deploy/README.md). Do not put hostnames, usernames, key paths, or API keys in the repo.
+
+### Self-hosted relative cost
+
+Self-hosted models have no API $/token. Relative cost uses measured throughput:
+
+`relativeCostWeight(m) = 100 * (tok_per_sec_L / tok_per_sec_m)`
+
+Large-alone = 100 (GPU-time per token). Run **Benchmark** on `/deploy` after both models are serving; it records `MEASURED_TOK_PER_SEC_*` on the GPU host and the app picks them up. FP8 vs bf16 must appear in result caveats — never mix precisions in one table without that note.
+
+Indic L-candidate A/B (Gemma 4 31B vs Qwen3.6 27B): compare on **IN22-Gen** and **IndicGLUE** slices (`in22-gen-hi-en`, `indic-glue-iitp-mr-hi`).
 
 Keep `.env` at the **repo root**. Next loads it via `apps/web/next.config.ts`.
 
@@ -136,13 +156,28 @@ Keep `.env` at the **repo root**. Next loads it via `apps/web/next.config.ts`.
 - `GET /api/optimize/runs/:id` - meta + result + report
 - `GET /api/optimize/runs/:id?export=md|json` - downloadable report
 
+**Compare**
+
+- `POST /api/compare/run` - SSE; dispatches on `modality` (`text` | `image`)
+- `POST /api/compare/tournament` - build one bracket per prompt from a run's answers
+- `GET /api/compare/tournament/:id` - meta + brackets + votes + standings
+- `POST /api/compare/tournament/:id/vote` - record a blind vote and advance
+- `POST /api/compare/tournament/:id/judge` - let the modality's model judge decide one match
+- `POST /api/compare/tournament/:id/route-policy` - preference labels, save rate, optional corpus write
+
 **Routing collection**
 
 - `POST /api/routing/collect` → `{ runId }`
 - `GET /api/routing/runs/:id/events` - SSE
 - `GET /api/routing/export?format=chat|flat` - training JSONL
 
-Also: `/api/models`, `/api/datasets`, `/api/image/*`, `/api/status`, …
+**Headless**
+
+- `POST /api/eval` - SSE text eval with the optional router baseline (`includeRouter`)
+- `POST /api/preference/runs` - K×M preference generation, no UI needed
+- `GET|POST /api/score` - metric fixtures and one-off scoring
+
+Also: `/api/models`, `/api/datasets`, `/api/image/suites`, `/api/status`, `/api/probe`, …
 
 ## CLI
 
@@ -152,8 +187,12 @@ yarn verify:gepa     # GEPA unit checks (offline)
 yarn verify:phase3   # script_policy, demo fit, report (offline)
 yarn verify:custom-goal  # custom goal parse + judge JSON (offline)
 yarn verify:video    # frame_policy, QWK, rubric lint (offline)
+yarn verify:tournament   # preference brackets + preference-derived routing labels (offline)
+yarn verify:selfhosted   # self-hosted catalog + relative cost, no currency (offline)
+yarn verify:preference-gen  # preference run planning + matrix (offline)
 yarn export:samples  # write exports/samples report + Pareto SVG
 yarn typecheck
+yarn lint
 yarn build
 yarn probe
 yarn datasets:fetch  # regenerate vendored JSON (not needed at runtime)

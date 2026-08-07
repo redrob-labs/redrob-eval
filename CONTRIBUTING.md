@@ -8,7 +8,6 @@ Thanks for improving redrob-eval.
 cp .env.example .env   # add provider keys you need
 yarn install
 yarn verify:phase1 && yarn verify:gepa && yarn verify:phase3
-yarn verify:compare
 yarn verify:preference-gen
 yarn typecheck
 ```

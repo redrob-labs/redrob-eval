@@ -360,6 +360,35 @@ export {
   deriveTokenProfileFromTexts,
 } from './lib/compare';
 
+// Blind World Cup preference tournament
+export {
+  advance,
+  aggregateTournament,
+  appendVote,
+  assertSafeTournamentRunId,
+  championOf,
+  createBracket,
+  listTournaments,
+  makeTournamentRunId,
+  nextPendingMatch,
+  readTournament,
+  resolvedMatches,
+  totalMatches,
+  writeTournament,
+  writeTournamentMeta,
+} from './lib/tournament';
+export type {
+  Bracket,
+  Competitor,
+  Match,
+  ModelStanding,
+  TournamentAggregate,
+  TournamentMeta,
+  TournamentRun,
+  Vote,
+  VoteWinner,
+} from './lib/tournament';
+
 // Preference generation (Stage 1 — task-grounded outputs for later blind voting)
 export type {
   CellStatus,

@@ -1,0 +1,108 @@
+import { promises as fs } from 'node:fs';
+import path from 'node:path';
+import { evalRoot } from '../paths';
+import type { Bracket, TournamentMeta, TournamentRun, Vote } from './types';
+
+/**
+ * Tournaments live under `eval/tournaments/{runId}/`, matching the layout the
+ * other run types use: a `meta.json` snapshot plus append-only `votes.jsonl`
+ * so a vote is never lost to a crash mid-session.
+ */
+
+function tournamentsDir(): string {
+  return path.join(evalRoot(), 'tournaments');
+}
+
+const RUN_ID_RE = /^[0-9]{4}-[0-9]{2}-[0-9]{2}_[0-9]{6}_[a-z0-9-]+$/i;
+
+export function assertSafeTournamentRunId(runId: string): string {
+  if (!runId || !RUN_ID_RE.test(runId)) throw new Error('Invalid tournament run id');
+  return runId;
+}
+
+export function makeTournamentRunId(sourceRunId: string): string {
+  const now = new Date();
+  const p = (n: number, w = 2) => String(n).padStart(w, '0');
+  const stamp = `${now.getFullYear()}-${p(now.getMonth() + 1)}-${p(now.getDate())}_${p(
+    now.getHours(),
+  )}${p(now.getMinutes())}${p(now.getSeconds())}`;
+  const slug = sourceRunId.toLowerCase().replace(/[^a-z0-9-]+/g, '-').slice(0, 24) || 'run';
+  return `${stamp}_${slug}`;
+}
+
+function runDir(runId: string): string {
+  return path.join(tournamentsDir(), assertSafeTournamentRunId(runId));
+}
+
+export async function writeTournament(run: TournamentRun): Promise<void> {
+  const dir = runDir(run.meta.runId);
+  await fs.mkdir(dir, { recursive: true });
+  await fs.writeFile(
+    path.join(dir, 'meta.json'),
+    `${JSON.stringify({ meta: run.meta, brackets: run.brackets }, null, 2)}\n`,
+    'utf8',
+  );
+  await fs.writeFile(
+    path.join(dir, 'votes.jsonl'),
+    run.votes.map((v) => JSON.stringify(v)).join('\n') + (run.votes.length ? '\n' : ''),
+    'utf8',
+  );
+}
+
+/** Rewrite meta + brackets only; votes stay append-only. */
+export async function writeTournamentMeta(
+  meta: TournamentMeta,
+  brackets: Bracket[],
+): Promise<void> {
+  const dir = runDir(meta.runId);
+  await fs.mkdir(dir, { recursive: true });
+  await fs.writeFile(
+    path.join(dir, 'meta.json'),
+    `${JSON.stringify({ meta, brackets }, null, 2)}\n`,
+    'utf8',
+  );
+}
+
+export async function appendVote(runId: string, vote: Vote): Promise<void> {
+  const dir = runDir(runId);
+  await fs.mkdir(dir, { recursive: true });
+  await fs.appendFile(path.join(dir, 'votes.jsonl'), `${JSON.stringify(vote)}\n`, 'utf8');
+}
+
+export async function readTournament(runId: string): Promise<TournamentRun> {
+  const dir = runDir(runId);
+  const metaRaw = await fs.readFile(path.join(dir, 'meta.json'), 'utf8');
+  const parsed = JSON.parse(metaRaw) as { meta: TournamentMeta; brackets: Bracket[] };
+
+  let votes: Vote[] = [];
+  try {
+    const votesRaw = await fs.readFile(path.join(dir, 'votes.jsonl'), 'utf8');
+    votes = votesRaw
+      .split('\n')
+      .filter((l) => l.trim())
+      .map((l) => JSON.parse(l) as Vote);
+  } catch {
+    // no votes yet
+  }
+
+  return { meta: parsed.meta, brackets: parsed.brackets, votes };
+}
+
+export async function listTournaments(): Promise<TournamentMeta[]> {
+  let entries: string[];
+  try {
+    entries = await fs.readdir(tournamentsDir());
+  } catch {
+    return [];
+  }
+  const out: TournamentMeta[] = [];
+  for (const id of entries) {
+    try {
+      const raw = await fs.readFile(path.join(tournamentsDir(), id, 'meta.json'), 'utf8');
+      out.push((JSON.parse(raw) as { meta: TournamentMeta }).meta);
+    } catch {
+      // skip unreadable runs
+    }
+  }
+  return out.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+}

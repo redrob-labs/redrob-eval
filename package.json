@@ -24,6 +24,7 @@
     "verify:custom-goal": "tsx scripts/verify-custom-goal.mts",
     "verify:video": "tsx scripts/verify-video.mts",
     "verify:compare": "tsx scripts/verify-compare.mts",
+    "verify:tournament": "tsx scripts/verify-tournament.mts",
     "verify:selfhosted": "tsx scripts/verify-selfhosted.mts",
     "verify:preference-gen": "tsx scripts/verify-preference-gen.mts",
     "export:samples": "tsx scripts/export-samples.mts",

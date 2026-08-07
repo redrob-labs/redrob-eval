@@ -16,9 +16,27 @@ export {
   EVAL_MODELS,
   PROVIDER_LABELS,
   getModelById,
+  listSelfHostedModels,
+  resolveModelCostWeight,
+  modelResultCaveat,
+  SELF_HOSTED_CANDIDATES,
+  SELF_HOSTED_DEFAULTS,
+  SELF_HOSTED_EXCLUSIONS,
+  VLLM_ENV,
+  buildSelfHostedCaveat,
+  relativeCostFromThroughput,
+  resolveSelfHostedCostWeight,
   type ModelRef,
   type ProviderId,
+  type SelfHostedAxis,
+  type SelfHostedLicense,
+  type SelfHostedMeta,
+  type SelfHostedPrecision,
 } from './config/models';
+export {
+  applyMeasuredThroughput,
+  resetMeasuredThroughputApplied,
+} from './config/apply-measured';
 
 // Datasets
 export {

@@ -1,9 +1,14 @@
+import { applyMeasuredThroughput } from '../../config/apply-measured';
 import type { ProviderId } from '../../config/models';
 import { anthropicAdapter } from './anthropic';
 import { googleAdapter } from './google';
 import { createOpenAICompatAdapter } from './openai-compat';
+import { vllmAdapter } from './vllm';
 import type { CallModelParams, CallModelResult, ProviderAdapter } from './types';
 import { ProviderError } from './types';
+
+/** Patch EVAL_MODELS from MEASURED_* env on first provider load. */
+applyMeasuredThroughput();
 
 const adapters: Record<ProviderId, ProviderAdapter> = {
   openrouter: createOpenAICompatAdapter('openrouter'),
@@ -12,6 +17,7 @@ const adapters: Record<ProviderId, ProviderAdapter> = {
   fireworks: createOpenAICompatAdapter('fireworks'),
   anthropic: anthropicAdapter,
   google: googleAdapter,
+  vllm: vllmAdapter,
 };
 
 export function listProviders(): {

@@ -121,12 +121,12 @@ export function EvolutionParetoChart({
         cost: p.meanRelativeCost,
         fill:
           role === 'best'
-            ? '#0f766e'
+            ? '#2b52ff'
             : role === 'seed'
               ? '#c2410c'
               : p.feasible
-                ? '#1d4ed8'
-                : '#94a3b8',
+                ? '#64748b'
+                : '#cbd5e1',
         role,
       };
     });
@@ -269,8 +269,8 @@ export function EvolutionParetoChart({
             <Scatter
               name="Feasible frontier"
               data={feasible}
-              fill="#1d4ed8"
-              line={{ stroke: '#0f766e', strokeWidth: 2 }}
+              fill="#64748b"
+              line={{ stroke: '#2b52ff', strokeWidth: 2 }}
               lineJointType="linear"
               isAnimationActive={false}
             >

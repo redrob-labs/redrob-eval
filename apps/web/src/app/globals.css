@@ -100,12 +100,29 @@ code {
 }
 
 .app-name {
-  font-family: var(--font-display), Syne, sans-serif;
-  font-weight: 700;
-  font-size: 0.92rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex: none;
+  font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-weight: 650;
+  font-size: 0.88rem;
   letter-spacing: -0.02em;
-  color: inherit;
+  color: #f8fafc;
   text-decoration: none;
+}
+
+.app-logo {
+  flex: none;
+  color: #6f8bff;
+}
+
+.app-name:hover {
+  color: #fff;
+}
+
+.app-name:hover .app-logo {
+  color: #9db1ff;
 }
 
 .app-sep {

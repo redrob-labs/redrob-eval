@@ -1,18 +1,5 @@
 import type { Metadata } from 'next';
-import { IBM_Plex_Sans, Syne } from 'next/font/google';
 import './globals.css';
-
-const syne = Syne({
-  variable: '--font-display',
-  subsets: ['latin'],
-  weight: ['600', '700', '800'],
-});
-
-const plex = IBM_Plex_Sans({
-  variable: '--font-body',
-  subsets: ['latin'],
-  weight: ['400', '500', '600'],
-});
 
 export const metadata: Metadata = {
   title: 'redrob-eval',
@@ -27,7 +14,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${syne.variable} ${plex.variable} antialiased`}>{children}</body>
+      <head>
+        <link
+          rel="stylesheet"
+          href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css"
+        />
+      </head>
+      <body className="antialiased">{children}</body>
     </html>
   );
 }

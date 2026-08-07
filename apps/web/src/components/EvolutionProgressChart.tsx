@@ -256,13 +256,13 @@ export function EvolutionProgressChart({
               type="stepAfter"
               dataKey="bestPct"
               name="Best quality"
-              stroke="#0f766e"
+              stroke="#2b52ff"
               strokeWidth={3}
-              fill="#0f766e"
+              fill="#2b52ff"
               fillOpacity={0.1}
               connectNulls
               isAnimationActive={false}
-              dot={{ r: 3, fill: '#0f766e', stroke: '#fff', strokeWidth: 1 }}
+              dot={{ r: 3, fill: '#2b52ff', stroke: '#fff', strokeWidth: 1 }}
               activeDot={{ r: 5 }}
             />
           </AreaChart>

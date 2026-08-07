@@ -38,6 +38,19 @@ export interface EvalTargetSummary {
   routingOracleAccuracy?: number | null;
   /** quality / largeBaselineQuality when available */
   qualityRetention?: number | null;
+  /**
+   * Mandatory for any path that renders numbers.
+   * Precision, sample count, max-model-len, measurement date, etc.
+   */
+  caveat?: string;
+  /** Self-hosted / reporting extras (filled by results.ts) */
+  precision?: string | null;
+  license?: string | null;
+  hfRepoId?: string | null;
+  maxModelLen?: number | null;
+  meanTtftMs?: number | null;
+  tokensPerSec?: number | null;
+  costSource?: 'catalog' | 'measured-throughput' | 'unmeasured-fallback';
 }
 
 export interface EvalRunMeta {
@@ -50,6 +63,13 @@ export interface EvalRunMeta {
   seed: number;
   largeBaselineId: string | null;
   finishedAt: string;
+  /**
+   * False for custom prompts without reference answers: every `quality` is 0
+   * and the ranking has to come from human preference instead.
+   */
+  scored?: boolean;
+  /** The prompts that were run, so a preference bracket can replay them. */
+  prompts?: Array<{ id: string; input: string }>;
 }
 
 export interface EvalRunResult {
@@ -66,6 +86,7 @@ export type EvalStreamEvent =
       sampleCount: number;
       targets: Array<{ targetId: string; label: string; kind: 'model' | 'router' }>;
       totalCalls: number;
+      scored?: boolean;
     }
   | {
       type: 'progress';

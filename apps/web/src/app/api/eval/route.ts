@@ -15,13 +15,16 @@ function sseEncode(event: EvalStreamEvent): string {
  *
  * Body:
  * {
- *   datasetId, sampleCount,
+ *   datasetId?, prompts?: [{ id?, input, gold? }], promptSetLabel?, promptMetric?,
+ *   sampleCount,
  *   modelIds: string[],
  *   includeRouter?: boolean,
  *   routerSmallId?: string,
  *   routerLargeId?: string,
  *   largeBaselineId?: string
  * }
+ *
+ * Supply either a catalog `datasetId` or an inline `prompts` set.
  */
 export async function POST(request: Request) {
   let body: EvalRunRequest;
@@ -34,9 +37,10 @@ export async function POST(request: Request) {
     });
   }
 
-  if (!body.datasetId || !Number.isFinite(body.sampleCount)) {
+  const hasPrompts = Array.isArray(body.prompts) && body.prompts.length > 0;
+  if ((!body.datasetId && !hasPrompts) || !Number.isFinite(body.sampleCount)) {
     return new Response(
-      JSON.stringify({ error: 'Provide datasetId and sampleCount' }),
+      JSON.stringify({ error: 'Provide sampleCount plus either datasetId or prompts' }),
       { status: 400, headers: { 'Content-Type': 'application/json' } },
     );
   }
@@ -60,6 +64,9 @@ export async function POST(request: Request) {
         for await (const event of runEval(
           {
             datasetId: body.datasetId,
+            prompts: hasPrompts ? body.prompts : undefined,
+            promptSetLabel: body.promptSetLabel,
+            promptMetric: body.promptMetric,
             sampleCount: body.sampleCount,
             modelIds: Array.isArray(body.modelIds) ? body.modelIds : [],
             includeRouter: Boolean(body.includeRouter),

@@ -1,12 +1,15 @@
-import { getDatasetById, type MetricId } from '../../config/datasets';
+import { getDatasetById, type DatasetRef, type MetricId } from '../../config/datasets';
 import type { ModelRef } from '../../config/models';
+import { resolveModelCostWeight } from '../../config/models';
 import { resolveEvalModel, resolveEvalModels } from '../catalog/resolve';
 import { loadDataset } from '../datasets/index';
+import type { EvalSample } from '../datasets/types';
 import { scorePair } from '../metrics/index';
 import { callModel, ProviderError } from '../providers/index';
 import { routeSample, type RouteDecision } from '../router/index';
 import { enrichSummaries, pickLargeBaseline, summarizeTarget } from './aggregate';
 import { buildEvalPrompt, maxTokensForTask } from './prompts';
+import { ensureResultCaveats, withMandatoryCaveat } from './results';
 import {
   ROUTER_TARGET_ID,
   type EvalRunResult,
@@ -15,8 +18,25 @@ import {
   type EvalTargetSummary,
 } from './types';
 
+/** One ad-hoc prompt supplied by the user instead of a catalog dataset. */
+export interface CustomPrompt {
+  id?: string;
+  input: string;
+  /** Reference answer. Without it the prompt is generated but not scored. */
+  gold?: string;
+}
+
+export const CUSTOM_DATASET_ID = 'custom';
+
 export interface EvalRunRequest {
-  datasetId: string;
+  /** Catalog dataset id. Optional when `prompts` is supplied. */
+  datasetId?: string;
+  /** Ad-hoc prompt set; takes precedence over `datasetId`. */
+  prompts?: CustomPrompt[];
+  /** Display name for an ad-hoc prompt set. */
+  promptSetLabel?: string;
+  /** Metric for ad-hoc prompts that carry gold answers. Defaults to chrF. */
+  promptMetric?: MetricId;
   sampleCount: number;
   modelIds: string[];
   includeRouter?: boolean;
@@ -28,6 +48,20 @@ export interface EvalRunRequest {
   largeBaselineId?: string;
 }
 
+/** Wrap ad-hoc prompts in the DatasetRef shape the rest of the run expects. */
+function customDatasetRef(req: EvalRunRequest, metric: MetricId, count: number): DatasetRef {
+  return {
+    id: CUSTOM_DATASET_ID,
+    label: req.promptSetLabel?.trim() || 'Custom prompts',
+    task: 'custom',
+    metric,
+    hf: { dataset: 'custom', config: 'inline', split: 'none' },
+    fields: { input: 'input', gold: 'gold' },
+    maxSamples: Math.max(1, count),
+    seed: 0,
+  };
+}
+
 async function evalOneSample(params: {
   model: ModelRef;
   prompt: string;
@@ -36,19 +70,22 @@ async function evalOneSample(params: {
   maxTokens: number;
   sampleId: string;
   route?: RouteDecision;
-}): Promise<EvalSampleResult> {
+  /** When false there is no gold answer, so we generate without scoring. */
+  scored: boolean;
+}): Promise<EvalSampleResult & { timeToFirstTokenMs?: number }> {
   try {
     const result = await callModel(params.model.providerId, params.model.modelId, params.prompt, {
       maxTokens: params.maxTokens,
       temperature: 0,
     });
-    const scored = scorePair(params.metric, params.gold, result.text);
+    const score = params.scored ? scorePair(params.metric, params.gold, result.text).score : 0;
     return {
       sampleId: params.sampleId,
-      score: scored.score,
+      score,
       latencyMs: result.latencyMs,
       prediction: result.text,
       route: params.route,
+      timeToFirstTokenMs: result.timeToFirstTokenMs,
     };
   } catch (error) {
     const message =
@@ -76,6 +113,16 @@ function assertNotAborted(signal?: AbortSignal): void {
   }
 }
 
+function meanTtftMs(
+  results: Array<EvalSampleResult & { timeToFirstTokenMs?: number }>,
+): number | null {
+  const vals = results
+    .map((r) => r.timeToFirstTokenMs)
+    .filter((n): n is number => n != null && Number.isFinite(n));
+  if (!vals.length) return null;
+  return vals.reduce((a, b) => a + b, 0) / vals.length;
+}
+
 /**
  * Run a full eval, yielding SSE-friendly events.
  */
@@ -84,7 +131,17 @@ export async function* runEval(
   opts?: { signal?: AbortSignal },
 ): AsyncGenerator<EvalStreamEvent, void, unknown> {
   const signal = opts?.signal;
-  const datasetRef = getDatasetById(req.datasetId);
+
+  const customPrompts = (req.prompts ?? []).filter((p) => p.input?.trim());
+  const useCustomPrompts = customPrompts.length > 0;
+
+  // Custom prompts are only scored when the user supplied reference answers;
+  // otherwise Compare ranks them through the preference bracket instead.
+  const scored = useCustomPrompts ? customPrompts.every((p) => Boolean(p.gold?.trim())) : true;
+
+  const datasetRef = useCustomPrompts
+    ? customDatasetRef(req, req.promptMetric ?? 'chrf', customPrompts.length)
+    : getDatasetById(req.datasetId ?? '');
   if (!datasetRef) {
     yield { type: 'error', message: `Unknown dataset id: ${req.datasetId}` };
     return;
@@ -142,20 +199,29 @@ export async function* runEval(
   const largeBaseline =
     pickLargeBaseline(uniquePool, req.largeBaselineId ?? routerLarge?.id ?? null) ??
     uniquePool[0]!;
-  const largeBaselineWeight = largeBaseline.relativeCostWeight;
+  const largeBaselineWeight = resolveModelCostWeight(largeBaseline, largeBaseline).weight;
 
-  let loaded;
-  try {
-    loaded = await loadDataset(req.datasetId, { maxSamples: sampleCount });
-  } catch (e) {
-    yield {
-      type: 'error',
-      message: e instanceof Error ? e.message : 'Failed to load dataset',
-    };
-    return;
+  let samples: EvalSample[];
+  let seed = datasetRef.seed;
+  if (useCustomPrompts) {
+    samples = customPrompts.slice(0, sampleCount).map((p, i) => ({
+      id: p.id?.trim() || `p${i + 1}`,
+      input: p.input.trim(),
+      gold: p.gold?.trim() ?? '',
+    }));
+  } else {
+    try {
+      const loaded = await loadDataset(datasetRef.id, { maxSamples: sampleCount });
+      samples = loaded.samples.slice(0, sampleCount);
+      seed = loaded.seed;
+    } catch (e) {
+      yield {
+        type: 'error',
+        message: e instanceof Error ? e.message : 'Failed to load dataset',
+      };
+      return;
+    }
   }
-
-  const samples = loaded.samples.slice(0, sampleCount);
   const runId = `run_${Date.now().toString(36)}`;
   const targetsMeta: Array<{ targetId: string; label: string; kind: 'model' | 'router' }> = [
     ...models.map((m) => ({ targetId: m.id, label: m.label, kind: 'model' as const })),
@@ -172,24 +238,31 @@ export async function* runEval(
   yield {
     type: 'start',
     runId,
-    datasetId: req.datasetId,
+    datasetId: datasetRef.id,
     sampleCount: samples.length,
     targets: targetsMeta,
     totalCalls,
+    scored,
   };
 
   const targetSummaries: EvalTargetSummary[] = [];
   const routingLog: RouteDecision[] = [];
   let done = 0;
   const promptMax = maxTokensForTask(datasetRef.task);
+  const modelsById = new Map<string, ModelRef>([
+    ...models.map((m) => [m.id, m] as const),
+    ...(routerSmall ? ([[routerSmall.id, routerSmall]] as const) : []),
+    ...(routerLarge ? ([[routerLarge.id, routerLarge]] as const) : []),
+  ]);
 
   const runTarget = async function* (
     targetId: string,
     label: string,
     kind: 'model' | 'router',
     pickModel: (sampleIndex: number) => { model: ModelRef; route?: RouteDecision },
+    caveatModel?: ModelRef | null,
   ): AsyncGenerator<EvalStreamEvent, EvalTargetSummary, unknown> {
-    const sampleResults: EvalSampleResult[] = [];
+    const sampleResults: Array<EvalSampleResult & { timeToFirstTokenMs?: number }> = [];
     const costWeights: number[] = [];
 
     for (let i = 0; i < samples.length; i += 1) {
@@ -207,9 +280,10 @@ export async function* runEval(
         maxTokens: promptMax,
         sampleId: sample.id,
         route,
+        scored,
       });
       sampleResults.push(result);
-      costWeights.push(model.relativeCostWeight);
+      costWeights.push(resolveModelCostWeight(model, largeBaseline).weight);
       done += 1;
 
       yield {
@@ -219,7 +293,7 @@ export async function* runEval(
         targetId,
         sampleIndex: i,
         sampleId: sample.id,
-        score: result.error ? undefined : result.score,
+        score: result.error || !scored ? undefined : result.score,
         latencyMs: result.latencyMs,
         error: result.error,
         route,
@@ -235,14 +309,36 @@ export async function* runEval(
       costWeights,
       largeBaselineWeight,
     });
-    yield { type: 'target_done', target: summary };
-    return summary;
+
+    const modelForCaveat = caveatModel ?? modelsById.get(targetId) ?? null;
+    const costSource = modelForCaveat
+      ? resolveModelCostWeight(modelForCaveat, largeBaseline).costSource
+      : undefined;
+    const extra: string[] = [];
+    if (costSource === 'unmeasured-fallback') {
+      extra.push('relative cost uses unmeasured fallback — run Benchmark on /deploy');
+    }
+    if (kind === 'router' && routerSmall && routerLarge) {
+      extra.push(`router; small=${routerSmall.id}; large=${routerLarge.id}`);
+    }
+
+    const reported = withMandatoryCaveat(summary, {
+      model: modelForCaveat,
+      sampleCount: sampleResults.length,
+      extraCaveat: extra.join('; ') || undefined,
+      meanTtftMs: meanTtftMs(sampleResults),
+      tokensPerSec: modelForCaveat?.selfHosted?.measuredTokPerSec ?? null,
+      costSource,
+    });
+
+    yield { type: 'target_done', target: reported };
+    return reported;
   };
 
   try {
     for (const model of models) {
       assertNotAborted(signal);
-      const gen = runTarget(model.id, model.label, 'model', () => ({ model }));
+      const gen = runTarget(model.id, model.label, 'model', () => ({ model }), model);
       let step = await gen.next();
       while (!step.done) {
         yield step.value;
@@ -255,12 +351,18 @@ export async function* runEval(
       assertNotAborted(signal);
       const pair = { small: routerSmall, large: routerLarge };
       const label = `Router (${routerSmall.label} / ${routerLarge.label})`;
-      const gen = runTarget(ROUTER_TARGET_ID, label, 'router', (i) => {
-        const sample = samples[i]!;
-        const route = routeSample(sample.id, sample.input, datasetRef.task, pair);
-        const model = route.chosenTier === 'large' ? pair.large : pair.small;
-        return { model, route };
-      });
+      const gen = runTarget(
+        ROUTER_TARGET_ID,
+        label,
+        'router',
+        (i) => {
+          const sample = samples[i]!;
+          const route = routeSample(sample.id, sample.input, datasetRef.task, pair);
+          const model = route.chosenTier === 'large' ? pair.large : pair.small;
+          return { model, route };
+        },
+        null,
+      );
       let step = await gen.next();
       while (!step.done) {
         yield step.value;
@@ -269,10 +371,17 @@ export async function* runEval(
       targetSummaries.push(step.value);
     }
 
-    const enriched = enrichSummaries(targetSummaries, {
-      largeBaselineId: largeBaseline.id,
-      smallModelId: routerSmall?.id ?? models.find((m) => m.tier === 'small')?.id ?? null,
-    });
+    const enriched = ensureResultCaveats(
+      enrichSummaries(targetSummaries, {
+        largeBaselineId: largeBaseline.id,
+        smallModelId: routerSmall?.id ?? models.find((m) => m.tier === 'small')?.id ?? null,
+      }),
+      {
+        modelsById,
+        sampleCount: samples.length,
+        datasetId: datasetRef.id,
+      },
+    );
 
     const result: EvalRunResult = {
       meta: {
@@ -282,9 +391,11 @@ export async function* runEval(
         task: datasetRef.task,
         metric: datasetRef.metric,
         sampleCount: samples.length,
-        seed: loaded.seed,
+        seed,
         largeBaselineId: largeBaseline.id,
         finishedAt: new Date().toISOString(),
+        scored,
+        prompts: samples.map((s) => ({ id: s.id, input: s.input })),
       },
       targets: enriched,
       routingLog,

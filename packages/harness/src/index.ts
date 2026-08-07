@@ -123,7 +123,12 @@ export {
 export { routeSample, classifyComplexity, type RouteDecision } from './lib/router';
 
 // Eval
-export { runEval, type EvalRunRequest } from './lib/eval/run';
+export {
+  runEval,
+  CUSTOM_DATASET_ID,
+  type CustomPrompt,
+  type EvalRunRequest,
+} from './lib/eval/run';
 export type {
   EvalRunResult,
   EvalStreamEvent,
@@ -134,6 +139,17 @@ export type {
 export { ROUTER_TARGET_ID } from './lib/eval/types';
 export { summarizeTarget, enrichSummaries, pickLargeBaseline, mean } from './lib/eval/aggregate';
 export { buildEvalPrompt, maxTokensForTask } from './lib/eval/prompts';
+export {
+  assertHasCaveat,
+  withMandatoryCaveat,
+  reportModelTarget,
+  ensureResultCaveats,
+  INDIC_DATASET_IDS,
+  isIndicDataset,
+  sliceLabelForDataset,
+  type ResultCaveatFields,
+  type ReportedTargetSummary,
+} from './lib/eval/results';
 
 // Routing data
 export type {

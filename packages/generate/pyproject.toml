@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "redrob-generate"
+version = "0.1.0"
+description = "Parametric generation of verifiable evaluation prompts and their verifiers (Redrob Verifiable Task Spec v1)."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Apache-2.0" }
+authors = [{ name = "Janghoon Lee" }]
+keywords = ["evaluation", "llm", "benchmark", "contamination", "verifier"]
+classifiers = [
+  "License :: OSI Approved :: Apache Software License",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = ["jsonschema>=4.20", "sympy>=1.12"]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.4"]
+
+[project.scripts]
+redrob-generate = "redrob_generate.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/redrob-labs/redrob-eval"
+Specification = "https://github.com/redrob-labs/redrob-eval/blob/main/spec/verifiable-task-v1.md"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

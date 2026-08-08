@@ -1,0 +1,19 @@
+Metadata-Version: 2.4
+Name: redrob-generate
+Version: 0.1.0
+Summary: Parametric generation of verifiable evaluation prompts and their verifiers (Redrob Verifiable Task Spec v1).
+Author: Janghoon Lee
+License: Apache-2.0
+Project-URL: Homepage, https://github.com/redrob-labs/redrob-eval
+Project-URL: Specification, https://github.com/redrob-labs/redrob-eval/blob/main/spec/verifiable-task-v1.md
+Keywords: evaluation,llm,benchmark,contamination,verifier
+Classifier: License :: OSI Approved :: Apache Software License
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+Requires-Dist: jsonschema>=4.20
+Requires-Dist: sympy>=1.12
+Provides-Extra: dev
+Requires-Dist: pytest>=7.4; extra == "dev"

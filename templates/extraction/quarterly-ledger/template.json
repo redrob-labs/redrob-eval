@@ -1,0 +1,75 @@
+{
+  "spec_version": "redrob-verifiable-task/v1",
+  "id": "extraction.quarterly_ledger",
+  "version": "1.0.0",
+  "family": "extraction",
+  "parameters": [
+    {
+      "name": "city",
+      "type": "choice",
+      "choices": ["Aveldon", "Brightmoor", "Calderhythe", "Dunmarch", "Ellisport", "Fairwater", "Greyhollow", "Havenreach"],
+      "description": "Invented place names, so that no model can answer from world knowledge."
+    },
+    { "name": "quarter", "type": "choice", "choices": ["Q1", "Q2", "Q3", "Q4"] },
+    { "name": "year", "type": "integer", "min": 2015, "max": 2024 },
+    { "name": "units", "type": "integer", "min": 100, "max": 9999 },
+    { "name": "returns", "type": "integer", "min": 0, "max": 99 },
+    {
+      "name": "distractor_cities",
+      "type": "subset",
+      "choices": ["Aveldon", "Brightmoor", "Calderhythe", "Dunmarch", "Ellisport", "Fairwater", "Greyhollow", "Havenreach"],
+      "size": 4,
+      "description": "Rows that surround the planted row in the document."
+    },
+    { "name": "distractor_units", "type": "permutation", "choices": [412, 907, 1533, 2288, 3641, 5024, 6810, 8175] }
+  ],
+  "derivations": [
+    {
+      "name": "other_cities",
+      "expr": "[name for name in distractor_cities if name != city]",
+      "description": "Distractor rows never collide with the planted row."
+    },
+    {
+      "name": "rows",
+      "expr": "join(\"\\n\", [f\"  {other_cities[i]:<14} {distractor_units[i]:>6} units    {distractor_units[i] % 40:>3} returned\" for i in range(len(other_cities))])"
+    },
+    {
+      "name": "planted_row",
+      "expr": "f\"  {city:<14} {units:>6} units    {returns:>3} returned\""
+    },
+    { "name": "net_units", "expr": "units - returns" },
+    {
+      "name": "answer",
+      "expr": "{\"city\": city, \"quarter\": quarter, \"year\": year, \"units\": units, \"returns\": returns, \"net_units\": net_units}"
+    },
+    { "name": "answer_json", "expr": "canonical_json(answer)" }
+  ],
+  "verifier": {
+    "type": "all_of",
+    "verifiers": [
+      {
+        "type": "json_schema",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["city", "quarter", "year", "units", "returns", "net_units"],
+          "properties": {
+            "city": { "type": "string", "const": "{{city}}" },
+            "quarter": { "type": "string", "const": "{{quarter}}" },
+            "year": { "type": "integer", "const": "{{year}}" },
+            "units": { "type": "integer", "const": "{{units}}" },
+            "returns": { "type": "integer", "const": "{{returns}}" },
+            "net_units": { "type": "integer", "const": "{{net_units}}" }
+          }
+        }
+      },
+      {
+        "type": "exact",
+        "expected": "{{answer_json}}",
+        "trim": true,
+        "normalize_line_endings": true
+      }
+    ]
+  },
+  "notes": "json_schema runs before exact on purpose: a wrong extraction should report a schema violation, which names the offending field, rather than a string mismatch, which does not. The place names are invented so the ground truth cannot leak in from pretraining."
+}

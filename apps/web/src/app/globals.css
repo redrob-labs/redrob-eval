@@ -3032,3 +3032,67 @@ body.is-pane-resizing * {
   gap: 0.35rem;
   flex-wrap: wrap;
 }
+
+/* ---- Theme switch ---- */
+
+.app-theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--titlebar-muted);
+  cursor: pointer;
+  flex: none;
+}
+
+.app-theme-toggle:hover {
+  color: var(--titlebar-hover-ink);
+  background: var(--titlebar-hover);
+}
+
+.theme-switch {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.theme-switch-options {
+  display: inline-flex;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+}
+
+.theme-switch-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--ink);
+  padding: 0.3rem 0.6rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.theme-switch-option:hover:not(.on) {
+  background: var(--surface-hover);
+}
+
+.theme-switch-option.on {
+  border-color: var(--brand);
+  background: var(--brand-tint);
+  color: var(--brand-ink);
+  font-weight: 600;
+}
+
+.theme-switch-note {
+  margin: 0;
+  font-size: 0.7rem;
+  color: var(--muted);
+}

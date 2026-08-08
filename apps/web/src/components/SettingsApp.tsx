@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AppShell } from '@/components/AppShell';
 import { FilePickerModal } from '@/components/FilePickerModal';
+import { ThemeSwitch } from '@/components/ThemeSwitch';
 
 type Setting = {
   key: string;
@@ -162,6 +163,29 @@ export function SettingsApp() {
 
         {error ? <p className="settings-error">{error}</p> : null}
         {message ? <p className="settings-ok">{message}</p> : null}
+
+        {/* Above the saved settings, and outside the save flow: this one lives in the
+            browser rather than in .env, and it applies the moment it is clicked. */}
+        <section className="settings-card">
+          <div className="settings-card-head">
+            <h2>Appearance</h2>
+            <p>
+              Stored in this browser, not in <code>.env</code>, and applied immediately —
+              there is nothing to save.
+            </p>
+          </div>
+          <div className="settings-rows">
+            <div className="settings-row">
+              <label className="settings-label">
+                <span className="settings-label-main">Colour theme</span>
+                <span className="settings-hint">
+                  System follows your operating system and changes with it.
+                </span>
+              </label>
+              <ThemeSwitch />
+            </div>
+          </div>
+        </section>
 
         {!data && !error ? <p className="settings-note">Checking saved settings…</p> : null}
 

@@ -22,7 +22,7 @@ export {
   contentHash,
   CanonicalJsonError,
   MAX_SAFE_INTEGER,
-} from "./canonical";
+} from './canonical';
 
 export {
   jsonDeepEqual,
@@ -33,19 +33,25 @@ export {
   REJECTED_KEYWORDS,
   type Schema,
   type SchemaViolation,
-} from "./json-schema-subset";
+} from './json-schema-subset';
 
 export {
   DEFAULT_COMMAND,
   DEFAULT_TIMEOUT_MS,
+  emitWithPython,
   probePythonBridge,
+  studyWithPython,
   verifyWithPython,
   type BridgeItemResult,
   type BridgeOptions,
   type BridgeOutcome,
   type BridgePayload,
+  type EmitOutcome,
+  type EmitRequest,
+  type StudyOutcome,
+  type StudyRequest,
   type VerifyRequest,
-} from "./python-client";
+} from './python-client';
 
 export {
   auditManifestConsistency,
@@ -64,7 +70,7 @@ export {
   type SeedAudit,
   type SeedAuditEntry,
   type TemplateHashAudit,
-} from "./reader";
+} from './reader';
 
 export {
   compileSubsetPattern,
@@ -76,7 +82,7 @@ export {
   validateFlags as validateRegexFlags,
   type RegexDialect,
   type Token as RegexToken,
-} from "./regex-subset";
+} from './regex-subset';
 
 export {
   ALL_VERIFIER_TYPES,
@@ -88,7 +94,19 @@ export {
   runVerifierList,
   runVerifierOrFail,
   type ExecutableVerifierType,
-} from "./registry";
+} from './registry';
+
+export {
+  CatalogError,
+  findRepoRoot,
+  readStudyConfigs,
+  readTemplateCatalog,
+  verifierFamilyOf,
+  type CatalogLocale,
+  type CatalogTemplate,
+  type StudyConfigSummary,
+  type TranslationStatus,
+} from './catalog';
 
 export {
   IMPLEMENTATION,
@@ -96,9 +114,9 @@ export {
   localProvenance,
   UNICODE_VERSION,
   type Provenance,
-} from "./provenance";
+} from './provenance';
 
-export { deriveSeed, SEED_METHOD, seedMessage, seedToString } from "./seed";
+export { deriveSeed, SEED_METHOD, seedMessage, seedToString } from './seed';
 
 export {
   applyUnicodeNormalization,
@@ -119,7 +137,7 @@ export {
   utf8ByteLength,
   type LengthUnit,
   type UnicodeNormalization,
-} from "./text";
+} from './text';
 
 export {
   fail,
@@ -129,7 +147,7 @@ export {
   VerifierConfigError,
   type Verdict,
   type VerdictCode,
-} from "./verdict";
+} from './verdict';
 
 export {
   coerceExpectedNumber,
@@ -143,7 +161,7 @@ export {
   verifyOrderedEquality,
   verifyRegex,
   verifySetEquality,
-} from "./verifiers";
+} from './verifiers';
 
 export type {
   ConformanceCase,
@@ -169,4 +187,4 @@ export type {
   Template,
   Verifier,
   VerifierList,
-} from "./spec-types.generated";
+} from './spec-types.generated';

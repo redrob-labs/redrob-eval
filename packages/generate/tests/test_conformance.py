@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import unicodedata
 from pathlib import Path
 
 import pytest
@@ -82,6 +83,87 @@ def test_conformance_file_is_well_formed(path: Path) -> None:
         assert case["verifier"].get("type") in {path.stem, None}, (
             f"{case['id']} declares a {case['verifier'].get('type')} verifier in {path.name}"
         )
+
+
+def _strings_in(value: object):
+    """Every string inside a JSON value, object keys included."""
+    if isinstance(value, str):
+        yield value
+    elif isinstance(value, list):
+        for entry in value:
+            yield from _strings_in(entry)
+    elif isinstance(value, dict):
+        for key, entry in value.items():
+            yield key
+            yield from _strings_in(entry)
+
+
+def _script_of(character: str) -> str | None:
+    """A coarse script bucket, covering the scripts this corpus actually uses.
+
+    Not UAX #24. Characters UAX #24 calls Common or Inherited — ASCII digits, punctuation,
+    spaces, combining marks — return ``None``, so "42 rupees" does not count as two scripts
+    on the strength of its digits.
+    """
+    value = ord(character)
+    if 0x0041 <= value <= 0x024F:
+        return "Latin"
+    if 0x0370 <= value <= 0x03FF:
+        return "Greek"
+    if 0x0400 <= value <= 0x04FF:
+        return "Cyrillic"
+    if 0x0590 <= value <= 0x05FF:
+        return "Hebrew"
+    if 0x0600 <= value <= 0x06FF:
+        return "Arabic"
+    if 0x0900 <= value <= 0x097F:
+        return "Devanagari"
+    if 0x1100 <= value <= 0x11FF or 0x3130 <= value <= 0x318F or 0xAC00 <= value <= 0xD7AF:
+        return "Hangul"
+    if 0x3040 <= value <= 0x30FF:
+        return "Kana"
+    if 0x4E00 <= value <= 0x9FFF or 0x20000 <= value <= 0x2A6DF:
+        return "Han"
+    if 0x2600 <= value <= 0x27BF or 0x1F000 <= value <= 0x1FAFF:
+        return "Emoji"
+    return None
+
+
+#: The four properties every declarative verifier's case set must be able to exercise.
+CORPUS_PROPERTIES = {
+    "an astral character": lambda text: any(ord(c) > 0xFFFF for c in text),
+    "a combining sequence": lambda text: any(
+        unicodedata.category(c) in ("Mn", "Mc", "Me") and index > 0
+        for index, c in enumerate(text)
+    ),
+    "a ZWJ sequence": lambda text: "\u200d" in text,
+    "a mixed-script string": lambda text: len(
+        {script for script in (_script_of(c) for c in text) if script}
+    )
+    >= 2,
+}
+
+
+@pytest.mark.parametrize("path", VERIFIER_FILES, ids=lambda path: path.stem)
+def test_the_case_set_can_reach_a_unicode_divergence(path: Path) -> None:
+    """Every verifier's corpus must contain input where the two runtimes could differ.
+
+    This is a rule about the corpus rather than about either implementation, and it exists
+    because its absence hid a real defect. The subset's end-of-input construct diverged on
+    the first astral character anyone would have tried, and the corpus was entirely within
+    the Basic Multilingual Plane — Devanagari and Hangul both are — so every case agreed on
+    both sides while the construct was broken. A corpus that cannot reach a divergence is
+    not evidence that there is none.
+    """
+    document = _load(path)
+    found: dict[str, str] = {}
+    for case in document["cases"] + document.get("rejections", []):
+        texts = list(_strings_in(case["candidate"])) + list(_strings_in(case["verifier"]))
+        for name, predicate in CORPUS_PROPERTIES.items():
+            if name not in found and any(predicate(text) for text in texts):
+                found[name] = case["id"]
+    missing = sorted(set(CORPUS_PROPERTIES) - set(found))
+    assert not missing, f"{path.name} has no case containing {' or '.join(missing)}"
 
 
 def test_case_ids_are_globally_unique() -> None:

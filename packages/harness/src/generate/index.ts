@@ -5,11 +5,15 @@
  * (`spec/verifiable-task-v2.md`).
  *
  * This is a peer of the Python implementation under `packages/generate/`, not a client
- * of it: neither is authoritative over the other, and `spec/conformance/` decides when
- * they disagree. What differs is capability, not rank. This side reads generated sets,
- * audits their seeds and template hashes, and runs every declarative verifier natively.
- * It does not generate, and it refuses the executable tier with an explicit error rather
- * than skipping it.
+ * of it, and `spec/conformance/` decides when they disagree. They are not equal in rank
+ * for publication, though: Python is normative and this side is display only, because
+ * the two runtimes read different Unicode tables. Every verdict produced here is marked
+ * non-authoritative in the record, and a publishable artifact refuses to build from one.
+ * See `provenance.ts`.
+ *
+ * This side reads generated sets, audits their seeds and template hashes, and runs every
+ * declarative verifier natively. It does not generate, and it refuses the executable tier
+ * with an explicit error rather than skipping it.
  *
  * Not wired into any route or UI. Imported as `@redrob/harness/generate`.
  */
@@ -85,6 +89,14 @@ export {
   runVerifierOrFail,
   type ExecutableVerifierType,
 } from './registry';
+
+export {
+  IMPLEMENTATION,
+  isAuthoritative,
+  localProvenance,
+  UNICODE_VERSION,
+  type Provenance,
+} from './provenance';
 
 export { deriveSeed, SEED_METHOD, seedMessage, seedToString } from './seed';
 

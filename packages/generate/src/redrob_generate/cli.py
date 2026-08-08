@@ -9,6 +9,7 @@ no auth and no lifecycle.
 
     redrob-generate emit   --template <path> --count <n> --out <dir>
     redrob-generate verify --set <dir> --outputs <path> --json
+    redrob-generate study  --config <path> --out <dir>
 """
 
 from __future__ import annotations
@@ -223,6 +224,54 @@ def command_verify(args: argparse.Namespace) -> int:
     return 0 if passed_count == len(instances) else 1
 
 
+# ------------------------------------------------------------------------ study
+
+
+RESULT_FILENAME = "result.json"
+TABLE_FILENAME = "aggregates.txt"
+
+
+def command_study(args: argparse.Namespace) -> int:
+    from .study.config import load_study_config
+    from .study.publish import PublicationRefused, assert_publishable
+    from .study.result import build_result
+    from .study.runner import peer_runtime_record, run_study
+    from .study.table import render_table
+    from .study.tokenizers import resolve_tokenizer
+
+    config = load_study_config(args.config)
+    tokenizer = resolve_tokenizer(config.tokenizer["name"], config.tokenizer["version"])
+
+    scored, locale_records = run_study(config, tokenizer)
+    result = build_result(
+        config,
+        scored,
+        locale_records,
+        created_at=args.created_at or utc_now_rfc3339(),
+        peer_runtime=None if args.no_peer_probe else peer_runtime_record(),
+    )
+
+    out_dir = Path(args.out)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    write_canonical_json(out_dir / RESULT_FILENAME, result)
+
+    table = render_table(result)
+    (out_dir / TABLE_FILENAME).write_text(table, encoding="utf-8", newline="\n")
+
+    if args.publish:
+        # Checked against the written artifact rather than the run that produced it, so
+        # the gate behaves the same for an artifact that arrived from somewhere else.
+        try:
+            assert_publishable(result)
+        except PublicationRefused as refusal:
+            print(f"{GENERATOR_NAME}: {refusal}", file=sys.stderr)
+            return 3
+
+    if not args.quiet:
+        sys.stdout.write(table)
+    return 0
+
+
 # ------------------------------------------------------------------------ entry
 
 
@@ -268,6 +317,33 @@ def build_parser() -> argparse.ArgumentParser:
         help="refuse executable verifiers instead of running model-derived code",
     )
     verify.set_defaults(handler=command_verify, allow_executable=True)
+
+    study = subparsers.add_parser("study", help="run a study and write a results artifact")
+    study.add_argument("--config", required=True, help="study config JSON")
+    study.add_argument("--out", required=True, help="output directory")
+    study.add_argument(
+        "--created-at",
+        default=None,
+        help="pin the artifact timestamp, for byte-identical reruns",
+    )
+    study.add_argument(
+        "--publish",
+        action="store_true",
+        help=(
+            "refuse to finish unless the artifact may be published: every locale "
+            "reviewed, every verdict from the authoritative implementation"
+        ),
+    )
+    study.add_argument("--quiet", action="store_true", help="do not print the aggregate table")
+    study.add_argument(
+        "--no-peer-probe",
+        action="store_true",
+        help=(
+            "skip reading the TypeScript runtime's Unicode version; the artifact then "
+            "records only this runtime, which is what a machine without node produces"
+        ),
+    )
+    study.set_defaults(handler=command_study)
 
     return parser
 

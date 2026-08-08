@@ -1,6 +1,6 @@
 {
-  "locale": "en",
-  "translation_status": "single-reviewer",
+  "locale": "ko",
+  "translation_status": "untranslated",
   "description": "Write a release note under exact line, length and vocabulary constraints.",
   "prompt": "Write a release note for {component} version {version}.\n\nFormat rules, all of which are checked mechanically:\n\n- Line 1 must be exactly: {header}\n- Then exactly {bullet_count} bullet lines, each starting with \"- \"\n- The whole note must be at most {max_chars} characters and at least 80\n- The word \"{banned_word}\" must not appear, in any capitalisation\n- No blank lines, no trailing commentary, no code fence\n\nOutput the note and nothing else."
 }

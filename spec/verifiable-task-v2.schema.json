@@ -13,9 +13,14 @@
     },
     "locale": {
       "title": "Locale",
-      "description": "BCP 47 language tag, restricted to a language subtag with an optional region subtag.",
+      "description": "BCP 47 language tag, restricted to a language subtag with an optional script subtag and an optional region subtag. The script subtag is what makes Hinglish expressible as hi-Latn: Hindi written in Latin script is a different tokenisation problem from Hindi in Devanagari, so it has to be a different locale rather than a different template.",
       "type": "string",
-      "pattern": "^[a-z]{2,3}(-[A-Z]{2})?$"
+      "pattern": "^[a-z]{2,3}(-[A-Z][a-z]{3})?(-[A-Z]{2})?$"
+    },
+    "translation_status": {
+      "title": "TranslationStatus",
+      "description": "How much human review a locale's prompt text has had. This is metadata about the text rather than about the task, so it belongs to the locale layer. untranslated means the prompt is a placeholder -- in practice the English text copied verbatim -- which is enough to exercise a pipeline end to end and never enough to publish a result from. A publishable artifact refuses to build while any locale it covers is untranslated.",
+      "enum": ["native-reviewed", "single-reviewer", "untranslated"]
     },
     "semver": {
       "title": "Semver",
@@ -718,6 +723,9 @@
         "locale": {
           "$ref": "#/$defs/locale"
         },
+        "translation_status": {
+          "$ref": "#/$defs/translation_status"
+        },
         "family": {
           "description": "Coarse grouping used for reporting, for example math or extraction.",
           "type": "string"
@@ -748,7 +756,16 @@
           "type": "string"
         }
       },
-      "required": ["spec_version", "id", "version", "locale", "parameters", "prompt", "verifier"],
+      "required": [
+        "spec_version",
+        "id",
+        "version",
+        "locale",
+        "translation_status",
+        "parameters",
+        "prompt",
+        "verifier"
+      ],
       "additionalProperties": false
     },
     "fertility": {
@@ -826,6 +843,12 @@
         },
         "fertility": {
           "$ref": "#/$defs/fertility"
+        },
+        "code_mix_ratio": {
+          "description": "Proportion of an instance's prompt drawn from the embedded language in a code-mixed locale such as hi-Latn. Always null at present. The field exists so that the artifact shape does not change when a measurement is defined, and it is null rather than absent so that a reader can tell 'not measured' from 'this reader is looking at an older artifact'. Defining the measurement is a human decision -- it requires choosing a token unit, a language identifier and a treatment of proper nouns and numerals, and each choice produces a different number for the same sentence -- so no value is invented here.",
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1
         }
       },
       "required": [
@@ -838,7 +861,8 @@
         "seed",
         "parameters",
         "prompt",
-        "verifier"
+        "verifier",
+        "code_mix_ratio"
       ],
       "additionalProperties": false
     },

@@ -1,0 +1,344 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/redrob-labs/redrob-eval/spec/study-v1.schema.json",
+  "title": "Redrob Study v1",
+  "description": "Config and results artifact for a study run by `redrob-generate study`. This is a separate document from the Verifiable Task Spec on purpose. That spec describes an item and how it is scored, and is meant to be citable and stable; this describes one particular kind of experiment built on top of it, and is expected to change as the experiment does. Keeping them apart means an experiment can be redesigned without a spec version bump.",
+  "$defs": {
+    "study_version": {
+      "title": "StudyVersion",
+      "const": "redrob-study/v1"
+    },
+    "cell_level": {
+      "title": "CellLevel",
+      "description": "One axis of the 2x2 design. These are labels the study author assigns, not measurements the runner makes: calling a locale high fertility is a hypothesis being tested, so the runner records the label and never derives it.",
+      "enum": ["low", "high"]
+    },
+    "tokenizer_ref": {
+      "title": "TokenizerRef",
+      "description": "Name and version of the tokenizer used for token counting. Both are required and neither is defaulted, because a token count is meaningless without knowing what produced it, and a tokenizer that silently changed version between two runs would make those runs look comparable when they are not.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "version": { "type": "string", "minLength": 1 }
+      },
+      "required": ["name", "version"],
+      "additionalProperties": false
+    },
+    "seed_policy": {
+      "title": "SeedPolicy",
+      "description": "How instance seeds are derived. content-derived is the only supported value and means the seed comes from the generator version, template id and instance index, with no locale term -- which is what makes the same instance index the same item in every locale, and therefore what makes a paired comparison legitimate.",
+      "type": "object",
+      "properties": {
+        "method": { "const": "content-derived" },
+        "generator_version": { "type": "string", "minLength": 1 }
+      },
+      "required": ["method", "generator_version"],
+      "additionalProperties": false
+    },
+    "mock_strategy": {
+      "title": "MockStrategy",
+      "description": "How the mock provider decides what to answer. expected synthesises an answer the verifier will accept where the verifier is invertible; wrong always answers incorrectly; alternating alternates by instance index. Deterministic in all three cases, because a mock that varied between runs would break the byte-identical rerun guarantee it exists to let us test.",
+      "enum": ["expected", "wrong", "alternating"]
+    },
+    "model_under_test": {
+      "title": "ModelUnderTest",
+      "description": "One model the study invokes. provider selects the invocation path: mock runs in process with no network, harness shells out to the same callModel() the Compare module uses.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "description": "Identifier used in the artifact. For the harness provider this is the canonical provider/model id that Compare uses.",
+          "type": "string",
+          "minLength": 1
+        },
+        "provider": { "enum": ["mock", "harness"] },
+        "mock_strategy": { "$ref": "#/$defs/mock_strategy" },
+        "quantization": {
+          "description": "Recorded where known, null where not. Null is not the same as none: an unquantised model should say bf16, not null.",
+          "type": ["string", "null"]
+        },
+        "serving_engine": { "type": ["string", "null"] },
+        "hardware": { "type": ["string", "null"] }
+      },
+      "required": ["id", "provider"],
+      "additionalProperties": false
+    },
+    "study_locale": {
+      "title": "StudyLocale",
+      "description": "One locale under test, with its position in the 2x2 design.",
+      "type": "object",
+      "properties": {
+        "tag": { "$ref": "verifiable-task-v2.schema.json#/$defs/locale" },
+        "fertility_level": { "$ref": "#/$defs/cell_level" },
+        "resource_level": { "$ref": "#/$defs/cell_level" }
+      },
+      "required": ["tag", "fertility_level", "resource_level"],
+      "additionalProperties": false
+    },
+    "study_template": {
+      "title": "StudyTemplate",
+      "type": "object",
+      "properties": {
+        "path": {
+          "description": "Template family directory, resolved relative to the config file rather than the working directory, so a config is portable.",
+          "type": "string",
+          "minLength": 1
+        },
+        "count": { "type": "integer", "minimum": 1 }
+      },
+      "required": ["path", "count"],
+      "additionalProperties": false
+    },
+    "comparison": {
+      "title": "Comparison",
+      "description": "One paired comparison between two locales. Paired means matched on template and instance index: because seeds carry no locale term, instance 3 of a template is the same item in both locales, so the difference between them is the locale and nothing else. An unpaired difference of means over these two sets would answer a weaker question.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "left": { "$ref": "verifiable-task-v2.schema.json#/$defs/locale" },
+        "right": { "$ref": "verifiable-task-v2.schema.json#/$defs/locale" }
+      },
+      "required": ["id", "left", "right"],
+      "additionalProperties": false
+    },
+    "study_config": {
+      "title": "StudyConfig",
+      "description": "The input to `redrob-generate study`.",
+      "type": "object",
+      "properties": {
+        "study_version": { "$ref": "#/$defs/study_version" },
+        "id": { "type": "string", "minLength": 1 },
+        "description": { "type": "string" },
+        "seed_policy": { "$ref": "#/$defs/seed_policy" },
+        "fertility_tokenizer": { "$ref": "#/$defs/tokenizer_ref" },
+        "templates": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/study_template" }
+        },
+        "locales": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/study_locale" }
+        },
+        "models": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/model_under_test" }
+        },
+        "comparisons": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/comparison" }
+        }
+      },
+      "required": [
+        "study_version",
+        "id",
+        "seed_policy",
+        "fertility_tokenizer",
+        "templates",
+        "locales",
+        "models",
+        "comparisons"
+      ],
+      "additionalProperties": false
+    },
+    "runtime_record": {
+      "title": "RuntimeRecord",
+      "description": "One implementation that produced verdicts in this run, and the Unicode table it read. Both runtimes are recorded even when only one produced verdicts, because the reason the distinction exists is that their Unicode versions differ, and a reader cannot check that claim unless both numbers are present.",
+      "type": "object",
+      "properties": {
+        "implementation": { "type": "string" },
+        "implementation_version": { "type": "string" },
+        "unicode_version": { "type": "string" },
+        "authoritative": { "type": "boolean" }
+      },
+      "required": ["implementation", "implementation_version", "unicode_version", "authoritative"],
+      "additionalProperties": false
+    },
+    "result_provenance": {
+      "title": "ResultProvenance",
+      "type": "object",
+      "properties": {
+        "generator_name": { "type": "string" },
+        "generator_version": { "type": "string" },
+        "spec_version": { "$ref": "verifiable-task-v2.schema.json#/$defs/spec_version" },
+        "seed_policy": { "$ref": "#/$defs/seed_policy" },
+        "tokenizer": { "$ref": "#/$defs/tokenizer_ref" },
+        "runtimes": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/runtime_record" }
+        },
+        "models": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/model_under_test" }
+        },
+        "created_at": { "type": "string" }
+      },
+      "required": [
+        "generator_name",
+        "generator_version",
+        "spec_version",
+        "seed_policy",
+        "tokenizer",
+        "runtimes",
+        "models",
+        "created_at"
+      ],
+      "additionalProperties": false
+    },
+    "result_locale": {
+      "title": "ResultLocale",
+      "description": "A study locale with the translation status of the template text actually rendered for it, carried through so that a reader sees which locales were placeholders without opening the templates.",
+      "type": "object",
+      "properties": {
+        "tag": { "$ref": "verifiable-task-v2.schema.json#/$defs/locale" },
+        "fertility_level": { "$ref": "#/$defs/cell_level" },
+        "resource_level": { "$ref": "#/$defs/cell_level" },
+        "translation_status": { "$ref": "verifiable-task-v2.schema.json#/$defs/translation_status" }
+      },
+      "required": ["tag", "fertility_level", "resource_level", "translation_status"],
+      "additionalProperties": false
+    },
+    "result_instance": {
+      "title": "ResultInstance",
+      "description": "One model's answer to one instance, and the verdict on it.",
+      "type": "object",
+      "properties": {
+        "model_id": { "type": "string" },
+        "template_id": { "$ref": "verifiable-task-v2.schema.json#/$defs/template_id" },
+        "locale": { "$ref": "verifiable-task-v2.schema.json#/$defs/locale" },
+        "instance_index": { "type": "integer", "minimum": 0 },
+        "seed": { "type": "string", "pattern": "^[0-9]+$" },
+        "verifier_family": {
+          "description": "Verifier type, or the bracketed list of element types when the verifier field held a list.",
+          "type": "string"
+        },
+        "passed": { "type": "boolean" },
+        "code": { "$ref": "verifiable-task-v2.schema.json#/$defs/verdict_code" },
+        "elements": {
+          "description": "Per-element verdicts, present exactly when the verifier field held a list.",
+          "type": "array",
+          "items": { "$ref": "verifiable-task-v2.schema.json#/$defs/verdict_element" }
+        },
+        "verdict_provenance": { "$ref": "#/$defs/runtime_record" },
+        "prompt_tokens": { "type": "integer", "minimum": 0 },
+        "code_mix_ratio": { "type": ["number", "null"] }
+      },
+      "required": [
+        "model_id",
+        "template_id",
+        "locale",
+        "instance_index",
+        "seed",
+        "verifier_family",
+        "passed",
+        "code",
+        "verdict_provenance",
+        "prompt_tokens",
+        "code_mix_ratio"
+      ],
+      "additionalProperties": false
+    },
+    "accuracy_row": {
+      "title": "AccuracyRow",
+      "type": "object",
+      "properties": {
+        "model_id": { "type": "string" },
+        "locale": { "$ref": "verifiable-task-v2.schema.json#/$defs/locale" },
+        "verifier_family": { "type": "string" },
+        "n": { "type": "integer", "minimum": 0 },
+        "passed": { "type": "integer", "minimum": 0 },
+        "accuracy": { "type": "number", "minimum": 0, "maximum": 1 }
+      },
+      "required": ["model_id", "locale", "verifier_family", "n", "passed", "accuracy"],
+      "additionalProperties": false
+    },
+    "token_row": {
+      "title": "TokenRow",
+      "description": "Mean prompt tokens for a locale. Prompt token counts do not depend on the model, so these are aggregated over instances only and carry no model id.",
+      "type": "object",
+      "properties": {
+        "locale": { "$ref": "verifiable-task-v2.schema.json#/$defs/locale" },
+        "n": { "type": "integer", "minimum": 0 },
+        "mean_prompt_tokens": { "type": "number", "minimum": 0 }
+      },
+      "required": ["locale", "n", "mean_prompt_tokens"],
+      "additionalProperties": false
+    },
+    "paired_delta": {
+      "title": "PairedDelta",
+      "description": "The difference between two locales over items matched on template and instance index. n_pairs is the number of matched items, not the number of instances in either locale; a pair missing from one side is dropped and counted in dropped_unpaired rather than filled in.",
+      "type": "object",
+      "properties": {
+        "comparison": { "type": "string" },
+        "left": { "$ref": "verifiable-task-v2.schema.json#/$defs/locale" },
+        "right": { "$ref": "verifiable-task-v2.schema.json#/$defs/locale" },
+        "n_pairs": { "type": "integer", "minimum": 0 },
+        "dropped_unpaired": { "type": "integer", "minimum": 0 },
+        "mean_prompt_tokens_left": { "type": "number" },
+        "mean_prompt_tokens_right": { "type": "number" },
+        "mean_prompt_tokens_delta": {
+          "description": "Mean of the per-pair differences, right minus left. Equal to the difference of the means for a complete pairing, and reported per pair because that is the quantity whose spread would be summarised if a dispersion measure is added later.",
+          "type": "number"
+        },
+        "accuracy_left": { "type": "number", "minimum": 0, "maximum": 1 },
+        "accuracy_right": { "type": "number", "minimum": 0, "maximum": 1 },
+        "accuracy_delta": { "type": "number", "minimum": -1, "maximum": 1 }
+      },
+      "required": [
+        "comparison",
+        "left",
+        "right",
+        "n_pairs",
+        "dropped_unpaired",
+        "mean_prompt_tokens_left",
+        "mean_prompt_tokens_right",
+        "mean_prompt_tokens_delta",
+        "accuracy_left",
+        "accuracy_right",
+        "accuracy_delta"
+      ],
+      "additionalProperties": false
+    },
+    "study_result": {
+      "title": "StudyResult",
+      "description": "The artifact `redrob-generate study` writes. Numbers only: there is no field for a conclusion, an interpretation or a summary sentence, because an artifact that carried one would be quoted instead of the data.",
+      "type": "object",
+      "properties": {
+        "study_version": { "$ref": "#/$defs/study_version" },
+        "study_id": { "type": "string" },
+        "provenance": { "$ref": "#/$defs/result_provenance" },
+        "locales": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/result_locale" }
+        },
+        "instances": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/result_instance" }
+        },
+        "aggregates": {
+          "type": "object",
+          "properties": {
+            "accuracy": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/accuracy_row" }
+            },
+            "tokens": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/token_row" }
+            },
+            "paired_deltas": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/paired_delta" }
+            }
+          },
+          "required": ["accuracy", "tokens", "paired_deltas"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["study_version", "study_id", "provenance", "locales", "instances", "aggregates"],
+      "additionalProperties": false
+    }
+  }
+}

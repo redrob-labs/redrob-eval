@@ -558,9 +558,17 @@ Used for content hashing and for the emitted files:
   writes `1e-9`, and Python switches to exponent notation at `1e16` where JavaScript waits until
   `1e21`. A Python implementation must reimplement the ECMAScript presentation rules; the digits
   themselves already agree.
-- **Restriction:** an integer outside the safe double range, `±(2^53 - 1)`, is rejected rather
-  than serialised, because a JavaScript reader would silently see a different number and
-  therefore compute a different hash.
+- **Restriction:** a document must not contain an integer outside the safe double range,
+  `±(2^53 - 1)`, because a JavaScript reader would silently see a different number and therefore
+  compute a different hash.
+
+  The restriction is on documents, and it is enforced where the distinction still exists. Python
+  has arbitrary-precision integers, so it rejects such a value on the way in. A JavaScript
+  implementation cannot: by the time `JSON.parse` returns, `9007199254740993` has already become
+  `9007199254740992` and no serialiser can tell. What a JavaScript implementation must *not* do is
+  reject large numbers at serialisation time as a substitute, because a value like `1e21` is a
+  perfectly legal JSON number that Python reads as a float and writes back as `1e+21`; refusing it
+  would turn a safety check into the divergence it was meant to prevent.
 
 Content hash: `sha256:` followed by the lowercase hex SHA-256 of the UTF-8 canonical JSON of the
 merged template document.

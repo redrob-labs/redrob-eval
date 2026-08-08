@@ -1,0 +1,49 @@
+$ yarn verify:phase1
+
+yarn run v1.22.22
+$ tsx scripts/verify-phase1.mts
+=== Metric fixtures ===
+[PASS] chrf-identical (chrf) score=1.0000 expected == 1 — Identical strings → chrF = 1
+[PASS] chrf-empty-vs-text (chrf) score=0.0000 expected == 0 — Empty hypothesis → chrF = 0
+[PASS] chrf-close (chrf) score=0.9620 expected >= 0.7 && <= 1 — Near-match English should score high chrF
+[PASS] chrf-unrelated (chrf) score=0.0084 expected <= 0.15 — Unrelated text should score near zero
+[PASS] acc-exact (accuracy) score=1.0000 expected == 1 — Exact label match
+[PASS] acc-from-sentence (accuracy) score=1.0000 expected == 1 — Extract numeric label from verbose prediction
+[PASS] acc-mismatch (accuracy) score=0.0000 expected == 0 — Wrong label → 0
+[PASS] gsm8k-hash (gsm8k_exact) score=1.0000 expected == 1 — #### answer extraction matches
+[PASS] gsm8k-phrase (gsm8k_exact) score=1.0000 expected == 1 — "The answer is N" extraction
+[PASS] gsm8k-comma (gsm8k_exact) score=1.0000 expected == 1 — Comma / currency normalization
+[PASS] gsm8k-wrong (gsm8k_exact) score=0.0000 expected == 0 — Wrong numeric answer → 0
+[PASS] qwk-perfect (qwk) score=1.0000 expected == 1 — Identical ordinals → QWK = 1
+[PASS] qwk-disagree (qwk) score=0.0000 expected <= 0.05 — Systematic extreme disagreement → near-zero / negative QWK clipped
+[PASS] qwk-abstain-excluded (qwk) score=1.0000 expected == 1 — Abstentions excluded from QWK; remaining exact matches → 1
+[PASS] kappa-items (cohens_kappa) score=1.0000 expected == 1 — Identical binary checklist → κ = 1
+[PASS] checklist-composite-match (checklist_composite) score=1.0000 expected == 1 — Weighted sum matches human total
+[PASS] abstention-yes (abstention_rate) score=1.0000 expected == 1 — Single abstention → rate 1
+All 17 fixtures passed.
+
+scorePair smoke + feedback: ok
+
+=== Dataset catalog ===
+- in22-gen-hi-en: IN22-Gen Hindi→English [chrf] localOnly=false
+- indic-glue-iitp-mr-hi: IndicGLUE IITP-MR (Hindi sentiment) [accuracy] localOnly=true
+- accuracy-fixture: Synthetic Hindi sentiment (fixture) [accuracy] localOnly=false
+- gsm8k-main: GSM8K (main) [gsm8k_exact] localOnly=false
+
+=== Vendored offline load ===
+gsm8k-main: n=3 revision=4b2c368fd981
+in22-gen-hi-en: n=3 revision=f087d258c14d
+accuracy-fixture: n=3 revision=d4934eeaddb5
+Golden sample IDs: ok
+
+=== Prompt builder snapshot ===
+Prompt snapshot: ok
+
+=== Aggregate snapshot ===
+Aggregate snapshot: ok
+
+=== Split isolation ===
+Split isolation: ok
+
+Phase 1 verify OK
+Done in 0.36s.

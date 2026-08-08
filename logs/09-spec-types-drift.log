@@ -1,0 +1,6 @@
+$ yarn generate:spec-types:check
+
+yarn run v1.22.22
+$ tsx scripts/generate-spec-types.mts --check
+spec-types.generated.ts matches spec/verifiable-task-v1.schema.json
+Done in 0.18s.

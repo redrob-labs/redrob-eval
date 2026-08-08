@@ -1,0 +1,13 @@
+$ reproducible_emit
+
+--- linear-equation
+    identical: 5e0c45030da1ee9e0acf0ca8c601a0bd8ff73536b51f859aa74d06256b2288cf  instances.jsonl
+f3e2bd256fdce68fb60a66a0a66f2ac089bccb837c09cca1f1a79e766d24392f  manifest.json
+--- quarterly-ledger
+    identical: ca6c8bf8dfb5d5755d678ada534a914b99373997dce468c0e8f329ef416694a3  instances.jsonl
+8ac0d169182f601b4c6663dceb8dec66d0bd58e5d26f98e9c15207a03adc9e35  manifest.json
+--- release-note
+    identical: d364ba1500e99b87c96f53f0739f5c88c12ca1fbc5a875f3def17de08fed5bc4  instances.jsonl
+c0e147ec0b348d2c1b7cd1e2562a8a9139ab9de99188718613be79fc326b3d55  manifest.json
+--- default invocation, created_at excluded
+    identical apart from created_at

@@ -1,0 +1,40 @@
+// Copyright 2026 Janghoon Lee
+// SPDX-License-Identifier: Apache-2.0
+/**
+ * Dump the verdict this implementation produces for every conformance case.
+ * Run: tsx scripts/generate-verdicts.mts > /tmp/ts.json
+ *
+ * Its counterpart is `scripts/generate_verdicts.py`. Each conformance suite already checks
+ * its own side against the expected verdict in the case file, which is enough to catch a
+ * divergence; diffing these two dumps is what *shows* it, as a list of case ids rather
+ * than as two separate red builds that a reader has to correlate by hand.
+ */
+import { readdirSync, readFileSync } from 'node:fs';
+import path from 'node:path';
+
+import {
+  DECLARATIVE_VERIFIER_TYPES,
+  runVerifierOrFail,
+  type ConformanceFile,
+  type Verifier,
+} from '../packages/harness/src/generate/index';
+
+const directory = path.join(process.cwd(), 'spec', 'conformance');
+const verdicts: Record<string, [boolean, string]> = {};
+
+for (const filename of readdirSync(directory).sort()) {
+  if (!filename.endsWith('.json')) continue;
+  if (!(DECLARATIVE_VERIFIER_TYPES as readonly string[]).includes(filename.slice(0, -5))) continue;
+  const document = JSON.parse(
+    readFileSync(path.join(directory, filename), 'utf8'),
+  ) as ConformanceFile;
+  for (const entry of document.cases) {
+    const verdict = runVerifierOrFail(entry.verifier as Verifier, entry.candidate);
+    verdicts[entry.id] = [verdict.passed, verdict.code];
+  }
+}
+
+const ordered = Object.keys(verdicts)
+  .sort()
+  .map((id) => `  ${JSON.stringify(id)}: ${JSON.stringify(verdicts[id])}`);
+process.stdout.write(`{\n${ordered.join(',\n')}\n}\n`);

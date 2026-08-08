@@ -270,7 +270,27 @@ That guarantee is also what makes their token counts comparable, per the fertili
 
 ---
 
-## 14. Fertility: interface only, and no default tokenizer
+## 14. One line added to the root `tsconfig.json`
+
+**Decision.** The definition of done requires `tsc --noEmit` to be clean. On a clean checkout of
+`main` it is not: six `TS5097` errors, all of the form "an import path can only end with a '.ts'
+extension when `allowImportingTsExtensions` is enabled", in `scripts/datasets/fetch.mts`,
+`scripts/verify-selfhosted.mts` and `scripts/verify-tournament.mts`. None of them come from this
+work — `yarn typecheck`, which runs the harness and tokenizers projects, never covered
+`scripts/`, so the errors were invisible.
+
+**Options.** (a) Rewrite the import specifiers in three existing scripts. (b) Enable
+`allowImportingTsExtensions` in the root `tsconfig.json`. (c) Leave it, and report the item as
+failing for a pre-existing reason.
+
+**Chose (b),** one line. It changes no runtime behaviour — `tsx` already resolves those imports,
+which is why the scripts run — and the flag is only permitted when the project never emits, which
+this one does not. (a) touches three files belonging to Compare and Deploy for a cosmetic reason,
+which the prohibitions discourage.
+
+---
+
+## 15. Fertility: interface only, and no default tokenizer
 
 **Decision.** The prompt asks for the hook and forbids selecting or bundling a tokenizer.
 

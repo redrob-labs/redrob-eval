@@ -1,0 +1,98 @@
+$ build_without_python
+
+python:  not found
+python3: not found
+pip:     not found
+
+yarn install v1.22.22
+[1/5] Validating package.json...
+[2/5] Resolving packages...
+success Already up-to-date.
+Done in 0.15s.
+yarn run v1.22.22
+$ yarn workspace @redrob/harness typecheck && yarn workspace @redrob/web build
+$ tsc -p tsconfig.json --noEmit
+$ next build
+▲ Next.js 16.2.11 (Turbopack)
+
+  Creating an optimized production build ...
+Turbopack build encountered 1 warnings:
+./apps/web/next.config.ts
+Encountered unexpected file in NFT list
+A file was traced that indicates that the whole project was traced unintentionally. Somewhere in the import trace below, there are:
+- filesystem operations (like path.join, path.resolve or fs.readFile), or
+- very dynamic requires (like require('./' + foo)).
+To resolve this, you can
+- remove them if possible, or
+- only use them in development, or
+- make sure they are statically scoped to some subfolder: path.join(process.cwd(), 'data', bar), or
+- add ignore comments: path.join(/*turbopackIgnore: true*/ process.cwd(), bar)
+
+Import trace:
+  App Route:
+    ./apps/web/next.config.ts
+    ./apps/web/src/lib/deploy/operations.ts
+    ./apps/web/src/app/api/deploy/terminal/[id]/inject/route.ts
+
+
+✓ Compiled successfully in 3.4s
+  Running TypeScript ...
+  Finished TypeScript in 3.2s ...
+  Collecting page data using 3 workers ...
+  Generating static pages using 3 workers (0/15) ...
+  Generating static pages using 3 workers (3/15) 
+  Generating static pages using 3 workers (7/15) 
+  Generating static pages using 3 workers (11/15) 
+✓ Generating static pages using 3 workers (15/15) in 199ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /api/compare/run
+├ ƒ /api/compare/tournament
+├ ƒ /api/compare/tournament/[runId]
+├ ƒ /api/compare/tournament/[runId]/judge
+├ ƒ /api/compare/tournament/[runId]/route-policy
+├ ƒ /api/compare/tournament/[runId]/vote
+├ ƒ /api/datasets
+├ ƒ /api/deploy/status
+├ ƒ /api/deploy/terminal
+├ ƒ /api/deploy/terminal/[id]
+├ ƒ /api/deploy/terminal/[id]/inject
+├ ƒ /api/deploy/terminal/[id]/output
+├ ƒ /api/deploy/tunnel
+├ ƒ /api/eval
+├ ƒ /api/image/runs/[runId]
+├ ƒ /api/image/suites
+├ ƒ /api/models
+├ ƒ /api/optimize
+├ ƒ /api/optimize/runs
+├ ƒ /api/optimize/runs/[runId]
+├ ƒ /api/optimize/runs/[runId]/events
+├ ƒ /api/preference/runs
+├ ƒ /api/preference/runs/[runId]
+├ ƒ /api/preference/runs/[runId]/events
+├ ƒ /api/probe
+├ ƒ /api/routing/collect
+├ ƒ /api/routing/corpus
+├ ƒ /api/routing/export
+├ ƒ /api/routing/runs
+├ ƒ /api/routing/runs/[runId]
+├ ƒ /api/routing/runs/[runId]/events
+├ ƒ /api/samples/optimize-report
+├ ƒ /api/score
+├ ƒ /api/settings
+├ ƒ /api/settings/browse
+├ ƒ /api/status
+├ ○ /compare
+├ ○ /deploy
+├ ○ /evolve
+├ ○ /icon.svg
+└ ○ /settings
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+Done in 9.52s.

@@ -41,6 +41,30 @@ jobs:
       - run: pip install -e "packages/generate[dev]"
       - run: pytest packages/generate -q
 
+  zero-divergence:
+    name: Zero divergence
+    runs-on: ubuntu-latest
+    # Each suite already checks its own side against the expected verdict in the case file.
+    # This job diffs the two implementations' actual output so that a disagreement is
+    # reported as a list of case ids rather than as two separate red builds.
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: yarn
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: yarn install --frozen-lockfile
+      - run: pip install -e packages/generate
+      - name: Diff Python verdicts against TypeScript verdicts
+        run: |
+          npx tsx scripts/generate-verdicts.mts > /tmp/ts-verdicts.json
+          python scripts/generate_verdicts.py > /tmp/py-verdicts.json
+          diff -u /tmp/py-verdicts.json /tmp/ts-verdicts.json
+          echo "zero divergence across $(( $(wc -l < /tmp/py-verdicts.json) - 2 )) cases"
+
   reproducible-emit:
     name: Reproducible emit
     runs-on: ubuntu-latest

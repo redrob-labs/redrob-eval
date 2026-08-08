@@ -86,6 +86,9 @@ exports/*
 # router training artifacts / venv
 train/artifacts/
 .venv-train/
+.venv-generate/
+**/*.egg-info/
+.pytest_cache/
 **/__pycache__/
 *.py[cod]
 *.pt

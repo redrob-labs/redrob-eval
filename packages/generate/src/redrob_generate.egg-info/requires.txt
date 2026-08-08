@@ -1,5 +1,0 @@
-jsonschema>=4.20
-sympy>=1.12
-
-[dev]
-pytest>=7.4

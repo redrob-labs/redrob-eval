@@ -1,2 +1,0 @@
-[console_scripts]
-redrob-generate = redrob_generate.cli:main

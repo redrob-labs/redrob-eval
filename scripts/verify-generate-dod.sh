@@ -199,6 +199,12 @@ PY
 
 step 12-build-output-unchanged build_output_unchanged
 
+# 6. Every check above compares two things and passes when they match. That is only
+#    evidence if a mismatch would have been noticed, so each invariant is broken on purpose
+#    and the check for it is required to fail. A control that passes is a check that cannot
+#    fail, which is worse than no check because it reads as proof.
+step 13-negative-controls bash scripts/negative-controls.sh
+
 echo
 if [ "$FAILURES" -eq 0 ]; then
   echo "all checks passed"

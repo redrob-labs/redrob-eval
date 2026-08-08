@@ -267,7 +267,7 @@ PY
 
   if diff /tmp/dod-build-with.txt /tmp/dod-build-without.txt; then
     echo "    identical across $(wc -l </tmp/dod-build-with.txt) artifacts"
-    grep -E '  server/app/(compare|evolve|deploy)\.html$' /tmp/dod-build-with.txt
+    grep -E '  server/app/(compare|evolve|deploy|generate)\.html$' /tmp/dod-build-with.txt
   else
     status=1
   fi

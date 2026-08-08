@@ -187,6 +187,33 @@ identical
 
 ---
 
+## From the workbench
+
+`/generate` in the web UI covers the same ground without the command line.
+
+**Templates** lists every family under `templates/`, each locale it has, and how reviewed that
+locale is. Picking one samples a few instances and shows the rendered prompt, the parameters that
+produced it, and the verifier that will score it. Selecting a locale marked `untranslated` says so
+before showing you a prompt that is going to be in English.
+
+**Study** runs a shipped config and renders the aggregate tables, along with the provenance block
+— both runtimes and the Unicode version each reads — and the publication verdict.
+
+Three things the page does deliberately:
+
+- **It always asks the publication gate.** The CLI writes the artifact before checking it, so
+  asking is free, and reporting "publishable" without having checked would be the page asserting
+  something it never established. The refusal shown is Python's own, not a second implementation of
+  the rule living in the browser.
+- **It will not spend money.** A config declaring a `harness` model is refused by the route, not
+  merely hidden in the UI. Real model calls stay on the command line, where the spend is a decision
+  someone typed.
+- **It says when it cannot help.** Sampling is Python-only — this repository's TypeScript
+  implementation reads and verifies but does not generate — so without the CLI on `PATH` the page
+  says exactly that and still lists the catalog, which is read from disk.
+
+---
+
 ## The artifact
 
 Numbers only. There is no field for a conclusion and no code that writes one.

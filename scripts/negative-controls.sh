@@ -604,6 +604,36 @@ expect_failure \
   make_the_mock_nondeterministic
 
 # ---------------------------------------------------------------------------------------
+# 18. A locale nobody reviewed is never presented as reviewed.
+#
+# Broken by defaulting the catalog's translation status to native-reviewed when a layer
+# does not declare one. This is the failure mode worth a control because it is silent and
+# it is upward: the page shows a green chip, the reader believes a number is about Korean,
+# and nothing in the run errors. Absence of a claim has to read as absence of review.
+
+default_a_locale_to_reviewed() {
+  break_file packages/harness/src/generate/catalog.ts <<'PY'
+import sys
+from pathlib import Path
+path = Path(sys.argv[1])
+text = path.read_text()
+marker = "(layer.translation_status as TranslationStatus) ?? 'untranslated',"
+assert marker in text, "anchor drifted"
+path.write_text(text.replace(
+    marker,
+    "(layer.translation_status as TranslationStatus) ?? 'native-reviewed',",
+))
+PY
+  [ $? -eq 0 ] || return 0
+  node --import tsx --test scripts/test/generate-catalog.test.mts 2>&1
+}
+
+expect_failure \
+  "a locale layer that declares no review status is treated as unreviewed" \
+  "defaulted the catalog's translation status to native-reviewed" \
+  default_a_locale_to_reviewed
+
+# ---------------------------------------------------------------------------------------
 
 echo
 if [ "$FAILURES" -eq 0 ]; then

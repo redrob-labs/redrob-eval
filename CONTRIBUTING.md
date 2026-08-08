@@ -53,6 +53,44 @@ git checkout -b release/0.2.0 develop
 # PR into main, tag main as v0.2.0, then merge the tag back into develop
 ```
 
+## Releases and QA
+
+**What a release branch is for.** Cutting `release/x.y.z` freezes the feature set for that version
+while leaving `develop` open, so the next cycle's work is not blocked by whatever the release is
+waiting on. Only three kinds of commit belong on it: the version bump, the changelog, and fixes
+for defects found while testing it. A new feature on a release branch means the freeze did not
+happen and the branch is just `develop` under another name.
+
+**The version bump touches five files**, and missing one is the usual mistake: the `version` field
+in the root, `apps/web`, `packages/harness` and `packages/tokenizers` `package.json`, plus
+`version:` in `CITATION.cff`.
+
+**QA happens in three layers, and only the first two are automated.**
+
+1. *Every pull request into `develop`* runs both workflows: typecheck, lint, the `verify:*`
+   scripts, the byte-identity check on `exports/samples`, a production build, the TypeScript and
+   Python conformance suites on Python 3.11 and 3.12, the zero-divergence diff between the two
+   implementations, the reproducible-emit check, and a build with Python stripped from `PATH`.
+2. *Every push to `develop` and `main`* runs the same thing again, which is what catches a merge
+   that is fine in isolation and broken in combination.
+3. *On the release branch*, by hand, the things CI structurally cannot do. CI has no browser, no
+   API keys and no GPU, so none of the following is covered by a green build:
+   - click through the UI — there are no end-to-end tests, so `yarn build` proves it compiles and
+     nothing proves it works
+   - one real call against a live provider key, since the `verify:*` scripts are deliberately
+     offline and deterministic
+   - if a GPU host is available, one `/deploy` smoke test through SSH, systemd and vLLM
+   - upgrade from the previous tag with an existing `.env` and cached runs in place
+
+Layer 3 is the reason the release branch exists here. Without it a release is only as good as a
+build that never opened the application.
+
+**Tagging.** Tag `main` after the release merge, `vX.Y.Z`, and publish it as a GitHub release.
+This is a precondition for the citation metadata, not bookkeeping: `CITATION.cff` names a version,
+and Zenodo mints a DOI from a published GitHub release. Until a tag exists, `version: 0.1.0` in
+that file points at nothing a reader can obtain, which is why the spec currently tells readers to
+pin a commit and why generated manifests carry `"doi": "TBD"`.
+
 ## Development
 
 - App: `yarn dev` → http://localhost:3939 (only when you need the UI)

@@ -157,6 +157,9 @@ On **Evolve**, pick a catalog dataset or **Custom goal** (goal + rubric + input-
 - [Decision records](docs/decisions/) - why a design is the way it is, one file per decision,
   numbered and never rewritten in place. Start with
   [0001 Generate module foundation](docs/decisions/0001-generate-foundation.md).
+- [Contributing](CONTRIBUTING.md) - setup, and the branching model: `main` is production and only
+  takes releases, `develop` is what you branch from and target. Reasoning in
+  [0004 Branching model](docs/decisions/0004-branching-model.md).
 - [Sample exports](exports/samples/README.md) - regenerable report + Pareto
 
 ## Environment

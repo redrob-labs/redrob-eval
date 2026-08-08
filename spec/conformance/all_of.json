@@ -1,0 +1,316 @@
+{
+  "spec_version": "redrob-verifiable-task/v1",
+  "verifier_type": "all_of",
+  "description": "Composition. The contract is that the first failing child's verdict is returned verbatim, code and all, so ordering the children changes the diagnosis but never the pass or fail.",
+  "cases": [
+    {
+      "id": "all_of/empty-list-passes",
+      "description": "The identity element.",
+      "verifier": { "type": "all_of", "verifiers": [] },
+      "candidate": "anything",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "all_of/single-child-passing",
+      "verifier": {
+        "type": "all_of",
+        "verifiers": [{ "type": "exact", "expected": "42" }]
+      },
+      "candidate": "42",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "all_of/single-child-failing-propagates-code",
+      "verifier": {
+        "type": "all_of",
+        "verifiers": [{ "type": "exact", "expected": "42" }]
+      },
+      "candidate": "43",
+      "expected": { "passed": false, "code": "mismatch" }
+    },
+    {
+      "id": "all_of/all-children-pass",
+      "verifier": {
+        "type": "all_of",
+        "verifiers": [
+          { "type": "format_constraint", "max_lines": 1 },
+          { "type": "regex", "pattern": "[0-9]+" },
+          { "type": "numeric_tolerance", "expected": 42 }
+        ]
+      },
+      "candidate": "42",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "all_of/first-failure-wins-line-count",
+      "description": "Both the line count and the number would fail; the earlier child decides the code.",
+      "verifier": {
+        "type": "all_of",
+        "verifiers": [
+          { "type": "format_constraint", "max_lines": 1 },
+          { "type": "numeric_tolerance", "expected": 42 }
+        ]
+      },
+      "candidate": "42\n43",
+      "expected": { "passed": false, "code": "line_count_out_of_bounds" }
+    },
+    {
+      "id": "all_of/first-failure-wins-reordered",
+      "description": "The same candidate and the same two constraints, in the other order, reports the other code.",
+      "verifier": {
+        "type": "all_of",
+        "verifiers": [
+          { "type": "numeric_tolerance", "expected": 42 },
+          { "type": "format_constraint", "max_lines": 1 }
+        ]
+      },
+      "candidate": "42\n43",
+      "expected": { "passed": false, "code": "not_a_number" }
+    },
+    {
+      "id": "all_of/schema-then-exact-both-pass",
+      "description": "The extraction template's shape: the schema says the values are right, exact says the serialisation is right.",
+      "verifier": {
+        "type": "all_of",
+        "verifiers": [
+          {
+            "type": "json_schema",
+            "schema": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["city", "units"],
+              "properties": {
+                "city": { "type": "string", "const": "Aveldon" },
+                "units": { "type": "integer", "const": 8143 }
+              }
+            }
+          },
+          { "type": "exact", "expected": "{\"city\":\"Aveldon\",\"units\":8143}", "trim": true }
+        ]
+      },
+      "candidate": "{\"city\":\"Aveldon\",\"units\":8143}",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "all_of/schema-catches-wrong-value-first",
+      "description": "A wrong extraction reports a schema violation, which names the field, rather than a string mismatch, which does not.",
+      "verifier": {
+        "type": "all_of",
+        "verifiers": [
+          {
+            "type": "json_schema",
+            "schema": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["city", "units"],
+              "properties": {
+                "city": { "type": "string", "const": "Aveldon" },
+                "units": { "type": "integer", "const": 8143 }
+              }
+            }
+          },
+          { "type": "exact", "expected": "{\"city\":\"Aveldon\",\"units\":8143}", "trim": true }
+        ]
+      },
+      "candidate": "{\"city\":\"Aveldon\",\"units\":8144}",
+      "expected": { "passed": false, "code": "schema_violation" }
+    },
+    {
+      "id": "all_of/exact-catches-wrong-serialisation",
+      "description": "Right values, wrong serialisation: the schema passes and exact is what fails.",
+      "verifier": {
+        "type": "all_of",
+        "verifiers": [
+          {
+            "type": "json_schema",
+            "schema": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["city", "units"],
+              "properties": {
+                "city": { "type": "string", "const": "Aveldon" },
+                "units": { "type": "integer", "const": 8143 }
+              }
+            }
+          },
+          { "type": "exact", "expected": "{\"city\":\"Aveldon\",\"units\":8143}", "trim": true }
+        ]
+      },
+      "candidate": "{ \"units\": 8143, \"city\": \"Aveldon\" }",
+      "expected": { "passed": false, "code": "mismatch" }
+    },
+    {
+      "id": "all_of/invalid-json-surfaces-from-the-first-child",
+      "verifier": {
+        "type": "all_of",
+        "verifiers": [
+          { "type": "json_schema", "schema": { "type": "object" } },
+          { "type": "exact", "expected": "{}" }
+        ]
+      },
+      "candidate": "not json at all",
+      "expected": { "passed": false, "code": "invalid_json" }
+    },
+    {
+      "id": "all_of/nested-composition",
+      "verifier": {
+        "type": "all_of",
+        "verifiers": [
+          { "type": "format_constraint", "min_length": 1 },
+          {
+            "type": "all_of",
+            "verifiers": [
+              { "type": "regex", "pattern": "^[A-Z]", "mode": "search" },
+              { "type": "format_constraint", "forbidden_substrings": ["TODO"] }
+            ]
+          }
+        ]
+      },
+      "candidate": "Ready to ship",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "all_of/nested-composition-inner-failure",
+      "verifier": {
+        "type": "all_of",
+        "verifiers": [
+          { "type": "format_constraint", "min_length": 1 },
+          {
+            "type": "all_of",
+            "verifiers": [
+              { "type": "regex", "pattern": "^[A-Z]", "mode": "search" },
+              { "type": "format_constraint", "forbidden_substrings": ["TODO"] }
+            ]
+          }
+        ]
+      },
+      "candidate": "Ready to ship, TODO check the changelog",
+      "expected": { "passed": false, "code": "forbidden_substring_present" }
+    },
+    {
+      "id": "all_of/nested-composition-outer-failure-wins",
+      "verifier": {
+        "type": "all_of",
+        "verifiers": [
+          { "type": "format_constraint", "min_length": 100 },
+          {
+            "type": "all_of",
+            "verifiers": [{ "type": "regex", "pattern": "^[A-Z]", "mode": "search" }]
+          }
+        ]
+      },
+      "candidate": "short",
+      "expected": { "passed": false, "code": "length_out_of_bounds" }
+    },
+    {
+      "id": "all_of/three-deep-nesting",
+      "verifier": {
+        "type": "all_of",
+        "verifiers": [
+          {
+            "type": "all_of",
+            "verifiers": [
+              {
+                "type": "all_of",
+                "verifiers": [{ "type": "exact", "expected": "deep" }]
+              }
+            ]
+          }
+        ]
+      },
+      "candidate": "deep",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "all_of/three-deep-nesting-failure",
+      "verifier": {
+        "type": "all_of",
+        "verifiers": [
+          {
+            "type": "all_of",
+            "verifiers": [
+              {
+                "type": "all_of",
+                "verifiers": [{ "type": "exact", "expected": "deep" }]
+              }
+            ]
+          }
+        ]
+      },
+      "candidate": "shallow",
+      "expected": { "passed": false, "code": "mismatch" }
+    },
+    {
+      "id": "all_of/regex-invalid-pattern-propagates",
+      "description": "A configuration error in a child is still a verdict, and it is still the child's code.",
+      "verifier": {
+        "type": "all_of",
+        "verifiers": [
+          { "type": "format_constraint", "min_length": 1 },
+          { "type": "regex", "pattern": "(unclosed" }
+        ]
+      },
+      "candidate": "anything",
+      "expected": { "passed": false, "code": "invalid_pattern" }
+    },
+    {
+      "id": "all_of/set-then-ordered",
+      "description": "Membership first, then order, so a right-members-wrong-order answer is diagnosed as an ordering problem.",
+      "verifier": {
+        "type": "all_of",
+        "verifiers": [
+          {
+            "type": "set_equality",
+            "expected": ["a", "b", "c"],
+            "parse": { "mode": "lines" }
+          },
+          {
+            "type": "ordered_equality",
+            "expected": ["a", "b", "c"],
+            "parse": { "mode": "lines" }
+          }
+        ]
+      },
+      "candidate": "c\nb\na",
+      "expected": { "passed": false, "code": "element_mismatch" }
+    },
+    {
+      "id": "all_of/unicode-children",
+      "verifier": {
+        "type": "all_of",
+        "verifiers": [
+          { "type": "format_constraint", "min_length": 6, "max_length": 6 },
+          { "type": "exact", "expected": "\u0928\u092e\u0938\u094d\u0924\u0947" }
+        ]
+      },
+      "candidate": "\u0928\u092e\u0938\u094d\u0924\u0947",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "all_of/empty-candidate-against-several-children",
+      "verifier": {
+        "type": "all_of",
+        "verifiers": [
+          { "type": "format_constraint", "min_length": 1 },
+          { "type": "numeric_tolerance", "expected": 0 },
+          { "type": "exact", "expected": "" }
+        ]
+      },
+      "candidate": "",
+      "expected": { "passed": false, "code": "length_out_of_bounds" }
+    },
+    {
+      "id": "all_of/single-passing-child-does-not-mask-later-failure",
+      "description": "A composite that returned ok as soon as any child passed would be an any_of wearing the wrong name, and would silently inflate every score using it.",
+      "verifier": {
+        "type": "all_of",
+        "verifiers": [
+          { "type": "format_constraint", "min_length": 1 },
+          { "type": "exact", "expected": "never" }
+        ]
+      },
+      "candidate": "something",
+      "expected": { "passed": false, "code": "mismatch" }
+    }
+  ]
+}

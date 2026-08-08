@@ -1,0 +1,189 @@
+{
+  "spec_version": "redrob-verifiable-task/v1",
+  "verifier_type": "exact",
+  "description": "String equality after the declared normalisation pipeline. The interesting cases are the ones where Python and JavaScript have different default notions of whitespace, case and Unicode composition.",
+  "cases": [
+    {
+      "id": "exact/identical",
+      "description": "The trivial case, which still has to be pinned.",
+      "verifier": { "type": "exact", "expected": "the answer is 42" },
+      "candidate": "the answer is 42",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "exact/empty-matches-empty",
+      "description": "An empty expectation is satisfied by an empty candidate, not by anything else.",
+      "verifier": { "type": "exact", "expected": "" },
+      "candidate": "",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "exact/empty-candidate-nonempty-expected",
+      "verifier": { "type": "exact", "expected": "42" },
+      "candidate": "",
+      "expected": { "passed": false, "code": "mismatch" }
+    },
+    {
+      "id": "exact/trailing-whitespace-not-trimmed",
+      "description": "trim defaults to false, so a trailing newline is a real difference.",
+      "verifier": { "type": "exact", "expected": "42" },
+      "candidate": "42\n",
+      "expected": { "passed": false, "code": "mismatch" }
+    },
+    {
+      "id": "exact/trailing-whitespace-trimmed",
+      "verifier": { "type": "exact", "expected": "42", "trim": true },
+      "candidate": "  42\t\n",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "exact/trim-ideographic-space",
+      "description": "U+3000 is spec whitespace even though JavaScript's String.prototype.trim and Python's str.strip disagree about several members of that set.",
+      "verifier": { "type": "exact", "expected": "answer", "trim": true },
+      "candidate": "\u3000answer\u3000",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "exact/collapse-internal-runs",
+      "verifier": { "type": "exact", "expected": "a b c", "collapse_whitespace": true },
+      "candidate": "a    b\t\tc",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "exact/no-collapse-internal-runs",
+      "verifier": { "type": "exact", "expected": "a b c" },
+      "candidate": "a    b\t\tc",
+      "expected": { "passed": false, "code": "mismatch" }
+    },
+    {
+      "id": "exact/collapse-nbsp-to-space",
+      "description": "U+00A0 is in the spec whitespace set, so collapsing turns it into U+0020.",
+      "verifier": { "type": "exact", "expected": "a b", "collapse_whitespace": true },
+      "candidate": "a\u00a0b",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "exact/nbsp-without-collapse",
+      "verifier": { "type": "exact", "expected": "a b" },
+      "candidate": "a\u00a0b",
+      "expected": { "passed": false, "code": "mismatch" }
+    },
+    {
+      "id": "exact/case-sensitive-by-default",
+      "verifier": { "type": "exact", "expected": "Yes" },
+      "candidate": "yes",
+      "expected": { "passed": false, "code": "mismatch" }
+    },
+    {
+      "id": "exact/case-insensitive",
+      "verifier": { "type": "exact", "expected": "Yes", "case_sensitive": false },
+      "candidate": "YES",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "exact/crlf-normalised",
+      "verifier": { "type": "exact", "expected": "one\ntwo", "normalize_line_endings": true },
+      "candidate": "one\r\ntwo",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "exact/lone-cr-normalised",
+      "description": "A lone CR is a line ending too, which is the case a naive replace(\"\\r\\n\", \"\\n\") misses.",
+      "verifier": { "type": "exact", "expected": "one\ntwo", "normalize_line_endings": true },
+      "candidate": "one\rtwo",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "exact/crlf-not-normalised",
+      "verifier": { "type": "exact", "expected": "one\ntwo" },
+      "candidate": "one\r\ntwo",
+      "expected": { "passed": false, "code": "mismatch" }
+    },
+    {
+      "id": "exact/devanagari-nfc",
+      "description": "U+0958 is a composition exclusion, so NFC decomposes it to U+0915 U+093C rather than the other way round.",
+      "verifier": { "type": "exact", "expected": "\u0958", "unicode_normalization": "NFC" },
+      "candidate": "\u0915\u093c",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "exact/devanagari-unnormalised",
+      "verifier": { "type": "exact", "expected": "\u0958" },
+      "candidate": "\u0915\u093c",
+      "expected": { "passed": false, "code": "mismatch" }
+    },
+    {
+      "id": "exact/hangul-jamo-nfc",
+      "description": "Conjoining jamo compose to a precomposed syllable under NFC.",
+      "verifier": { "type": "exact", "expected": "\ud55c\uae00", "unicode_normalization": "NFC" },
+      "candidate": "\u1112\u1161\u11ab\u1100\u1173\u11af",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "exact/hangul-jamo-unnormalised",
+      "verifier": { "type": "exact", "expected": "\ud55c\uae00" },
+      "candidate": "\u1112\u1161\u11ab\u1100\u1173\u11af",
+      "expected": { "passed": false, "code": "mismatch" }
+    },
+    {
+      "id": "exact/nfkc-ligature",
+      "description": "NFKC folds the fi ligature; NFC does not. Case exists to keep the two forms distinguishable.",
+      "verifier": { "type": "exact", "expected": "fi", "unicode_normalization": "NFKC" },
+      "candidate": "\ufb01",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "exact/nfc-does-not-fold-ligature",
+      "verifier": { "type": "exact", "expected": "fi", "unicode_normalization": "NFC" },
+      "candidate": "\ufb01",
+      "expected": { "passed": false, "code": "mismatch" }
+    },
+    {
+      "id": "exact/nfd-decomposes",
+      "verifier": { "type": "exact", "expected": "e\u0301", "unicode_normalization": "NFD" },
+      "candidate": "\u00e9",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "exact/full-pipeline",
+      "description": "Normalisation order matters: NFC, then line endings, then trim, then collapse, then case.",
+      "verifier": {
+        "type": "exact",
+        "expected": "the total is 42",
+        "unicode_normalization": "NFC",
+        "normalize_line_endings": true,
+        "trim": true,
+        "collapse_whitespace": true,
+        "case_sensitive": false
+      },
+      "candidate": "\r\n  THE   Total\tIS\u00a042  \r\n",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "exact/astral-emoji-equal",
+      "description": "A surrogate pair must compare as one character's worth of content in either runtime.",
+      "verifier": { "type": "exact", "expected": "done \ud83d\udc4d" },
+      "candidate": "done \ud83d\udc4d",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "exact/astral-emoji-different",
+      "verifier": { "type": "exact", "expected": "done \ud83d\udc4d" },
+      "candidate": "done \ud83d\udc4e",
+      "expected": { "passed": false, "code": "mismatch" }
+    },
+    {
+      "id": "exact/whitespace-only-candidate-trimmed",
+      "verifier": { "type": "exact", "expected": "", "trim": true },
+      "candidate": " \t\n\u2003 ",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "exact/devanagari-case-insensitive-is-identity",
+      "description": "Caseless scripts must be unaffected by the case_sensitive switch.",
+      "verifier": { "type": "exact", "expected": "\u0909\u0924\u094d\u0924\u0930", "case_sensitive": false },
+      "candidate": "\u0909\u0924\u094d\u0924\u0930",
+      "expected": { "passed": true, "code": "ok" }
+    }
+  ]
+}

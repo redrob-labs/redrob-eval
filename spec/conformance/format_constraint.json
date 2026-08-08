@@ -1,0 +1,265 @@
+{
+  "spec_version": "redrob-verifiable-task/v1",
+  "verifier_type": "format_constraint",
+  "description": "Shape checks only. Length is in code points, line counting has a specified answer for the trailing-newline case, and the order in which checks run determines which code is reported.",
+  "cases": [
+    {
+      "id": "format/no-constraints-accepts-anything",
+      "description": "The identity configuration. A legitimate way to say the shape does not matter.",
+      "verifier": { "type": "format_constraint" },
+      "candidate": "anything at all\n\n\u0928\u092e\u0938\u094d\u0924\u0947",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "format/min-length-satisfied",
+      "verifier": { "type": "format_constraint", "min_length": 5 },
+      "candidate": "12345",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "format/min-length-boundary-below",
+      "verifier": { "type": "format_constraint", "min_length": 5 },
+      "candidate": "1234",
+      "expected": { "passed": false, "code": "length_out_of_bounds" }
+    },
+    {
+      "id": "format/max-length-boundary",
+      "verifier": { "type": "format_constraint", "max_length": 5 },
+      "candidate": "123456",
+      "expected": { "passed": false, "code": "length_out_of_bounds" }
+    },
+    {
+      "id": "format/empty-candidate-with-min-length",
+      "verifier": { "type": "format_constraint", "min_length": 1 },
+      "candidate": "",
+      "expected": { "passed": false, "code": "length_out_of_bounds" }
+    },
+    {
+      "id": "format/length-counts-code-points-not-utf16-units",
+      "description": "Four astral characters are four code points and eight UTF-16 units. A JavaScript implementation using .length fails this.",
+      "verifier": { "type": "format_constraint", "max_length": 4 },
+      "candidate": "\ud83d\udc4d\ud83d\udc4e\ud83c\udf00\ud83d\ude80",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "format/length-counts-combining-marks-separately",
+      "description": "Devanagari combining marks are their own code points, so this is 6 and not the 4 a reader might count.",
+      "verifier": { "type": "format_constraint", "min_length": 6, "max_length": 6 },
+      "candidate": "\u0928\u092e\u0938\u094d\u0924\u0947",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "format/hangul-precomposed-length",
+      "verifier": { "type": "format_constraint", "min_length": 5, "max_length": 5 },
+      "candidate": "\uc548\ub155\ud558\uc138\uc694",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "format/trim-before-length",
+      "verifier": { "type": "format_constraint", "max_length": 3, "trim": true },
+      "candidate": "   abc   ",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "format/no-trim-before-length",
+      "verifier": { "type": "format_constraint", "max_length": 3 },
+      "candidate": "   abc   ",
+      "expected": { "passed": false, "code": "length_out_of_bounds" }
+    },
+    {
+      "id": "format/crlf-normalised-shortens-length",
+      "description": "Line ending normalisation is on by default, so CRLF costs one character rather than two.",
+      "verifier": { "type": "format_constraint", "max_length": 3 },
+      "candidate": "a\r\nb",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "format/crlf-not-normalised",
+      "verifier": { "type": "format_constraint", "max_length": 3, "normalize_line_endings": false },
+      "candidate": "a\r\nb",
+      "expected": { "passed": false, "code": "length_out_of_bounds" }
+    },
+    {
+      "id": "format/line-count-exact",
+      "verifier": { "type": "format_constraint", "min_lines": 3, "max_lines": 3 },
+      "candidate": "one\ntwo\nthree",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "format/trailing-newline-adds-no-line",
+      "description": "Specified rather than left to the language: a single trailing terminator does not create an empty final line.",
+      "verifier": { "type": "format_constraint", "min_lines": 3, "max_lines": 3 },
+      "candidate": "one\ntwo\nthree\n",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "format/two-trailing-newlines-add-one-line",
+      "verifier": { "type": "format_constraint", "max_lines": 3 },
+      "candidate": "one\ntwo\nthree\n\n",
+      "expected": { "passed": false, "code": "line_count_out_of_bounds" }
+    },
+    {
+      "id": "format/empty-string-has-zero-lines",
+      "verifier": { "type": "format_constraint", "min_lines": 1 },
+      "candidate": "",
+      "expected": { "passed": false, "code": "line_count_out_of_bounds" }
+    },
+    {
+      "id": "format/single-line-has-one-line",
+      "verifier": { "type": "format_constraint", "min_lines": 1, "max_lines": 1 },
+      "candidate": "just the one",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "format/mixed-line-endings-counted-uniformly",
+      "verifier": { "type": "format_constraint", "min_lines": 3, "max_lines": 3 },
+      "candidate": "a\r\nb\rc",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "format/unicode-line-separator-is-not-a-line-ending",
+      "description": "U+2028 is not a line terminator for this spec, so this is one line even though several editors would show two.",
+      "verifier": { "type": "format_constraint", "min_lines": 1, "max_lines": 1 },
+      "candidate": "a\u2028b",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "format/too-many-lines",
+      "verifier": { "type": "format_constraint", "max_lines": 2 },
+      "candidate": "one\ntwo\nthree",
+      "expected": { "passed": false, "code": "line_count_out_of_bounds" }
+    },
+    {
+      "id": "format/required-substring-present",
+      "verifier": { "type": "format_constraint", "required_substrings": ["gateway 3.1.4"] },
+      "candidate": "gateway 3.1.4\n- fixed a thing",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "format/required-substring-absent",
+      "verifier": { "type": "format_constraint", "required_substrings": ["gateway 3.1.4"] },
+      "candidate": "gateway 3.1.5\n- fixed a thing",
+      "expected": { "passed": false, "code": "missing_required_substring" }
+    },
+    {
+      "id": "format/required-substring-case-sensitive-by-default",
+      "verifier": { "type": "format_constraint", "required_substrings": ["Gateway"] },
+      "candidate": "gateway",
+      "expected": { "passed": false, "code": "missing_required_substring" }
+    },
+    {
+      "id": "format/required-substring-case-insensitive",
+      "verifier": {
+        "type": "format_constraint",
+        "required_substrings": ["Gateway"],
+        "case_sensitive": false
+      },
+      "candidate": "GATEWAY",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "format/empty-required-substring-always-present",
+      "verifier": { "type": "format_constraint", "required_substrings": [""] },
+      "candidate": "",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "format/forbidden-substring-present",
+      "verifier": { "type": "format_constraint", "forbidden_substrings": ["seamless"] },
+      "candidate": "a seamless experience",
+      "expected": { "passed": false, "code": "forbidden_substring_present" }
+    },
+    {
+      "id": "format/forbidden-substring-absent",
+      "verifier": { "type": "format_constraint", "forbidden_substrings": ["seamless"] },
+      "candidate": "a smooth experience",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "format/forbidden-substring-case-insensitive",
+      "verifier": {
+        "type": "format_constraint",
+        "forbidden_substrings": ["seamless"],
+        "case_sensitive": false
+      },
+      "candidate": "A Seamless Experience",
+      "expected": { "passed": false, "code": "forbidden_substring_present" }
+    },
+    {
+      "id": "format/forbidden-substring-case-sensitive-misses-other-casing",
+      "verifier": { "type": "format_constraint", "forbidden_substrings": ["seamless"] },
+      "candidate": "A Seamless Experience",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "format/devanagari-required-substring",
+      "verifier": { "type": "format_constraint", "required_substrings": ["\u0928\u092e\u0938\u094d\u0924\u0947"] },
+      "candidate": "\u0906\u091c \u0928\u092e\u0938\u094d\u0924\u0947 \u0915\u0939\u0947\u0902",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "format/hangul-forbidden-substring",
+      "verifier": { "type": "format_constraint", "forbidden_substrings": ["\uae08\uc9c0"] },
+      "candidate": "\uc774\uac83\uc740 \uae08\uc9c0\ub41c \ub2e8\uc5b4\uc785\ub2c8\ub2e4",
+      "expected": { "passed": false, "code": "forbidden_substring_present" }
+    },
+    {
+      "id": "format/length-is-checked-before-line-count",
+      "description": "Check order is fixed so that two implementations report the same code when several constraints fail at once.",
+      "verifier": { "type": "format_constraint", "max_length": 3, "max_lines": 1 },
+      "candidate": "one\ntwo\nthree",
+      "expected": { "passed": false, "code": "length_out_of_bounds" }
+    },
+    {
+      "id": "format/line-count-is-checked-before-substrings",
+      "verifier": {
+        "type": "format_constraint",
+        "max_lines": 1,
+        "required_substrings": ["absent"]
+      },
+      "candidate": "one\ntwo",
+      "expected": { "passed": false, "code": "line_count_out_of_bounds" }
+    },
+    {
+      "id": "format/required-is-checked-before-forbidden",
+      "verifier": {
+        "type": "format_constraint",
+        "required_substrings": ["absent"],
+        "forbidden_substrings": ["present"]
+      },
+      "candidate": "present",
+      "expected": { "passed": false, "code": "missing_required_substring" }
+    },
+    {
+      "id": "format/full-release-note-shape",
+      "description": "The shape the format.release_note template actually asks for.",
+      "verifier": {
+        "type": "format_constraint",
+        "min_length": 80,
+        "max_length": 400,
+        "min_lines": 4,
+        "max_lines": 4,
+        "required_substrings": ["gateway 3.1.4"],
+        "forbidden_substrings": ["seamless", "Seamless"],
+        "trim": true
+      },
+      "candidate": "gateway 3.1.4\n- Reduced request queueing under sustained load.\n- Fixed a header parsing bug on chunked uploads.\n- Upgraded the TLS stack to the current release.\n",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "format/full-release-note-shape-with-banned-word",
+      "verifier": {
+        "type": "format_constraint",
+        "min_length": 80,
+        "max_length": 400,
+        "min_lines": 4,
+        "max_lines": 4,
+        "required_substrings": ["gateway 3.1.4"],
+        "forbidden_substrings": ["seamless", "Seamless"],
+        "trim": true
+      },
+      "candidate": "gateway 3.1.4\n- Reduced request queueing under sustained load.\n- Seamless header parsing on chunked uploads.\n- Upgraded the TLS stack to the current release.\n",
+      "expected": { "passed": false, "code": "forbidden_substring_present" }
+    }
+  ]
+}

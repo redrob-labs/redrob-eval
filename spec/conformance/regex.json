@@ -1,0 +1,323 @@
+{
+  "spec_version": "redrob-verifiable-task/v1",
+  "verifier_type": "regex",
+  "description": "The portable regex subset. Python re under re.ASCII is normative; a JavaScript engine has to rewrite the pattern to reproduce it. Roughly half of these cases exist purely to pin one of the four documented divergences.",
+  "cases": [
+    {
+      "id": "regex/full-match-literal",
+      "verifier": { "type": "regex", "pattern": "abc" },
+      "candidate": "abc",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "regex/full-match-requires-whole-string",
+      "description": "full_match is the default because a search-by-default verifier passes far too much.",
+      "verifier": { "type": "regex", "pattern": "abc" },
+      "candidate": "abcd",
+      "expected": { "passed": false, "code": "no_match" }
+    },
+    {
+      "id": "regex/search-anywhere",
+      "verifier": { "type": "regex", "pattern": "abc", "mode": "search" },
+      "candidate": "xxabcxx",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "regex/empty-pattern-empty-candidate",
+      "verifier": { "type": "regex", "pattern": "" },
+      "candidate": "",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "regex/empty-pattern-nonempty-candidate",
+      "verifier": { "type": "regex", "pattern": "" },
+      "candidate": "x",
+      "expected": { "passed": false, "code": "no_match" }
+    },
+    {
+      "id": "regex/digits-ascii",
+      "verifier": { "type": "regex", "pattern": "\\d+" },
+      "candidate": "12345",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "regex/digits-are-ascii-only",
+      "description": "Divergence 4: Python's \\d is Unicode-aware by default, so re.ASCII is normative and Devanagari digits must not match.",
+      "verifier": { "type": "regex", "pattern": "\\d+" },
+      "candidate": "\u0967\u0968\u0969",
+      "expected": { "passed": false, "code": "no_match" }
+    },
+    {
+      "id": "regex/word-chars-are-ascii-only",
+      "verifier": { "type": "regex", "pattern": "\\w+" },
+      "candidate": "\ud55c\uae00",
+      "expected": { "passed": false, "code": "no_match" }
+    },
+    {
+      "id": "regex/whitespace-class-is-ascii-only",
+      "description": "Divergence 4 again, in the other direction: JavaScript's \\s includes U+00A0 and the ASCII-mode Python \\s does not.",
+      "verifier": { "type": "regex", "pattern": "\\s+" },
+      "candidate": "\u00a0",
+      "expected": { "passed": false, "code": "no_match" }
+    },
+    {
+      "id": "regex/whitespace-class-ascii-members",
+      "verifier": { "type": "regex", "pattern": "\\s+" },
+      "candidate": " \t\n\r\f\u000b",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "regex/negated-whitespace-outside-class",
+      "verifier": { "type": "regex", "pattern": "\\S+" },
+      "candidate": "abc",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "regex/dot-excludes-newline",
+      "description": "Divergence 1: JavaScript's dot also excludes CR, U+2028 and U+2029, so the JS side must rewrite dot to [^\\n].",
+      "verifier": { "type": "regex", "pattern": "a.b", "mode": "search" },
+      "candidate": "a\nb",
+      "expected": { "passed": false, "code": "no_match" }
+    },
+    {
+      "id": "regex/dot-includes-cr",
+      "description": "The concrete consequence of divergence 1: a bare CR is matched by dot under Python semantics.",
+      "verifier": { "type": "regex", "pattern": "a.b", "mode": "search" },
+      "candidate": "a\rb",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "regex/dotall-flag",
+      "verifier": { "type": "regex", "pattern": "a.b", "mode": "search", "flags": ["s"] },
+      "candidate": "a\nb",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "regex/dollar-before-trailing-newline",
+      "description": "Divergence 2: Python's $ without MULTILINE matches before a single trailing newline; JavaScript's does not.",
+      "verifier": { "type": "regex", "pattern": "a$", "mode": "search" },
+      "candidate": "a\n",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "regex/dollar-not-before-interior-newline",
+      "verifier": { "type": "regex", "pattern": "a$", "mode": "search" },
+      "candidate": "a\nb",
+      "expected": { "passed": false, "code": "no_match" }
+    },
+    {
+      "id": "regex/dollar-not-before-two-trailing-newlines",
+      "verifier": { "type": "regex", "pattern": "a$", "mode": "search" },
+      "candidate": "a\n\n",
+      "expected": { "passed": false, "code": "no_match" }
+    },
+    {
+      "id": "regex/multiline-caret",
+      "description": "Divergence 3: with m, both engines anchor around newlines, but JavaScript also anchors around CR and the Unicode line separators.",
+      "verifier": { "type": "regex", "pattern": "^b", "mode": "search", "flags": ["m"] },
+      "candidate": "a\nb",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "regex/caret-without-multiline",
+      "verifier": { "type": "regex", "pattern": "^b", "mode": "search" },
+      "candidate": "a\nb",
+      "expected": { "passed": false, "code": "no_match" }
+    },
+    {
+      "id": "regex/multiline-caret-ignores-cr",
+      "description": "A lone CR is not a line start under Python semantics, so the JavaScript rewrite must not use the native m flag.",
+      "verifier": { "type": "regex", "pattern": "^b", "mode": "search", "flags": ["m"] },
+      "candidate": "a\rb",
+      "expected": { "passed": false, "code": "no_match" }
+    },
+    {
+      "id": "regex/multiline-dollar",
+      "verifier": { "type": "regex", "pattern": "a$", "mode": "search", "flags": ["m"] },
+      "candidate": "a\nb",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "regex/multiline-dollar-ignores-cr",
+      "verifier": { "type": "regex", "pattern": "a$", "mode": "search", "flags": ["m"] },
+      "candidate": "a\rb",
+      "expected": { "passed": false, "code": "no_match" }
+    },
+    {
+      "id": "regex/ignore-case-ascii",
+      "verifier": { "type": "regex", "pattern": "abc", "flags": ["i"] },
+      "candidate": "ABC",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "regex/ignore-case-does-not-affect-caseless-script",
+      "verifier": { "type": "regex", "pattern": "\ud55c\uae00", "flags": ["i"] },
+      "candidate": "\ud55c\uae00",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "regex/escaped-metacharacters",
+      "description": "A currency amount, which is nothing but metacharacters in disguise.",
+      "verifier": { "type": "regex", "pattern": "\\$\\d+\\.\\d{2}" },
+      "candidate": "$12.34",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "regex/escaped-metacharacters-wrong-shape",
+      "verifier": { "type": "regex", "pattern": "\\$\\d+\\.\\d{2}" },
+      "candidate": "$12.3",
+      "expected": { "passed": false, "code": "no_match" }
+    },
+    {
+      "id": "regex/character-class-with-ranges",
+      "verifier": { "type": "regex", "pattern": "[A-Fa-f0-9]{6}" },
+      "candidate": "9fD3b0",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "regex/negated-character-class",
+      "verifier": { "type": "regex", "pattern": "[^,]+" },
+      "candidate": "no commas here",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "regex/class-with-escaped-bracket",
+      "verifier": { "type": "regex", "pattern": "[\\]a]+" },
+      "candidate": "a]a",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "regex/lazy-quantifier",
+      "verifier": { "type": "regex", "pattern": "<.*?>", "mode": "search" },
+      "candidate": "<a><b>",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "regex/alternation-and-groups",
+      "verifier": { "type": "regex", "pattern": "(cat|dog)s?" },
+      "candidate": "dogs",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "regex/non-capturing-and-lookahead",
+      "verifier": { "type": "regex", "pattern": "(?:ab)+(?=c)", "mode": "search" },
+      "candidate": "ababc",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "regex/negative-lookahead",
+      "verifier": { "type": "regex", "pattern": "foo(?!bar)", "mode": "search" },
+      "candidate": "foobar",
+      "expected": { "passed": false, "code": "no_match" }
+    },
+    {
+      "id": "regex/word-boundary",
+      "verifier": { "type": "regex", "pattern": "\\bcat\\b", "mode": "search" },
+      "candidate": "the cat sat",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "regex/bounded-repetition",
+      "verifier": { "type": "regex", "pattern": "a{2,4}" },
+      "candidate": "aaa",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "regex/bounded-repetition-too-many",
+      "verifier": { "type": "regex", "pattern": "a{2,4}" },
+      "candidate": "aaaaa",
+      "expected": { "passed": false, "code": "no_match" }
+    },
+    {
+      "id": "regex/crlf-literal",
+      "verifier": { "type": "regex", "pattern": "a\\r\\nb" },
+      "candidate": "a\r\nb",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "regex/unicode-escape",
+      "verifier": { "type": "regex", "pattern": "\\u0915\\u093c" },
+      "candidate": "\u0915\u093c",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "regex/invalid-backreference",
+      "verifier": { "type": "regex", "pattern": "(a)\\1" },
+      "candidate": "aa",
+      "expected": { "passed": false, "code": "invalid_pattern" }
+    },
+    {
+      "id": "regex/invalid-named-group",
+      "verifier": { "type": "regex", "pattern": "(?P<word>a)" },
+      "candidate": "a",
+      "expected": { "passed": false, "code": "invalid_pattern" }
+    },
+    {
+      "id": "regex/invalid-lookbehind",
+      "verifier": { "type": "regex", "pattern": "(?<=a)b", "mode": "search" },
+      "candidate": "ab",
+      "expected": { "passed": false, "code": "invalid_pattern" }
+    },
+    {
+      "id": "regex/invalid-inline-flags",
+      "verifier": { "type": "regex", "pattern": "(?i)abc" },
+      "candidate": "ABC",
+      "expected": { "passed": false, "code": "invalid_pattern" }
+    },
+    {
+      "id": "regex/invalid-unicode-property",
+      "verifier": { "type": "regex", "pattern": "\\p{L}+" },
+      "candidate": "abc",
+      "expected": { "passed": false, "code": "invalid_pattern" }
+    },
+    {
+      "id": "regex/invalid-string-anchor",
+      "verifier": { "type": "regex", "pattern": "\\Aabc", "mode": "search" },
+      "candidate": "abc",
+      "expected": { "passed": false, "code": "invalid_pattern" }
+    },
+    {
+      "id": "regex/invalid-unbalanced-paren",
+      "verifier": { "type": "regex", "pattern": "(abc" },
+      "candidate": "abc",
+      "expected": { "passed": false, "code": "invalid_pattern" }
+    },
+    {
+      "id": "regex/invalid-unterminated-class",
+      "verifier": { "type": "regex", "pattern": "[abc" },
+      "candidate": "a",
+      "expected": { "passed": false, "code": "invalid_pattern" }
+    },
+    {
+      "id": "regex/invalid-bare-close-bracket",
+      "description": "Python reads '[]]' as an unterminated class and JavaScript reads it as an empty class plus a literal, so the subset requires the escape.",
+      "verifier": { "type": "regex", "pattern": "[]]" },
+      "candidate": "]",
+      "expected": { "passed": false, "code": "invalid_pattern" }
+    },
+    {
+      "id": "regex/invalid-possessive-quantifier",
+      "verifier": { "type": "regex", "pattern": "a*+" },
+      "candidate": "aaa",
+      "expected": { "passed": false, "code": "invalid_pattern" }
+    },
+    {
+      "id": "regex/invalid-negated-whitespace-in-class",
+      "verifier": { "type": "regex", "pattern": "[\\S]+" },
+      "candidate": "abc",
+      "expected": { "passed": false, "code": "invalid_pattern" }
+    },
+    {
+      "id": "regex/invalid-quantifier-without-atom",
+      "verifier": { "type": "regex", "pattern": "*abc" },
+      "candidate": "abc",
+      "expected": { "passed": false, "code": "invalid_pattern" }
+    },
+    {
+      "id": "regex/invalid-bare-brace",
+      "verifier": { "type": "regex", "pattern": "a{b" },
+      "candidate": "a{b",
+      "expected": { "passed": false, "code": "invalid_pattern" }
+    }
+  ]
+}

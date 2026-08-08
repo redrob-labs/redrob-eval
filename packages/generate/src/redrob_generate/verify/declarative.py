@@ -10,9 +10,11 @@ things being proved.
 from __future__ import annotations
 
 import json
+import math
 import re
 from typing import Any, Mapping
 
+from ..canonical import canonical_json, js_number_to_string
 from .base import (
     Verdict,
     apply_unicode_normalization,
@@ -171,16 +173,30 @@ def _split_elements(config: Mapping[str, Any], candidate: str) -> list[Any] | No
     return elements
 
 
-def _canonical_key(value: Any, comparator: str) -> Any:
-    """A hashable identity used only for deduplication, never for tolerance matching."""
+def _canonical_key(value: Any, comparator: str) -> str:
+    """A string identity used only for deduplication, never for tolerance matching.
+
+    A string rather than a tuple because NaN is not equal to itself, so a structured key
+    containing one would deduplicate differently depending on object identity.
+    """
     if comparator == "case_insensitive_string":
-        return str(value).lower()
+        return "ci:" + str(value).lower()
     if comparator == "numeric":
-        parsed = parse_spec_number(str(value)) if not isinstance(value, (int, float)) else float(value)
-        return ("num", parsed) if parsed is not None else ("raw", str(value))
+        parsed = (
+            float(value)
+            if isinstance(value, (int, float)) and not isinstance(value, bool)
+            else parse_spec_number(str(value))
+        )
+        if parsed is None:
+            return "raw:" + str(value)
+        if math.isnan(parsed):
+            return "num:NaN"
+        if math.isinf(parsed):
+            return "num:Infinity" if parsed > 0 else "num:-Infinity"
+        return "num:" + js_number_to_string(parsed)
     if comparator == "json":
-        return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
-    return str(value)
+        return "json:" + canonical_json(value)
+    return "str:" + str(value)
 
 
 def _dedupe(values: list[Any], comparator: str) -> list[Any]:

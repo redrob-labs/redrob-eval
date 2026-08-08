@@ -543,7 +543,9 @@ Rules that make that true:
 
 Used for content hashing and for the emitted files:
 
-- Object keys sorted by Unicode code point, ascending.
+- Object keys sorted by Unicode **code point**, ascending. Not by UTF-16 code unit: JavaScript's
+  default `Array.prototype.sort` orders `"\u{1F44D}"` before `"\uFFFF"` and a conforming
+  implementation must not. Python's `sorted` is already correct here.
 - No insignificant whitespace: `,` and `:` separators with no spaces.
 - Strings escaped as JSON requires and no further: the short escapes for `\b \t \n \f \r \" \\`,
   `\u00XX` for the remaining C0 controls, and every other character emitted literally.

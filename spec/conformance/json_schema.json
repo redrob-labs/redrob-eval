@@ -1,0 +1,565 @@
+{
+  "spec_version": "redrob-verifiable-task/v1",
+  "verifier_type": "json_schema",
+  "description": "Draft 2020-12 conformance over the documented keyword subset. Python runs the full jsonschema library and TypeScript runs a hand-written subset validator, so these cases are the only thing holding the two together.",
+  "cases": [
+    {
+      "id": "json_schema/object-valid",
+      "verifier": {
+        "type": "json_schema",
+        "schema": {
+          "type": "object",
+          "required": ["name", "count"],
+          "properties": { "name": { "type": "string" }, "count": { "type": "integer" } }
+        }
+      },
+      "candidate": "{\"name\":\"widget\",\"count\":3}",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "json_schema/missing-required",
+      "verifier": {
+        "type": "json_schema",
+        "schema": {
+          "type": "object",
+          "required": ["name", "count"],
+          "properties": { "name": { "type": "string" }, "count": { "type": "integer" } }
+        }
+      },
+      "candidate": "{\"name\":\"widget\"}",
+      "expected": { "passed": false, "code": "schema_violation" }
+    },
+    {
+      "id": "json_schema/not-json",
+      "verifier": { "type": "json_schema", "schema": { "type": "object" } },
+      "candidate": "here is your object: {name: widget}",
+      "expected": { "passed": false, "code": "invalid_json" }
+    },
+    {
+      "id": "json_schema/empty-candidate",
+      "verifier": { "type": "json_schema", "schema": { "type": "object" } },
+      "candidate": "",
+      "expected": { "passed": false, "code": "invalid_json" }
+    },
+    {
+      "id": "json_schema/truncated-json",
+      "verifier": { "type": "json_schema", "schema": { "type": "object" } },
+      "candidate": "{\"name\":\"widget\"",
+      "expected": { "passed": false, "code": "invalid_json" }
+    },
+    {
+      "id": "json_schema/trailing-comma-is-not-json",
+      "verifier": { "type": "json_schema", "schema": { "type": "object" } },
+      "candidate": "{\"a\":1,}",
+      "expected": { "passed": false, "code": "invalid_json" }
+    },
+    {
+      "id": "json_schema/code-fence-is-not-json",
+      "description": "The single most common shape of a wrong answer.",
+      "verifier": { "type": "json_schema", "schema": { "type": "object" } },
+      "candidate": "```json\n{\"a\":1}\n```",
+      "expected": { "passed": false, "code": "invalid_json" }
+    },
+    {
+      "id": "json_schema/array-of-integers",
+      "verifier": {
+        "type": "json_schema",
+        "schema": { "type": "array", "items": { "type": "integer" }, "minItems": 2 }
+      },
+      "candidate": "[1,2,3]",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "json_schema/array-wrong-item-type",
+      "verifier": {
+        "type": "json_schema",
+        "schema": { "type": "array", "items": { "type": "integer" } }
+      },
+      "candidate": "[1,\"two\",3]",
+      "expected": { "passed": false, "code": "schema_violation" }
+    },
+    {
+      "id": "json_schema/array-too-short",
+      "verifier": {
+        "type": "json_schema",
+        "schema": { "type": "array", "items": { "type": "integer" }, "minItems": 4 }
+      },
+      "candidate": "[1,2,3]",
+      "expected": { "passed": false, "code": "schema_violation" }
+    },
+    {
+      "id": "json_schema/integer-accepts-integral-float",
+      "description": "2.0 is an integer in JSON Schema, which a naive typeof check gets wrong.",
+      "verifier": { "type": "json_schema", "schema": { "type": "integer" } },
+      "candidate": "2.0",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "json_schema/integer-rejects-fraction",
+      "verifier": { "type": "json_schema", "schema": { "type": "integer" } },
+      "candidate": "2.5",
+      "expected": { "passed": false, "code": "schema_violation" }
+    },
+    {
+      "id": "json_schema/boolean-is-not-integer",
+      "description": "true is not 1, which a truthiness-based implementation gets wrong.",
+      "verifier": { "type": "json_schema", "schema": { "type": "integer" } },
+      "candidate": "true",
+      "expected": { "passed": false, "code": "schema_violation" }
+    },
+    {
+      "id": "json_schema/null-type",
+      "verifier": { "type": "json_schema", "schema": { "type": "null" } },
+      "candidate": "null",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "json_schema/type-union",
+      "verifier": { "type": "json_schema", "schema": { "type": ["string", "null"] } },
+      "candidate": "null",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "json_schema/type-union-violation",
+      "verifier": { "type": "json_schema", "schema": { "type": ["string", "null"] } },
+      "candidate": "7",
+      "expected": { "passed": false, "code": "schema_violation" }
+    },
+    {
+      "id": "json_schema/deeply-nested-valid",
+      "verifier": {
+        "type": "json_schema",
+        "schema": {
+          "type": "object",
+          "required": ["l1"],
+          "properties": {
+            "l1": {
+              "type": "object",
+              "required": ["l2"],
+              "properties": {
+                "l2": {
+                  "type": "object",
+                  "required": ["l3"],
+                  "properties": {
+                    "l3": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": ["l5"],
+                        "properties": {
+                          "l5": {
+                            "type": "object",
+                            "required": ["leaf"],
+                            "properties": { "leaf": { "type": "integer", "minimum": 10 } }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "candidate": "{\"l1\":{\"l2\":{\"l3\":[{\"l5\":{\"leaf\":11}},{\"l5\":{\"leaf\":12}}]}}}",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "json_schema/deeply-nested-violation-at-leaf",
+      "verifier": {
+        "type": "json_schema",
+        "schema": {
+          "type": "object",
+          "required": ["l1"],
+          "properties": {
+            "l1": {
+              "type": "object",
+              "required": ["l2"],
+              "properties": {
+                "l2": {
+                  "type": "object",
+                  "required": ["l3"],
+                  "properties": {
+                    "l3": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": ["l5"],
+                        "properties": {
+                          "l5": {
+                            "type": "object",
+                            "required": ["leaf"],
+                            "properties": { "leaf": { "type": "integer", "minimum": 10 } }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "candidate": "{\"l1\":{\"l2\":{\"l3\":[{\"l5\":{\"leaf\":11}},{\"l5\":{\"leaf\":9}}]}}}",
+      "expected": { "passed": false, "code": "schema_violation" }
+    },
+    {
+      "id": "json_schema/enum-member",
+      "verifier": { "type": "json_schema", "schema": { "enum": ["Q1", "Q2", "Q3", "Q4"] } },
+      "candidate": "\"Q3\"",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "json_schema/enum-non-member",
+      "verifier": { "type": "json_schema", "schema": { "enum": ["Q1", "Q2", "Q3", "Q4"] } },
+      "candidate": "\"Q5\"",
+      "expected": { "passed": false, "code": "schema_violation" }
+    },
+    {
+      "id": "json_schema/const-structural",
+      "description": "const compares structurally, so key order in the candidate is irrelevant.",
+      "verifier": {
+        "type": "json_schema",
+        "schema": { "const": { "a": 1, "b": [true, null] } }
+      },
+      "candidate": "{\"b\":[true,null],\"a\":1}",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "json_schema/const-mismatch",
+      "verifier": { "type": "json_schema", "schema": { "const": { "a": 1 } } },
+      "candidate": "{\"a\":2}",
+      "expected": { "passed": false, "code": "schema_violation" }
+    },
+    {
+      "id": "json_schema/min-length-counts-code-points-devanagari",
+      "description": "Devanagari combining marks are separate code points, so this string is 5 long, not 3.",
+      "verifier": { "type": "json_schema", "schema": { "type": "string", "minLength": 5 } },
+      "candidate": "\"\u0928\u092e\u0938\u094d\u0924\u0947\"",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "json_schema/max-length-counts-code-points-hangul",
+      "verifier": { "type": "json_schema", "schema": { "type": "string", "maxLength": 3 } },
+      "candidate": "\"\uc548\ub155\ud558\uc138\uc694\"",
+      "expected": { "passed": false, "code": "schema_violation" }
+    },
+    {
+      "id": "json_schema/max-length-counts-astral-as-one",
+      "description": "A surrogate pair is one code point. A UTF-16 length would report 2 and fail this wrongly.",
+      "verifier": { "type": "json_schema", "schema": { "type": "string", "maxLength": 1 } },
+      "candidate": "\"\ud83d\udc4d\"",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "json_schema/pattern-matches",
+      "description": "pattern is a search, not a full match, which is easy to get backwards.",
+      "verifier": {
+        "type": "json_schema",
+        "schema": { "type": "string", "pattern": "^[A-Z]{2}-[0-9]{4}$" }
+      },
+      "candidate": "\"AB-1234\"",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "json_schema/pattern-violation",
+      "verifier": {
+        "type": "json_schema",
+        "schema": { "type": "string", "pattern": "^[A-Z]{2}-[0-9]{4}$" }
+      },
+      "candidate": "\"ab-1234\"",
+      "expected": { "passed": false, "code": "schema_violation" }
+    },
+    {
+      "id": "json_schema/pattern-is-unanchored-search",
+      "verifier": { "type": "json_schema", "schema": { "type": "string", "pattern": "cat" } },
+      "candidate": "\"concatenate\"",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "json_schema/unique-items-violation",
+      "verifier": {
+        "type": "json_schema",
+        "schema": { "type": "array", "uniqueItems": true }
+      },
+      "candidate": "[\"a\",\"b\",\"a\"]",
+      "expected": { "passed": false, "code": "schema_violation" }
+    },
+    {
+      "id": "json_schema/unique-items-numeric-equality",
+      "description": "1 and 1.0 are the same JSON value, so this array is not unique.",
+      "verifier": {
+        "type": "json_schema",
+        "schema": { "type": "array", "uniqueItems": true }
+      },
+      "candidate": "[1,1.0]",
+      "expected": { "passed": false, "code": "schema_violation" }
+    },
+    {
+      "id": "json_schema/unique-items-boolean-is-not-one",
+      "description": "true and 1 are different values, even though many languages' equality says otherwise.",
+      "verifier": {
+        "type": "json_schema",
+        "schema": { "type": "array", "uniqueItems": true }
+      },
+      "candidate": "[1,true]",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "json_schema/unique-items-structural",
+      "verifier": {
+        "type": "json_schema",
+        "schema": { "type": "array", "uniqueItems": true }
+      },
+      "candidate": "[{\"a\":1,\"b\":2},{\"b\":2,\"a\":1}]",
+      "expected": { "passed": false, "code": "schema_violation" }
+    },
+    {
+      "id": "json_schema/additional-properties-false",
+      "verifier": {
+        "type": "json_schema",
+        "schema": {
+          "type": "object",
+          "properties": { "a": { "type": "integer" } },
+          "additionalProperties": false
+        }
+      },
+      "candidate": "{\"a\":1,\"b\":2}",
+      "expected": { "passed": false, "code": "schema_violation" }
+    },
+    {
+      "id": "json_schema/additional-properties-schema",
+      "verifier": {
+        "type": "json_schema",
+        "schema": {
+          "type": "object",
+          "properties": { "a": { "type": "integer" } },
+          "additionalProperties": { "type": "string" }
+        }
+      },
+      "candidate": "{\"a\":1,\"b\":\"two\"}",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "json_schema/pattern-properties",
+      "verifier": {
+        "type": "json_schema",
+        "schema": {
+          "type": "object",
+          "patternProperties": { "^x_": { "type": "integer" } },
+          "additionalProperties": false
+        }
+      },
+      "candidate": "{\"x_one\":1,\"x_two\":2}",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "json_schema/pattern-properties-violation",
+      "verifier": {
+        "type": "json_schema",
+        "schema": {
+          "type": "object",
+          "patternProperties": { "^x_": { "type": "integer" } },
+          "additionalProperties": false
+        }
+      },
+      "candidate": "{\"x_one\":\"1\"}",
+      "expected": { "passed": false, "code": "schema_violation" }
+    },
+    {
+      "id": "json_schema/any-of",
+      "verifier": {
+        "type": "json_schema",
+        "schema": { "anyOf": [{ "type": "string" }, { "type": "integer" }] }
+      },
+      "candidate": "7",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "json_schema/one-of-exactly-one",
+      "verifier": {
+        "type": "json_schema",
+        "schema": {
+          "oneOf": [
+            { "type": "integer", "minimum": 0 },
+            { "type": "integer", "maximum": -1 }
+          ]
+        }
+      },
+      "candidate": "5",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "json_schema/one-of-two-matches-fails",
+      "description": "oneOf means exactly one, which is the keyword implementations most often treat as anyOf.",
+      "verifier": {
+        "type": "json_schema",
+        "schema": { "oneOf": [{ "type": "integer" }, { "minimum": 0 }] }
+      },
+      "candidate": "5",
+      "expected": { "passed": false, "code": "schema_violation" }
+    },
+    {
+      "id": "json_schema/all-of",
+      "verifier": {
+        "type": "json_schema",
+        "schema": { "allOf": [{ "type": "integer" }, { "minimum": 10 }, { "maximum": 20 }] }
+      },
+      "candidate": "15",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "json_schema/not",
+      "verifier": { "type": "json_schema", "schema": { "not": { "type": "string" } } },
+      "candidate": "42",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "json_schema/not-violation",
+      "verifier": { "type": "json_schema", "schema": { "not": { "type": "string" } } },
+      "candidate": "\"42\"",
+      "expected": { "passed": false, "code": "schema_violation" }
+    },
+    {
+      "id": "json_schema/local-ref",
+      "verifier": {
+        "type": "json_schema",
+        "schema": {
+          "$defs": { "row": { "type": "object", "required": ["id"], "properties": { "id": { "type": "integer" } } } },
+          "type": "array",
+          "items": { "$ref": "#/$defs/row" }
+        }
+      },
+      "candidate": "[{\"id\":1},{\"id\":2}]",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "json_schema/local-ref-violation",
+      "verifier": {
+        "type": "json_schema",
+        "schema": {
+          "$defs": { "row": { "type": "object", "required": ["id"], "properties": { "id": { "type": "integer" } } } },
+          "type": "array",
+          "items": { "$ref": "#/$defs/row" }
+        }
+      },
+      "candidate": "[{\"id\":1},{\"identifier\":2}]",
+      "expected": { "passed": false, "code": "schema_violation" }
+    },
+    {
+      "id": "json_schema/boolean-schema-true",
+      "verifier": { "type": "json_schema", "schema": true },
+      "candidate": "{\"anything\":[1,2,3]}",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "json_schema/boolean-schema-false",
+      "verifier": { "type": "json_schema", "schema": false },
+      "candidate": "{}",
+      "expected": { "passed": false, "code": "schema_violation" }
+    },
+    {
+      "id": "json_schema/multiple-of",
+      "verifier": { "type": "json_schema", "schema": { "type": "number", "multipleOf": 0.5 } },
+      "candidate": "2.5",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "json_schema/multiple-of-violation",
+      "verifier": { "type": "json_schema", "schema": { "type": "number", "multipleOf": 0.5 } },
+      "candidate": "2.3",
+      "expected": { "passed": false, "code": "schema_violation" }
+    },
+    {
+      "id": "json_schema/exclusive-minimum-boundary",
+      "verifier": { "type": "json_schema", "schema": { "type": "number", "exclusiveMinimum": 0 } },
+      "candidate": "0",
+      "expected": { "passed": false, "code": "schema_violation" }
+    },
+    {
+      "id": "json_schema/inclusive-minimum-boundary",
+      "verifier": { "type": "json_schema", "schema": { "type": "number", "minimum": 0 } },
+      "candidate": "0",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "json_schema/prefix-items",
+      "verifier": {
+        "type": "json_schema",
+        "schema": {
+          "type": "array",
+          "prefixItems": [{ "type": "string" }, { "type": "integer" }],
+          "items": false
+        }
+      },
+      "candidate": "[\"a\",1]",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "json_schema/prefix-items-extra-rejected",
+      "verifier": {
+        "type": "json_schema",
+        "schema": {
+          "type": "array",
+          "prefixItems": [{ "type": "string" }, { "type": "integer" }],
+          "items": false
+        }
+      },
+      "candidate": "[\"a\",1,\"extra\"]",
+      "expected": { "passed": false, "code": "schema_violation" }
+    },
+    {
+      "id": "json_schema/property-names",
+      "verifier": {
+        "type": "json_schema",
+        "schema": { "type": "object", "propertyNames": { "pattern": "^[a-z_]+$" } }
+      },
+      "candidate": "{\"good_name\":1,\"Bad Name\":2}",
+      "expected": { "passed": false, "code": "schema_violation" }
+    },
+    {
+      "id": "json_schema/dependent-required",
+      "verifier": {
+        "type": "json_schema",
+        "schema": { "type": "object", "dependentRequired": { "card": ["billing_address"] } }
+      },
+      "candidate": "{\"card\":\"1234\"}",
+      "expected": { "passed": false, "code": "schema_violation" }
+    },
+    {
+      "id": "json_schema/min-max-properties",
+      "verifier": {
+        "type": "json_schema",
+        "schema": { "type": "object", "minProperties": 2, "maxProperties": 3 }
+      },
+      "candidate": "{\"a\":1}",
+      "expected": { "passed": false, "code": "schema_violation" }
+    },
+    {
+      "id": "json_schema/contains-with-min-contains",
+      "verifier": {
+        "type": "json_schema",
+        "schema": { "type": "array", "contains": { "type": "integer" }, "minContains": 2 }
+      },
+      "candidate": "[\"a\",1,\"b\",2]",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "json_schema/contains-not-enough",
+      "verifier": {
+        "type": "json_schema",
+        "schema": { "type": "array", "contains": { "type": "integer" }, "minContains": 2 }
+      },
+      "candidate": "[\"a\",1,\"b\"]",
+      "expected": { "passed": false, "code": "schema_violation" }
+    },
+    {
+      "id": "json_schema/empty-schema-accepts-anything",
+      "verifier": { "type": "json_schema", "schema": {} },
+      "candidate": "[]",
+      "expected": { "passed": true, "code": "ok" }
+    }
+  ]
+}

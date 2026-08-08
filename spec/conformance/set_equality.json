@@ -724,5 +724,25 @@
         "code": "ok"
       }
     }
+  ],
+  "rejections": [
+    {
+      "id": "set/unpaired-surrogate-delimiter-is-refused",
+      "description": "The same defect in the splitter rather than the matcher: a lone lead surrogate splits an emoji in half on a UTF-16 runtime and matches nothing on a code point one.",
+      "verifier": {
+        "type": "set_equality",
+        "parse": {
+          "mode": "delimiter",
+          "delimiter": "\ud83d"
+        },
+        "expected": ["a", "b"]
+      },
+      "candidate": "a😀b",
+      "raises": "verifier_config",
+      "expected": {
+        "passed": false,
+        "code": "unsupported_verifier"
+      }
+    }
   ]
 }

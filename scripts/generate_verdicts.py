@@ -17,8 +17,25 @@ import sys
 from pathlib import Path
 
 from redrob_generate.verify import DECLARATIVE_VERIFIER_TYPES, run_verifier_or_fail
+from redrob_generate.verify.regex_subset import scan as scan_regex_pattern
 
 DIRECTORY = Path(__file__).resolve().parent.parent / "spec" / "conformance"
+
+
+def token_signature(pattern: str) -> str:
+    """The token stream a pattern scans to, alongside the verdict it produces.
+
+    The two scanners walk a pattern with an index, and the thing being indexed is not the
+    same on the two sides: a Python string steps by code point and a JavaScript string
+    steps by UTF-16 code unit, so an astral character is one step here and two there. The
+    JavaScript scanner reassembles surrogate pairs to compensate. Comparing verdicts alone
+    would not notice if it stopped: a pattern can tokenise differently and still match or
+    fail to match the same candidate. Comparing the token stream does.
+    """
+    try:
+        return " ".join(f"{token.kind}:{token.text}" for token in scan_regex_pattern(pattern))
+    except Exception as exc:  # the error class is the signal, not the message
+        return f"error:{type(exc).__name__}"
 
 
 def main() -> int:
@@ -38,11 +55,17 @@ def main() -> int:
                 verdicts[case["id"]] = [verdict.passed, verdict.code]
             except ValueError:
                 verdicts[case["id"]] = ["raises", "verifier_config"]
+            pattern = case["verifier"].get("pattern")
+            if case["verifier"].get("type") == "regex" and isinstance(pattern, str):
+                verdicts[f"tokens:{case['id']}"] = ["raises", token_signature(pattern)]
 
-    # Separators pinned to match JSON.stringify, so that a diff of the two dumps shows a
-    # disagreement about verdicts rather than about whitespace.
+    # Separators pinned to match JSON.stringify, and ensure_ascii off for the same reason:
+    # JSON.stringify emits an astral character literally and json.dumps would escape it to
+    # a surrogate pair, which would show up as a divergence about encoding rather than
+    # about behaviour.
     lines = [
-        f"  {json.dumps(key)}: {json.dumps(verdicts[key], separators=(',', ':'))}"
+        f"  {json.dumps(key, ensure_ascii=False)}: "
+        f"{json.dumps(verdicts[key], separators=(',', ':'), ensure_ascii=False)}"
         for key in sorted(verdicts)
     ]
     sys.stdout.write("{\n" + ",\n".join(lines) + "\n}\n")

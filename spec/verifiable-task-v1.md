@@ -307,12 +307,90 @@ this set.
 **Line ending normalisation** rewrites `\r\n` and then lone `\r` to `\n`. Nothing else is a line
 terminator for this purpose, including `\u2028` and `\u2029`.
 
-**Length** is counted in Unicode **code points**, not UTF-16 code units. An implementation on a
-UTF-16 runtime must iterate code points; `"👍".length === 2` is the wrong answer, the answer is 1.
-
 **Line count** of a text: normalise line endings if the verifier says so, split on `\n`; if the
 result has more than one element and the last is empty, drop that last element; the empty string
 has 0 lines.
+
+#### Unicode normalisation
+
+Every verifier that compares strings carries a `normalization` field, one of `NFC` (**default**),
+`NFD`, `NFKC`, `NFKD`, `none`. The declared form is applied to the candidate **and** to the
+expected value, before any other step, so that a comparison never depends on which composition
+form a tokeniser happened to emit.
+
+The default is `NFC` rather than `none`, and that is a deliberate choice about what a benchmark is
+measuring. Hangul `가` is U+AC00 precomposed and U+1100 U+1161 as conjoining jamo; the two render
+identically and no reader can tell them apart. Devanagari nukta forms and Latin combining accents
+have the same property. Without normalisation, two models that produced the same visible answer
+score differently because of their tokeniser's internal preference, which is not a capability
+difference and must not be reported as one.
+
+`none` exists for the case where byte exactness is the thing under test — a serialisation format,
+a hash input, a round-trip — and must be requested explicitly. It is not the default precisely
+because the failure it produces is invisible: the two strings look the same in every log, diff and
+terminal that will ever display them.
+
+`NFC` is the only form for which the two reference implementations are known to agree on the whole
+code point range. Python's `unicodedata` and a JavaScript runtime's ICU are versioned
+independently, and the compatibility and decomposition forms differ for characters assigned in
+whichever Unicode version one side has and the other does not; `NFC` is stable across those
+assignments and the others are not. `NFD`, `NFKC` and `NFKD` are specified and implemented, and a
+template using one accepts that its scores are only reproducible where both runtimes carry the
+same Unicode version. See `docs/decisions/0002-unicode-semantics.md` for the measurement.
+
+Normalisation applies to **strings inside a parsed JSON instance too, keys as well as values**.
+`{"\uAC00": 1}` and `{"\u1100\u1161": 1}` are the same object to a reader, so they must be the same
+object to `required`, `properties` and `propertyNames`.
+
+#### Length units
+
+Every verifier that bounds a length carries a `length_unit` field:
+
+| Value | Meaning | Why it is not the default |
+| --- | --- | --- |
+| `codepoints` | Unicode scalar values (**default**) | — |
+| `utf16` | UTF-16 code units, i.e. `String.prototype.length` | Runtime-specific; astral characters count twice |
+| `bytes_utf8` | Bytes in the UTF-8 encoding | A transport bound, not a text bound |
+| `graphemes` | UAX #29 extended grapheme clusters | **Refused.** See below |
+
+There is no unit that is simply correct. `नमस्ते` is six code points, six UTF-16 units, eighteen
+UTF-8 bytes and four grapheme clusters; `😀` is one code point, two UTF-16 units and four bytes.
+`codepoints` is the default because it is the only one of the three supported units that is a
+property of the text rather than of a runtime or a transport.
+
+`graphemes` is what a human means by "length", it is in the value list, and both implementations
+**refuse it with an error rather than approximating it**. Grapheme breaking is defined by UAX #29
+against a specific Unicode version, and the two runtimes here do not carry the same one: Python's
+`unicodedata` and Node's ICU differ, and they differ on exactly the emoji and conjunct sequences a
+grapheme count exists to get right. Two breakers drawn from different tables would produce two
+lengths, one of them would silently score a model, and no test comparing the two implementations
+against a corpus written in either Unicode version would see it. An error is the only answer that
+cannot be quietly wrong. Reinstating the unit requires pinning one Unicode version for both
+runtimes, which is a dependency decision, not a spec decision.
+
+Substring checks are normalisation-sensitive in the same way and for the same reason: the needle
+goes through the verifier's declared form before it is looked for, so a required substring written
+in one composition form is found in the other.
+
+#### Verifier configuration must be well-formed Unicode
+
+**No string anywhere in a verifier's configuration may contain an unpaired surrogate.** A
+configuration that does is refused with a configuration error before anything is evaluated, and
+the rule is enforced once at dispatch so that a field added later inherits it.
+
+U+D800..U+DFFF are not characters. They exist so that UTF-16 can encode the astral planes, and a
+JSON document can name one directly with a `\uD83D` escape. What the two runtimes then do with it
+is not the same thing. A JavaScript string is a sequence of UTF-16 code units, so `\uD83D` really
+is the first half of `😀` and `"😀".includes("\uD83D")` is **true**; a Python string is a sequence
+of code points, so `"\ud83d" in "\U0001f600"` is **false**. The same split runs through
+`String.prototype.split` against a lone-surrogate delimiter, which cuts an emoji in two on one
+runtime and matches nothing on the other. Both engines are behaving correctly according to their
+own model of a string; there is no reading of the input on which they agree, so there is nothing
+for this spec to pin.
+
+**Candidates are not subject to this rule.** A candidate is model output and must always yield a
+verdict rather than an error, and an unpaired surrogate in a candidate is harmless by itself: the
+divergence needs the *needle* to be half of a pair, not the haystack.
 
 ### 6.1 Declarative tier
 
@@ -324,7 +402,7 @@ eight, and must agree on every one.
 String equality after a normalisation pipeline applied identically to both the candidate and the
 expected value, in this fixed order:
 
-1. `unicode_normalization` - one of `none` (default), `NFC`, `NFD`, `NFKC`, `NFKD`
+1. `normalization` - one of `NFC` (default), `NFD`, `NFKC`, `NFKD`, `none`, per §6.0
 2. `normalize_line_endings` (default `false`)
 3. `trim` (default `false`)
 4. `collapse_whitespace` (default `false`) - each run of spec whitespace becomes one `U+0020`
@@ -362,8 +440,17 @@ Codes: `ok`, `not_a_number`, `nan_mismatch`, `infinity_mismatch`, `out_of_tolera
 
 #### `json_schema`
 
-The candidate is parsed as JSON (`invalid_json` on failure) and validated against
-`schema` (`schema_violation` on failure).
+The candidate is parsed as JSON (`invalid_json` on failure), every string and object key in the
+result is normalised to the verifier's declared `normalization` form (§6.0, default `NFC`), and
+the result is validated against `schema` (`schema_violation` on failure).
+
+**The schema itself is not normalised; it is required to be already in the declared form**, and a
+schema that is not is refused as a configuration error. Rewriting it would be the more forgiving
+choice and it is the wrong one: a `const` written in NFD under a verifier declaring NFC can never
+match anything, and that is a bug in the template rather than a property of the answer. Refusing
+it says so at load time; rewriting it would make the template mean something its author did not
+write. The check skips `pattern` and `patternProperties` keys, whose contents are regex source
+rather than text to be compared.
 
 The schema is a JSON Schema draft 2020-12 document, restricted to the keyword subset below. The
 restriction exists because the Python implementation uses the full `jsonschema` library while
@@ -385,7 +472,10 @@ remote `$ref`, `if` / `then` / `else`, `dependentSchemas`, `unevaluatedPropertie
 Further clarifications, each of which is a real divergence risk:
 
 - `pattern` and `patternProperties` keys use the same restricted regex subset as the `regex`
-  verifier (§6.1 `regex`), with `search` semantics.
+  verifier (§6.1 `regex`), with `search` semantics, and with the one difference described under
+  "`^` and `$` live only in a JSON Schema pattern" below: the two anchors are permitted here.
+- `minLength` and `maxLength` count **code points**, per JSON Schema draft 2020-12, which is the
+  `codepoints` unit of §6.0 and not a runtime's string length.
 - `type: "integer"` matches an integral value, including `2.0`.
 - `multipleOf` is evaluated as `value / multipleOf` being integral, with a relative slack of
   `1e-9` to absorb binary floating point.
@@ -402,13 +492,19 @@ entire design rule, and every restriction below follows from it. Implementations
 pattern verbatim: there is no translation between dialects, because a translator is a second
 implementation of regex semantics and it would need its own conformance suite to be trustworthy.
 
-Configuration: `pattern`, `mode` (`full_match` default, or `search`), and `flags`, which may
-contain `i` and nothing else.
+Configuration: `pattern` and `mode` (`full_match` default, or `search`). **There are no flags.**
 
 Supported syntax: literal characters; character classes `[...]` with ranges, negation and
-escapes; the escapes `\n \r \t \f \v \0`, `\xHH`, `\uHHHH` and any punctuation escape;
-quantifiers `* + ? {m} {m,} {m,n}` with the lazy `?` suffix; groups `( )`, `(?: )`, `(?= )`,
-`(?! )`; alternation `|`; the anchor `^`.
+escapes; the escapes `\n \r \t \f \v`, `\xHH`, `\uHHHH`, and the escaped punctuation
+`^ $ \ . * + ? ( ) [ ] { } | /` plus `-` inside a class; quantifiers `* + ? {m} {m,} {m,n}` with
+the lazy `?` suffix; groups `( )`, `(?: )`, `(?= )`, `(?! )`; alternation `|`.
+
+A pattern is matched **by code point**, not by UTF-16 code unit. A JavaScript implementation must
+compile with the `u` flag; a Python implementation gets this for free. `[\u0000-\uffff]` therefore
+means "one BMP character" on both sides, `😀` is one atom on both sides, and a quantifier applied
+to a class counts astral characters once rather than twice. Surrogate code points, and the escapes
+`\uD800`–`\uDFFF` that would name them, are rejected: they have no meaning as text and the two
+engines disagree about whether they are even expressible.
 
 ##### The shorthand classes are forbidden
 
@@ -425,7 +521,7 @@ string. For a benchmark whose targets are Hindi, Hinglish and Korean, a `\w` tha
 "Latin only" is not a portability compromise, it is a wrong answer that looks like a working
 pattern. An explicit class cannot make that mistake quietly.
 
-##### `.` and `$` are forbidden for the same reason
+##### `.`, `^` and `$` are forbidden for the same reason
 
 | Construct | Python `re` | JavaScript `RegExp` |
 | --- | --- | --- |
@@ -433,36 +529,59 @@ pattern. An explicit class cannot make that mistake quietly.
 | `$` without `m` | end of string, or before one trailing `\n` | end of input only |
 | `^` and `$` with `m` | around `\n` only | also around `\r`, U+2028, U+2029 |
 
-None of these differences is expressible as a flag, so keeping the constructs would mean keeping
-the translator. Instead: write `[^\n]` where you meant `.`, or `[\u0000-\uffff]` for any
-character at all; use `mode: full_match` where you meant to anchor the end. `^` stays, and means
-start of input in both engines. `m` and `s` are gone from the flag subset because there is no
-longer a `$` or a `.` for them to modify.
+None of these differences is expressible as a flag, so keeping the constructs would mean keeping a
+translator. Instead: write `[^\n]` where you meant `.`, or `[\u0000-\uffff]` for any BMP character
+and `[\u0000-\U0010ffff]` for any character at all; and use `mode` where you meant to anchor.
+`full_match` requires the pattern to consume the entire input and `search` does not, which is the
+whole of what the two anchors were being used for.
 
-Where `mode` is not available — inside a JSON Schema `pattern`, which is a search by
-definition — end of input is spelled `(?![\u0000-\uffff])`, a negative lookahead asserting that no
-character follows. It is built from constructs already in the subset, and unlike `$` the two
-engines read it identically, including before a trailing newline. So the familiar `^...$` becomes
-`^...(?![\u0000-\uffff])`. This is longer, and being longer is the price of meaning one thing.
+An earlier revision of this spec kept `^`, and spelled end of input as `(?![\u0000-\uffff])` where
+`mode` was not available. **That was wrong, and wrong in a way two implementations agreed on.** In
+Python a string is code points, so an astral character is outside the class, the lookahead
+succeeds and `^foo(?![\u0000-\uffff])` matches `foo😀`. In a JavaScript `RegExp` without `u` the
+string is UTF-16, the lead surrogate is inside the class, the lookahead fails and the same pattern
+rejects the same input. Both engines were doing exactly what their own model of a string says, the
+conformance corpus contained no astral characters, and the divergence was invisible for as long as
+that stayed true. The construct is gone and so is the ambiguity it needed: the subset now fixes
+code-point matching, and anchoring is a field rather than syntax.
 
-##### The `i` flag is confined to ASCII patterns
+##### `^` and `$` live only in a JSON Schema pattern
 
-Case folding is the last construct on which the engines disagree. A JavaScript `RegExp` without
-`u` folds Greek and Cyrillic but refuses to fold a non-ASCII character down to an ASCII one, so
-`[a-z]` with `i` does not match U+212A KELVIN SIGN; Python under `re.ASCII` folds nothing outside
-ASCII at all, and without `re.ASCII` it does match the Kelvin sign. Confined to an ASCII-only
-pattern, with Python compiling under `re.ASCII`, the two agree exactly. A pattern containing any
-non-ASCII character is rejected if `i` is set. Nothing is lost for this specification's target
-scripts, because Devanagari and Hangul are caseless.
+`^...$` is how everyone writes an anchored JSON Schema `pattern`, there is no `mode` field to move
+the intent into, and a subset that forbids it would be ignored. So the two anchors are permitted
+inside `pattern` and `patternProperties`, and `$` is defined normatively as **the absolute end of
+input** — never before a trailing newline. A JavaScript `RegExp` without `m` already means that.
+Python's `$` does not, so a Python implementation rewrites that single token to `\Z`.
+
+That rewrite is one token, in one dialect, and it is not a reinstatement of the general pattern
+translator this spec removed. The distinction is that the translator had to model each engine's
+reading of `.`, `^`, `$`, `\s` and the flags, so it was a second implementation of regex semantics
+and needed its own conformance suite to be trusted; this is a substitution of one fixed token for
+one fixed token, visible in a single line, with the corpus row
+`json_schema/pattern-dollar-excludes-a-trailing-newline` failing the moment it stops happening.
+The reasoning is recorded in `docs/decisions/0002-unicode-semantics.md`.
+
+##### There are no flags, and case-insensitive matching is gone with them
+
+Case folding is the last construct on which the engines disagree, and no configuration of the two
+makes them agree. Under the code-point model this subset now requires, Python's `re.IGNORECASE`
+folds U+212A KELVIN SIGN to `k` and U+0131 LATIN SMALL LETTER DOTLESS I to `i`; a JavaScript
+`RegExp` with `iu` folds the Kelvin sign and does **not** fold the dotless i. There is no flag
+combination that reconciles them, and the earlier compromise of confining `i` to ASCII patterns
+died with `re.ASCII`, which was only there to make the shorthand classes portable.
+
+Write the alternation out: `[aA][bB][cC]`. It is longer, it is exact, and it cannot mean two things
+in two runtimes. Nothing is lost for this specification's target scripts, because Devanagari and
+Hangul are caseless.
+
+`m`, `s`, `g` and `u` are likewise not configurable: `m` and `s` had nothing left to modify once
+`^`, `$` and `.` were gone, `g` is meaningless for a single match, and `u` is mandatory rather than
+optional. `flags` is not a field.
 
 Also rejected with `invalid_pattern`: backreferences, named groups, lookbehind, atomic groups and
-possessive quantifiers, inline flag groups `(?i)`, `\A \Z \z \G`, `\p{...}` and `\P{...}`, and any
-malformed pattern.
-
-One consequence remains out of subset and is not covered by any guarantee: a quantified class
-spanning astral characters, which a UTF-16 engine counts as two units and Python counts as one.
-Patterns should stay within the Basic Multilingual Plane, which includes all of Devanagari and
-Hangul.
+possessive quantifiers, inline flag groups `(?i)`, `\A \Z \z \G`, `\p{...}` and `\P{...}`, the
+octal-looking `\0` (write `\x00`), a quantifier applied to a lookahead, an escaped character
+outside the permitted punctuation set, and any malformed pattern.
 
 Codes: `ok`, `no_match`, `invalid_pattern`.
 
@@ -474,10 +593,12 @@ The candidate string is split into elements by `parse`:
 - `lines` - normalise line endings, split on `\n`
 - `delimiter` - split on the literal `delimiter`
 
-then `trim_elements` (default `true`) and `drop_empty` (default `true`) are applied.
-`element_comparator` is one of `exact_string`, `case_insensitive_string`, `numeric` (parsed by
-the `numeric_tolerance` grammar, with `numeric_abs_tol` / `numeric_rel_tol`), or `json`
-(structural deep equality).
+then each element is normalised to the verifier's `normalization` form (§6.0, default `NFC`), and
+`trim_elements` (default `true`) and `drop_empty` (default `true`) are applied. The expected
+elements go through the same normalisation. `element_comparator` is one of `exact_string`,
+`case_insensitive_string`, `numeric` (parsed by the `numeric_tolerance` grammar, with
+`numeric_abs_tol` / `numeric_rel_tol`), or `json` (structural deep equality, over strings and keys
+that have themselves been normalised).
 
 `duplicates` is `collapse` (default) or `significant`. Under `collapse` both sides are
 deduplicated first, using the comparator's *canonical key* and ignoring numeric tolerance;
@@ -501,18 +622,27 @@ Codes: `ok`, `parse_error`, `cardinality_mismatch`, `element_mismatch`.
 
 #### `format_constraint`
 
-Shape only; it never looks at meaning. After optional `normalize_line_endings` (default `true`)
-and `trim` (default `false`), the checks run in this fixed order, and the **first** failure is
-the reported code:
+Shape only; it never looks at meaning. The candidate is normalised to the `normalization` form
+(§6.0, default `NFC`) **first**, then optional `normalize_line_endings` (default `true`) and
+`trim` (default `false`) are applied, and then the checks run in this fixed order, the **first**
+failure being the reported code:
 
-1. `min_length` / `max_length`, in code points → `length_out_of_bounds`
+1. `min_length` / `max_length`, in the `length_unit` of §6.0 (default `codepoints`) →
+   `length_out_of_bounds`
 2. `min_lines` / `max_lines`, by the §6.0 line count → `line_count_out_of_bounds`
 3. `required_substrings`, in declaration order → `missing_required_substring`
 4. `forbidden_substrings`, in declaration order → `forbidden_substring_present`
 
-`case_sensitive` (default `true`) applies to the substring checks only. Every field is
-optional; a verifier with no fields set passes everything, which is a legitimate way to say
-"any output is structurally acceptable".
+Normalisation runs before the length is taken, and the order is normative because it changes the
+answer: `cafe\u0301` is six code points and NFC makes it five. Each substring is normalised to the
+same form before it is looked for, so a needle and a haystack written in different composition
+forms still match.
+
+`case_sensitive` (default `true`) applies to the substring checks only, and lowercases with the
+locale-independent default Unicode mapping — never a locale-sensitive one, because Turkish `İ`
+lowercases to `i̇` under the root locale and to `i` under `tr`, and a verifier's answer must not
+depend on the machine it runs on. Every field is optional; a verifier with no fields set passes
+everything, which is a legitimate way to say "any output is structurally acceptable".
 
 Codes: `ok`, `length_out_of_bounds`, `line_count_out_of_bounds`,
 `missing_required_substring`, `forbidden_substring_present`.
@@ -652,10 +782,19 @@ merged template document.
 `#/$defs/conformance_file`. Every case is `{ id, verifier, candidate, expected }` where
 `expected` is `{ passed, code }`.
 
-Both implementations run the same files. The suite deliberately includes empty strings, Unicode
-including Devanagari and Hangul, floating point edge cases, NaN and infinities, deeply nested
-JSON, regex metacharacters, and mixed line endings, because those are exactly the places two
-engines drift apart. Any divergence fails CI.
+Both implementations run the same files. The suite deliberately includes empty strings, floating
+point edge cases, NaN and infinities, deeply nested JSON, regex metacharacters, and mixed line
+endings, because those are exactly the places two engines drift apart.
+
+Every declarative verifier's case set is additionally required to contain, at minimum, **one
+astral character, one combining sequence, one ZWJ sequence and one mixed-script string**, and a
+test enforces the requirement rather than trusting an author to remember. The rule exists because
+its absence hid a real defect: a corpus of Devanagari and Hangul is entirely within the Basic
+Multilingual Plane, so every case agreed on both sides while the subset's end-of-input construct
+diverged on the first astral character anyone would have tried. A corpus that cannot reach a
+divergence is not evidence that there is none.
+
+Any divergence fails CI.
 
 `conformance/seed-fixture.json` pins the seed derivation, and `conformance/canonical-json.json`
 pins canonical JSON serialisation. Both are executed by both suites.

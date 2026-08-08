@@ -25,6 +25,72 @@ export function isSpecWhitespace(character: string): boolean {
   return WHITESPACE_SET.has(character);
 }
 
+/**
+ * Index of the first unpaired surrogate code unit in `text`, or `-1`.
+ *
+ * A well-formed pair is not reported; a lead with no trail, a trail with no lead, and a
+ * lead followed by another lead all are.
+ */
+export function findUnpairedSurrogate(text: string): number {
+  let index = 0;
+  while (index < text.length) {
+    const value = text.charCodeAt(index);
+    if (value >= 0xd800 && value <= 0xdbff) {
+      const next = index + 1 < text.length ? text.charCodeAt(index + 1) : 0;
+      if (next >= 0xdc00 && next <= 0xdfff) {
+        index += 2;
+        continue;
+      }
+      return index;
+    }
+    if (value >= 0xdc00 && value <= 0xdfff) return index;
+    index += 1;
+  }
+  return -1;
+}
+
+/**
+ * Refuse a configuration containing an unpaired surrogate, anywhere inside it.
+ *
+ * An unpaired surrogate is not a character, and the two runtimes disagree about what it is
+ * instead. This one holds a string as UTF-16 code units, so `'\u{1f600}'.includes('\ud83d')`
+ * is true: the needle is literally the first half of the haystack. Python holds a string as
+ * code points, so the same test is false. `String.prototype.split` against a lone-surrogate
+ * delimiter splits the same emoji that Python's `str.split` leaves whole. Neither engine is
+ * wrong about its own model of a string, so a configuration that can only mean two things is
+ * refused rather than evaluated.
+ *
+ * Candidates are deliberately not checked. A candidate is model output and must always
+ * produce a verdict; an unpaired surrogate in a candidate is harmless on its own, because
+ * the divergence needs the *needle* to be the half of a pair.
+ *
+ * Mirrors `require_well_formed` in packages/generate/src/redrob_generate/verify/base.py.
+ */
+export function requireWellFormed(value: unknown, where = 'verifier configuration'): void {
+  if (typeof value === 'string') {
+    const position = findUnpairedSurrogate(value);
+    if (position >= 0) {
+      const code = value.charCodeAt(position).toString(16).toUpperCase().padStart(4, '0');
+      throw new VerifierConfigError(
+        `${where} contains an unpaired surrogate U+${code} at index ${position}. It is not ` +
+          'a character, and a Python implementation matching by code point and a JavaScript ' +
+          'one matching by UTF-16 code unit give opposite answers for it',
+      );
+    }
+    return;
+  }
+  if (Array.isArray(value)) {
+    for (const entry of value) requireWellFormed(entry, where);
+    return;
+  }
+  if (typeof value === 'object' && value !== null) {
+    for (const [key, entry] of Object.entries(value as Record<string, unknown>)) {
+      requireWellFormed(key, where);
+      requireWellFormed(entry, where);
+    }
+  }
+}
+
 /** Strip leading and trailing spec whitespace. */
 export function stripSpecWhitespace(text: string): string {
   let start = 0;

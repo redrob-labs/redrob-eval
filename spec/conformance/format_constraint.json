@@ -793,6 +793,20 @@
         "passed": false,
         "code": "unsupported_verifier"
       }
+    },
+    {
+      "id": "format/unpaired-surrogate-in-a-required-substring-is-refused",
+      "description": "U+D83D is the lead unit of the U+1F600 surrogate pair and is not a character. Python searches by code point and does not find it inside the emoji; a JavaScript String.prototype.includes searches by code unit and does. Same configuration, same candidate, opposite verdicts, so the configuration is refused on both sides.",
+      "verifier": {
+        "type": "format_constraint",
+        "required_substrings": ["\ud83d"]
+      },
+      "candidate": "😀",
+      "raises": "verifier_config",
+      "expected": {
+        "passed": false,
+        "code": "unsupported_verifier"
+      }
     }
   ]
 }

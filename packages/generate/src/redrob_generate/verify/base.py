@@ -13,6 +13,7 @@ from __future__ import annotations
 import math
 import re
 import unicodedata
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -79,6 +80,63 @@ def fail(code: str, message: str = "", **detail: Any) -> Verdict:
     if code not in VERDICT_CODES:
         raise ValueError(f"{code!r} is not a spec verdict code")
     return Verdict(False, code, message, detail)
+
+
+def find_unpaired_surrogate(text: str) -> int:
+    """Index of the first unpaired surrogate code unit in ``text``, or ``-1``.
+
+    A well-formed surrogate pair is not reported; a lead with no trail, a trail with no
+    lead, and a lead followed by another lead all are.
+    """
+    index = 0
+    length = len(text)
+    while index < length:
+        value = ord(text[index])
+        if 0xD800 <= value <= 0xDBFF:
+            if index + 1 < length and 0xDC00 <= ord(text[index + 1]) <= 0xDFFF:
+                index += 2
+                continue
+            return index
+        if 0xDC00 <= value <= 0xDFFF:
+            return index
+        index += 1
+    return -1
+
+
+def require_well_formed(value: Any, where: str = "verifier configuration") -> None:
+    """Refuse a configuration containing an unpaired surrogate, anywhere inside it.
+
+    An unpaired surrogate is not a character, and the two runtimes disagree about what it
+    is instead. Python holds a string as code points, so ``"\\ud83d" in "\\U0001f600"`` is
+    false; JavaScript holds one as UTF-16 code units, so
+    ``"\\u{1f600}".includes("\\ud83d")`` is true, because the needle is literally the first
+    half of the haystack. The same split happens in ``String.prototype.split`` against a
+    lone-surrogate delimiter. Neither engine is wrong about its own model of a string and
+    no amount of care in the verifier reconciles them, so a configuration that can only
+    mean two things is refused rather than evaluated.
+
+    Candidates are deliberately not checked. A candidate is model output and must always
+    produce a verdict; and an unpaired surrogate in a candidate is harmless on its own,
+    because the divergence needs the *needle* to be the half of a pair.
+    """
+    if isinstance(value, str):
+        position = find_unpaired_surrogate(value)
+        if position >= 0:
+            raise ValueError(
+                f"{where} contains an unpaired surrogate U+{ord(value[position]):04X} at "
+                f"index {position}. It is not a character, and a Python implementation "
+                "matching by code point and a JavaScript one matching by UTF-16 code unit "
+                "give opposite answers for it"
+            )
+        return
+    if isinstance(value, Mapping):
+        for key, entry in value.items():
+            require_well_formed(key, where)
+            require_well_formed(entry, where)
+        return
+    if isinstance(value, (list, tuple)):
+        for entry in value:
+            require_well_formed(entry, where)
 
 
 def strip_spec_whitespace(text: str) -> str:

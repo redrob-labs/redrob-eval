@@ -11,6 +11,7 @@
  * bridge or an explicit failure.
  */
 import type { Verifier } from './spec-types.generated';
+import { requireWellFormed } from './text';
 import { fail, UnsupportedVerifierError, type Verdict } from './verdict';
 import {
   DECLARATIVE_VERIFIERS,
@@ -56,6 +57,8 @@ export function runVerifier(verifier: Verifier, candidate: string): Verdict {
   if (!handler) {
     throw new UnsupportedVerifierError(verifierType, 'no implementation is registered');
   }
+  // Checked here rather than in each verifier, so a field added later inherits the rule.
+  requireWellFormed(verifier, `the ${verifierType} verifier's configuration`);
   return handler(verifier as never, candidate);
 }
 

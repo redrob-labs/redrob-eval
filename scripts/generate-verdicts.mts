@@ -15,6 +15,7 @@ import path from 'node:path';
 import {
   DECLARATIVE_VERIFIER_TYPES,
   runVerifierOrFail,
+  scanRegexPattern,
   VerifierConfigError,
   type ConformanceFile,
   type Verifier,
@@ -22,6 +23,26 @@ import {
 
 const directory = path.join(process.cwd(), 'spec', 'conformance');
 const verdicts: Record<string, [boolean | 'raises', string]> = {};
+
+/**
+ * The token stream a pattern scans to, alongside the verdict it produces.
+ *
+ * The two scanners walk a pattern with an index, and the thing being indexed is not the
+ * same on the two sides: a Python string steps by code point and a JavaScript string steps
+ * by UTF-16 code unit, so an astral character is one step on one side and two on the other.
+ * The JavaScript scanner reassembles surrogate pairs to compensate. Comparing verdicts
+ * alone would not notice if it stopped: a pattern can tokenise differently and still match
+ * or fail to match the same candidate. Comparing the token stream does.
+ */
+function tokenSignature(pattern: string): string {
+  try {
+    return scanRegexPattern(pattern)
+      .map((token) => `${token.kind}:${token.text}`)
+      .join(' ');
+  } catch (error) {
+    return `error:${(error as Error).name}`;
+  }
+}
 
 for (const filename of readdirSync(directory).sort()) {
   if (!filename.endsWith('.json')) continue;
@@ -40,6 +61,13 @@ for (const filename of readdirSync(directory).sort()) {
     } catch (error) {
       if (!(error instanceof VerifierConfigError)) throw error;
       verdicts[entry.id] = ['raises', 'verifier_config'];
+    }
+    const pattern = (entry.verifier as { type?: string; pattern?: unknown }).pattern;
+    if (
+      (entry.verifier as { type?: string }).type === 'regex' &&
+      typeof pattern === 'string'
+    ) {
+      verdicts[`tokens:${entry.id}`] = ['raises', tokenSignature(pattern)];
     }
   }
 }

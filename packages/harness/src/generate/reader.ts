@@ -9,21 +9,21 @@
  * spec's claim that cherry-picking is structurally impossible rather than discouraged;
  * without a tool that actually performs the check, the claim is decoration.
  */
-import { readFile } from 'node:fs/promises';
-import path from 'node:path';
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 
-import { contentHash } from './canonical';
-import { deriveSeed, seedToString } from './seed';
-import type { Instance, Manifest, Template } from './spec-types.generated';
+import { contentHash } from "./canonical";
+import { deriveSeed, seedToString } from "./seed";
+import type { Instance, Manifest, Template } from "./spec-types.generated";
 
-export const INSTANCES_FILENAME = 'instances.jsonl';
-export const MANIFEST_FILENAME = 'manifest.json';
-export const SPEC_VERSION = 'redrob-verifiable-task/v2';
+export const INSTANCES_FILENAME = "instances.jsonl";
+export const MANIFEST_FILENAME = "manifest.json";
+export const SPEC_VERSION = "redrob-verifiable-task/v2";
 
 export class GeneratedSetError extends Error {
   constructor(message: string) {
     super(message);
-    this.name = 'GeneratedSetError';
+    this.name = "GeneratedSetError";
   }
 }
 
@@ -36,8 +36,8 @@ export interface GeneratedSet {
 /** Parse the JSONL instance stream. Blank lines are skipped; malformed ones are not. */
 export function parseInstances(text: string): Instance[] {
   const instances: Instance[] = [];
-  text.split('\n').forEach((line, offset) => {
-    if (line.trim() === '') return;
+  text.split("\n").forEach((line, offset) => {
+    if (line.trim() === "") return;
     try {
       instances.push(JSON.parse(line) as Instance);
     } catch (error) {
@@ -49,12 +49,20 @@ export function parseInstances(text: string): Instance[] {
   return instances;
 }
 
-export async function readGeneratedSet(directory: string): Promise<GeneratedSet> {
+export async function readGeneratedSet(
+  directory: string,
+): Promise<GeneratedSet> {
   let manifestText: string;
   let instancesText: string;
   try {
-    manifestText = await readFile(path.join(directory, MANIFEST_FILENAME), 'utf8');
-    instancesText = await readFile(path.join(directory, INSTANCES_FILENAME), 'utf8');
+    manifestText = await readFile(
+      path.join(directory, MANIFEST_FILENAME),
+      "utf8",
+    );
+    instancesText = await readFile(
+      path.join(directory, INSTANCES_FILENAME),
+      "utf8",
+    );
   } catch (error) {
     throw new GeneratedSetError(
       `${directory} is not a generated set: ${(error as NodeJS.ErrnoException).message}`,
@@ -78,11 +86,11 @@ export async function readGeneratedSet(directory: string): Promise<GeneratedSet>
 
 /** The only fields a locale layer may set, per spec §1.2. */
 export const LOCALE_ONLY_FIELDS = [
-  'locale',
-  'translation_status',
-  'description',
-  'prompt',
-  'notes',
+  "locale",
+  "translation_status",
+  "description",
+  "prompt",
+  "notes",
 ] as const;
 
 /**
@@ -101,19 +109,22 @@ export function mergeTemplateLayers(
   const overreach = Object.keys(localeLayer).filter((key) => !allowed.has(key));
   if (overreach.length > 0) {
     throw new GeneratedSetError(
-      `a locale layer may only set ${LOCALE_ONLY_FIELDS.join(', ')}; this one also sets ${overreach.join(', ')}`,
+      `a locale layer may only set ${LOCALE_ONLY_FIELDS.join(", ")}; this one also sets ${overreach.join(", ")}`,
     );
   }
   return { ...core, ...localeLayer } as unknown as Template;
 }
 
 /** Load `template.json` plus `locales/<locale>.json` and merge them. */
-export async function readTemplate(directory: string, locale = 'en'): Promise<Template> {
+export async function readTemplate(
+  directory: string,
+  locale = "en",
+): Promise<Template> {
   const core = JSON.parse(
-    await readFile(path.join(directory, 'template.json'), 'utf8'),
+    await readFile(path.join(directory, "template.json"), "utf8"),
   ) as Record<string, unknown>;
   const layer = JSON.parse(
-    await readFile(path.join(directory, 'locales', `${locale}.json`), 'utf8'),
+    await readFile(path.join(directory, "locales", `${locale}.json`), "utf8"),
   ) as Record<string, unknown>;
   return mergeTemplateLayers(core, layer);
 }
@@ -142,7 +153,11 @@ export function auditSeeds(set: GeneratedSet): SeedAudit {
   const generatorVersion = set.manifest.generator_version;
   const entries = set.instances.map((instance) => {
     const recomputed = seedToString(
-      deriveSeed(instance.template_id, instance.instance_index, generatorVersion),
+      deriveSeed(
+        instance.template_id,
+        instance.instance_index,
+        generatorVersion,
+      ),
     );
     return {
       instanceIndex: instance.instance_index,
@@ -169,7 +184,10 @@ export interface TemplateHashAudit {
  * This closes the remaining gap in the seed argument: without it, a template could be
  * edited after generation and the seeds would still recompute.
  */
-export function auditTemplateHash(template: Template, claimed: string): TemplateHashAudit {
+export function auditTemplateHash(
+  template: Template,
+  claimed: string,
+): TemplateHashAudit {
   const recomputed = contentHash(template);
   return {
     templateId: template.id,
@@ -182,11 +200,15 @@ export function auditTemplateHash(template: Template, claimed: string): Template
 /** Every instance in the set must agree with the manifest about its template. */
 export function auditManifestConsistency(set: GeneratedSet): string[] {
   const problems: string[] = [];
-  const byId = new Map(set.manifest.templates.map((entry) => [entry.id, entry]));
+  const byId = new Map(
+    set.manifest.templates.map((entry) => [entry.id, entry]),
+  );
   for (const instance of set.instances) {
     const entry = byId.get(instance.template_id);
     if (!entry) {
-      problems.push(`instance ${instance.instance_index} uses template ${instance.template_id}, which the manifest does not list`);
+      problems.push(
+        `instance ${instance.instance_index} uses template ${instance.template_id}, which the manifest does not list`,
+      );
       continue;
     }
     if (entry.content_hash !== instance.template_hash) {
@@ -203,7 +225,7 @@ export function auditManifestConsistency(set: GeneratedSet): string[] {
   const indices = set.instances.map((instance) => instance.instance_index);
   const expected = indices.map((_, position) => position);
   if (JSON.stringify(indices) !== JSON.stringify(expected)) {
-    problems.push('instance indices are not a contiguous run starting at zero');
+    problems.push("instance indices are not a contiguous run starting at zero");
   }
   return problems;
 }

@@ -17,14 +17,14 @@
  */
 
 /** The implementation this module is. Recorded verbatim in verdict records it produces. */
-export const IMPLEMENTATION = '@redrob/harness';
+export const IMPLEMENTATION = "@redrob/harness";
 
 /**
  * Unicode version this runtime's ICU implements. Read from `process.versions` rather
  * than pinned, because a pinned value would record a claim instead of a measurement.
  * Falls back to `unknown` on a build without full ICU, which is itself worth recording.
  */
-export const UNICODE_VERSION: string = process.versions.unicode ?? 'unknown';
+export const UNICODE_VERSION: string = process.versions.unicode ?? "unknown";
 
 export interface Provenance {
   implementation: string;
@@ -57,6 +57,6 @@ export function localProvenance(version: string): Provenance {
  * case where the origin is unknown.
  */
 export function isAuthoritative(provenance: unknown): boolean {
-  if (typeof provenance !== 'object' || provenance === null) return false;
+  if (typeof provenance !== "object" || provenance === null) return false;
   return (provenance as { authoritative?: unknown }).authoritative === true;
 }

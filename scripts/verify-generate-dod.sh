@@ -145,6 +145,83 @@ step 09-spec-types-drift yarn generate:spec-types:check
 step 10-zero-divergence zero_divergence
 step 11-existing-verifiers-unaffected yarn verify:phase1
 
+# 4b. The study command runs end to end against the mock provider, twice, and produces the
+#     same bytes both times. `--created-at` pins the one field that legitimately differs;
+#     `--no-peer-probe` keeps the artifact independent of whether node happens to be here,
+#     so the comparison is of the study and nothing else.
+STUDY_CONFIG=packages/generate/examples/language-cost-mock.study.json
+
+reproducible_study() {
+  local status=0
+  rm -rf /tmp/dod-study-a /tmp/dod-study-b
+  for out in /tmp/dod-study-a /tmp/dod-study-b; do
+    redrob-generate study --config "$STUDY_CONFIG" --out "$out" \
+      --created-at 2026-01-01T00:00:00Z --no-peer-probe --quiet || status=1
+  done
+  if diff -r /tmp/dod-study-a /tmp/dod-study-b; then
+    echo "byte-identical across $(python3 -c 'import json;print(len(json.load(open("/tmp/dod-study-a/result.json"))["instances"]))') instance rows"
+  else
+    status=1
+  fi
+  return $status
+}
+
+# 4c. The artifact validates against its own schema, carries all three paired deltas, and
+#     every verdict row names the implementation behind it. Read off the written file
+#     rather than from the objects the run held in memory.
+study_artifact_shape() {
+  python3 - <<'PY'
+import json, sys
+sys.path.insert(0, "packages/generate/src")
+from redrob_generate.study.config import validate_study_document
+
+result = json.load(open("/tmp/dod-study-a/result.json", encoding="utf-8"))
+validate_study_document(result, "study_result")
+print("validates against spec/study-v1.schema.json")
+
+deltas = [row["comparison"] for row in result["aggregates"]["paired_deltas"]]
+expected = ["english-vs-korean", "korean-vs-hindi", "hindi-vs-hinglish"]
+assert deltas == expected, f"{deltas} != {expected}"
+for row in result["aggregates"]["paired_deltas"]:
+    assert row["n_pairs"] > 0, f"{row['comparison']} has no pairs"
+    print(
+        f"  {row['comparison']:<20} {row['n_pairs']:>3} pairs  "
+        f"tokens {row['mean_prompt_tokens_delta']:+.3f}  accuracy {row['accuracy_delta']:+.3f}"
+    )
+
+for row in result["instances"]:
+    provenance = row["verdict_provenance"]
+    assert provenance["implementation"] == "redrob-generate", provenance
+    assert provenance["authoritative"] is True, provenance
+    assert provenance["unicode_version"], provenance
+    assert row["code_mix_ratio"] is None, row
+print(f"all {len(result['instances'])} verdict rows carry implementation, version and unicode table")
+
+runtimes = {r["implementation"]: r["unicode_version"] for r in result["provenance"]["runtimes"]}
+print(f"runtimes recorded: {runtimes}")
+PY
+}
+
+# 4d. Publication refuses the two things it exists to refuse. Both are expected to exit 3,
+#     so a zero exit here is the failure.
+study_publication_gates() {
+  local status=0
+  if redrob-generate study --config "$STUDY_CONFIG" --out /tmp/dod-study-pub \
+    --created-at 2026-01-01T00:00:00Z --no-peer-probe --publish --quiet 2>/tmp/dod-study-pub.err; then
+    echo "FAILED: --publish accepted an artifact with untranslated locales"
+    status=1
+  else
+    echo "refused untranslated locales (exit 3): $(head -c 200 /tmp/dod-study-pub.err | tail -c 150)"
+  fi
+  python3 -m pytest packages/generate/tests/test_study.py -q \
+    -k "publication or provenance" || status=1
+  return $status
+}
+
+step 12-reproducible-study reproducible_study
+step 13-study-artifact-shape study_artifact_shape
+step 14-study-publication-gates study_publication_gates
+
 # 5. The one line this branch adds to the shared root tsconfig must not change what Compare,
 #    Evolve or Deploy compile to. Next.js embeds a random BUILD_ID and two random encryption
 #    keys, so a raw hash diff is noise; the snapshot normalises the build id away and the
@@ -197,13 +274,13 @@ PY
   return $status
 }
 
-step 12-build-output-unchanged build_output_unchanged
+step 15-build-output-unchanged build_output_unchanged
 
 # 6. Every check above compares two things and passes when they match. That is only
 #    evidence if a mismatch would have been noticed, so each invariant is broken on purpose
 #    and the check for it is required to fail. A control that passes is a check that cannot
 #    fail, which is worse than no check because it reads as proof.
-step 13-negative-controls bash scripts/negative-controls.sh
+step 16-negative-controls bash scripts/negative-controls.sh
 
 echo
 if [ "$FAILURES" -eq 0 ]; then

@@ -18,8 +18,8 @@
  * Deliberately not wired into any route: it reads credentials from the environment and
  * writes to stdout, which is a command line contract, not an HTTP one.
  */
-import { callModel } from '../packages/harness/src/lib/providers/index';
-import { resolveModel } from '../packages/harness/src/lib/catalog/resolve';
+import { callModel } from "../packages/harness/src/lib/providers/index";
+import { resolveModel } from "../packages/harness/src/lib/catalog/resolve";
 
 interface Request {
   model_id: string;
@@ -32,7 +32,7 @@ interface Request {
 async function readStdin(): Promise<string> {
   const chunks: Buffer[] = [];
   for await (const chunk of process.stdin) chunks.push(Buffer.from(chunk));
-  return Buffer.concat(chunks).toString('utf8');
+  return Buffer.concat(chunks).toString("utf8");
 }
 
 function fail(message: string): never {
@@ -48,23 +48,33 @@ async function main(): Promise<void> {
   } catch (err) {
     fail(`request is not JSON: ${(err as Error).message}`);
   }
-  if (typeof request.model_id !== 'string' || typeof request.prompt !== 'string') {
-    fail('request needs a string model_id and a string prompt');
+  if (
+    typeof request.model_id !== "string" ||
+    typeof request.prompt !== "string"
+  ) {
+    fail("request needs a string model_id and a string prompt");
   }
 
   const resolved = await resolveModel(request.model_id);
   if (!resolved) {
-    fail(`unknown model id ${request.model_id}; it is not in the curated catalog or OpenRouter`);
+    fail(
+      `unknown model id ${request.model_id}; it is not in the curated catalog or OpenRouter`,
+    );
   }
 
-  const result = await callModel(resolved.providerId, resolved.modelId, request.prompt, {
-    systemPrompt: request.system_prompt,
-    maxTokens: request.max_tokens ?? null,
-    // Zero rather than a default, because a study rerun that produced different text
-    // would break the reproducibility guarantee the artifact claims. It does not make
-    // a provider deterministic, and the artifact does not pretend that it does.
-    temperature: request.temperature ?? 0,
-  });
+  const result = await callModel(
+    resolved.providerId,
+    resolved.modelId,
+    request.prompt,
+    {
+      systemPrompt: request.system_prompt,
+      maxTokens: request.max_tokens ?? null,
+      // Zero rather than a default, because a study rerun that produced different text
+      // would break the reproducibility guarantee the artifact claims. It does not make
+      // a provider deterministic, and the artifact does not pretend that it does.
+      temperature: request.temperature ?? 0,
+    },
+  );
 
   process.stdout.write(
     `${JSON.stringify({

@@ -50,6 +50,14 @@ TypeScript and Python are both reference implementations of this document. **Nei
 authoritative over the other.** When they disagree, this document decides; if this document is
 silent, that silence is the bug and it gets fixed here first.
 
+That parity is about conformance, not about publication. **Python is normative for any verdict
+that is going to be published: every verdict record carries the implementation that produced it,
+that implementation's version and the version of the Unicode table it read, and a publishable
+artifact refuses to build from a verdict this project's Python implementation did not produce.**
+The reason is not that TypeScript is less correct — it passes the same corpus — but that the two
+runtimes compile against different versions of the Unicode Character Database, so a normalisation
+or case mapping over a recently assigned code point can differ while both behave correctly.
+
 The split of duties is by capability, not by rank:
 
 | Concern | Python | TypeScript |
@@ -118,16 +126,29 @@ template family is a directory:
 ```
 templates/<family>/<name>/
   template.json     # locale-neutral core: id, version, family, parameters, derivations, verifier
-  locales/en.json   # locale layer: locale, description, prompt, optional notes
+  locales/en.json   # locale layer: locale, translation_status, description, prompt, optional notes
   locales/xx.json   # a sibling file, added later, sharing id and parameter declarations
 ```
 
 Merging is a shallow field-wise overlay of the locale layer onto the core. A locale layer may
-only set `locale`, `description`, `prompt` and `notes`; if it tries to redeclare `parameters`,
-`derivations`, `id`, `version` or `verifier`, loading fails. That restriction is the whole point
-of the split: **translations may change the wording, never the task**. Two locales of the same
-template id sample the same parameters from the same seed and expect the same answer, which is
-what makes their token counts comparable (see §8).
+only set `locale`, `translation_status`, `description`, `prompt` and `notes`; if it tries to
+redeclare `parameters`, `derivations`, `id`, `version` or `verifier`, loading fails. That
+restriction is the whole point of the split: **translations may change the wording, never the
+task**. Two locales of the same template id sample the same parameters from the same seed and
+expect the same answer, which is what makes their token counts comparable (see §8).
+
+Resolving a template id and a locale to a concrete template either succeeds or fails loudly.
+There is no fallback to another locale: a missing `xx.json` is an error naming the locales that
+do exist, because silently serving English under a Korean label would make a per-locale
+measurement meaningless in exactly the way that is hardest to notice afterwards.
+
+`translation_status` is required on every locale layer and is one of `native-reviewed`,
+`single-reviewer` or `untranslated`. It has no default, because every candidate default is a
+false statement about work that either did or did not happen. `untranslated` marks a placeholder
+— in practice the English prompt copied verbatim — which exists so that a pipeline can be
+exercised across locales before any translation is commissioned. Such a template loads, generates
+and scores normally; what it cannot do is be published. A publishable artifact refuses to build
+while any locale it covers is `untranslated`.
 
 A single merged `.json` file that already contains every field is also accepted, for tests and
 for one-off templates.
@@ -137,6 +158,15 @@ for one-off templates.
 An instance is a template plus bound parameter values plus the derived seed plus the expected
 result, computed at generation time. It also carries the content hash of the template it came
 from, so a set cannot be silently re-pointed at an edited template.
+
+It also carries `code_mix_ratio`, which is required and is currently always `null`. The field
+names the proportion of a prompt drawn from the embedded language in a code-mixed locale such as
+`hi-Latn`. No implementation computes it, and none should until the measurement is defined:
+choosing a token unit, a language identifier and a treatment of proper nouns and numerals each
+change the number for the same sentence, so any value produced today would be an artefact of
+those unstated choices. It is present rather than absent so that the document shape does not
+change when the method is settled, and `null` rather than omitted so a reader can tell "not
+measured" from "written by an older tool".
 
 ### 1.4 Manifest
 
@@ -853,6 +883,17 @@ One breaking change, plus the rename that follows from it.
   the runtime executable-child rejection as the primary defence. Executable elements are now a
   schema violation. Each removed construct was a place two implementations could disagree, and
   the previous pass showed that some such disagreements are invisible to parity testing.
+
+Three additive changes were made after the list-valued verifier field and before `v2` was
+tagged. They are recorded here rather than as a version bump because no `v2` document was
+published in the interim, so nothing exists that they could break.
+
+- **`translation_status` is required on every locale layer** (§1.2), so that a placeholder
+  locale cannot be mistaken for a translated one by anything downstream.
+- **`code_mix_ratio` is required on every instance and is always `null`** (§1.3).
+- **The `locale` pattern admits a script subtag**, so Hinglish is expressible as `hi-Latn`.
+  Hindi in Latin script tokenises quite differently from Hindi in Devanagari, and treating the
+  two as one locale would average the difference away.
 
 `v1` documents are not accepted by a `v2` implementation: the `spec_version` field is a `const`
 in the schema and the reader checks it, so a stale set fails loudly rather than being scored

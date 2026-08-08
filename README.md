@@ -159,8 +159,12 @@ On **Evolve**, pick a catalog dataset or **Custom goal** (goal + rubric + input-
   numbered and never rewritten in place. Start with
   [0001 Generate module foundation](docs/decisions/0001-generate-foundation.md), then
   [0002 Unicode semantics](docs/decisions/0002-unicode-semantics.md),
-  [0003 List-valued verifier field](docs/decisions/0003-list-valued-verifier-field.md) and
-  [0004 Branching model](docs/decisions/0004-branching-model.md).
+  [0003 List-valued verifier field](docs/decisions/0003-list-valued-verifier-field.md),
+  [0004 Branching model](docs/decisions/0004-branching-model.md) and
+  [0005 Study runner](docs/decisions/0005-study-runner.md).
+- [Running a study](packages/generate/STUDY.md) - the config format for
+  `redrob-generate study`, a worked example against the mock provider, and why the stub locales
+  cannot be published
 - [Sample exports](exports/samples/README.md) - regenerable report + Pareto
 
 ## Environment

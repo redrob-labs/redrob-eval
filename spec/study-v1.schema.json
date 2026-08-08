@@ -152,7 +152,12 @@
         "unicode_version": { "type": "string" },
         "authoritative": { "type": "boolean" }
       },
-      "required": ["implementation", "implementation_version", "unicode_version", "authoritative"],
+      "required": [
+        "implementation",
+        "implementation_version",
+        "unicode_version",
+        "authoritative"
+      ],
       "additionalProperties": false
     },
     "result_provenance": {
@@ -161,7 +166,9 @@
       "properties": {
         "generator_name": { "type": "string" },
         "generator_version": { "type": "string" },
-        "spec_version": { "$ref": "verifiable-task-v2.schema.json#/$defs/spec_version" },
+        "spec_version": {
+          "$ref": "verifiable-task-v2.schema.json#/$defs/spec_version"
+        },
         "seed_policy": { "$ref": "#/$defs/seed_policy" },
         "tokenizer": { "$ref": "#/$defs/tokenizer_ref" },
         "runtimes": {
@@ -195,9 +202,16 @@
         "tag": { "$ref": "verifiable-task-v2.schema.json#/$defs/locale" },
         "fertility_level": { "$ref": "#/$defs/cell_level" },
         "resource_level": { "$ref": "#/$defs/cell_level" },
-        "translation_status": { "$ref": "verifiable-task-v2.schema.json#/$defs/translation_status" }
+        "translation_status": {
+          "$ref": "verifiable-task-v2.schema.json#/$defs/translation_status"
+        }
       },
-      "required": ["tag", "fertility_level", "resource_level", "translation_status"],
+      "required": [
+        "tag",
+        "fertility_level",
+        "resource_level",
+        "translation_status"
+      ],
       "additionalProperties": false
     },
     "result_instance": {
@@ -206,7 +220,9 @@
       "type": "object",
       "properties": {
         "model_id": { "type": "string" },
-        "template_id": { "$ref": "verifiable-task-v2.schema.json#/$defs/template_id" },
+        "template_id": {
+          "$ref": "verifiable-task-v2.schema.json#/$defs/template_id"
+        },
         "locale": { "$ref": "verifiable-task-v2.schema.json#/$defs/locale" },
         "instance_index": { "type": "integer", "minimum": 0 },
         "seed": { "type": "string", "pattern": "^[0-9]+$" },
@@ -215,11 +231,15 @@
           "type": "string"
         },
         "passed": { "type": "boolean" },
-        "code": { "$ref": "verifiable-task-v2.schema.json#/$defs/verdict_code" },
+        "code": {
+          "$ref": "verifiable-task-v2.schema.json#/$defs/verdict_code"
+        },
         "elements": {
           "description": "Per-element verdicts, present exactly when the verifier field held a list.",
           "type": "array",
-          "items": { "$ref": "verifiable-task-v2.schema.json#/$defs/verdict_element" }
+          "items": {
+            "$ref": "verifiable-task-v2.schema.json#/$defs/verdict_element"
+          }
         },
         "verdict_provenance": { "$ref": "#/$defs/runtime_record" },
         "prompt_tokens": { "type": "integer", "minimum": 0 },
@@ -251,7 +271,14 @@
         "passed": { "type": "integer", "minimum": 0 },
         "accuracy": { "type": "number", "minimum": 0, "maximum": 1 }
       },
-      "required": ["model_id", "locale", "verifier_family", "n", "passed", "accuracy"],
+      "required": [
+        "model_id",
+        "locale",
+        "verifier_family",
+        "n",
+        "passed",
+        "accuracy"
+      ],
       "additionalProperties": false
     },
     "token_row": {
@@ -337,7 +364,14 @@
           "additionalProperties": false
         }
       },
-      "required": ["study_version", "study_id", "provenance", "locales", "instances", "aggregates"],
+      "required": [
+        "study_version",
+        "study_id",
+        "provenance",
+        "locales",
+        "instances",
+        "aggregates"
+      ],
       "additionalProperties": false
     }
   }

@@ -76,9 +76,13 @@ git push -u origin feature/short-description   # then open a PR into develop
 
 This is the rule the rest of the model depends on, so it is worth stating on its own.
 
-- **Feature, fix and refactor PRs into `develop`: squash.** One branch becomes one commit and
-  `develop` stays readable.
-- **Release and hotfix merges: real merge commits, `--no-ff`, never squash or rebase.**
+- **Feature, fix and refactor PRs into `develop`: squash by default.** One branch becomes one
+  commit and `develop` stays readable. A branch whose commits are each already a self-contained
+  logical change — not a trail of "wip" and "fix typo" — may be merged with `--no-ff` instead, to
+  keep boundaries that are worth bisecting later. Either is fine here; the point is that nothing
+  merges into `develop` as a pile of noise.
+- **Release and hotfix merges: real merge commits, `--no-ff`, never squash or rebase.** This one is
+  not a preference.
 
 A squash does not record that the two branches share history — it produces a brand new commit
 holding the same text. So if you squash a hotfix into `main` and then squash it into `develop`,

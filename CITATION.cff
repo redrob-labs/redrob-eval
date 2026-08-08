@@ -26,7 +26,7 @@ keywords:
 # set to a placeholder, because the CFF schema requires a real `10.x` DOI there and a
 # plausible-looking one that resolves to nothing is worse than none. Generated manifests carry
 # `"doi": "TBD"` in their citation block for the same reason, so a shared dataset says plainly
-# that its identifier is not final. Tracked in BLOCKERS.md.
+# that its identifier is not final. Tracked in docs/decisions/0001-generate-foundation.md.
 identifiers:
   - type: other
     value: "TBD"

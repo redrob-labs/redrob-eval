@@ -1,9 +1,19 @@
-# Blockers
+# 0001. Generate module foundation
+
+Status: **open**. Several entries below are awaiting a human decision, and each says so.
+Supersedes: nothing. Superseded by: nothing.
+Applies to: `spec/`, `packages/generate/`, `packages/harness/src/generate/`, `templates/`.
 
 Decisions taken during unattended work that could not be resolved from the task prompt, each with
 the options considered, the provisional choice, and why. A provisional choice is not a
 recommendation; it is what let the work continue. Every one of these is cheap to reverse now and
 expensive to reverse after something depends on it.
+
+This file began as `BLOCKERS.md` at the repository root. It moved here because it is a record of
+why the design is the way it is, which stays useful long after the blockers themselves are
+resolved, and a root-level file named for a temporary condition invites deletion once the
+condition passes. Entries revised after the first draft say so in place rather than being
+rewritten, because a record that shows only the final answer does not explain the answer.
 
 ---
 

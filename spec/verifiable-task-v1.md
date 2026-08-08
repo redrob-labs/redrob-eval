@@ -1,7 +1,29 @@
 # Redrob Verifiable Task Spec v1
 
+> ## ⚠ DRAFT — NOT STABLE, DO NOT CITE THIS BRANCH
+>
+> **This surface may change, including in ways that break existing templates and generated
+> sets, until the accompanying preprint is released.** The version identifier
+> `redrob-verifiable-task/v1` does not yet imply stability; it names the shape of the
+> document, not a promise about it.
+>
+> **Pin a commit.** Anyone implementing against this specification, generating a set they
+> intend to publish, or citing it in written work should reference an exact commit SHA and
+> not the branch. Tracking the branch means your verdicts can change under you between one
+> checkout and the next, which defeats the recomputability this document exists to provide.
+>
+> Changes already made after the first draft was written, as examples of the scale still
+> possible: the regex subset lost `\w`, `\d`, `\b`, `.` and `$` outright, and `all_of`
+> gained an eager rejection rule that turns previously scored configurations into errors.
+> Both were corrections, and both would have invalidated a published set.
+>
+> The intended stability point is the preprint. At that point this notice is replaced by a
+> statement of what is frozen and what is not, and breaking changes become `v2`. Until
+> then, the record of what is unresolved and why is
+> [`docs/decisions/0001-generate-foundation.md`](../docs/decisions/0001-generate-foundation.md).
+
 Spec version identifier: `redrob-verifiable-task/v1`
-Status: draft, foundation only. No UI, no model execution.
+Status: **draft**, foundation only. No UI, no model execution.
 Machine-checkable half: [`verifiable-task-v1.schema.json`](verifiable-task-v1.schema.json)
 Conformance suite: [`conformance/`](conformance/)
 

@@ -154,6 +154,9 @@ On **Evolve**, pick a catalog dataset or **Custom goal** (goal + rubric + input-
 - [Methodology](docs/methodology.md) - routing labels, features, export
 - [Preference](docs/preference.md) - blind brackets, and how votes become routing labels
 - [Learnings](docs/learnings.md) - living design log
+- [Decision records](docs/decisions/) - why a design is the way it is, one file per decision,
+  numbered and never rewritten in place. Start with
+  [0001 Generate module foundation](docs/decisions/0001-generate-foundation.md).
 - [Sample exports](exports/samples/README.md) - regenerable report + Pareto
 
 ## Environment

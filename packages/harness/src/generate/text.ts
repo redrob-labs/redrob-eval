@@ -8,6 +8,7 @@
  * UTF-16 units rather than code points, and `trim()` and `strip()` disagree about
  * several characters. The spec pins one answer and this module implements it.
  */
+import { VerifierConfigError } from './verdict';
 
 /**
  * The spec whitespace set, written out rather than delegated to `\s`.
@@ -80,8 +81,97 @@ export function countLines(text: string): number {
 
 export type UnicodeNormalization = 'none' | 'NFC' | 'NFD' | 'NFKC' | 'NFKD';
 
+/** Normalisation forms a comparison verifier may declare, per spec section 6.0. */
+export const NORMALIZATION_FORMS: readonly UnicodeNormalization[] = [
+  'none',
+  'NFC',
+  'NFD',
+  'NFKC',
+  'NFKD',
+];
+
+/**
+ * What a comparison verifier does when it says nothing.
+ *
+ * NFC rather than none because two answers a reader cannot tell apart must not score
+ * differently: Hangul U+AC00 and the jamo pair U+1100 U+1161 render identically and
+ * compare unequal without it.
+ */
+export const DEFAULT_NORMALIZATION: UnicodeNormalization = 'NFC';
+
 export function applyUnicodeNormalization(text: string, form: UnicodeNormalization): string {
-  return form === 'none' ? text : text.normalize(form);
+  if (form === 'none') return text;
+  if (!NORMALIZATION_FORMS.includes(form)) {
+    throw new VerifierConfigError(`'${String(form)}' is not a spec unicode normalization form`);
+  }
+  return text.normalize(form);
+}
+
+export function isNormalized(text: string, form: UnicodeNormalization): boolean {
+  return applyUnicodeNormalization(text, form) === text;
+}
+
+/**
+ * Normalise every string and every object key inside parsed JSON.
+ *
+ * Keys as well as values, because `{"\uac00": 1}` and `{"\u1100\u1161": 1}` are the same
+ * object to a reader and different objects to `required` and `properties`.
+ */
+export function normalizeJsonStrings(value: unknown, form: UnicodeNormalization): unknown {
+  if (form === 'none') return value;
+  if (typeof value === 'string') return applyUnicodeNormalization(value, form);
+  if (Array.isArray(value)) return value.map((entry) => normalizeJsonStrings(entry, form));
+  if (typeof value === 'object' && value !== null) {
+    const out: Record<string, unknown> = {};
+    for (const [key, entry] of Object.entries(value as Record<string, unknown>)) {
+      out[applyUnicodeNormalization(key, form)] = normalizeJsonStrings(entry, form);
+    }
+    return out;
+  }
+  return value;
+}
+
+/** Units a length bound can be expressed in, per spec section 6.1. */
+export const LENGTH_UNITS = ['codepoints', 'utf16', 'graphemes', 'bytes_utf8'] as const;
+export type LengthUnit = (typeof LENGTH_UNITS)[number];
+
+/**
+ * Length in UTF-8 bytes, counted from code points rather than from `TextEncoder`.
+ *
+ * `TextEncoder` silently substitutes U+FFFD for a lone surrogate and Python refuses to
+ * encode one at all. Both answers are three bytes, but arriving there by arithmetic means
+ * the two implementations agree by construction rather than by coincidence.
+ */
+export function utf8ByteLength(text: string): number {
+  let total = 0;
+  for (const character of text) {
+    const value = character.codePointAt(0) as number;
+    if (value < 0x80) total += 1;
+    else if (value < 0x800) total += 2;
+    else if (value < 0x10000) total += 3;
+    else total += 4;
+  }
+  return total;
+}
+
+/** Length of `text` in `unit`. Throws for a unit this implementation refuses. */
+export function measureLength(text: string, unit: string): number {
+  if (unit === 'codepoints') return codePointLength(text);
+  // String.prototype.length is the UTF-16 code unit count by definition.
+  if (unit === 'utf16') return text.length;
+  if (unit === 'bytes_utf8') return utf8ByteLength(text);
+  if (unit === 'graphemes') {
+    throw new VerifierConfigError(
+      "length_unit 'graphemes' is specified but not supported by this implementation: " +
+        "Python's unicodedata and this runtime's ICU carry different Unicode versions, so " +
+        'two UAX #29 grapheme breakers would disagree on the emoji and conjunct sequences ' +
+        "the unit exists for. Use 'codepoints', 'utf16' or 'bytes_utf8', which are exact " +
+        'in both',
+    );
+  }
+  throw new VerifierConfigError(
+    `'${unit}' is not a spec length unit; expected one of ${LENGTH_UNITS.join(', ')}`,
+  );
 }
 
 /**

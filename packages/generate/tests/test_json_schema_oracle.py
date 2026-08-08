@@ -15,11 +15,20 @@ Two things are worth proving on this side, and this file proves them.
    reads differently, is the only way the Python path can be wrong. This is a real check
    because the gate is hand-written even though the validator is not.
 
-2. **The recorded expectation equals raw** ``jsonschema``. That fact is the pivot the
-   TypeScript oracle test leans on: it proves ``ajv`` also matches the expectation, so
-   together the two files establish that the hand-written TypeScript validator, ``ajv``
-   and ``jsonschema`` all agree. Two independent libraries are what rule out a shared
-   misreading, which parity between the two implementations never could.
+2. **The recorded expectation equals** ``jsonschema`` **run on the normatively prepared
+   inputs.** That fact is the pivot the TypeScript oracle test leans on: it proves ``ajv``
+   also matches the expectation, so together the two files establish that the hand-written
+   TypeScript validator, ``ajv`` and ``jsonschema`` all agree. Two independent libraries
+   are what rule out a shared misreading, which parity between the two implementations
+   never could.
+
+"Prepared" means the two pre-steps the spec puts in front of schema evaluation, and
+nothing else: the instance is normalised to the declared form, and ``$`` inside a
+``pattern`` becomes ``\\Z`` because the spec defines it as the absolute end of input and
+Python's ``$`` also matches before one trailing newline. Both are one-line, auditable
+transforms rather than a general rewriter, and
+:func:`test_the_preparation_is_load_bearing` names the corpus rows whose verdict changes
+without them, so neither can quietly become a no-op.
 """
 
 from __future__ import annotations
@@ -33,6 +42,8 @@ import pytest
 
 from redrob_generate.spec import find_spec_dir
 from redrob_generate.verify import run_verifier
+from redrob_generate.verify.base import DEFAULT_NORMALIZATION, normalize_json_strings
+from redrob_generate.verify.declarative import _schema_for_python
 from redrob_generate.verify.json_schema_subset import SchemaSubsetError, validate_schema_document
 
 CONFORMANCE = find_spec_dir() / "conformance"
@@ -51,7 +62,15 @@ def _collect() -> list[tuple[str, Any, str, dict]]:
         if not isinstance(verifier, dict):
             return
         if verifier.get("type") == "json_schema":
-            rows.append((f"{case_id}#{len(rows)}", verifier["schema"], candidate, expected))
+            rows.append(
+                (
+                    f"{case_id}#{len(rows)}",
+                    verifier["schema"],
+                    candidate,
+                    expected,
+                    verifier.get("normalization", DEFAULT_NORMALIZATION),
+                )
+            )
             return
         if verifier.get("type") == "all_of":
             for child in verifier.get("verifiers", []):
@@ -67,13 +86,21 @@ def _collect() -> list[tuple[str, Any, str, dict]]:
 ROWS = _collect()
 
 
+def _library_verdict(schema: Any, parsed: Any, form: str, *, prepared: bool = True) -> bool:
+    """``jsonschema``'s answer, optionally without the spec's two pre-steps."""
+    if prepared:
+        schema = _schema_for_python(schema)
+        parsed = normalize_json_strings(parsed, form)
+    return jsonschema.Draft202012Validator(schema).is_valid(parsed)
+
+
 def test_the_oracle_corpus_is_not_empty() -> None:
     assert len(ROWS) >= 40, f"only {len(ROWS)} json_schema rows found"
 
 
 @pytest.mark.parametrize("row", ROWS, ids=[row[0] for row in ROWS])
 def test_the_subset_gate_does_not_change_the_library_verdict(row: tuple) -> None:
-    row_id, schema, candidate, _expected = row
+    row_id, schema, candidate, _expected, form = row
     try:
         parsed = json.loads(candidate)
     except ValueError:
@@ -83,12 +110,14 @@ def test_the_subset_gate_does_not_change_the_library_verdict(row: tuple) -> None
     # The gate must accept every schema in the corpus. A rejection here is a subset that
     # cannot express its own test cases.
     try:
-        validate_schema_document(schema)
+        validate_schema_document(schema, normalization=form)
     except SchemaSubsetError as exc:  # pragma: no cover - a failure is the message
         pytest.fail(f"{row_id}: the subset gate rejected a corpus schema: {exc}")
 
-    library = jsonschema.Draft202012Validator(schema).is_valid(parsed)
-    mine = run_verifier({"type": "json_schema", "schema": schema}, candidate).passed
+    library = _library_verdict(schema, parsed, form)
+    mine = run_verifier(
+        {"type": "json_schema", "schema": schema, "normalization": form}, candidate
+    ).passed
 
     if mine != library:
         reason = DOCUMENTED_DISAGREEMENTS.get(row_id)
@@ -103,7 +132,7 @@ def test_the_subset_gate_does_not_change_the_library_verdict(row: tuple) -> None
 @pytest.mark.parametrize("row", ROWS, ids=[row[0] for row in ROWS])
 def test_the_library_agrees_with_the_recorded_expectation(row: tuple) -> None:
     """The pivot the TypeScript oracle test relies on."""
-    row_id, schema, candidate, expected = row
+    row_id, schema, candidate, expected, form = row
     try:
         parsed = json.loads(candidate)
     except ValueError:
@@ -113,6 +142,33 @@ def test_the_library_agrees_with_the_recorded_expectation(row: tuple) -> None:
     # this schema's verdict.
     if not row_id.startswith("json_schema/"):
         return
-    assert jsonschema.Draft202012Validator(schema).is_valid(parsed) == expected["passed"], (
+    assert _library_verdict(schema, parsed, form) == expected["passed"], (
         f"{row_id}: jsonschema disagrees with the recorded expectation"
     )
+
+
+def test_the_preparation_is_load_bearing() -> None:
+    """The negative control for the two pre-steps.
+
+    Without them the library's answer is a different answer on real corpus rows, which is
+    the only thing that makes the prepared comparison above evidence rather than a
+    definition. The rows are named so that a future change removing a pre-step fails here
+    with the reason rather than silently weakening the oracle.
+    """
+    changed: list[str] = []
+    for row_id, schema, candidate, _expected, form in ROWS:
+        try:
+            parsed = json.loads(candidate)
+        except ValueError:
+            continue
+        if _library_verdict(schema, parsed, form) != _library_verdict(
+            schema, parsed, form, prepared=False
+        ):
+            changed.append(row_id)
+    assert changed, (
+        "the corpus contains no row where normalising the instance or rewriting '$' "
+        "changes jsonschema's verdict, so the prepared comparison proves nothing"
+    )
+    # A row per pre-step, named rather than counted.
+    assert any("pattern-dollar" in row_id for row_id in changed), changed
+    assert any("composition-forms" in row_id for row_id in changed), changed

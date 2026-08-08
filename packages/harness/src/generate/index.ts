@@ -64,11 +64,13 @@ export {
 
 export {
   compileSubsetPattern,
+  DIALECTS as REGEX_DIALECTS,
   RegexSubsetError,
   scan as scanRegexPattern,
   SUPPORTED_FLAGS as SUPPORTED_REGEX_FLAGS,
   validate as validateRegexPattern,
   validateFlags as validateRegexFlags,
+  type RegexDialect,
   type Token as RegexToken,
 } from './regex-subset';
 
@@ -91,10 +93,18 @@ export {
   collapseSpecWhitespace,
   compareByCodePoint,
   countLines,
+  DEFAULT_NORMALIZATION,
+  isNormalized,
   isSpecWhitespace,
+  LENGTH_UNITS,
+  measureLength,
+  NORMALIZATION_FORMS,
+  normalizeJsonStrings,
   normalizeLineEndings,
   SPEC_WHITESPACE,
   stripSpecWhitespace,
+  utf8ByteLength,
+  type LengthUnit,
   type UnicodeNormalization,
 } from './text';
 

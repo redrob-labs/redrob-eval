@@ -17,15 +17,17 @@ from typing import Any, Mapping
 from ..canonical import canonical_json, js_number_to_string
 from ..errors import UnsupportedVerifierError
 from .base import (
+    DEFAULT_NORMALIZATION,
     Verdict,
     apply_unicode_normalization,
-    code_point_length,
     coerce_expected_number,
     collapse_spec_whitespace,
     compare_numbers,
     count_lines,
     deep_equal,
     fail,
+    measure_length,
+    normalize_json_strings,
     normalize_line_endings,
     ok,
     parse_spec_number,
@@ -33,7 +35,11 @@ from .base import (
 )
 from .executable import EXECUTABLE_VERIFIER_TYPES
 from .json_schema_subset import SchemaSubsetError, validate_schema_document
-from .regex_subset import RegexSubsetError, validate as validate_regex_subset
+from .regex_subset import (
+    RegexSubsetError,
+    to_python_source,
+    validate as validate_regex_subset,
+)
 
 
 # --------------------------------------------------------------------------- exact
@@ -41,7 +47,9 @@ from .regex_subset import RegexSubsetError, validate as validate_regex_subset
 
 def verify_exact(config: Mapping[str, Any], candidate: str) -> Verdict:
     def normalize(text: str) -> str:
-        text = apply_unicode_normalization(text, config.get("unicode_normalization", "none"))
+        text = apply_unicode_normalization(
+            text, config.get("normalization", DEFAULT_NORMALIZATION)
+        )
         if config.get("normalize_line_endings", False):
             text = normalize_line_endings(text)
         if config.get("trim", False):
@@ -82,12 +90,39 @@ def verify_numeric_tolerance(config: Mapping[str, Any], candidate: str) -> Verdi
 # ------------------------------------------------------------------ json_schema
 
 
+def _schema_for_python(schema: Any) -> Any:
+    r"""Rewrite every ``pattern`` in ``schema`` into its Python ``re`` source.
+
+    ``$`` is normatively the absolute end of input, which Python's ``$`` is not: it also
+    matches before one trailing newline. :func:`to_python_source` turns that one token
+    into ``\Z`` and leaves everything else alone. Doing it here rather than inside the
+    scanner keeps the rewrite where it can be seen next to the validator that consumes it.
+    """
+    if isinstance(schema, list):
+        return [_schema_for_python(entry) for entry in schema]
+    if not isinstance(schema, Mapping):
+        return schema
+    result: dict[str, Any] = {}
+    for key, value in schema.items():
+        if key == "pattern" and isinstance(value, str):
+            result[key] = to_python_source(value, "schema_pattern")
+        elif key == "patternProperties" and isinstance(value, Mapping):
+            result[key] = {
+                to_python_source(name, "schema_pattern"): _schema_for_python(entry)
+                for name, entry in value.items()
+            }
+        else:
+            result[key] = _schema_for_python(value)
+    return result
+
+
 def verify_json_schema(config: Mapping[str, Any], candidate: str) -> Verdict:
     schema = config["schema"]
+    form = config.get("normalization", "NFC")
     # Reject out-of-subset keywords before validating, so that a schema the TypeScript
     # side cannot evaluate fails loudly here instead of passing on one side only.
     try:
-        validate_schema_document(schema)
+        validate_schema_document(schema, normalization=form)
     except SchemaSubsetError as exc:
         raise ValueError(f"schema is outside the supported subset: {exc}") from exc
 
@@ -95,13 +130,16 @@ def verify_json_schema(config: Mapping[str, Any], candidate: str) -> Verdict:
         parsed = json.loads(candidate)
     except (ValueError, RecursionError):
         return fail("invalid_json", "candidate is not well-formed JSON")
+    parsed = normalize_json_strings(parsed, form)
 
     import jsonschema  # imported lazily so that a bare import of this package is cheap
 
+    prepared = _schema_for_python(schema)
     validator_class = jsonschema.validators.validator_for(
-        schema if isinstance(schema, dict) else {}, default=jsonschema.Draft202012Validator
+        prepared if isinstance(prepared, dict) else {},
+        default=jsonschema.Draft202012Validator,
     )
-    validator = validator_class(schema)
+    validator = validator_class(prepared)
     errors = sorted(validator.iter_errors(parsed), key=lambda error: list(error.absolute_path))
     if not errors:
         return ok()
@@ -117,25 +155,19 @@ def verify_json_schema(config: Mapping[str, Any], candidate: str) -> Verdict:
 
 # ------------------------------------------------------------------------ regex
 
-_PYTHON_FLAGS = {"i": re.IGNORECASE}
-
 
 def verify_regex(config: Mapping[str, Any], candidate: str) -> Verdict:
     pattern = config["pattern"]
     try:
-        validate_regex_subset(pattern, config.get("flags", []))
+        # No flags and no anchors: the subset has neither, so there is nothing to pass to
+        # re.compile beyond the pattern itself. Python already matches code points, which
+        # is what the TypeScript side's u flag buys there.
+        validate_regex_subset(pattern, config.get("flags", ()))
     except RegexSubsetError as exc:
         return fail("invalid_pattern", str(exc))
 
-    # re.ASCII has one remaining job now that the shorthand classes are out of the subset:
-    # it confines IGNORECASE to ASCII case folding, which is what a JavaScript RegExp
-    # without the u flag does. The subset only permits 'i' on an ASCII-only pattern, so
-    # the two agree exactly rather than approximately.
-    flags = re.ASCII
-    for flag in config.get("flags", []):
-        flags |= _PYTHON_FLAGS[flag]
     try:
-        compiled = re.compile(pattern, flags)
+        compiled = re.compile(pattern)
     except re.error as exc:
         return fail("invalid_pattern", f"pattern did not compile: {exc}")
 
@@ -166,6 +198,12 @@ def _split_elements(config: Mapping[str, Any], candidate: str) -> list[Any] | No
         elements = candidate.split(parse.get("delimiter", ","))
     else:  # pragma: no cover - schema-validated
         raise ValueError(f"unknown parse mode {mode!r}")
+
+    # Normalisation runs on the split elements rather than on the raw candidate, because
+    # for json_array the raw candidate may spell a character as a \uXXXX escape, which is
+    # ASCII and so survives normalisation untouched.
+    form = config.get("normalization", DEFAULT_NORMALIZATION)
+    elements = [normalize_json_strings(element, form) for element in elements]
 
     if parse.get("trim_elements", True):
         elements = [
@@ -253,7 +291,8 @@ def verify_set_equality(config: Mapping[str, Any], candidate: str) -> Verdict:
     comparator = config.get("element_comparator", "exact_string")
     abs_tol = float(config.get("numeric_abs_tol", 0.0))
     rel_tol = float(config.get("numeric_rel_tol", 0.0))
-    expected = list(config["expected"])
+    form = config.get("normalization", DEFAULT_NORMALIZATION)
+    expected = [normalize_json_strings(value, form) for value in config["expected"]]
 
     if config.get("duplicates", "collapse") == "collapse":
         elements = _dedupe(elements, comparator)
@@ -286,7 +325,8 @@ def verify_ordered_equality(config: Mapping[str, Any], candidate: str) -> Verdic
     comparator = config.get("element_comparator", "exact_string")
     abs_tol = float(config.get("numeric_abs_tol", 0.0))
     rel_tol = float(config.get("numeric_rel_tol", 0.0))
-    expected = list(config["expected"])
+    form = config.get("normalization", DEFAULT_NORMALIZATION)
+    expected = [normalize_json_strings(value, form) for value in config["expected"]]
 
     if len(elements) != len(expected):
         return fail(
@@ -309,13 +349,18 @@ def verify_ordered_equality(config: Mapping[str, Any], candidate: str) -> Verdic
 
 
 def verify_format_constraint(config: Mapping[str, Any], candidate: str) -> Verdict:
-    text = candidate
+    form = config.get("normalization", DEFAULT_NORMALIZATION)
+    unit = config.get("length_unit", "codepoints")
+
+    text = apply_unicode_normalization(candidate, form)
     if config.get("normalize_line_endings", True):
         text = normalize_line_endings(text)
     if config.get("trim", False):
         text = strip_spec_whitespace(text)
 
-    length = code_point_length(text)
+    # Measured after normalisation, and it matters: NFC turns "cafe\u0301" from six code
+    # points into five. The spec fixes this order so the bound means one thing.
+    length = measure_length(text, unit)
     minimum = config.get("min_length")
     maximum = config.get("max_length")
     if minimum is not None and length < minimum:
@@ -350,8 +395,14 @@ def verify_format_constraint(config: Mapping[str, Any], candidate: str) -> Verdi
     case_sensitive = config.get("case_sensitive", True)
     haystack = text if case_sensitive else text.lower()
 
+    def prepare(needle: str) -> str:
+        # The needle goes through the same normalisation as the haystack, so a required
+        # substring written in one composition form is found in the other.
+        probe = apply_unicode_normalization(needle, form)
+        return probe if case_sensitive else probe.lower()
+
     for needle in config.get("required_substrings", []):
-        probe = needle if case_sensitive else needle.lower()
+        probe = prepare(needle)
         if probe not in haystack:
             return fail(
                 "missing_required_substring",
@@ -359,7 +410,7 @@ def verify_format_constraint(config: Mapping[str, Any], candidate: str) -> Verdi
                 substring=needle,
             )
     for needle in config.get("forbidden_substrings", []):
-        probe = needle if case_sensitive else needle.lower()
+        probe = prepare(needle)
         if probe in haystack:
             return fail(
                 "forbidden_substring_present",

@@ -99,6 +99,62 @@ def code_point_length(text: str) -> int:
     return len(text)
 
 
+#: Units a length bound can be expressed in, per spec section 6.1.
+LENGTH_UNITS = ("codepoints", "utf16", "graphemes", "bytes_utf8")
+
+#: ``graphemes`` is specified and refused rather than approximated. See
+#: docs/decisions/0002-unicode-semantics.md: this interpreter's ``unicodedata`` is at one
+#: Unicode version and the JavaScript runtime's ICU is at another, so two UAX #29
+#: implementations drawn from different tables would disagree on exactly the sequences a
+#: grapheme count exists to get right.
+UNSUPPORTED_LENGTH_UNITS = frozenset({"graphemes"})
+
+
+def utf16_length(text: str) -> int:
+    """Length in UTF-16 code units, which is what ``String.prototype.length`` returns."""
+    return sum(2 if ord(character) > 0xFFFF else 1 for character in text)
+
+
+def utf8_byte_length(text: str) -> int:
+    """Length in UTF-8 bytes, counted from code points rather than from an encoder.
+
+    Python refuses to encode a lone surrogate and ``TextEncoder`` silently substitutes
+    U+FFFD for one. Both answers are three bytes, but arriving there by arithmetic means
+    the two implementations agree by construction rather than by coincidence.
+    """
+    total = 0
+    for character in text:
+        value = ord(character)
+        if value < 0x80:
+            total += 1
+        elif value < 0x800:
+            total += 2
+        elif value < 0x10000:
+            total += 3
+        else:
+            total += 4
+    return total
+
+
+def measure_length(text: str, unit: str) -> int:
+    """Length of ``text`` in ``unit``. Raises for a unit this implementation refuses."""
+    if unit == "codepoints":
+        return code_point_length(text)
+    if unit == "utf16":
+        return utf16_length(text)
+    if unit == "bytes_utf8":
+        return utf8_byte_length(text)
+    if unit == "graphemes":
+        raise ValueError(
+            "length_unit 'graphemes' is specified but not supported by this "
+            "implementation: Python's unicodedata and the JavaScript runtime's ICU carry "
+            "different Unicode versions, so two UAX #29 grapheme breakers would disagree "
+            "on the emoji and conjunct sequences the unit exists for. Use 'codepoints', "
+            "'utf16' or 'bytes_utf8', which are exact in both"
+        )
+    raise ValueError(f"{unit!r} is not a spec length unit; expected one of {LENGTH_UNITS}")
+
+
 def count_lines(text: str) -> int:
     """Line count per spec: empty text has zero lines, one trailing LF adds no line."""
     if text == "":
@@ -109,12 +165,45 @@ def count_lines(text: str) -> int:
     return len(parts)
 
 
+#: Normalisation forms a comparison verifier may declare, per spec section 6.0.
+NORMALIZATION_FORMS = ("none", "NFC", "NFD", "NFKC", "NFKD")
+
+#: What a comparison verifier does when it says nothing. NFC rather than none because two
+#: answers that a reader cannot tell apart must not score differently: Hangul U+AC00 and
+#: the jamo pair U+1100 U+1161 render identically and compare unequal without it.
+DEFAULT_NORMALIZATION = "NFC"
+
+
 def apply_unicode_normalization(text: str, form: str) -> str:
     if form == "none":
         return text
     if form not in ("NFC", "NFD", "NFKC", "NFKD"):
         raise ValueError(f"{form!r} is not a spec unicode normalization form")
     return unicodedata.normalize(form, text)
+
+
+def is_normalized(text: str, form: str) -> bool:
+    return apply_unicode_normalization(text, form) == text
+
+
+def normalize_json_strings(value: Any, form: str) -> Any:
+    """Normalise every string and every object key inside parsed JSON.
+
+    Keys as well as values, because ``{"\\uac00": 1}`` and ``{"\\u1100\\u1161": 1}`` are the
+    same object to a reader and different objects to ``required`` and ``properties``.
+    """
+    if form == "none":
+        return value
+    if isinstance(value, str):
+        return apply_unicode_normalization(value, form)
+    if isinstance(value, list):
+        return [normalize_json_strings(entry, form) for entry in value]
+    if isinstance(value, dict):
+        return {
+            apply_unicode_normalization(key, form): normalize_json_strings(entry, form)
+            for key, entry in value.items()
+        }
+    return value
 
 
 _NUMBER_PATTERN = re.compile(

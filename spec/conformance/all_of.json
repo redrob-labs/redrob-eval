@@ -130,10 +130,7 @@
             "schema": {
               "type": "object",
               "additionalProperties": false,
-              "required": [
-                "city",
-                "units"
-              ],
+              "required": ["city", "units"],
               "properties": {
                 "city": {
                   "type": "string",
@@ -170,10 +167,7 @@
             "schema": {
               "type": "object",
               "additionalProperties": false,
-              "required": [
-                "city",
-                "units"
-              ],
+              "required": ["city", "units"],
               "properties": {
                 "city": {
                   "type": "string",
@@ -210,10 +204,7 @@
             "schema": {
               "type": "object",
               "additionalProperties": false,
-              "required": [
-                "city",
-                "units"
-              ],
+              "required": ["city", "units"],
               "properties": {
                 "city": {
                   "type": "string",
@@ -276,14 +267,11 @@
             "verifiers": [
               {
                 "type": "regex",
-                "pattern": "^[A-Z]",
-                "mode": "search"
+                "pattern": "[A-Z][^\\n]*"
               },
               {
                 "type": "format_constraint",
-                "forbidden_substrings": [
-                  "TODO"
-                ]
+                "forbidden_substrings": ["TODO"]
               }
             ]
           }
@@ -309,14 +297,11 @@
             "verifiers": [
               {
                 "type": "regex",
-                "pattern": "^[A-Z]",
-                "mode": "search"
+                "pattern": "[A-Z][^\\n]*"
               },
               {
                 "type": "format_constraint",
-                "forbidden_substrings": [
-                  "TODO"
-                ]
+                "forbidden_substrings": ["TODO"]
               }
             ]
           }
@@ -342,8 +327,7 @@
             "verifiers": [
               {
                 "type": "regex",
-                "pattern": "^[A-Z]",
-                "mode": "search"
+                "pattern": "[A-Z][^\\n]*"
               }
             ]
           }
@@ -439,22 +423,14 @@
         "verifiers": [
           {
             "type": "set_equality",
-            "expected": [
-              "a",
-              "b",
-              "c"
-            ],
+            "expected": ["a", "b", "c"],
             "parse": {
               "mode": "lines"
             }
           },
           {
             "type": "ordered_equality",
-            "expected": [
-              "a",
-              "b",
-              "c"
-            ],
+            "expected": ["a", "b", "c"],
             "parse": {
               "mode": "lines"
             }
@@ -651,6 +627,143 @@
         "passed": false,
         "code": "mismatch"
       }
+    },
+    {
+      "id": "all_of/astral-passes-a-length-and-a-pattern",
+      "description": "Non-BMP through a composite: one code point to the length check and one atom to the pattern, on both sides.",
+      "verifier": {
+        "type": "all_of",
+        "verifiers": [
+          {
+            "type": "format_constraint",
+            "max_length": 1
+          },
+          {
+            "type": "regex",
+            "pattern": "[^a]"
+          }
+        ]
+      },
+      "candidate": "😀",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
+    },
+    {
+      "id": "all_of/astral-fails-the-utf16-bound-first",
+      "verifier": {
+        "type": "all_of",
+        "verifiers": [
+          {
+            "type": "format_constraint",
+            "length_unit": "utf16",
+            "max_length": 1
+          },
+          {
+            "type": "regex",
+            "pattern": "[^a]"
+          }
+        ]
+      },
+      "candidate": "😀",
+      "expected": {
+        "passed": false,
+        "code": "length_out_of_bounds"
+      }
+    },
+    {
+      "id": "all_of/combining-sequence-normalised-consistently-by-both-children",
+      "description": "Combining sequence. Both children default to NFC, so the composite does not depend on which one runs first.",
+      "verifier": {
+        "type": "all_of",
+        "verifiers": [
+          {
+            "type": "exact",
+            "expected": "café"
+          },
+          {
+            "type": "format_constraint",
+            "max_length": 4
+          }
+        ]
+      },
+      "candidate": "café",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
+    },
+    {
+      "id": "all_of/zwj-sequence-passes-both-children",
+      "verifier": {
+        "type": "all_of",
+        "verifiers": [
+          {
+            "type": "format_constraint",
+            "required_substrings": ["‍"]
+          },
+          {
+            "type": "exact",
+            "expected": "👩‍👩‍👧"
+          }
+        ]
+      },
+      "candidate": "👩‍👩‍👧",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
+    },
+    {
+      "id": "all_of/zwj-sequence-fails-the-second-child-when-unjoined",
+      "verifier": {
+        "type": "all_of",
+        "verifiers": [
+          {
+            "type": "format_constraint",
+            "max_length": 5
+          },
+          {
+            "type": "exact",
+            "expected": "👩‍👩‍👧"
+          }
+        ]
+      },
+      "candidate": "👩👩👧",
+      "expected": {
+        "passed": false,
+        "code": "mismatch"
+      }
+    },
+    {
+      "id": "all_of/mixed-script-passes-a-schema-and-a-format-check",
+      "verifier": {
+        "type": "all_of",
+        "verifiers": [
+          {
+            "type": "json_schema",
+            "schema": {
+              "type": "object",
+              "required": ["greeting"],
+              "properties": {
+                "greeting": {
+                  "const": "नमस्ते"
+                }
+              }
+            }
+          },
+          {
+            "type": "format_constraint",
+            "forbidden_substrings": [" "]
+          }
+        ]
+      },
+      "candidate": "{\"greeting\":\"नमस्ते\"}",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
     }
   ],
   "rejections": [
@@ -663,9 +776,7 @@
           {
             "type": "sympy_equiv",
             "expected": "x + 1",
-            "symbols": [
-              "x"
-            ]
+            "symbols": ["x"]
           }
         ]
       },
@@ -708,9 +819,7 @@
           {
             "type": "sympy_equiv",
             "expected": "x + 1",
-            "symbols": [
-              "x"
-            ]
+            "symbols": ["x"]
           }
         ]
       },
@@ -734,9 +843,7 @@
           {
             "type": "sympy_equiv",
             "expected": "x + 1",
-            "symbols": [
-              "x"
-            ]
+            "symbols": ["x"]
           }
         ]
       },
@@ -756,9 +863,7 @@
           {
             "type": "sympy_equiv",
             "expected": "x + 1",
-            "symbols": [
-              "x"
-            ]
+            "symbols": ["x"]
           },
           {
             "type": "exact",
@@ -789,9 +894,7 @@
               {
                 "type": "sympy_equiv",
                 "expected": "x + 1",
-                "symbols": [
-                  "x"
-                ]
+                "symbols": ["x"]
               }
             ]
           }
@@ -852,9 +955,7 @@
                   {
                     "type": "sympy_equiv",
                     "expected": "x + 1",
-                    "symbols": [
-                      "x"
-                    ]
+                    "symbols": ["x"]
                   }
                 ]
               }
@@ -902,9 +1003,7 @@
                                           {
                                             "type": "sympy_equiv",
                                             "expected": "x + 1",
-                                            "symbols": [
-                                              "x"
-                                            ]
+                                            "symbols": ["x"]
                                           }
                                         ]
                                       }

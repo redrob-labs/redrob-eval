@@ -5,236 +5,536 @@
   "cases": [
     {
       "id": "numeric/integer-exact",
-      "verifier": { "type": "numeric_tolerance", "expected": 42 },
+      "verifier": {
+        "type": "numeric_tolerance",
+        "expected": 42
+      },
       "candidate": "42",
-      "expected": { "passed": true, "code": "ok" }
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
     },
     {
       "id": "numeric/trim-by-default",
       "description": "trim defaults to true, unlike exact, because a stray newline around a number is never meaningful.",
-      "verifier": { "type": "numeric_tolerance", "expected": 42 },
+      "verifier": {
+        "type": "numeric_tolerance",
+        "expected": 42
+      },
       "candidate": "  42\n",
-      "expected": { "passed": true, "code": "ok" }
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
     },
     {
       "id": "numeric/trim-disabled",
-      "verifier": { "type": "numeric_tolerance", "expected": 42, "trim": false },
+      "verifier": {
+        "type": "numeric_tolerance",
+        "expected": 42,
+        "trim": false
+      },
       "candidate": " 42",
-      "expected": { "passed": false, "code": "not_a_number" }
+      "expected": {
+        "passed": false,
+        "code": "not_a_number"
+      }
     },
     {
       "id": "numeric/empty-candidate",
-      "verifier": { "type": "numeric_tolerance", "expected": 0 },
+      "verifier": {
+        "type": "numeric_tolerance",
+        "expected": 0
+      },
       "candidate": "",
-      "expected": { "passed": false, "code": "not_a_number" }
+      "expected": {
+        "passed": false,
+        "code": "not_a_number"
+      }
     },
     {
       "id": "numeric/prose-candidate",
       "description": "Trailing prose is not a number. Accepting it would be the single most common way a verifier becomes too generous.",
-      "verifier": { "type": "numeric_tolerance", "expected": 42 },
+      "verifier": {
+        "type": "numeric_tolerance",
+        "expected": 42
+      },
       "candidate": "the answer is 42",
-      "expected": { "passed": false, "code": "not_a_number" }
+      "expected": {
+        "passed": false,
+        "code": "not_a_number"
+      }
     },
     {
       "id": "numeric/two-numbers",
-      "verifier": { "type": "numeric_tolerance", "expected": 42 },
+      "verifier": {
+        "type": "numeric_tolerance",
+        "expected": 42
+      },
       "candidate": "42 43",
-      "expected": { "passed": false, "code": "not_a_number" }
+      "expected": {
+        "passed": false,
+        "code": "not_a_number"
+      }
     },
     {
       "id": "numeric/hex-rejected",
-      "verifier": { "type": "numeric_tolerance", "expected": 16 },
+      "verifier": {
+        "type": "numeric_tolerance",
+        "expected": 16
+      },
       "candidate": "0x10",
-      "expected": { "passed": false, "code": "not_a_number" }
+      "expected": {
+        "passed": false,
+        "code": "not_a_number"
+      }
     },
     {
       "id": "numeric/underscore-separator-rejected",
       "description": "Python's float() accepts 1_000 and JavaScript's Number() does not, so the spec grammar forbids it and both must agree.",
-      "verifier": { "type": "numeric_tolerance", "expected": 1000 },
+      "verifier": {
+        "type": "numeric_tolerance",
+        "expected": 1000
+      },
       "candidate": "1_000",
-      "expected": { "passed": false, "code": "not_a_number" }
+      "expected": {
+        "passed": false,
+        "code": "not_a_number"
+      }
     },
     {
       "id": "numeric/devanagari-digits-rejected",
       "description": "The grammar is ASCII, so Devanagari digits are not a number even though they name one.",
-      "verifier": { "type": "numeric_tolerance", "expected": 123 },
-      "candidate": "\u0967\u0968\u0969",
-      "expected": { "passed": false, "code": "not_a_number" }
+      "verifier": {
+        "type": "numeric_tolerance",
+        "expected": 123
+      },
+      "candidate": "१२३",
+      "expected": {
+        "passed": false,
+        "code": "not_a_number"
+      }
     },
     {
       "id": "numeric/thousands-separator-allowed",
-      "verifier": { "type": "numeric_tolerance", "expected": 1234567, "allow_thousands_separator": true },
+      "verifier": {
+        "type": "numeric_tolerance",
+        "expected": 1234567,
+        "allow_thousands_separator": true
+      },
       "candidate": "1,234,567",
-      "expected": { "passed": true, "code": "ok" }
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
     },
     {
       "id": "numeric/thousands-separator-not-allowed",
-      "verifier": { "type": "numeric_tolerance", "expected": 1234 },
+      "verifier": {
+        "type": "numeric_tolerance",
+        "expected": 1234
+      },
       "candidate": "1,234",
-      "expected": { "passed": false, "code": "not_a_number" }
+      "expected": {
+        "passed": false,
+        "code": "not_a_number"
+      }
     },
     {
       "id": "numeric/leading-plus",
-      "verifier": { "type": "numeric_tolerance", "expected": 7 },
+      "verifier": {
+        "type": "numeric_tolerance",
+        "expected": 7
+      },
       "candidate": "+7",
-      "expected": { "passed": true, "code": "ok" }
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
     },
     {
       "id": "numeric/leading-point",
-      "verifier": { "type": "numeric_tolerance", "expected": 0.5 },
+      "verifier": {
+        "type": "numeric_tolerance",
+        "expected": 0.5
+      },
       "candidate": ".5",
-      "expected": { "passed": true, "code": "ok" }
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
     },
     {
       "id": "numeric/trailing-point",
-      "verifier": { "type": "numeric_tolerance", "expected": 5 },
+      "verifier": {
+        "type": "numeric_tolerance",
+        "expected": 5
+      },
       "candidate": "5.",
-      "expected": { "passed": true, "code": "ok" }
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
     },
     {
       "id": "numeric/scientific-notation",
-      "verifier": { "type": "numeric_tolerance", "expected": 1000 },
+      "verifier": {
+        "type": "numeric_tolerance",
+        "expected": 1000
+      },
       "candidate": "1e3",
-      "expected": { "passed": true, "code": "ok" }
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
     },
     {
       "id": "numeric/negative-zero-equals-zero",
-      "verifier": { "type": "numeric_tolerance", "expected": 0 },
+      "verifier": {
+        "type": "numeric_tolerance",
+        "expected": 0
+      },
       "candidate": "-0",
-      "expected": { "passed": true, "code": "ok" }
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
     },
     {
       "id": "numeric/abs-tolerance-inside",
-      "verifier": { "type": "numeric_tolerance", "expected": 42, "abs_tol": 0.000001 },
+      "verifier": {
+        "type": "numeric_tolerance",
+        "expected": 42,
+        "abs_tol": 1e-6
+      },
       "candidate": "42.0000001",
-      "expected": { "passed": true, "code": "ok" }
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
     },
     {
       "id": "numeric/abs-tolerance-outside",
-      "verifier": { "type": "numeric_tolerance", "expected": 42, "abs_tol": 0.000001 },
+      "verifier": {
+        "type": "numeric_tolerance",
+        "expected": 42,
+        "abs_tol": 1e-6
+      },
       "candidate": "42.001",
-      "expected": { "passed": false, "code": "out_of_tolerance" }
+      "expected": {
+        "passed": false,
+        "code": "out_of_tolerance"
+      }
     },
     {
       "id": "numeric/binary-float-artifact-exact",
       "description": "0.1 + 0.2 does not equal 0.3 in either runtime, and with no tolerance the verifier must say so.",
-      "verifier": { "type": "numeric_tolerance", "expected": 0.3 },
+      "verifier": {
+        "type": "numeric_tolerance",
+        "expected": 0.3
+      },
       "candidate": "0.30000000000000004",
-      "expected": { "passed": false, "code": "out_of_tolerance" }
+      "expected": {
+        "passed": false,
+        "code": "out_of_tolerance"
+      }
     },
     {
       "id": "numeric/binary-float-artifact-tolerated",
-      "verifier": { "type": "numeric_tolerance", "expected": 0.3, "rel_tol": 1e-9 },
+      "verifier": {
+        "type": "numeric_tolerance",
+        "expected": 0.3,
+        "rel_tol": 1e-9
+      },
       "candidate": "0.30000000000000004",
-      "expected": { "passed": true, "code": "ok" }
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
     },
     {
       "id": "numeric/relative-tolerance-inside",
       "description": "Tolerance is max(abs_tol, rel_tol * |expected|), so this is 1 against 1.01.",
-      "verifier": { "type": "numeric_tolerance", "expected": 101, "rel_tol": 0.01 },
+      "verifier": {
+        "type": "numeric_tolerance",
+        "expected": 101,
+        "rel_tol": 0.01
+      },
       "candidate": "100",
-      "expected": { "passed": true, "code": "ok" }
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
     },
     {
       "id": "numeric/relative-tolerance-outside",
-      "verifier": { "type": "numeric_tolerance", "expected": 101, "rel_tol": 0.001 },
+      "verifier": {
+        "type": "numeric_tolerance",
+        "expected": 101,
+        "rel_tol": 0.001
+      },
       "candidate": "100",
-      "expected": { "passed": false, "code": "out_of_tolerance" }
+      "expected": {
+        "passed": false,
+        "code": "out_of_tolerance"
+      }
     },
     {
       "id": "numeric/relative-tolerance-against-zero-degenerates",
       "description": "rel_tol against an expected value of 0 gives no room at all, which is why the two tolerances are combined with max rather than one replacing the other.",
-      "verifier": { "type": "numeric_tolerance", "expected": 0, "rel_tol": 0.5 },
+      "verifier": {
+        "type": "numeric_tolerance",
+        "expected": 0,
+        "rel_tol": 0.5
+      },
       "candidate": "0.1",
-      "expected": { "passed": false, "code": "out_of_tolerance" }
+      "expected": {
+        "passed": false,
+        "code": "out_of_tolerance"
+      }
     },
     {
       "id": "numeric/boundary-difference-equals-tolerance",
       "description": "The comparison is <=, so landing exactly on the tolerance passes.",
-      "verifier": { "type": "numeric_tolerance", "expected": 1, "abs_tol": 0.25 },
+      "verifier": {
+        "type": "numeric_tolerance",
+        "expected": 1,
+        "abs_tol": 0.25
+      },
       "candidate": "1.25",
-      "expected": { "passed": true, "code": "ok" }
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
     },
     {
       "id": "numeric/nan-not-accepted-by-default",
       "description": "nan_matches_nan defaults to false, because NaN is usually a bug rather than an answer.",
-      "verifier": { "type": "numeric_tolerance", "expected": "NaN" },
+      "verifier": {
+        "type": "numeric_tolerance",
+        "expected": "NaN"
+      },
       "candidate": "NaN",
-      "expected": { "passed": false, "code": "nan_mismatch" }
+      "expected": {
+        "passed": false,
+        "code": "nan_mismatch"
+      }
     },
     {
       "id": "numeric/nan-accepted-when-configured",
-      "verifier": { "type": "numeric_tolerance", "expected": "NaN", "nan_matches_nan": true },
+      "verifier": {
+        "type": "numeric_tolerance",
+        "expected": "NaN",
+        "nan_matches_nan": true
+      },
       "candidate": "nan",
-      "expected": { "passed": true, "code": "ok" }
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
     },
     {
       "id": "numeric/nan-candidate-finite-expectation",
-      "verifier": { "type": "numeric_tolerance", "expected": 5, "nan_matches_nan": true },
+      "verifier": {
+        "type": "numeric_tolerance",
+        "expected": 5,
+        "nan_matches_nan": true
+      },
       "candidate": "NaN",
-      "expected": { "passed": false, "code": "nan_mismatch" }
+      "expected": {
+        "passed": false,
+        "code": "nan_mismatch"
+      }
     },
     {
       "id": "numeric/finite-candidate-nan-expectation",
-      "verifier": { "type": "numeric_tolerance", "expected": "NaN", "nan_matches_nan": true },
+      "verifier": {
+        "type": "numeric_tolerance",
+        "expected": "NaN",
+        "nan_matches_nan": true
+      },
       "candidate": "5",
-      "expected": { "passed": false, "code": "nan_mismatch" }
+      "expected": {
+        "passed": false,
+        "code": "nan_mismatch"
+      }
     },
     {
       "id": "numeric/nan-beats-huge-tolerance",
       "description": "NaN is checked before tolerance, so an enormous abs_tol does not swallow it.",
-      "verifier": { "type": "numeric_tolerance", "expected": 5, "abs_tol": 1e30 },
+      "verifier": {
+        "type": "numeric_tolerance",
+        "expected": 5,
+        "abs_tol": 1e30
+      },
       "candidate": "NaN",
-      "expected": { "passed": false, "code": "nan_mismatch" }
+      "expected": {
+        "passed": false,
+        "code": "nan_mismatch"
+      }
     },
     {
       "id": "numeric/positive-infinity-matches",
-      "verifier": { "type": "numeric_tolerance", "expected": "Infinity" },
+      "verifier": {
+        "type": "numeric_tolerance",
+        "expected": "Infinity"
+      },
       "candidate": "Infinity",
-      "expected": { "passed": true, "code": "ok" }
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
     },
     {
       "id": "numeric/infinity-abbreviation",
-      "verifier": { "type": "numeric_tolerance", "expected": "-Infinity" },
+      "verifier": {
+        "type": "numeric_tolerance",
+        "expected": "-Infinity"
+      },
       "candidate": "-inf",
-      "expected": { "passed": true, "code": "ok" }
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
     },
     {
       "id": "numeric/infinity-sign-must-match",
-      "verifier": { "type": "numeric_tolerance", "expected": "-Infinity" },
+      "verifier": {
+        "type": "numeric_tolerance",
+        "expected": "-Infinity"
+      },
       "candidate": "inf",
-      "expected": { "passed": false, "code": "infinity_mismatch" }
+      "expected": {
+        "passed": false,
+        "code": "infinity_mismatch"
+      }
     },
     {
       "id": "numeric/finite-against-infinity",
-      "verifier": { "type": "numeric_tolerance", "expected": "Infinity", "abs_tol": 1e30 },
+      "verifier": {
+        "type": "numeric_tolerance",
+        "expected": "Infinity",
+        "abs_tol": 1e30
+      },
       "candidate": "1e30",
-      "expected": { "passed": false, "code": "infinity_mismatch" }
+      "expected": {
+        "passed": false,
+        "code": "infinity_mismatch"
+      }
     },
     {
       "id": "numeric/overflow-to-infinity",
       "description": "1e400 overflows to infinity in both runtimes, so it is an infinity rather than a parse failure.",
-      "verifier": { "type": "numeric_tolerance", "expected": "Infinity" },
+      "verifier": {
+        "type": "numeric_tolerance",
+        "expected": "Infinity"
+      },
       "candidate": "1e400",
-      "expected": { "passed": true, "code": "ok" }
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
     },
     {
       "id": "numeric/underflow-to-zero",
-      "verifier": { "type": "numeric_tolerance", "expected": 0 },
+      "verifier": {
+        "type": "numeric_tolerance",
+        "expected": 0
+      },
       "candidate": "1e-400",
-      "expected": { "passed": true, "code": "ok" }
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
     },
     {
       "id": "numeric/subnormal",
-      "verifier": { "type": "numeric_tolerance", "expected": 5e-324 },
+      "verifier": {
+        "type": "numeric_tolerance",
+        "expected": 5e-324
+      },
       "candidate": "5e-324",
-      "expected": { "passed": true, "code": "ok" }
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
     },
     {
       "id": "numeric/large-magnitude-relative",
-      "verifier": { "type": "numeric_tolerance", "expected": 1.7976931348623157e308, "rel_tol": 1e-15 },
+      "verifier": {
+        "type": "numeric_tolerance",
+        "expected": 1.7976931348623157e308,
+        "rel_tol": 1e-15
+      },
       "candidate": "1.7976931348623157e+308",
-      "expected": { "passed": true, "code": "ok" }
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
+    },
+    {
+      "id": "numeric/astral-digit-is-not-a-number",
+      "description": "U+1D7DC is MATHEMATICAL DOUBLE-STRUCK FOUR. The grammar is ASCII, and there is no normalization field on this verifier because NFC never turns a non-ASCII character into an ASCII one.",
+      "verifier": {
+        "type": "numeric_tolerance",
+        "expected": 4
+      },
+      "candidate": "𝟜",
+      "expected": {
+        "passed": false,
+        "code": "not_a_number"
+      }
+    },
+    {
+      "id": "numeric/combining-mark-after-a-digit-is-not-a-number",
+      "verifier": {
+        "type": "numeric_tolerance",
+        "expected": 4
+      },
+      "candidate": "4́",
+      "expected": {
+        "passed": false,
+        "code": "not_a_number"
+      }
+    },
+    {
+      "id": "numeric/zero-width-joiner-inside-a-number-is-not-a-number",
+      "verifier": {
+        "type": "numeric_tolerance",
+        "expected": 42
+      },
+      "candidate": "4‍2",
+      "expected": {
+        "passed": false,
+        "code": "not_a_number"
+      }
+    },
+    {
+      "id": "numeric/mixed-script-digits-are-not-a-number",
+      "description": "Devanagari four followed by ASCII two. Mixed script, and rejected as one token rather than half-parsed.",
+      "verifier": {
+        "type": "numeric_tolerance",
+        "expected": 42
+      },
+      "candidate": "४2",
+      "expected": {
+        "passed": false,
+        "code": "not_a_number"
+      }
+    },
+    {
+      "id": "numeric/mixed-script-amount-with-a-unit-is-not-a-number",
+      "description": "Devanagari and Latin in one candidate. The grammar accepts a bare number and nothing else, so a unit in any script is a parse failure rather than a value with a suffix to be stripped.",
+      "verifier": {
+        "type": "numeric_tolerance",
+        "expected": 42
+      },
+      "candidate": "42 रुपये INR",
+      "expected": {
+        "passed": false,
+        "code": "not_a_number"
+      }
     }
   ]
 }

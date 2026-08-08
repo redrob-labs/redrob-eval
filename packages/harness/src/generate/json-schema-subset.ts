@@ -16,7 +16,12 @@
  * would do it on one implementation only.
  */
 import { compileSubsetPattern, RegexSubsetError } from './regex-subset';
-import { codePointLength } from './text';
+import {
+  codePointLength,
+  DEFAULT_NORMALIZATION,
+  isNormalized,
+  type UnicodeNormalization,
+} from './text';
 import { VerifierConfigError } from './verdict';
 
 export const SUPPORTED_KEYWORDS = new Set([
@@ -99,8 +104,21 @@ export class SchemaSubsetError extends Error {
   }
 }
 
-/** Walk a schema and throw on anything outside the supported subset. */
-export function validateSchemaDocument(schema: unknown, path = '#', depth = 0): void {
+/**
+ * Walk a schema and throw on anything outside the supported subset.
+ *
+ * `normalization` is the form the verifier will apply to the candidate document. The
+ * schema is not rewritten to match it; it is required to be in that form already and
+ * rejected otherwise. Normalising a candidate while comparing it against an unnormalised
+ * `const` would silently never match, and the author would have no way to see why, so the
+ * mismatch is reported at configuration time instead.
+ */
+export function validateSchemaDocument(
+  schema: unknown,
+  path = '#',
+  depth = 0,
+  normalization: UnicodeNormalization = DEFAULT_NORMALIZATION,
+): void {
   if (typeof schema === 'boolean') return;
   if (typeof schema !== 'object' || schema === null || Array.isArray(schema)) {
     throw new SchemaSubsetError(`${path}: a schema must be an object or a boolean`);
@@ -109,6 +127,7 @@ export function validateSchemaDocument(schema: unknown, path = '#', depth = 0): 
     throw new SchemaSubsetError(`${path}: schema nests deeper than ${MAX_DEPTH} levels`);
   }
   const record = schema as Record<string, unknown>;
+  requireNormalized(record, path, normalization);
 
   for (const keyword of Object.keys(record)) {
     if (REJECTED_KEYWORDS.has(keyword)) {
@@ -140,7 +159,7 @@ export function validateSchemaDocument(schema: unknown, path = '#', depth = 0): 
 
   if (typeof record.pattern === 'string') {
     try {
-      compileSubsetPattern(record.pattern, 'search', []);
+      compileSubsetPattern(record.pattern, 'search', 'schema_pattern');
     } catch (error) {
       if (error instanceof RegexSubsetError) {
         throw new SchemaSubsetError(`${path}/pattern: ${error.message}`);
@@ -150,7 +169,9 @@ export function validateSchemaDocument(schema: unknown, path = '#', depth = 0): 
   }
 
   for (const keyword of ['not', 'contains', 'propertyNames', 'items', 'additionalProperties']) {
-    if (keyword in record) validateSchemaDocument(record[keyword], `${path}/${keyword}`, depth + 1);
+    if (keyword in record) {
+      validateSchemaDocument(record[keyword], `${path}/${keyword}`, depth + 1, normalization);
+    }
   }
   for (const keyword of ['allOf', 'anyOf', 'oneOf', 'prefixItems']) {
     if (!(keyword in record)) continue;
@@ -159,7 +180,7 @@ export function validateSchemaDocument(schema: unknown, path = '#', depth = 0): 
       throw new SchemaSubsetError(`${path}/${keyword}: expected an array of schemas`);
     }
     entries.forEach((entry, index) =>
-      validateSchemaDocument(entry, `${path}/${keyword}/${index}`, depth + 1),
+      validateSchemaDocument(entry, `${path}/${keyword}/${index}`, depth + 1, normalization),
     );
   }
   for (const keyword of ['properties', 'patternProperties', '$defs']) {
@@ -171,7 +192,7 @@ export function validateSchemaDocument(schema: unknown, path = '#', depth = 0): 
     for (const [name, entry] of Object.entries(entries as Record<string, unknown>)) {
       if (keyword === 'patternProperties') {
         try {
-          compileSubsetPattern(name, 'search', []);
+          compileSubsetPattern(name, 'search', 'schema_pattern');
         } catch (error) {
           if (error instanceof RegexSubsetError) {
             throw new SchemaSubsetError(`${path}/${keyword}/${name}: ${error.message}`);
@@ -179,8 +200,78 @@ export function validateSchemaDocument(schema: unknown, path = '#', depth = 0): 
           throw error;
         }
       }
-      validateSchemaDocument(entry, `${path}/${keyword}/${name}`, depth + 1);
+      validateSchemaDocument(entry, `${path}/${keyword}/${name}`, depth + 1, normalization);
     }
+  }
+}
+
+/**
+ * Keywords whose string content is a regex or a subschema, and so is not text that will
+ * be compared against a normalised candidate. Normalising a pattern would rewrite the
+ * pattern; subschemas are reached by the recursion instead.
+ */
+const NOT_COMPARED_TEXT = new Set([
+  'pattern',
+  'patternProperties',
+  'not',
+  'contains',
+  'propertyNames',
+  'items',
+  'additionalProperties',
+  'allOf',
+  'anyOf',
+  'oneOf',
+  'prefixItems',
+  'properties',
+  '$defs',
+]);
+
+function* stringsIn(value: unknown): Generator<string> {
+  if (typeof value === 'string') {
+    yield value;
+  } else if (Array.isArray(value)) {
+    for (const entry of value) yield* stringsIn(entry);
+  } else if (typeof value === 'object' && value !== null) {
+    for (const [key, entry] of Object.entries(value as Record<string, unknown>)) {
+      yield key;
+      yield* stringsIn(entry);
+    }
+  }
+}
+
+/**
+ * Refuse a schema whose own strings are not already in the declared form.
+ *
+ * Only this level: subschemas are checked when the walk reaches them, and the property
+ * names inside `properties` and `$defs` are checked here because the walk descends into
+ * their values without looking at their keys.
+ */
+function requireNormalized(
+  record: Record<string, unknown>,
+  path: string,
+  form: UnicodeNormalization,
+): void {
+  if (form === 'none') return;
+  const check = (text: string, where: string): void => {
+    if (!isNormalized(text, form)) {
+      throw new SchemaSubsetError(
+        `${where}: the string ${JSON.stringify(text)} is not in ${form}, and the candidate ` +
+          `is normalised to ${form} before comparison, so it could never match. Write the ` +
+          "schema in the declared form, or declare normalization 'none'",
+      );
+    }
+  };
+  for (const [keyword, value] of Object.entries(record)) {
+    if (keyword === 'properties' || keyword === '$defs') {
+      if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+        for (const name of Object.keys(value as Record<string, unknown>)) {
+          check(name, `${path}/${keyword}`);
+        }
+      }
+      continue;
+    }
+    if (NOT_COMPARED_TEXT.has(keyword)) continue;
+    for (const text of stringsIn(value)) check(text, `${path}/${keyword}`);
   }
 }
 
@@ -350,7 +441,7 @@ class Validator {
       this.record(pointer, `string length ${length} exceeds the maximum of ${s.maxLength}`);
     }
     if (typeof s.pattern === 'string') {
-      const { regexp } = compileSubsetPattern(s.pattern, 'search', []);
+      const { regexp } = compileSubsetPattern(s.pattern, 'search', 'schema_pattern');
       if (!regexp.test(value)) this.record(pointer, `string does not match ${s.pattern}`);
     }
   }
@@ -442,7 +533,7 @@ class Validator {
     const patternProperties = (s.patternProperties ?? {}) as Record<string, Schema>;
     const compiledPatterns = Object.entries(patternProperties).map(
       ([source, subschema]) =>
-        [compileSubsetPattern(source, 'search', []).regexp, subschema] as const,
+        [compileSubsetPattern(source, 'search', 'schema_pattern').regexp, subschema] as const,
     );
 
     for (const key of keys) {

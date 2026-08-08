@@ -3,10 +3,12 @@
 /**
  * The parts of the regex subset that cannot be expressed as conformance rows.
  *
- * A case file's verifier must validate against `#/$defs/verifier`, and the schema now
- * restricts `flags` to `["i"]`, so a row asserting that `m` and `s` are refused could not
- * be written there. It is asserted here instead, and mirrored by
- * `test_regex_subset.py::test_the_m_and_s_flags_are_gone`.
+ * A case file's verifier must validate against `#/$defs/verifier`, and the schema has no
+ * `flags` property at all now, so a row asserting that a flag is refused could not be
+ * written there. The same goes for the recorded engine-level facts below, which are about
+ * `RegExp` rather than about a verifier.
+ *
+ * Mirrored by `packages/generate/tests/test_regex_subset.py`.
  */
 
 import assert from 'node:assert/strict';
@@ -16,6 +18,7 @@ import {
   compileSubsetPattern,
   RegexSubsetError,
   runVerifier,
+  scanRegexPattern,
   SUPPORTED_REGEX_FLAGS,
   validateRegexFlags,
   validateRegexPattern,
@@ -47,51 +50,115 @@ for (const shorthand of ['\\w', '\\W', '\\d', '\\D', '\\s', '\\S']) {
   });
 }
 
-test('the m and s flags are gone from the subset', () => {
-  for (const flag of ['m', 's']) {
+test('the subset has no flags at all', () => {
+  assert.deepEqual([...SUPPORTED_REGEX_FLAGS], []);
+  for (const flag of ['i', 'm', 's', 'u', 'g']) {
     assert.throws(
-      () => validateRegexFlags('abc', [flag]),
+      () => validateRegexFlags([flag]),
       (error: unknown) => {
         assert.ok(error instanceof RegexSubsetError);
-        assert.match(error.message, /not in the portable subset/);
+        assert.match(error.message, /no flags at all/);
         return true;
       },
     );
   }
-  assert.deepEqual([...SUPPORTED_REGEX_FLAGS], ['i']);
-});
-
-test('the i flag is refused on a non-ASCII pattern', () => {
-  assert.doesNotThrow(() => validateRegexFlags('abc', ['i']));
-  assert.throws(() => validateRegexFlags('\u00e9t\u00e9', ['i']), RegexSubsetError);
-  // Without the flag the same pattern is fine; it is the folding that is unportable.
-  assert.doesNotThrow(() => validateRegexPattern('\u00e9t\u00e9'));
+  assert.doesNotThrow(() => validateRegexFlags([]));
 });
 
 test('an out-of-subset flag reaches the verdict as invalid_pattern, never as a pass', () => {
-  const verdict = runVerifier(
-    { type: 'regex', pattern: 'abc', flags: ['m'] } as never,
-    'abc',
-  );
-  assert.equal(verdict.passed, false);
-  assert.equal(verdict.code, 'invalid_pattern');
+  for (const flag of ['i', 'm']) {
+    const verdict = runVerifier({ type: 'regex', pattern: 'abc', flags: [flag] } as never, 'abc');
+    assert.equal(verdict.passed, false);
+    assert.equal(verdict.code, 'invalid_pattern');
+  }
 });
 
 test('the compiled source is the pattern verbatim, with no dialect translation', () => {
-  // The point of removing the rewriting layer: what the author wrote is what runs. A
-  // failure here means a translator has crept back in.
-  const search = compileSubsetPattern('a[^\\n]b', 'search', []);
+  // What the author wrote is what runs. A failure here means a translator has crept back
+  // in. The one exception in the whole subset is the Python side's '$' to '\Z', which is
+  // in the schema_pattern dialect only and is checked in test_regex_subset.py.
+  const search = compileSubsetPattern('a[^\\n]b', 'search');
   assert.equal(search.source, 'a[^\\n]b');
 
-  const full = compileSubsetPattern('a[^\\n]b', 'full_match', []);
+  const full = compileSubsetPattern('a[^\\n]b', 'full_match');
   assert.equal(full.source, '^(?:a[^\\n]b)$');
 });
 
-test('the portable end-of-input assertion behaves the same as Python across a trailing newline', () => {
-  // (?![\u0000-\uffff]) replaces '$', which the two engines read differently. The Python
-  // half of this assertion is test_regex_subset.py::test_the_portable_end_assertion.
-  const anchored = { type: 'regex', pattern: '^ab(?![\\u0000-\\uffff])', mode: 'search' } as never;
-  assert.equal(runVerifier(anchored, 'ab').passed, true);
-  assert.equal(runVerifier(anchored, 'ab\n').passed, false);
-  assert.equal(runVerifier(anchored, 'abc').passed, false);
+test('every pattern compiles under the u flag, which is what puts matching on code points', () => {
+  // Without u a RegExp matches UTF-16 code units, and [\u0000-\uffff] then matches the
+  // lead surrogate of an astral character while Python's code-point view does not. This
+  // is the A1 defect; the assertion below is the fix, stated as behaviour.
+  assert.equal(compileSubsetPattern('a', 'search').regexp.flags, 'u');
+  assert.equal(
+    runVerifier({ type: 'regex', pattern: '[\\u0000-\\uffff]+' } as never, '\u{1F600}').passed,
+    false,
+  );
+  assert.equal(runVerifier({ type: 'regex', pattern: '[^a]' } as never, '\u{1F600}').passed, true);
+});
+
+test("the verifier dialect has no '^' and no '$'; anchoring is the mode's job", () => {
+  for (const pattern of ['^abc', 'abc$', '^abc$']) {
+    const verdict = runVerifier({ type: 'regex', pattern } as never, 'abc');
+    assert.equal(verdict.passed, false);
+    assert.equal(verdict.code, 'invalid_pattern');
+  }
+  assert.equal(runVerifier({ type: 'regex', pattern: 'abc' } as never, 'abc').passed, true);
+  assert.equal(runVerifier({ type: 'regex', pattern: 'abc' } as never, 'abc\n').passed, false);
+});
+
+test("the schema_pattern dialect admits '^' and '$', and the verifier dialect does not", () => {
+  assert.doesNotThrow(() => validateRegexPattern('^ab$', [], 'schema_pattern'));
+  assert.throws(() => validateRegexPattern('^ab$'), RegexSubsetError);
+});
+
+test('surrogate escapes and unpaired surrogates are out of the subset', () => {
+  // Under u, '\uD83D\uDE00' is one astral code point to a RegExp and two lone surrogates
+  // to Python. Banning the escape is what keeps the two atom models the same.
+  assert.throws(() => validateRegexPattern('\\ud83d\\ude00'), RegexSubsetError);
+  assert.throws(() => validateRegexPattern('[\\ud800-\\udfff]'), RegexSubsetError);
+  assert.throws(() => validateRegexPattern('a\ud83db'), RegexSubsetError);
+  // A properly paired literal astral character is fine, and is one atom.
+  assert.doesNotThrow(() => validateRegexPattern('a\u{1F600}b'));
+});
+
+test('escapes are confined to what a RegExp accepts under u', () => {
+  for (const pattern of ['\\-', '\\ ', '\\#', '\\@', '\\_']) {
+    assert.throws(() => validateRegexPattern(pattern), RegexSubsetError);
+  }
+  for (const pattern of ['\\.', '\\$', '\\^', '\\|', '\\/', '\\(', '\\)', '\\[', '\\]']) {
+    assert.doesNotThrow(() => validateRegexPattern(pattern), pattern);
+  }
+  // '-' is escapable inside a class and only there.
+  assert.doesNotThrow(() => validateRegexPattern('[a\\-z]'));
+});
+
+test('\\0 is out of the subset because Python reads \\01 as an octal escape', () => {
+  assert.throws(() => validateRegexPattern('\\0'), RegexSubsetError);
+  assert.throws(() => validateRegexPattern('\\01'), RegexSubsetError);
+  assert.doesNotThrow(() => validateRegexPattern('\\x00'));
+});
+
+test('a quantified lookahead is refused rather than left to the two engines', () => {
+  // A syntax error under u and a silent no-op in Python.
+  assert.throws(() => validateRegexPattern('(?=a)*'), RegexSubsetError);
+  assert.throws(() => validateRegexPattern('(?!a)+'), RegexSubsetError);
+  assert.doesNotThrow(() => validateRegexPattern('(?:a)*'));
+});
+
+test('a scan concatenates back to its input, which is what makes the one rewrite auditable', () => {
+  const patterns = ['a[^\\n]b', '(cat|dog)s?', '[A-Fa-f0-9]{6}', '\\$[0-9]+\\.[0-9]{2}'];
+  for (const pattern of patterns) {
+    assert.equal(
+      scanRegexPattern(pattern)
+        .map((token) => token.text)
+        .join(''),
+      pattern,
+    );
+  }
+  assert.equal(
+    scanRegexPattern('^ab$', 'schema_pattern')
+      .map((token) => token.text)
+      .join(''),
+    '^ab$',
+  );
 });

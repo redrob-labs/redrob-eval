@@ -113,13 +113,18 @@
       "description": "String equality after a declared normalisation pipeline.",
       "type": "object",
       "properties": {
-        "type": { "type": "string", "const": "exact" },
-        "expected": { "type": "string" },
-        "unicode_normalization": {
-          "description": "Unicode normalisation form applied first, to both sides.",
+        "type": {
+          "type": "string",
+          "const": "exact"
+        },
+        "expected": {
+          "type": "string"
+        },
+        "normalization": {
+          "description": "Unicode normalisation form applied to both sides before comparison. NFC by default because two answers a reader cannot tell apart must not score differently: Hangul U+AC00 and the jamo pair U+1100 U+1161 render identically and compare unequal without it. 'none' exists for byte-exactness tests and is deliberately not the default.",
           "type": "string",
           "enum": ["none", "NFC", "NFD", "NFKC", "NFKD"],
-          "default": "none"
+          "default": "NFC"
         },
         "normalize_line_endings": {
           "description": "Rewrite CRLF and lone CR to LF before comparing.",
@@ -150,12 +155,20 @@
       "description": "Parse the candidate as a single number and compare it to the expected value within tolerance.",
       "type": "object",
       "properties": {
-        "type": { "type": "string", "const": "numeric_tolerance" },
+        "type": {
+          "type": "string",
+          "const": "numeric_tolerance"
+        },
         "expected": {
           "description": "Finite number, or one of the non-finite tokens as a string.",
           "oneOf": [
-            { "type": "number" },
-            { "type": "string", "enum": ["NaN", "Infinity", "-Infinity"] }
+            {
+              "type": "number"
+            },
+            {
+              "type": "string",
+              "enum": ["NaN", "Infinity", "-Infinity"]
+            }
           ]
         },
         "abs_tol": {
@@ -194,10 +207,26 @@
       "description": "Parse the candidate as JSON and validate it against a schema drawn from the documented draft 2020-12 keyword subset.",
       "type": "object",
       "properties": {
-        "type": { "type": "string", "const": "json_schema" },
+        "type": {
+          "type": "string",
+          "const": "json_schema"
+        },
         "schema": {
           "description": "JSON Schema draft 2020-12 document, restricted to the keyword subset in the spec prose.",
-          "oneOf": [{ "type": "object" }, { "type": "boolean" }]
+          "oneOf": [
+            {
+              "type": "object"
+            },
+            {
+              "type": "boolean"
+            }
+          ]
+        },
+        "normalization": {
+          "description": "Unicode normalisation form applied to every string and every object key in the parsed candidate before validation. The schema itself is not rewritten: it must already be in this form, and is rejected at configuration time otherwise, because a const written in another form would silently never match.",
+          "type": "string",
+          "enum": ["none", "NFC", "NFD", "NFKC", "NFKD"],
+          "default": "NFC"
         }
       },
       "required": ["type", "schema"],
@@ -205,23 +234,22 @@
     },
     "verifier_regex": {
       "title": "RegexVerifier",
-      "description": "Match the candidate against a pattern drawn from the documented portable regex subset.",
+      "description": "Match the candidate against a pattern drawn from the documented portable regex subset. There are no flags: the subset has no construct a flag could modify, and case folding is written out as [kK] because the two engines fold U+0130 and U+0131 differently.",
       "type": "object",
       "properties": {
-        "type": { "type": "string", "const": "regex" },
-        "pattern": { "type": "string" },
+        "type": {
+          "type": "string",
+          "const": "regex"
+        },
+        "pattern": {
+          "type": "string",
+          "description": "A pattern from the portable regex subset. The subset has no '^' and no '$': anchoring is the job of 'mode'."
+        },
         "mode": {
-          "description": "full_match requires the pattern to consume the entire candidate; search requires a match anywhere.",
+          "description": "full_match requires the pattern to consume the entire candidate; search requires a match anywhere. This is the only way to anchor, because the subset has no anchors.",
           "type": "string",
           "enum": ["full_match", "search"],
           "default": "full_match"
-        },
-        "flags": {
-          "description": "The portable flag subset is i alone, and only on an ASCII-only pattern. There is no m and no s because the subset has no $ and no . for them to modify.",
-          "type": "array",
-          "items": { "type": "string", "enum": ["i"] },
-          "uniqueItems": true,
-          "default": []
         }
       },
       "required": ["type", "pattern"],
@@ -260,16 +288,38 @@
       "description": "Unordered comparison of a parsed element list against the expected list.",
       "type": "object",
       "properties": {
-        "type": { "type": "string", "const": "set_equality" },
-        "expected": { "type": "array", "items": {} },
-        "parse": { "$ref": "#/$defs/element_parse" },
+        "type": {
+          "type": "string",
+          "const": "set_equality"
+        },
+        "expected": {
+          "type": "array",
+          "items": {}
+        },
+        "parse": {
+          "$ref": "#/$defs/element_parse"
+        },
         "element_comparator": {
           "type": "string",
           "enum": ["exact_string", "case_insensitive_string", "numeric", "json"],
           "default": "exact_string"
         },
-        "numeric_abs_tol": { "type": "number", "minimum": 0, "default": 0 },
-        "numeric_rel_tol": { "type": "number", "minimum": 0, "default": 0 },
+        "normalization": {
+          "description": "Unicode normalisation form applied to every parsed element and every expected element before comparison. NFC by default; 'none' is byte-exactness.",
+          "type": "string",
+          "enum": ["none", "NFC", "NFD", "NFKC", "NFKD"],
+          "default": "NFC"
+        },
+        "numeric_abs_tol": {
+          "type": "number",
+          "minimum": 0,
+          "default": 0
+        },
+        "numeric_rel_tol": {
+          "type": "number",
+          "minimum": 0,
+          "default": 0
+        },
         "duplicates": {
           "description": "collapse compares deduplicated collections, significant compares multisets.",
           "type": "string",
@@ -285,16 +335,38 @@
       "description": "Position-by-position comparison of a parsed element list against the expected list.",
       "type": "object",
       "properties": {
-        "type": { "type": "string", "const": "ordered_equality" },
-        "expected": { "type": "array", "items": {} },
-        "parse": { "$ref": "#/$defs/element_parse" },
+        "type": {
+          "type": "string",
+          "const": "ordered_equality"
+        },
+        "expected": {
+          "type": "array",
+          "items": {}
+        },
+        "parse": {
+          "$ref": "#/$defs/element_parse"
+        },
         "element_comparator": {
           "type": "string",
           "enum": ["exact_string", "case_insensitive_string", "numeric", "json"],
           "default": "exact_string"
         },
-        "numeric_abs_tol": { "type": "number", "minimum": 0, "default": 0 },
-        "numeric_rel_tol": { "type": "number", "minimum": 0, "default": 0 }
+        "normalization": {
+          "description": "Unicode normalisation form applied to every parsed element and every expected element before comparison. NFC by default; 'none' is byte-exactness.",
+          "type": "string",
+          "enum": ["none", "NFC", "NFD", "NFKC", "NFKD"],
+          "default": "NFC"
+        },
+        "numeric_abs_tol": {
+          "type": "number",
+          "minimum": 0,
+          "default": 0
+        },
+        "numeric_rel_tol": {
+          "type": "number",
+          "minimum": 0,
+          "default": 0
+        }
       },
       "required": ["type", "expected", "parse"],
       "additionalProperties": false
@@ -304,13 +376,44 @@
       "description": "Shape checks that do not look at meaning: length in code points, line count, required and forbidden substrings.",
       "type": "object",
       "properties": {
-        "type": { "type": "string", "const": "format_constraint" },
-        "min_length": { "type": "integer", "minimum": 0 },
-        "max_length": { "type": "integer", "minimum": 0 },
-        "min_lines": { "type": "integer", "minimum": 0 },
-        "max_lines": { "type": "integer", "minimum": 0 },
-        "required_substrings": { "type": "array", "items": { "type": "string" } },
-        "forbidden_substrings": { "type": "array", "items": { "type": "string" } },
+        "type": {
+          "type": "string",
+          "const": "format_constraint"
+        },
+        "length_unit": {
+          "description": "Unit the length bounds are measured in. codepoints is Python's len() and the iteration order of a JavaScript string; utf16 is String.prototype.length; bytes_utf8 is the UTF-8 encoded size. graphemes is specified and refused by both implementations rather than approximated, because the two runtimes carry different Unicode versions and two UAX #29 breakers drawn from different tables would disagree on exactly the sequences the unit exists for.",
+          "type": "string",
+          "enum": ["codepoints", "utf16", "graphemes", "bytes_utf8"],
+          "default": "codepoints"
+        },
+        "min_length": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "max_length": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "min_lines": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "max_lines": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "required_substrings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "forbidden_substrings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "case_sensitive": {
           "description": "Applies to substring checks only.",
           "type": "boolean",
@@ -325,6 +428,12 @@
           "description": "Rewrite CRLF and lone CR to LF before every check.",
           "type": "boolean",
           "default": true
+        },
+        "normalization": {
+          "description": "Unicode normalisation form applied to the candidate and to every required and forbidden substring, before the length is measured. The order matters: NFC turns \"cafe\\u0301\" from six code points into five.",
+          "type": "string",
+          "enum": ["none", "NFC", "NFD", "NFKC", "NFKD"],
+          "default": "NFC"
         }
       },
       "required": ["type"],
@@ -335,10 +444,15 @@
       "description": "Composition. Runs declarative verifiers in order and returns the first failure verbatim. Declarative tier. Children reference verifier_declarative rather than verifier, so an executable child is a schema violation and not merely a runtime error: a composite that can hide an executable verifier behind a declarative one is a way to obtain a verdict from partially checked output, which is the failure this specification exists to prevent.",
       "type": "object",
       "properties": {
-        "type": { "type": "string", "const": "all_of" },
+        "type": {
+          "type": "string",
+          "const": "all_of"
+        },
         "verifiers": {
           "type": "array",
-          "items": { "$ref": "#/$defs/verifier_declarative" }
+          "items": {
+            "$ref": "#/$defs/verifier_declarative"
+          }
         }
       },
       "required": ["type", "verifiers"],
@@ -349,7 +463,10 @@
       "description": "Executable tier. Symbolic equivalence of the candidate expression and the expected expression. Python only.",
       "type": "object",
       "properties": {
-        "type": { "type": "string", "const": "sympy_equiv" },
+        "type": {
+          "type": "string",
+          "const": "sympy_equiv"
+        },
         "expected": {
           "description": "Expected expression in SymPy input syntax.",
           "type": "string"
@@ -357,7 +474,9 @@
         "symbols": {
           "description": "Free symbols declared for parsing, so that an undeclared name is an error rather than a silent new symbol.",
           "type": "array",
-          "items": { "type": "string" },
+          "items": {
+            "type": "string"
+          },
           "default": []
         },
         "mode": {
@@ -369,7 +488,9 @@
         "strip_prefixes": {
           "description": "Literal prefixes removed from the candidate before parsing, such as an answer label.",
           "type": "array",
-          "items": { "type": "string" },
+          "items": {
+            "type": "string"
+          },
           "default": []
         }
       },
@@ -381,7 +502,10 @@
       "description": "Executable tier. Run supplied unittest source against the candidate output. Python only, and only in a sandbox the operator has consented to.",
       "type": "object",
       "properties": {
-        "type": { "type": "string", "const": "python_unittest" },
+        "type": {
+          "type": "string",
+          "const": "python_unittest"
+        },
         "test_source": {
           "description": "Python source defining unittest.TestCase subclasses. The candidate is importable as the module named by candidate_module.",
           "type": "string"
@@ -404,23 +528,45 @@
       "title": "DeclarativeVerifier",
       "description": "The declarative tier only. Every member must produce an identical verdict in every implementation, which is what the conformance suite enforces. Referenced wherever an executable verifier would be unsafe to permit, chiefly as an all_of child.",
       "oneOf": [
-        { "$ref": "#/$defs/verifier_exact" },
-        { "$ref": "#/$defs/verifier_numeric_tolerance" },
-        { "$ref": "#/$defs/verifier_json_schema" },
-        { "$ref": "#/$defs/verifier_regex" },
-        { "$ref": "#/$defs/verifier_set_equality" },
-        { "$ref": "#/$defs/verifier_ordered_equality" },
-        { "$ref": "#/$defs/verifier_format_constraint" },
-        { "$ref": "#/$defs/verifier_all_of" }
+        {
+          "$ref": "#/$defs/verifier_exact"
+        },
+        {
+          "$ref": "#/$defs/verifier_numeric_tolerance"
+        },
+        {
+          "$ref": "#/$defs/verifier_json_schema"
+        },
+        {
+          "$ref": "#/$defs/verifier_regex"
+        },
+        {
+          "$ref": "#/$defs/verifier_set_equality"
+        },
+        {
+          "$ref": "#/$defs/verifier_ordered_equality"
+        },
+        {
+          "$ref": "#/$defs/verifier_format_constraint"
+        },
+        {
+          "$ref": "#/$defs/verifier_all_of"
+        }
       ]
     },
     "verifier": {
       "title": "Verifier",
       "description": "Tagged union of every verifier type. Types exact through all_of are the declarative tier and must behave identically in every implementation. Types sympy_equiv and python_unittest are the executable tier and are Python only.",
       "oneOf": [
-        { "$ref": "#/$defs/verifier_declarative" },
-        { "$ref": "#/$defs/verifier_sympy_equiv" },
-        { "$ref": "#/$defs/verifier_python_unittest" }
+        {
+          "$ref": "#/$defs/verifier_declarative"
+        },
+        {
+          "$ref": "#/$defs/verifier_sympy_equiv"
+        },
+        {
+          "$ref": "#/$defs/verifier_python_unittest"
+        }
       ]
     },
     "verifier_binding": {
@@ -476,10 +622,18 @@
       "description": "Result of running one verifier against one candidate. passed and code are normative; message and detail are advisory and may differ between implementations.",
       "type": "object",
       "properties": {
-        "passed": { "type": "boolean" },
-        "code": { "$ref": "#/$defs/verdict_code" },
-        "message": { "type": "string" },
-        "detail": { "type": "object" }
+        "passed": {
+          "type": "boolean"
+        },
+        "code": {
+          "$ref": "#/$defs/verdict_code"
+        },
+        "message": {
+          "type": "string"
+        },
+        "detail": {
+          "type": "object"
+        }
       },
       "required": ["passed", "code"],
       "additionalProperties": false
@@ -489,29 +643,47 @@
       "description": "A parametric task family. This is the merged form: on disk a template is usually split into a locale-neutral core and one file per locale, and the loader merges them into this shape before validation.",
       "type": "object",
       "properties": {
-        "spec_version": { "$ref": "#/$defs/spec_version" },
-        "id": { "$ref": "#/$defs/template_id" },
-        "version": { "$ref": "#/$defs/semver" },
-        "locale": { "$ref": "#/$defs/locale" },
+        "spec_version": {
+          "$ref": "#/$defs/spec_version"
+        },
+        "id": {
+          "$ref": "#/$defs/template_id"
+        },
+        "version": {
+          "$ref": "#/$defs/semver"
+        },
+        "locale": {
+          "$ref": "#/$defs/locale"
+        },
         "family": {
           "description": "Coarse grouping used for reporting, for example math or extraction.",
           "type": "string"
         },
-        "description": { "type": "string" },
+        "description": {
+          "type": "string"
+        },
         "parameters": {
           "type": "array",
-          "items": { "$ref": "#/$defs/parameter" }
+          "items": {
+            "$ref": "#/$defs/parameter"
+          }
         },
         "derivations": {
           "type": "array",
-          "items": { "$ref": "#/$defs/derivation" }
+          "items": {
+            "$ref": "#/$defs/derivation"
+          }
         },
         "prompt": {
           "description": "Prompt body. {name} interpolates a parameter or derivation; {{ and }} are literal braces.",
           "type": "string"
         },
-        "verifier": { "$ref": "#/$defs/verifier_binding" },
-        "notes": { "type": "string" }
+        "verifier": {
+          "$ref": "#/$defs/verifier_binding"
+        },
+        "notes": {
+          "type": "string"
+        }
       },
       "required": ["spec_version", "id", "version", "locale", "parameters", "prompt", "verifier"],
       "additionalProperties": false
@@ -521,11 +693,23 @@
       "description": "Token counts for one instance under one named tokenizer. Generated items carry identical semantic content across locales, so these counts are directly comparable between locales in a way corpus-level fertility statistics are not.",
       "type": "object",
       "properties": {
-        "tokenizer_name": { "type": "string" },
-        "tokenizer_version": { "type": "string" },
-        "prompt_tokens": { "type": "integer", "minimum": 0 },
-        "prompt_characters": { "type": "integer", "minimum": 0 },
-        "tokens_per_character": { "type": "number" }
+        "tokenizer_name": {
+          "type": "string"
+        },
+        "tokenizer_version": {
+          "type": "string"
+        },
+        "prompt_tokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "prompt_characters": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "tokens_per_character": {
+          "type": "number"
+        }
       },
       "required": [
         "tokenizer_name",
@@ -541,22 +725,45 @@
       "description": "One generated task: a template, the parameter values bound to it, the seed those values came from, the rendered prompt, and the expected result computed at generation time.",
       "type": "object",
       "properties": {
-        "spec_version": { "$ref": "#/$defs/spec_version" },
-        "template_id": { "$ref": "#/$defs/template_id" },
-        "template_version": { "$ref": "#/$defs/semver" },
-        "template_hash": { "$ref": "#/$defs/content_hash" },
-        "locale": { "$ref": "#/$defs/locale" },
-        "instance_index": { "type": "integer", "minimum": 0 },
+        "spec_version": {
+          "$ref": "#/$defs/spec_version"
+        },
+        "template_id": {
+          "$ref": "#/$defs/template_id"
+        },
+        "template_version": {
+          "$ref": "#/$defs/semver"
+        },
+        "template_hash": {
+          "$ref": "#/$defs/content_hash"
+        },
+        "locale": {
+          "$ref": "#/$defs/locale"
+        },
+        "instance_index": {
+          "type": "integer",
+          "minimum": 0
+        },
         "seed": {
           "description": "Derived uint64 seed, written as a decimal string so that no JSON reader loses precision.",
           "type": "string",
           "pattern": "^[0-9]+$"
         },
-        "parameters": { "type": "object" },
-        "derived": { "type": "object" },
-        "prompt": { "type": "string" },
-        "verifier": { "$ref": "#/$defs/verifier" },
-        "fertility": { "$ref": "#/$defs/fertility" }
+        "parameters": {
+          "type": "object"
+        },
+        "derived": {
+          "type": "object"
+        },
+        "prompt": {
+          "type": "string"
+        },
+        "verifier": {
+          "$ref": "#/$defs/verifier"
+        },
+        "fertility": {
+          "$ref": "#/$defs/fertility"
+        }
       },
       "required": [
         "spec_version",
@@ -576,11 +783,22 @@
       "title": "ManifestTemplateEntry",
       "type": "object",
       "properties": {
-        "id": { "$ref": "#/$defs/template_id" },
-        "version": { "$ref": "#/$defs/semver" },
-        "locale": { "$ref": "#/$defs/locale" },
-        "content_hash": { "$ref": "#/$defs/content_hash" },
-        "instance_count": { "type": "integer", "minimum": 0 }
+        "id": {
+          "$ref": "#/$defs/template_id"
+        },
+        "version": {
+          "$ref": "#/$defs/semver"
+        },
+        "locale": {
+          "$ref": "#/$defs/locale"
+        },
+        "content_hash": {
+          "$ref": "#/$defs/content_hash"
+        },
+        "instance_count": {
+          "type": "integer",
+          "minimum": 0
+        }
       },
       "required": ["id", "version", "locale", "content_hash", "instance_count"],
       "additionalProperties": false
@@ -589,9 +807,15 @@
       "title": "ManifestCitation",
       "type": "object",
       "properties": {
-        "doi": { "type": "string" },
-        "bibtex": { "type": "string" },
-        "notice": { "type": "string" }
+        "doi": {
+          "type": "string"
+        },
+        "bibtex": {
+          "type": "string"
+        },
+        "notice": {
+          "type": "string"
+        }
       },
       "required": ["doi", "bibtex", "notice"],
       "additionalProperties": false
@@ -600,11 +824,18 @@
       "title": "ManifestSeedDerivation",
       "type": "object",
       "properties": {
-        "method": { "type": "string", "const": "sha256-prefix-uint64-be" },
-        "formula": { "type": "string" },
+        "method": {
+          "type": "string",
+          "const": "sha256-prefix-uint64-be"
+        },
+        "formula": {
+          "type": "string"
+        },
         "inputs": {
           "type": "array",
-          "items": { "type": "string" }
+          "items": {
+            "type": "string"
+          }
         }
       },
       "required": ["method", "formula", "inputs"],
@@ -615,12 +846,27 @@
       "description": "Present only when a tokenizer was supplied. No tokenizer ships with the generator, so this is null in a default run.",
       "type": "object",
       "properties": {
-        "tokenizer_name": { "type": "string" },
-        "tokenizer_version": { "type": "string" },
-        "instances_measured": { "type": "integer", "minimum": 0 },
-        "total_prompt_tokens": { "type": "integer", "minimum": 0 },
-        "total_prompt_characters": { "type": "integer", "minimum": 0 },
-        "mean_tokens_per_character": { "type": "number" }
+        "tokenizer_name": {
+          "type": "string"
+        },
+        "tokenizer_version": {
+          "type": "string"
+        },
+        "instances_measured": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "total_prompt_tokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "total_prompt_characters": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "mean_tokens_per_character": {
+          "type": "number"
+        }
       },
       "required": [
         "tokenizer_name",
@@ -637,14 +883,24 @@
       "description": "Emitted alongside every generated set. Everything a third party needs to regenerate the set and to cite it.",
       "type": "object",
       "properties": {
-        "spec_version": { "$ref": "#/$defs/spec_version" },
-        "generator_name": { "type": "string" },
-        "generator_version": { "$ref": "#/$defs/semver" },
+        "spec_version": {
+          "$ref": "#/$defs/spec_version"
+        },
+        "generator_name": {
+          "type": "string"
+        },
+        "generator_version": {
+          "$ref": "#/$defs/semver"
+        },
         "tool": {
           "type": "object",
           "properties": {
-            "name": { "type": "string" },
-            "version": { "type": "string" }
+            "name": {
+              "type": "string"
+            },
+            "version": {
+              "type": "string"
+            }
           },
           "required": ["name", "version"],
           "additionalProperties": false
@@ -653,15 +909,28 @@
           "description": "RFC 3339 UTC timestamp. The only field that legitimately differs between two otherwise identical runs.",
           "type": "string"
         },
-        "locale": { "$ref": "#/$defs/locale" },
-        "instance_count": { "type": "integer", "minimum": 0 },
+        "locale": {
+          "$ref": "#/$defs/locale"
+        },
+        "instance_count": {
+          "type": "integer",
+          "minimum": 0
+        },
         "templates": {
           "type": "array",
-          "items": { "$ref": "#/$defs/manifest_template_entry" }
+          "items": {
+            "$ref": "#/$defs/manifest_template_entry"
+          }
         },
-        "seed_derivation": { "$ref": "#/$defs/manifest_seed_derivation" },
-        "fertility": { "$ref": "#/$defs/manifest_fertility" },
-        "citation": { "$ref": "#/$defs/manifest_citation" }
+        "seed_derivation": {
+          "$ref": "#/$defs/manifest_seed_derivation"
+        },
+        "fertility": {
+          "$ref": "#/$defs/manifest_fertility"
+        },
+        "citation": {
+          "$ref": "#/$defs/manifest_citation"
+        }
       },
       "required": [
         "spec_version",
@@ -682,15 +951,27 @@
       "description": "One executable row of the cross-language conformance suite.",
       "type": "object",
       "properties": {
-        "id": { "type": "string" },
-        "description": { "type": "string" },
-        "verifier": { "$ref": "#/$defs/verifier" },
-        "candidate": { "type": "string" },
+        "id": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "verifier": {
+          "$ref": "#/$defs/verifier"
+        },
+        "candidate": {
+          "type": "string"
+        },
         "expected": {
           "type": "object",
           "properties": {
-            "passed": { "type": "boolean" },
-            "code": { "$ref": "#/$defs/verdict_code" }
+            "passed": {
+              "type": "boolean"
+            },
+            "code": {
+              "$ref": "#/$defs/verdict_code"
+            }
           },
           "required": ["passed", "code"],
           "additionalProperties": false
@@ -704,10 +985,18 @@
       "description": "One row of the suite asserting that a verifier configuration is refused rather than evaluated. The verifier here is deliberately typed as a bare object, because these configurations are invalid by construction and could not appear in a field typed as #/$defs/verifier. Strict dispatch must raise the named error; lenient dispatch must return the stated verdict, which is always a failure.",
       "type": "object",
       "properties": {
-        "id": { "type": "string" },
-        "description": { "type": "string" },
-        "verifier": { "type": "object" },
-        "candidate": { "type": "string" },
+        "id": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "verifier": {
+          "type": "object"
+        },
+        "candidate": {
+          "type": "string"
+        },
         "raises": {
           "description": "unsupported_verifier for a type this implementation must refuse; verifier_config for a configuration that is malformed rather than unsupported.",
           "type": "string",
@@ -716,8 +1005,13 @@
         "expected": {
           "type": "object",
           "properties": {
-            "passed": { "type": "boolean", "const": false },
-            "code": { "$ref": "#/$defs/verdict_code" }
+            "passed": {
+              "type": "boolean",
+              "const": false
+            },
+            "code": {
+              "$ref": "#/$defs/verdict_code"
+            }
           },
           "required": ["passed", "code"],
           "additionalProperties": false
@@ -730,16 +1024,26 @@
       "title": "ConformanceFile",
       "type": "object",
       "properties": {
-        "spec_version": { "$ref": "#/$defs/spec_version" },
-        "verifier_type": { "type": "string" },
-        "description": { "type": "string" },
+        "spec_version": {
+          "$ref": "#/$defs/spec_version"
+        },
+        "verifier_type": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
         "cases": {
           "type": "array",
-          "items": { "$ref": "#/$defs/conformance_case" }
+          "items": {
+            "$ref": "#/$defs/conformance_case"
+          }
         },
         "rejections": {
           "type": "array",
-          "items": { "$ref": "#/$defs/conformance_rejection" }
+          "items": {
+            "$ref": "#/$defs/conformance_rejection"
+          }
         }
       },
       "required": ["spec_version", "verifier_type", "cases"],

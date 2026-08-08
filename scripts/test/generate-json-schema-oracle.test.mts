@@ -18,6 +18,13 @@
  * TypeScript conformance suite proves this validator does. Proving `ajv` matches it too
  * means all four agree, and the two independent libraries are what rule out a shared
  * misreading.
+ *
+ * `ajv` is handed the instance after the spec's normalisation step, because normalisation
+ * happens before schema evaluation and no library does it for you. It is *not* handed a
+ * rewritten pattern: the Python side turns `$` into `\Z` only because Python's `$` also
+ * matches before one trailing newline, and a RegExp without the `m` flag already means the
+ * absolute end of input. `the normalisation step is load-bearing` below names the rows
+ * whose verdict changes without the one pre-step that does apply here.
  */
 
 import assert from 'node:assert/strict';
@@ -28,8 +35,11 @@ import test from 'node:test';
 import { Ajv2020 } from 'ajv/dist/2020.js';
 
 import {
+  DEFAULT_NORMALIZATION,
+  normalizeJsonStrings,
   runVerifier,
   type ConformanceFile,
+  type UnicodeNormalization,
   type Verifier,
 } from '../../packages/harness/src/generate/index';
 
@@ -49,6 +59,7 @@ interface Row {
   schema: unknown;
   candidate: string;
   expected: { passed: boolean; code: string };
+  normalization: UnicodeNormalization;
 }
 
 /** Every json_schema verifier in the corpus, including those nested inside an all_of. */
@@ -57,9 +68,20 @@ function collectRows(): Row[] {
 
   const walk = (verifier: unknown, id: string, candidate: string, expected: Row['expected']) => {
     if (!verifier || typeof verifier !== 'object') return;
-    const node = verifier as { type?: string; schema?: unknown; verifiers?: unknown[] };
+    const node = verifier as {
+      type?: string;
+      schema?: unknown;
+      verifiers?: unknown[];
+      normalization?: UnicodeNormalization;
+    };
     if (node.type === 'json_schema') {
-      rows.push({ id: `${id}#${rows.length}`, schema: node.schema, candidate, expected });
+      rows.push({
+        id: `${id}#${rows.length}`,
+        schema: node.schema,
+        candidate,
+        expected,
+        normalization: node.normalization ?? DEFAULT_NORMALIZATION,
+      });
       return;
     }
     if (node.type === 'all_of' && Array.isArray(node.verifiers)) {
@@ -85,8 +107,14 @@ const rows = collectRows();
 // support, not about ajv's opinion on schema style.
 const ajv = new Ajv2020({ strict: false, allErrors: false });
 
-function ajvAccepts(schema: unknown, value: unknown): boolean {
-  return ajv.compile(schema as object)(value) === true;
+function ajvAccepts(
+  schema: unknown,
+  value: unknown,
+  form: UnicodeNormalization,
+  prepared = true,
+): boolean {
+  const instance = prepared ? normalizeJsonStrings(value, form) : value;
+  return ajv.compile(schema as object)(instance) === true;
 }
 
 test('the oracle corpus is not empty', () => {
@@ -134,9 +162,12 @@ for (const row of rows) {
       return;
     }
 
-    const verdict = runVerifier({ type: 'json_schema', schema: row.schema } as Verifier, row.candidate);
+    const verdict = runVerifier(
+      { type: 'json_schema', schema: row.schema, normalization: row.normalization } as Verifier,
+      row.candidate,
+    );
     const mine = verdict.passed;
-    const theirs = ajvAccepts(row.schema, parsed);
+    const theirs = ajvAccepts(row.schema, parsed, row.normalization);
 
     if (mine !== theirs) {
       const reason = DOCUMENTED_DISAGREEMENTS.get(row.id);
@@ -166,10 +197,40 @@ for (const row of rows) {
     // is not this schema's verdict.
     if (!row.id.startsWith('json_schema/')) return;
     assert.equal(
-      ajvAccepts(row.schema, parsed),
+      ajvAccepts(row.schema, parsed, row.normalization),
       row.expected.passed,
       `${row.id}: ajv disagrees with the expectation the Python suite validated against ` +
         'jsonschema, so the two libraries disagree and the case needs a human',
     );
   });
 }
+
+test('the normalisation step is load-bearing', () => {
+  // The negative control. Handing ajv a normalised instance is only evidence if there is a
+  // row where not normalising gives a different answer; otherwise the comparison above
+  // would still pass with the pre-step deleted.
+  const changed: string[] = [];
+  for (const row of rows) {
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(row.candidate);
+    } catch {
+      continue;
+    }
+    if (
+      ajvAccepts(row.schema, parsed, row.normalization) !==
+      ajvAccepts(row.schema, parsed, row.normalization, false)
+    ) {
+      changed.push(row.id);
+    }
+  }
+  assert.ok(
+    changed.length > 0,
+    'no corpus row changes ajv\u2019s verdict under normalisation, so passing it a ' +
+      'normalised instance proves nothing',
+  );
+  assert.ok(
+    changed.some((id) => id.includes('composition-forms')),
+    `expected a composition-form row among ${changed.join(', ')}`,
+  );
+});

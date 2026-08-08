@@ -102,45 +102,52 @@
     {
       "id": "exact/devanagari-nfc",
       "description": "U+0958 is a composition exclusion, so NFC decomposes it to U+0915 U+093C rather than the other way round.",
-      "verifier": { "type": "exact", "expected": "\u0958", "unicode_normalization": "NFC" },
+      "verifier": { "type": "exact", "expected": "\u0958", "normalization": "NFC" },
       "candidate": "\u0915\u093c",
       "expected": { "passed": true, "code": "ok" }
     },
     {
       "id": "exact/devanagari-unnormalised",
-      "verifier": { "type": "exact", "expected": "\u0958" },
+      "description": "normalization defaults to NFC, so byte-exactness has to be asked for.",
+      "verifier": { "type": "exact", "expected": "\u0958", "normalization": "none" },
       "candidate": "\u0915\u093c",
       "expected": { "passed": false, "code": "mismatch" }
     },
     {
       "id": "exact/hangul-jamo-nfc",
       "description": "Conjoining jamo compose to a precomposed syllable under NFC.",
-      "verifier": { "type": "exact", "expected": "\ud55c\uae00", "unicode_normalization": "NFC" },
+      "verifier": { "type": "exact", "expected": "\ud55c\uae00", "normalization": "NFC" },
       "candidate": "\u1112\u1161\u11ab\u1100\u1173\u11af",
       "expected": { "passed": true, "code": "ok" }
     },
     {
       "id": "exact/hangul-jamo-unnormalised",
-      "verifier": { "type": "exact", "expected": "\ud55c\uae00" },
+      "verifier": { "type": "exact", "expected": "\ud55c\uae00", "normalization": "none" },
       "candidate": "\u1112\u1161\u11ab\u1100\u1173\u11af",
       "expected": { "passed": false, "code": "mismatch" }
     },
     {
       "id": "exact/nfkc-ligature",
       "description": "NFKC folds the fi ligature; NFC does not. Case exists to keep the two forms distinguishable.",
-      "verifier": { "type": "exact", "expected": "fi", "unicode_normalization": "NFKC" },
+      "verifier": { "type": "exact", "expected": "fi", "normalization": "NFKC" },
       "candidate": "\ufb01",
       "expected": { "passed": true, "code": "ok" }
     },
     {
       "id": "exact/nfc-does-not-fold-ligature",
-      "verifier": { "type": "exact", "expected": "fi", "unicode_normalization": "NFC" },
+      "verifier": { "type": "exact", "expected": "fi", "normalization": "NFC" },
       "candidate": "\ufb01",
       "expected": { "passed": false, "code": "mismatch" }
     },
     {
+      "id": "exact/nfkd-decomposes-and-folds",
+      "verifier": { "type": "exact", "expected": "fi", "normalization": "NFKD" },
+      "candidate": "\ufb01",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
       "id": "exact/nfd-decomposes",
-      "verifier": { "type": "exact", "expected": "e\u0301", "unicode_normalization": "NFD" },
+      "verifier": { "type": "exact", "expected": "e\u0301", "normalization": "NFD" },
       "candidate": "\u00e9",
       "expected": { "passed": true, "code": "ok" }
     },
@@ -150,7 +157,7 @@
       "verifier": {
         "type": "exact",
         "expected": "the total is 42",
-        "unicode_normalization": "NFC",
+        "normalization": "NFC",
         "normalize_line_endings": true,
         "trim": true,
         "collapse_whitespace": true,
@@ -181,8 +188,95 @@
     {
       "id": "exact/devanagari-case-insensitive-is-identity",
       "description": "Caseless scripts must be unaffected by the case_sensitive switch.",
-      "verifier": { "type": "exact", "expected": "\u0909\u0924\u094d\u0924\u0930", "case_sensitive": false },
+      "verifier": {
+        "type": "exact",
+        "expected": "\u0909\u0924\u094d\u0924\u0930",
+        "case_sensitive": false
+      },
       "candidate": "\u0909\u0924\u094d\u0924\u0930",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "exact/hangul-precomposed-vs-jamo-under-default",
+      "description": "The default is NFC, so a model that emits conjoining jamo scores the same as one that emits the precomposed syllable. Two visually identical answers must not score differently because of a tokeniser's output form.",
+      "verifier": { "type": "exact", "expected": "\uac00" },
+      "candidate": "\u1100\u1161",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "exact/hangul-precomposed-vs-jamo-under-none",
+      "description": "none exists for byte-exactness tests, and is not the default for the reason the previous case shows.",
+      "verifier": { "type": "exact", "expected": "\uac00", "normalization": "none" },
+      "candidate": "\u1100\u1161",
+      "expected": { "passed": false, "code": "mismatch" }
+    },
+    {
+      "id": "exact/devanagari-nukta-under-default",
+      "verifier": { "type": "exact", "expected": "\u0958" },
+      "candidate": "\u0915\u093c",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "exact/latin-combining-acute-under-default",
+      "description": "Combining sequence. NFC composes e + U+0301 to U+00E9.",
+      "verifier": { "type": "exact", "expected": "caf\u00e9" },
+      "candidate": "cafe\u0301",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "exact/nfd-normalisation-value",
+      "description": "One case per normalization value: NFD sends both sides to the decomposed form.",
+      "verifier": { "type": "exact", "expected": "caf\u00e9", "normalization": "NFD" },
+      "candidate": "cafe\u0301",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "exact/nfkc-normalisation-value",
+      "verifier": { "type": "exact", "expected": "12", "normalization": "NFKC" },
+      "candidate": "\u00b9\u00b2",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "exact/zwj-sequence-is-preserved-by-nfc",
+      "description": "ZWJ sequence. U+200D has no decomposition, so NFC must leave the family emoji alone rather than dropping the joiner.",
+      "verifier": {
+        "type": "exact",
+        "expected": "\ud83d\udc69\u200d\ud83d\udc69\u200d\ud83d\udc67"
+      },
+      "candidate": "\ud83d\udc69\u200d\ud83d\udc69\u200d\ud83d\udc67",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "exact/zwj-sequence-differs-from-unjoined",
+      "description": "Two women and a girl side by side are not a family. The joiner is content.",
+      "verifier": {
+        "type": "exact",
+        "expected": "\ud83d\udc69\u200d\ud83d\udc69\u200d\ud83d\udc67"
+      },
+      "candidate": "\ud83d\udc69\ud83d\udc69\ud83d\udc67",
+      "expected": { "passed": false, "code": "mismatch" }
+    },
+    {
+      "id": "exact/astral-cjk-extension-b",
+      "description": "Non-BMP outside the emoji planes, where a UTF-16 length assumption is just as wrong.",
+      "verifier": { "type": "exact", "expected": "\ud840\udc00\ud840\udc0b" },
+      "candidate": "\ud840\udc00\ud840\udc0b",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "exact/mixed-script-hinglish-devanagari-latin-emoji",
+      "description": "Mixed script: Latin, Devanagari, Hangul and an astral emoji in one string.",
+      "verifier": {
+        "type": "exact",
+        "expected": "ok \u0928\u092e\u0938\u094d\u0924\u0947 \ud55c\uae00 \ud83d\ude00"
+      },
+      "candidate": "ok \u0928\u092e\u0938\u094d\u0924\u0947 \ud55c\uae00 \ud83d\ude00",
+      "expected": { "passed": true, "code": "ok" }
+    },
+    {
+      "id": "exact/mixed-script-nfc-composes-only-the-devanagari-part",
+      "verifier": { "type": "exact", "expected": "hi \u0958 \ud83d\ude00" },
+      "candidate": "hi \u0915\u093c \ud83d\ude00",
       "expected": { "passed": true, "code": "ok" }
     }
   ]

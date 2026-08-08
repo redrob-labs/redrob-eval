@@ -16,7 +16,7 @@ import {
   SchemaSubsetError,
   type Schema,
 } from './json-schema-subset';
-import { compileSubsetPattern, RegexSubsetError } from './regex-subset';
+import { compileSubsetPattern, RegexSubsetError, validateFlags } from './regex-subset';
 import type {
   AllOfVerifier,
   ElementParse,
@@ -30,9 +30,11 @@ import type {
 } from './spec-types.generated';
 import {
   applyUnicodeNormalization,
-  codePointLength,
   collapseSpecWhitespace,
   countLines,
+  DEFAULT_NORMALIZATION,
+  measureLength,
+  normalizeJsonStrings,
   normalizeLineEndings,
   stripSpecWhitespace,
   type UnicodeNormalization,
@@ -129,7 +131,7 @@ export function verifyExact(config: ExactVerifier, candidate: string): Verdict {
   const normalize = (text: string): string => {
     let out = applyUnicodeNormalization(
       text,
-      (config.unicode_normalization ?? 'none') as UnicodeNormalization,
+      (config.normalization ?? DEFAULT_NORMALIZATION) as UnicodeNormalization,
     );
     if (config.normalize_line_endings === true) out = normalizeLineEndings(out);
     if (config.trim === true) out = stripSpecWhitespace(out);
@@ -167,8 +169,9 @@ export function verifyNumericTolerance(
 
 export function verifyJsonSchema(config: JsonSchemaVerifier, candidate: string): Verdict {
   const schema = config.schema as Schema;
+  const form = (config.normalization ?? DEFAULT_NORMALIZATION) as UnicodeNormalization;
   try {
-    validateSchemaDocument(schema);
+    validateSchemaDocument(schema, '#', 0, form);
   } catch (error) {
     if (error instanceof SchemaSubsetError) {
       throw new VerifierConfigError(`schema is outside the supported subset: ${error.message}`);
@@ -182,6 +185,7 @@ export function verifyJsonSchema(config: JsonSchemaVerifier, candidate: string):
   } catch {
     return fail('invalid_json', 'candidate is not well-formed JSON');
   }
+  parsed = normalizeJsonStrings(parsed, form);
 
   const violations = validateInstance(schema, parsed);
   if (violations.length === 0) return ok();
@@ -198,7 +202,9 @@ export function verifyRegex(config: RegexVerifier, candidate: string): Verdict {
   const mode = config.mode ?? 'full_match';
   let compiled;
   try {
-    compiled = compileSubsetPattern(config.pattern, mode, config.flags ?? []);
+    // The subset has no flags, so a config carrying one is refused rather than ignored.
+    validateFlags((config as { flags?: readonly string[] }).flags ?? []);
+    compiled = compileSubsetPattern(config.pattern, mode);
   } catch (error) {
     if (error instanceof RegexSubsetError) return fail('invalid_pattern', error.message);
     throw error;
@@ -209,7 +215,11 @@ export function verifyRegex(config: RegexVerifier, candidate: string): Verdict {
 
 // -------------------------------------------------- set and ordered equality
 
-function splitElements(parse: ElementParse, candidate: string): unknown[] | null {
+function splitElements(
+  parse: ElementParse,
+  candidate: string,
+  form: UnicodeNormalization,
+): unknown[] | null {
   let elements: unknown[];
   switch (parse.mode) {
     case 'json_array': {
@@ -232,6 +242,11 @@ function splitElements(parse: ElementParse, candidate: string): unknown[] | null
     default:
       throw new VerifierConfigError(`unknown parse mode ${JSON.stringify(parse.mode)}`);
   }
+
+  // Normalisation runs on the split elements rather than on the raw candidate, because
+  // for json_array the raw candidate may spell a character as a \uXXXX escape, which is
+  // ASCII and so survives normalisation untouched.
+  elements = elements.map((element) => normalizeJsonStrings(element, form));
 
   if (parse.trim_elements ?? true) {
     elements = elements.map((element) =>
@@ -303,13 +318,14 @@ function elementsEqual(
 }
 
 export function verifySetEquality(config: SetEqualityVerifier, candidate: string): Verdict {
-  let elements = splitElements(config.parse, candidate);
+  const form = (config.normalization ?? DEFAULT_NORMALIZATION) as UnicodeNormalization;
+  let elements = splitElements(config.parse, candidate, form);
   if (elements === null) return fail('parse_error', 'candidate could not be split into elements');
 
   const comparator = (config.element_comparator ?? 'exact_string') as ElementComparator;
   const absTol = config.numeric_abs_tol ?? 0;
   const relTol = config.numeric_rel_tol ?? 0;
-  let expected: unknown[] = [...config.expected];
+  let expected: unknown[] = config.expected.map((value) => normalizeJsonStrings(value, form));
 
   if ((config.duplicates ?? 'collapse') === 'collapse') {
     elements = dedupe(elements, comparator);
@@ -338,13 +354,14 @@ export function verifySetEquality(config: SetEqualityVerifier, candidate: string
 }
 
 export function verifyOrderedEquality(config: OrderedEqualityVerifier, candidate: string): Verdict {
-  const elements = splitElements(config.parse, candidate);
+  const form = (config.normalization ?? DEFAULT_NORMALIZATION) as UnicodeNormalization;
+  const elements = splitElements(config.parse, candidate, form);
   if (elements === null) return fail('parse_error', 'candidate could not be split into elements');
 
   const comparator = (config.element_comparator ?? 'exact_string') as ElementComparator;
   const absTol = config.numeric_abs_tol ?? 0;
   const relTol = config.numeric_rel_tol ?? 0;
-  const expected = config.expected;
+  const expected = config.expected.map((value) => normalizeJsonStrings(value, form));
 
   if (elements.length !== expected.length) {
     return fail(
@@ -371,11 +388,16 @@ export function verifyFormatConstraint(
   config: FormatConstraintVerifier,
   candidate: string,
 ): Verdict {
-  let text = candidate;
+  const form = (config.normalization ?? DEFAULT_NORMALIZATION) as UnicodeNormalization;
+  const unit = config.length_unit ?? 'codepoints';
+
+  let text = applyUnicodeNormalization(candidate, form);
   if (config.normalize_line_endings ?? true) text = normalizeLineEndings(text);
   if (config.trim === true) text = stripSpecWhitespace(text);
 
-  const length = codePointLength(text);
+  // Measured after normalisation, and it matters: NFC turns "cafe\u0301" from six code
+  // points into five. The spec fixes this order so the bound means one thing.
+  const length = measureLength(text, unit);
   if (typeof config.min_length === 'number' && length < config.min_length) {
     return fail('length_out_of_bounds', `length ${length} is below the minimum of ${config.min_length}`, {
       length,
@@ -406,8 +428,15 @@ export function verifyFormatConstraint(
   const caseSensitive = config.case_sensitive ?? true;
   const haystack = caseSensitive ? text : text.toLowerCase();
 
+  // The needle goes through the same normalisation as the haystack, so a required
+  // substring written in one composition form is found in the other.
+  const prepare = (needle: string): string => {
+    const probe = applyUnicodeNormalization(needle, form);
+    return caseSensitive ? probe : probe.toLowerCase();
+  };
+
   for (const needle of config.required_substrings ?? []) {
-    const probe = caseSensitive ? needle : needle.toLowerCase();
+    const probe = prepare(needle);
     if (!haystack.includes(probe)) {
       return fail(
         'missing_required_substring',
@@ -417,7 +446,7 @@ export function verifyFormatConstraint(
     }
   }
   for (const needle of config.forbidden_substrings ?? []) {
-    const probe = caseSensitive ? needle : needle.toLowerCase();
+    const probe = prepare(needle);
     if (haystack.includes(probe)) {
       return fail(
         'forbidden_substring_present',

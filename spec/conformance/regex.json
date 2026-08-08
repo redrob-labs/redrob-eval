@@ -1,7 +1,7 @@
 {
   "spec_version": "redrob-verifiable-task/v1",
   "verifier_type": "regex",
-  "description": "The portable regex subset contains no construct whose meaning depends on which engine reads it. The shorthand classes, '.' and '$' are absent because each of them means something different in Python re and in a JavaScript RegExp. Both implementations compile the pattern verbatim, so these cases test one regex dialect rather than a translation between two.",
+  "description": "Pattern matching over the portable regex subset. The subset has no shorthand classes, no '.', no anchors and no flags, because each of those means something different in Python re and in a JavaScript RegExp. Matching is by code point on both sides: the TypeScript implementation compiles with the u flag, and the astral rows below are what hold it to that.",
   "cases": [
     {
       "id": "regex/full-match-literal",
@@ -337,7 +337,8 @@
       }
     },
     {
-      "id": "regex/caret-anchors-start-of-input",
+      "id": "regex/caret-out-of-subset-start-anchor",
+      "description": "Anchoring is the mode's job. '^' left the subset with '$': a half-anchored pattern is what pushed the previous revision into inventing an end-of-input assertion, and that assertion was the A1 defect.",
       "verifier": {
         "type": "regex",
         "pattern": "^a",
@@ -345,48 +346,43 @@
       },
       "candidate": "abc",
       "expected": {
-        "passed": true,
-        "code": "ok"
+        "passed": false,
+        "code": "invalid_pattern"
       }
     },
     {
-      "id": "regex/caret-does-not-anchor-after-a-newline",
-      "description": "Without the m flag the caret is start of input in both engines, and the m flag is not in the subset.",
+      "id": "regex/caret-out-of-subset-inside-a-group",
+      "description": "Rejected wherever it appears, not only at position zero.",
       "verifier": {
         "type": "regex",
-        "pattern": "^b",
+        "pattern": "(^a|b)",
         "mode": "search"
       },
-      "candidate": "a\nb",
+      "candidate": "abc",
       "expected": {
         "passed": false,
-        "code": "no_match"
+        "code": "invalid_pattern"
       }
     },
     {
-      "id": "regex/ignore-case-ascii",
+      "id": "regex/case-insensitivity-is-written-out",
+      "description": "What the 'i' flag used to do. Written as explicit alternatives it means the same thing in both engines, including under the u flag.",
       "verifier": {
         "type": "regex",
-        "pattern": "abc",
-        "flags": [
-          "i"
-        ]
+        "pattern": "[aA][bB][cC]"
       },
-      "candidate": "ABC",
+      "candidate": "AbC",
       "expected": {
         "passed": true,
         "code": "ok"
       }
     },
     {
-      "id": "regex/ignore-case-does-not-fold-the-kelvin-sign",
-      "description": "U+212A folds to 'k' under Python's default IGNORECASE, and not under re.ASCII or a JavaScript RegExp without the u flag. Confining 'i' to ASCII patterns and compiling Python under re.ASCII makes the two agree.",
+      "id": "regex/explicit-class-does-not-fold-the-kelvin-sign",
+      "description": "U+212A folds to 'k' under Python's IGNORECASE and under a JavaScript RegExp with 'iu'. With no folding at all there is nothing to disagree about.",
       "verifier": {
         "type": "regex",
-        "pattern": "[a-z]+",
-        "flags": [
-          "i"
-        ]
+        "pattern": "[a-z]+"
       },
       "candidate": "K",
       "expected": {
@@ -395,15 +391,13 @@
       }
     },
     {
-      "id": "regex/ignore-case-does-not-fold-the-long-s",
+      "id": "regex/explicit-class-does-not-fold-the-dotless-i",
+      "description": "U+0131 folds to 'i' under Python's IGNORECASE and not under 'iu'. This is the divergence that removed the flag; written out, both engines say no.",
       "verifier": {
         "type": "regex",
-        "pattern": "[a-z]+",
-        "flags": [
-          "i"
-        ]
+        "pattern": "[iI]"
       },
-      "candidate": "ſ",
+      "candidate": "ı",
       "expected": {
         "passed": false,
         "code": "no_match"
@@ -784,19 +778,16 @@
       }
     },
     {
-      "id": "regex/invalid-ignore-case-on-a-non-ascii-pattern",
-      "description": "The two engines fold non-ASCII case differently, so 'i' is confined to ASCII patterns.",
+      "id": "regex/non-ascii-literal-needs-no-flag",
+      "description": "The 'i' flag used to be refused here because the two engines fold non-ASCII case differently. There is no flag to refuse now, and the literal itself is exact in both. That the flag is rejected is asserted in test_regex_subset.py, because a config carrying one no longer validates against the schema.",
       "verifier": {
         "type": "regex",
-        "pattern": "été",
-        "flags": [
-          "i"
-        ]
+        "pattern": "été"
       },
-      "candidate": "ÉTÉ",
+      "candidate": "été",
       "expected": {
-        "passed": false,
-        "code": "invalid_pattern"
+        "passed": true,
+        "code": "ok"
       }
     },
     {
@@ -953,6 +944,297 @@
         "pattern": "abc\\"
       },
       "candidate": "abc",
+      "expected": {
+        "passed": false,
+        "code": "invalid_pattern"
+      }
+    },
+    {
+      "id": "regex/astral-is-one-atom",
+      "description": "Non-BMP. One atom in Python and, under the u flag, one atom in JavaScript too. Without u a RegExp sees two code units here and this row reads no_match.",
+      "verifier": {
+        "type": "regex",
+        "pattern": "[^a]"
+      },
+      "candidate": "😀",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
+    },
+    {
+      "id": "regex/bmp-class-excludes-astral",
+      "description": "The A1 defect in one row. The class covers the BMP; an astral code point is outside it. Without the u flag JavaScript matched the surrogate halves and said ok.",
+      "verifier": {
+        "type": "regex",
+        "pattern": "[\\u0000-\\uffff]+"
+      },
+      "candidate": "😀",
+      "expected": {
+        "passed": false,
+        "code": "no_match"
+      }
+    },
+    {
+      "id": "regex/bmp-class-accepts-bmp",
+      "verifier": {
+        "type": "regex",
+        "pattern": "[\\u0000-\\uffff]+"
+      },
+      "candidate": "ab가",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
+    },
+    {
+      "id": "regex/astral-counted-as-one-by-a-quantifier",
+      "description": "A counted quantifier over an astral character: one repetition, not two.",
+      "verifier": {
+        "type": "regex",
+        "pattern": "[^a]{1}"
+      },
+      "candidate": "😀",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
+    },
+    {
+      "id": "regex/astral-counted-as-two-is-wrong",
+      "verifier": {
+        "type": "regex",
+        "pattern": "[^a]{2}"
+      },
+      "candidate": "😀",
+      "expected": {
+        "passed": false,
+        "code": "no_match"
+      }
+    },
+    {
+      "id": "regex/astral-literal-in-a-class",
+      "description": "An astral character written literally inside a class. Without the u flag this class is four surrogate code units and matches neither character as a pair.",
+      "verifier": {
+        "type": "regex",
+        "pattern": "[😀😁]+"
+      },
+      "candidate": "😁😀",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
+    },
+    {
+      "id": "regex/astral-cjk-extension-b",
+      "description": "Non-BMP outside the emoji planes, where the same assumption is just as wrong.",
+      "verifier": {
+        "type": "regex",
+        "pattern": "[𠀀-𪛟]+"
+      },
+      "candidate": "𠀀𠀋",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
+    },
+    {
+      "id": "regex/combining-sequence-is-two-atoms",
+      "description": "Combining sequence. The regex verifier does not normalise: a combining mark is its own atom and the pattern has to say so.",
+      "verifier": {
+        "type": "regex",
+        "pattern": "e[\\u0300-\\u036f]"
+      },
+      "candidate": "é",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
+    },
+    {
+      "id": "regex/combining-sequence-is-not-one-atom",
+      "description": "The precomposed class does not match the decomposed sequence. Use the exact verifier, which normalises, when that is what is meant.",
+      "verifier": {
+        "type": "regex",
+        "pattern": "[\\u00e0-\\u00ff]"
+      },
+      "candidate": "é",
+      "expected": {
+        "passed": false,
+        "code": "no_match"
+      }
+    },
+    {
+      "id": "regex/zwj-sequence-matched-explicitly",
+      "description": "ZWJ sequence: five code points, matched as five atoms.",
+      "verifier": {
+        "type": "regex",
+        "pattern": "👩\\u200d👩\\u200d👧"
+      },
+      "candidate": "👩‍👩‍👧",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
+    },
+    {
+      "id": "regex/zwj-is-content-not-a-separator",
+      "verifier": {
+        "type": "regex",
+        "pattern": "👩\\u200d👩\\u200d👧"
+      },
+      "candidate": "👩👩👧",
+      "expected": {
+        "passed": false,
+        "code": "no_match"
+      }
+    },
+    {
+      "id": "regex/skin-tone-modifier-is-its-own-atom",
+      "verifier": {
+        "type": "regex",
+        "pattern": "👍[🏻-🏿]"
+      },
+      "candidate": "👍🏽",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
+    },
+    {
+      "id": "regex/regional-indicator-pair-is-two-atoms",
+      "description": "A flag emoji is a regional-indicator pair: two code points, and two atoms in both engines under the u flag.",
+      "verifier": {
+        "type": "regex",
+        "pattern": "[🇦-🇿]{2}"
+      },
+      "candidate": "🇮🇳",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
+    },
+    {
+      "id": "regex/mixed-script-latin-devanagari-hangul-emoji",
+      "description": "Mixed script in one pattern, with the emoji matched by a negated class that has to treat it as one atom.",
+      "verifier": {
+        "type": "regex",
+        "pattern": "[a-z]+ [\\u0900-\\u097f]+ [\\uac00-\\ud7a3]+ [^ ]+"
+      },
+      "candidate": "ok नमस्ते 한글 😀",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
+    },
+    {
+      "id": "regex/mixed-script-rejects-a-wrong-script",
+      "verifier": {
+        "type": "regex",
+        "pattern": "[\\u0900-\\u097f]+ [\\uac00-\\ud7a3]+"
+      },
+      "candidate": "नमस्ते hangul",
+      "expected": {
+        "passed": false,
+        "code": "no_match"
+      }
+    },
+    {
+      "id": "regex/invalid-surrogate-escape-pair",
+      "description": "Under the u flag JavaScript reads this as one astral code point and Python reads it as two lone surrogates. Banning the escape is what keeps the atom models identical.",
+      "verifier": {
+        "type": "regex",
+        "pattern": "\\ud83d\\ude00"
+      },
+      "candidate": "😀",
+      "expected": {
+        "passed": false,
+        "code": "invalid_pattern"
+      }
+    },
+    {
+      "id": "regex/invalid-surrogate-range-in-a-class",
+      "verifier": {
+        "type": "regex",
+        "pattern": "[\\ud800-\\udfff]"
+      },
+      "candidate": "a",
+      "expected": {
+        "passed": false,
+        "code": "invalid_pattern"
+      }
+    },
+    {
+      "id": "regex/invalid-null-escape",
+      "description": "Python reads \\01 as an octal escape and JavaScript under u rejects it, so \\0 goes and \\x00 stays.",
+      "verifier": {
+        "type": "regex",
+        "pattern": "\\0"
+      },
+      "candidate": "\u0000",
+      "expected": {
+        "passed": false,
+        "code": "invalid_pattern"
+      }
+    },
+    {
+      "id": "regex/valid-hex-escape-for-null",
+      "verifier": {
+        "type": "regex",
+        "pattern": "\\x00"
+      },
+      "candidate": "\u0000",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
+    },
+    {
+      "id": "regex/invalid-quantified-lookahead",
+      "description": "A syntax error under the u flag and a silent no-op in Python.",
+      "verifier": {
+        "type": "regex",
+        "pattern": "(?=a)*"
+      },
+      "candidate": "a",
+      "expected": {
+        "passed": false,
+        "code": "invalid_pattern"
+      }
+    },
+    {
+      "id": "regex/invalid-escaped-hyphen-outside-a-class",
+      "description": "Legal in Python, a syntax error under the u flag. Only the syntax characters and '/' may be escaped.",
+      "verifier": {
+        "type": "regex",
+        "pattern": "a\\-b"
+      },
+      "candidate": "a-b",
+      "expected": {
+        "passed": false,
+        "code": "invalid_pattern"
+      }
+    },
+    {
+      "id": "regex/valid-escaped-hyphen-inside-a-class",
+      "description": "Inside a class '-' is escapable in both, and only there.",
+      "verifier": {
+        "type": "regex",
+        "pattern": "[a\\-z]+"
+      },
+      "candidate": "a-z",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
+    },
+    {
+      "id": "regex/invalid-escaped-space",
+      "verifier": {
+        "type": "regex",
+        "pattern": "a\\ b"
+      },
+      "candidate": "a b",
       "expected": {
         "passed": false,
         "code": "invalid_pattern"

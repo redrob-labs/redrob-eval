@@ -8,10 +8,15 @@
       "verifier": {
         "type": "set_equality",
         "expected": ["alpha", "beta", "gamma"],
-        "parse": { "mode": "lines" }
+        "parse": {
+          "mode": "lines"
+        }
       },
       "candidate": "alpha\nbeta\ngamma",
-      "expected": { "passed": true, "code": "ok" }
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
     },
     {
       "id": "set/lines-different-order",
@@ -19,60 +24,90 @@
       "verifier": {
         "type": "set_equality",
         "expected": ["alpha", "beta", "gamma"],
-        "parse": { "mode": "lines" }
+        "parse": {
+          "mode": "lines"
+        }
       },
       "candidate": "gamma\nalpha\nbeta",
-      "expected": { "passed": true, "code": "ok" }
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
     },
     {
       "id": "set/lines-trailing-newline-dropped",
       "verifier": {
         "type": "set_equality",
         "expected": ["alpha", "beta"],
-        "parse": { "mode": "lines" }
+        "parse": {
+          "mode": "lines"
+        }
       },
       "candidate": "alpha\nbeta\n",
-      "expected": { "passed": true, "code": "ok" }
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
     },
     {
       "id": "set/lines-crlf-normalised",
       "verifier": {
         "type": "set_equality",
         "expected": ["alpha", "beta"],
-        "parse": { "mode": "lines" }
+        "parse": {
+          "mode": "lines"
+        }
       },
       "candidate": "alpha\r\nbeta",
-      "expected": { "passed": true, "code": "ok" }
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
     },
     {
       "id": "set/lines-mixed-line-endings",
       "verifier": {
         "type": "set_equality",
         "expected": ["a", "b", "c"],
-        "parse": { "mode": "lines" }
+        "parse": {
+          "mode": "lines"
+        }
       },
       "candidate": "a\r\nb\rc",
-      "expected": { "passed": true, "code": "ok" }
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
     },
     {
       "id": "set/missing-element",
       "verifier": {
         "type": "set_equality",
         "expected": ["alpha", "beta", "gamma"],
-        "parse": { "mode": "lines" }
+        "parse": {
+          "mode": "lines"
+        }
       },
       "candidate": "alpha\nbeta",
-      "expected": { "passed": false, "code": "cardinality_mismatch" }
+      "expected": {
+        "passed": false,
+        "code": "cardinality_mismatch"
+      }
     },
     {
       "id": "set/extra-element",
       "verifier": {
         "type": "set_equality",
         "expected": ["alpha", "beta"],
-        "parse": { "mode": "lines" }
+        "parse": {
+          "mode": "lines"
+        }
       },
       "candidate": "alpha\nbeta\ndelta",
-      "expected": { "passed": false, "code": "cardinality_mismatch" }
+      "expected": {
+        "passed": false,
+        "code": "cardinality_mismatch"
+      }
     },
     {
       "id": "set/right-count-wrong-member",
@@ -80,175 +115,267 @@
       "verifier": {
         "type": "set_equality",
         "expected": ["alpha", "beta"],
-        "parse": { "mode": "lines" }
+        "parse": {
+          "mode": "lines"
+        }
       },
       "candidate": "alpha\ndelta",
-      "expected": { "passed": false, "code": "element_mismatch" }
+      "expected": {
+        "passed": false,
+        "code": "element_mismatch"
+      }
     },
     {
       "id": "set/duplicates-collapsed-by-default",
       "verifier": {
         "type": "set_equality",
         "expected": ["alpha", "beta"],
-        "parse": { "mode": "lines" }
+        "parse": {
+          "mode": "lines"
+        }
       },
       "candidate": "alpha\nbeta\nalpha",
-      "expected": { "passed": true, "code": "ok" }
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
     },
     {
       "id": "set/duplicates-significant",
       "verifier": {
         "type": "set_equality",
         "expected": ["alpha", "beta"],
-        "parse": { "mode": "lines" },
+        "parse": {
+          "mode": "lines"
+        },
         "duplicates": "significant"
       },
       "candidate": "alpha\nbeta\nalpha",
-      "expected": { "passed": false, "code": "cardinality_mismatch" }
+      "expected": {
+        "passed": false,
+        "code": "cardinality_mismatch"
+      }
     },
     {
       "id": "set/multiset-equality",
       "verifier": {
         "type": "set_equality",
         "expected": ["a", "a", "b"],
-        "parse": { "mode": "lines" },
+        "parse": {
+          "mode": "lines"
+        },
         "duplicates": "significant"
       },
       "candidate": "b\na\na",
-      "expected": { "passed": true, "code": "ok" }
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
     },
     {
       "id": "set/multiset-wrong-multiplicity",
       "verifier": {
         "type": "set_equality",
         "expected": ["a", "a", "b"],
-        "parse": { "mode": "lines" },
+        "parse": {
+          "mode": "lines"
+        },
         "duplicates": "significant"
       },
       "candidate": "a\nb\nb",
-      "expected": { "passed": false, "code": "element_mismatch" }
+      "expected": {
+        "passed": false,
+        "code": "element_mismatch"
+      }
     },
     {
       "id": "set/delimiter-mode",
       "verifier": {
         "type": "set_equality",
         "expected": ["red", "green", "blue"],
-        "parse": { "mode": "delimiter", "delimiter": "," }
+        "parse": {
+          "mode": "delimiter",
+          "delimiter": ","
+        }
       },
       "candidate": "blue, red , green",
-      "expected": { "passed": true, "code": "ok" }
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
     },
     {
       "id": "set/delimiter-without-trimming",
       "verifier": {
         "type": "set_equality",
         "expected": ["red", "green"],
-        "parse": { "mode": "delimiter", "delimiter": ",", "trim_elements": false }
+        "parse": {
+          "mode": "delimiter",
+          "delimiter": ",",
+          "trim_elements": false
+        }
       },
       "candidate": "red, green",
-      "expected": { "passed": false, "code": "element_mismatch" }
+      "expected": {
+        "passed": false,
+        "code": "element_mismatch"
+      }
     },
     {
       "id": "set/delimiter-multichar",
       "verifier": {
         "type": "set_equality",
         "expected": ["one", "two"],
-        "parse": { "mode": "delimiter", "delimiter": " | " }
+        "parse": {
+          "mode": "delimiter",
+          "delimiter": " | "
+        }
       },
       "candidate": "two | one",
-      "expected": { "passed": true, "code": "ok" }
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
     },
     {
       "id": "set/empty-elements-dropped",
       "verifier": {
         "type": "set_equality",
         "expected": ["a", "b"],
-        "parse": { "mode": "delimiter", "delimiter": "," }
+        "parse": {
+          "mode": "delimiter",
+          "delimiter": ","
+        }
       },
       "candidate": "a,,b,",
-      "expected": { "passed": true, "code": "ok" }
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
     },
     {
       "id": "set/empty-elements-kept",
       "verifier": {
         "type": "set_equality",
         "expected": ["a", "b"],
-        "parse": { "mode": "delimiter", "delimiter": ",", "drop_empty": false },
+        "parse": {
+          "mode": "delimiter",
+          "delimiter": ",",
+          "drop_empty": false
+        },
         "duplicates": "significant"
       },
       "candidate": "a,,b",
-      "expected": { "passed": false, "code": "cardinality_mismatch" }
+      "expected": {
+        "passed": false,
+        "code": "cardinality_mismatch"
+      }
     },
     {
       "id": "set/empty-candidate-empty-expectation",
       "verifier": {
         "type": "set_equality",
         "expected": [],
-        "parse": { "mode": "lines" }
+        "parse": {
+          "mode": "lines"
+        }
       },
       "candidate": "",
-      "expected": { "passed": true, "code": "ok" }
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
     },
     {
       "id": "set/empty-candidate-nonempty-expectation",
       "verifier": {
         "type": "set_equality",
         "expected": ["a"],
-        "parse": { "mode": "lines" }
+        "parse": {
+          "mode": "lines"
+        }
       },
       "candidate": "   ",
-      "expected": { "passed": false, "code": "cardinality_mismatch" }
+      "expected": {
+        "passed": false,
+        "code": "cardinality_mismatch"
+      }
     },
     {
       "id": "set/json-array-mode",
       "verifier": {
         "type": "set_equality",
         "expected": ["a", "b"],
-        "parse": { "mode": "json_array" }
+        "parse": {
+          "mode": "json_array"
+        }
       },
       "candidate": "[\"b\",\"a\"]",
-      "expected": { "passed": true, "code": "ok" }
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
     },
     {
       "id": "set/json-array-not-json",
       "verifier": {
         "type": "set_equality",
         "expected": ["a"],
-        "parse": { "mode": "json_array" }
+        "parse": {
+          "mode": "json_array"
+        }
       },
       "candidate": "a, b",
-      "expected": { "passed": false, "code": "parse_error" }
+      "expected": {
+        "passed": false,
+        "code": "parse_error"
+      }
     },
     {
       "id": "set/json-array-is-an-object",
       "verifier": {
         "type": "set_equality",
         "expected": ["a"],
-        "parse": { "mode": "json_array" }
+        "parse": {
+          "mode": "json_array"
+        }
       },
       "candidate": "{\"0\":\"a\"}",
-      "expected": { "passed": false, "code": "parse_error" }
+      "expected": {
+        "passed": false,
+        "code": "parse_error"
+      }
     },
     {
       "id": "set/case-insensitive-comparator",
       "verifier": {
         "type": "set_equality",
         "expected": ["Alpha", "Beta"],
-        "parse": { "mode": "lines" },
+        "parse": {
+          "mode": "lines"
+        },
         "element_comparator": "case_insensitive_string"
       },
       "candidate": "BETA\nalpha",
-      "expected": { "passed": true, "code": "ok" }
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
     },
     {
       "id": "set/case-sensitive-by-default",
       "verifier": {
         "type": "set_equality",
         "expected": ["Alpha", "Beta"],
-        "parse": { "mode": "lines" }
+        "parse": {
+          "mode": "lines"
+        }
       },
       "candidate": "BETA\nalpha",
-      "expected": { "passed": false, "code": "element_mismatch" }
+      "expected": {
+        "passed": false,
+        "code": "element_mismatch"
+      }
     },
     {
       "id": "set/case-insensitive-collapses-duplicates",
@@ -256,46 +383,69 @@
       "verifier": {
         "type": "set_equality",
         "expected": ["alpha"],
-        "parse": { "mode": "lines" },
+        "parse": {
+          "mode": "lines"
+        },
         "element_comparator": "case_insensitive_string"
       },
       "candidate": "Alpha\nalpha\nALPHA",
-      "expected": { "passed": true, "code": "ok" }
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
     },
     {
       "id": "set/numeric-comparator",
       "verifier": {
         "type": "set_equality",
         "expected": [1, 2, 3],
-        "parse": { "mode": "delimiter", "delimiter": "," },
+        "parse": {
+          "mode": "delimiter",
+          "delimiter": ","
+        },
         "element_comparator": "numeric"
       },
       "candidate": "3, 1.0, 2",
-      "expected": { "passed": true, "code": "ok" }
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
     },
     {
       "id": "set/numeric-comparator-with-tolerance",
       "verifier": {
         "type": "set_equality",
         "expected": [0.333333, 0.666667],
-        "parse": { "mode": "delimiter", "delimiter": "," },
+        "parse": {
+          "mode": "delimiter",
+          "delimiter": ","
+        },
         "element_comparator": "numeric",
         "numeric_abs_tol": 0.001
       },
       "candidate": "0.6667, 0.3333",
-      "expected": { "passed": true, "code": "ok" }
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
     },
     {
       "id": "set/numeric-comparator-outside-tolerance",
       "verifier": {
         "type": "set_equality",
         "expected": [0.333333],
-        "parse": { "mode": "delimiter", "delimiter": "," },
+        "parse": {
+          "mode": "delimiter",
+          "delimiter": ","
+        },
         "element_comparator": "numeric",
-        "numeric_abs_tol": 0.00001
+        "numeric_abs_tol": 1e-5
       },
       "candidate": "0.34",
-      "expected": { "passed": false, "code": "element_mismatch" }
+      "expected": {
+        "passed": false,
+        "code": "element_mismatch"
+      }
     },
     {
       "id": "set/numeric-comparator-unparseable-element",
@@ -303,64 +453,276 @@
       "verifier": {
         "type": "set_equality",
         "expected": [1, 2],
-        "parse": { "mode": "delimiter", "delimiter": "," },
+        "parse": {
+          "mode": "delimiter",
+          "delimiter": ","
+        },
         "element_comparator": "numeric"
       },
       "candidate": "1, two",
-      "expected": { "passed": false, "code": "element_mismatch" }
+      "expected": {
+        "passed": false,
+        "code": "element_mismatch"
+      }
     },
     {
       "id": "set/json-comparator-structural",
       "verifier": {
         "type": "set_equality",
-        "expected": [{ "id": 1 }, { "id": 2 }],
-        "parse": { "mode": "json_array" },
+        "expected": [
+          {
+            "id": 1
+          },
+          {
+            "id": 2
+          }
+        ],
+        "parse": {
+          "mode": "json_array"
+        },
         "element_comparator": "json"
       },
       "candidate": "[{\"id\":2},{\"id\":1}]",
-      "expected": { "passed": true, "code": "ok" }
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
     },
     {
       "id": "set/json-comparator-nested-mismatch",
       "verifier": {
         "type": "set_equality",
-        "expected": [{ "id": 1, "tags": ["x", "y"] }],
-        "parse": { "mode": "json_array" },
+        "expected": [
+          {
+            "id": 1,
+            "tags": ["x", "y"]
+          }
+        ],
+        "parse": {
+          "mode": "json_array"
+        },
         "element_comparator": "json"
       },
       "candidate": "[{\"id\":1,\"tags\":[\"y\",\"x\"]}]",
-      "expected": { "passed": false, "code": "element_mismatch" }
+      "expected": {
+        "passed": false,
+        "code": "element_mismatch"
+      }
     },
     {
       "id": "set/devanagari-elements",
       "verifier": {
         "type": "set_equality",
-        "expected": ["\u090f\u0915", "\u0926\u094b", "\u0924\u0940\u0928"],
-        "parse": { "mode": "delimiter", "delimiter": "," }
+        "expected": ["एक", "दो", "तीन"],
+        "parse": {
+          "mode": "delimiter",
+          "delimiter": ","
+        }
       },
-      "candidate": "\u0924\u0940\u0928, \u090f\u0915, \u0926\u094b",
-      "expected": { "passed": true, "code": "ok" }
+      "candidate": "तीन, एक, दो",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
     },
     {
       "id": "set/hangul-elements-with-nbsp-trimmed",
       "description": "NBSP is spec whitespace, so trim_elements removes it even though JavaScript's trim and Python's strip disagree elsewhere.",
       "verifier": {
         "type": "set_equality",
-        "expected": ["\ud558\ub098", "\ub458"],
-        "parse": { "mode": "delimiter", "delimiter": "," }
+        "expected": ["하나", "둘"],
+        "parse": {
+          "mode": "delimiter",
+          "delimiter": ","
+        }
       },
-      "candidate": "\u00a0\ub458\u00a0,\u00a0\ud558\ub098\u00a0",
-      "expected": { "passed": true, "code": "ok" }
+      "candidate": " 둘 , 하나 ",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
     },
     {
       "id": "set/astral-elements",
       "verifier": {
         "type": "set_equality",
-        "expected": ["\ud83d\udc4d", "\ud83d\udc4e"],
-        "parse": { "mode": "delimiter", "delimiter": "," }
+        "expected": ["👍", "👎"],
+        "parse": {
+          "mode": "delimiter",
+          "delimiter": ","
+        }
       },
-      "candidate": "\ud83d\udc4e,\ud83d\udc4d",
-      "expected": { "passed": true, "code": "ok" }
+      "candidate": "👎,👍",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
+    },
+    {
+      "id": "set/hangul-jamo-element-normalised-by-default",
+      "description": "The element arrives as conjoining jamo and the expectation is precomposed. Under the default NFC they are the same element.",
+      "verifier": {
+        "type": "set_equality",
+        "expected": ["가", "b"],
+        "parse": {
+          "mode": "lines"
+        }
+      },
+      "candidate": "가\nb",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
+    },
+    {
+      "id": "set/hangul-jamo-element-under-normalisation-none",
+      "verifier": {
+        "type": "set_equality",
+        "expected": ["가", "b"],
+        "parse": {
+          "mode": "lines"
+        },
+        "normalization": "none"
+      },
+      "candidate": "가\nb",
+      "expected": {
+        "passed": false,
+        "code": "element_mismatch"
+      }
+    },
+    {
+      "id": "set/combining-acute-element-normalised-by-default",
+      "verifier": {
+        "type": "set_equality",
+        "expected": ["café"],
+        "parse": {
+          "mode": "lines"
+        }
+      },
+      "candidate": "café",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
+    },
+    {
+      "id": "set/astral-elements-unordered",
+      "verifier": {
+        "type": "set_equality",
+        "expected": ["😀", "🇮🇳"],
+        "parse": {
+          "mode": "lines"
+        }
+      },
+      "candidate": "🇮🇳\n😀",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
+    },
+    {
+      "id": "set/zwj-sequence-element",
+      "verifier": {
+        "type": "set_equality",
+        "expected": ["👩‍👩‍👧"],
+        "parse": {
+          "mode": "lines"
+        }
+      },
+      "candidate": "👩‍👩‍👧",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
+    },
+    {
+      "id": "set/zwj-sequence-is-not-the-unjoined-run",
+      "verifier": {
+        "type": "set_equality",
+        "expected": ["👩‍👩‍👧"],
+        "parse": {
+          "mode": "lines"
+        }
+      },
+      "candidate": "👩👩👧",
+      "expected": {
+        "passed": false,
+        "code": "element_mismatch"
+      }
+    },
+    {
+      "id": "set/mixed-script-elements",
+      "verifier": {
+        "type": "set_equality",
+        "expected": ["ok", "नमस्ते", "한글", "😀"],
+        "parse": {
+          "mode": "delimiter",
+          "delimiter": ","
+        }
+      },
+      "candidate": "😀, ok, 한글, नमस्ते",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
+    },
+    {
+      "id": "set/json-comparator-normalises-object-keys",
+      "description": "The key arrives as a \\uXXXX escape spelling conjoining jamo, so normalisation has to run on the parsed value rather than on the candidate text.",
+      "verifier": {
+        "type": "set_equality",
+        "expected": [
+          {
+            "가": 1
+          }
+        ],
+        "parse": {
+          "mode": "json_array"
+        },
+        "element_comparator": "json"
+      },
+      "candidate": "[{\"\\u1100\\u1161\":1}]",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
+    },
+    {
+      "id": "set/json-comparator-keeps-forms-apart-under-none",
+      "verifier": {
+        "type": "set_equality",
+        "expected": [
+          {
+            "가": 1
+          }
+        ],
+        "parse": {
+          "mode": "json_array"
+        },
+        "element_comparator": "json",
+        "normalization": "none"
+      },
+      "candidate": "[{\"\\u1100\\u1161\":1}]",
+      "expected": {
+        "passed": false,
+        "code": "element_mismatch"
+      }
+    },
+    {
+      "id": "set/deduplication-sees-two-forms-as-one",
+      "description": "Normalisation runs before deduplication, so the same visible element written two ways collapses to one rather than reading as a cardinality mismatch.",
+      "verifier": {
+        "type": "set_equality",
+        "expected": ["가"],
+        "parse": {
+          "mode": "lines"
+        }
+      },
+      "candidate": "가\n가",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
     }
   ]
 }

@@ -200,7 +200,7 @@ def _validate_verifier_patterns(template: dict[str, Any]) -> None:
             pattern = node.get("pattern")
             if isinstance(pattern, str) and _DERIVATION_REFERENCE not in pattern:
                 try:
-                    validate_regex_subset(pattern, node.get("flags", []))
+                    validate_regex_subset(pattern, node.get("flags", ()))
                 except RegexSubsetError as exc:
                     raise SpecError(
                         f"template {template['id']}: verifier at {path} has a pattern "
@@ -211,7 +211,9 @@ def _validate_verifier_patterns(template: dict[str, Any]) -> None:
         # subset, so they are checked here too.
         if node.get("type") == "json_schema" and isinstance(node.get("schema"), dict):
             try:
-                validate_schema_document(node["schema"])
+                validate_schema_document(
+                    node["schema"], normalization=node.get("normalization", "NFC")
+                )
             except (SchemaSubsetError, RegexSubsetError) as exc:
                 raise SpecError(
                     f"template {template['id']}: verifier at {path} carries a schema "

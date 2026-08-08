@@ -76,31 +76,31 @@
     },
     {
       "id": "exponent-lower-boundary",
-      "value": 1e-06,
+      "value": 1e-6,
       "canonical": "0.000001",
       "sha256": "159fb29a827ad04b260aa6c8ab6d8637f8f2b38af5c4f3cb49d6a21205e040f8"
     },
     {
       "id": "exponent-just-below-boundary",
-      "value": 1e-07,
+      "value": 1e-7,
       "canonical": "1e-7",
       "sha256": "5b33e02f2c5103a05d32f6ba9cb058294452bfbf393967f68bb30c1bdcbbab22"
     },
     {
       "id": "exponent-nano",
-      "value": 1e-09,
+      "value": 1e-9,
       "canonical": "1e-9",
       "sha256": "102fcc97f45d32e96cc83b03636d643deb8bf0606adf3b1625329c4cf0eba52c"
     },
     {
       "id": "exponent-upper-boundary",
-      "value": 1e+21,
+      "value": 1e21,
       "canonical": "1e+21",
       "sha256": "241c4643fa70b1dcde1205b71be4e3bebb17e9f880c8e1a33d0ead6c27271d3c"
     },
     {
       "id": "exponent-just-below-upper",
-      "value": 1e+20,
+      "value": 1e20,
       "canonical": "100000000000000000000",
       "sha256": "c344e9487bfbd5c4e03c9fb90d62a5dde5e00b54d55c46e9f4a803aea162b80c"
     },
@@ -112,7 +112,7 @@
     },
     {
       "id": "largest-double",
-      "value": 1.7976931348623157e+308,
+      "value": 1.7976931348623157e308,
       "canonical": "1.7976931348623157e+308",
       "sha256": "c2784e1abd6317452708f3fbf9641c16b959561bc621a1d408c23a20aa2cb585"
     },
@@ -199,10 +199,7 @@
         ],
         "a": {
           "b": {
-            "c": [
-              true,
-              false
-            ]
+            "c": [true, false]
           }
         }
       },
@@ -211,26 +208,13 @@
     },
     {
       "id": "mixed-array",
-      "value": [
-        1,
-        "two",
-        null,
-        true,
-        [],
-        {},
-        3.5
-      ],
+      "value": [1, "two", null, true, [], {}, 3.5],
       "canonical": "[1,\"two\",null,true,[],{},3.5]",
       "sha256": "f64330a57794fbe6bcaaf67fecc97b56ed220844fdc416ca8ed6ba2d2ad4a330"
     },
     {
       "id": "array-of-floats",
-      "value": [
-        1e-09,
-        1e+21,
-        0.1,
-        -0.0
-      ],
+      "value": [1e-9, 1e21, 0.1, -0.0],
       "canonical": "[1e-9,1e+21,0.1,0]",
       "sha256": "2821d4412c446eb4c740c6ba4d53984138250d19d25747d0ac06f7866658ae4a"
     },

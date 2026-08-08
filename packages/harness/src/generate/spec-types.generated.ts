@@ -73,8 +73,8 @@ export type Derivation = {
 export type ExactVerifier = {
   "type": "exact";
   "expected": string;
-  /** Unicode normalisation form applied first, to both sides. */
-  "unicode_normalization"?: "none" | "NFC" | "NFD" | "NFKC" | "NFKD";
+  /** Unicode normalisation form applied to both sides before comparison. NFC by default because two answers a reader cannot tell apart must not score differently: Hangul U+AC00 and the jamo pair U+1100 U+1161 render identically and compare unequal without it. 'none' exists for byte-exactness tests and is deliberately not the default. */
+  "normalization"?: "none" | "NFC" | "NFD" | "NFKC" | "NFKD";
   /** Rewrite CRLF and lone CR to LF before comparing. */
   "normalize_line_endings"?: boolean;
   /** Strip leading and trailing spec whitespace. */
@@ -113,18 +113,19 @@ export type JsonSchemaVerifier = {
   "schema": {
     [key: string]: unknown;
   } | boolean;
+  /** Unicode normalisation form applied to every string and every object key in the parsed candidate before validation. The schema itself is not rewritten: it must already be in this form, and is rejected at configuration time otherwise, because a const written in another form would silently never match. */
+  "normalization"?: "none" | "NFC" | "NFD" | "NFKC" | "NFKD";
 };
 
 /**
- * Match the candidate against a pattern drawn from the documented portable regex subset.
+ * Match the candidate against a pattern drawn from the documented portable regex subset. There are no flags: the subset has no construct a flag could modify, and case folding is written out as [kK] because the two engines fold U+0130 and U+0131 differently.
  */
 export type RegexVerifier = {
   "type": "regex";
+  /** A pattern from the portable regex subset. The subset has no '^' and no '$': anchoring is the job of 'mode'. */
   "pattern": string;
-  /** full_match requires the pattern to consume the entire candidate; search requires a match anywhere. */
+  /** full_match requires the pattern to consume the entire candidate; search requires a match anywhere. This is the only way to anchor, because the subset has no anchors. */
   "mode"?: "full_match" | "search";
-  /** The portable flag subset is i alone, and only on an ASCII-only pattern. There is no m and no s because the subset has no $ and no . for them to modify. */
-  "flags"?: "i"[];
 };
 
 /**
@@ -148,6 +149,8 @@ export type SetEqualityVerifier = {
   "expected": unknown[];
   "parse": ElementParse;
   "element_comparator"?: "exact_string" | "case_insensitive_string" | "numeric" | "json";
+  /** Unicode normalisation form applied to every parsed element and every expected element before comparison. NFC by default; 'none' is byte-exactness. */
+  "normalization"?: "none" | "NFC" | "NFD" | "NFKC" | "NFKD";
   "numeric_abs_tol"?: number;
   "numeric_rel_tol"?: number;
   /** collapse compares deduplicated collections, significant compares multisets. */
@@ -162,6 +165,8 @@ export type OrderedEqualityVerifier = {
   "expected": unknown[];
   "parse": ElementParse;
   "element_comparator"?: "exact_string" | "case_insensitive_string" | "numeric" | "json";
+  /** Unicode normalisation form applied to every parsed element and every expected element before comparison. NFC by default; 'none' is byte-exactness. */
+  "normalization"?: "none" | "NFC" | "NFD" | "NFKC" | "NFKD";
   "numeric_abs_tol"?: number;
   "numeric_rel_tol"?: number;
 };
@@ -171,6 +176,8 @@ export type OrderedEqualityVerifier = {
  */
 export type FormatConstraintVerifier = {
   "type": "format_constraint";
+  /** Unit the length bounds are measured in. codepoints is Python's len() and the iteration order of a JavaScript string; utf16 is String.prototype.length; bytes_utf8 is the UTF-8 encoded size. graphemes is specified and refused by both implementations rather than approximated, because the two runtimes carry different Unicode versions and two UAX #29 breakers drawn from different tables would disagree on exactly the sequences the unit exists for. */
+  "length_unit"?: "codepoints" | "utf16" | "graphemes" | "bytes_utf8";
   "min_length"?: number;
   "max_length"?: number;
   "min_lines"?: number;
@@ -183,6 +190,8 @@ export type FormatConstraintVerifier = {
   "trim"?: boolean;
   /** Rewrite CRLF and lone CR to LF before every check. */
   "normalize_line_endings"?: boolean;
+  /** Unicode normalisation form applied to the candidate and to every required and forbidden substring, before the length is measured. The order matters: NFC turns "cafe\u0301" from six code points into five. */
+  "normalization"?: "none" | "NFC" | "NFD" | "NFKC" | "NFKD";
 };
 
 /**

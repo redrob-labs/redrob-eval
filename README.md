@@ -84,7 +84,7 @@ same seeds from published values and check them, which a conventional seed such 
 allow. Scoring is done by deterministic verifiers, not by a judge model.
 
 What exists today is the foundation, not a feature: the [Redrob Verifiable Task Spec
-v1](spec/verifiable-task-v2.md), a Python generator, verifiers implemented natively in both
+v2](spec/verifiable-task-v2.md), a Python generator, verifiers implemented natively in both
 languages, and a cross-language conformance suite that fails CI if the two ever disagree. There is
 no page, no route and no navigation entry.
 

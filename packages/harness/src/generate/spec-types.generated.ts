@@ -123,8 +123,8 @@ export type RegexVerifier = {
   "pattern": string;
   /** full_match requires the pattern to consume the entire candidate; search requires a match anywhere. */
   "mode"?: "full_match" | "search";
-  /** Portable flag subset: i (case-insensitive), m (multiline anchors), s (dot matches newline). */
-  "flags"?: ("i" | "m" | "s")[];
+  /** The portable flag subset is i alone, and only on an ASCII-only pattern. There is no m and no s because the subset has no $ and no . for them to modify. */
+  "flags"?: "i"[];
 };
 
 /**

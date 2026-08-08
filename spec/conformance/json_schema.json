@@ -258,7 +258,7 @@
       "description": "pattern is a search, not a full match, which is easy to get backwards.",
       "verifier": {
         "type": "json_schema",
-        "schema": { "type": "string", "pattern": "^[A-Z]{2}-[0-9]{4}$" }
+        "schema": { "type": "string", "pattern": "^[A-Z]{2}-[0-9]{4}(?![\\u0000-\\uffff])" }
       },
       "candidate": "\"AB-1234\"",
       "expected": { "passed": true, "code": "ok" }
@@ -267,7 +267,7 @@
       "id": "json_schema/pattern-violation",
       "verifier": {
         "type": "json_schema",
-        "schema": { "type": "string", "pattern": "^[A-Z]{2}-[0-9]{4}$" }
+        "schema": { "type": "string", "pattern": "^[A-Z]{2}-[0-9]{4}(?![\\u0000-\\uffff])" }
       },
       "candidate": "\"ab-1234\"",
       "expected": { "passed": false, "code": "schema_violation" }
@@ -514,7 +514,7 @@
       "id": "json_schema/property-names",
       "verifier": {
         "type": "json_schema",
-        "schema": { "type": "object", "propertyNames": { "pattern": "^[a-z_]+$" } }
+        "schema": { "type": "object", "propertyNames": { "pattern": "^[a-z_]+(?![\\u0000-\\uffff])" } }
       },
       "candidate": "{\"good_name\":1,\"Bad Name\":2}",
       "expected": { "passed": false, "code": "schema_violation" }

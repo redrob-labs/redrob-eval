@@ -117,18 +117,20 @@ def verify_json_schema(config: Mapping[str, Any], candidate: str) -> Verdict:
 
 # ------------------------------------------------------------------------ regex
 
-_PYTHON_FLAGS = {"i": re.IGNORECASE, "m": re.MULTILINE, "s": re.DOTALL}
+_PYTHON_FLAGS = {"i": re.IGNORECASE}
 
 
 def verify_regex(config: Mapping[str, Any], candidate: str) -> Verdict:
     pattern = config["pattern"]
     try:
-        validate_regex_subset(pattern)
+        validate_regex_subset(pattern, config.get("flags", []))
     except RegexSubsetError as exc:
         return fail("invalid_pattern", str(exc))
 
-    # re.ASCII is normative: it makes \d \w \b \s ASCII-only, which is the only reading
-    # a JavaScript engine without the u flag can reproduce.
+    # re.ASCII has one remaining job now that the shorthand classes are out of the subset:
+    # it confines IGNORECASE to ASCII case folding, which is what a JavaScript RegExp
+    # without the u flag does. The subset only permits 'i' on an ASCII-only pattern, so
+    # the two agree exactly rather than approximately.
     flags = re.ASCII
     for flag in config.get("flags", []):
         flags |= _PYTHON_FLAGS[flag]

@@ -1,323 +1,962 @@
 {
   "spec_version": "redrob-verifiable-task/v1",
   "verifier_type": "regex",
-  "description": "The portable regex subset. Python re under re.ASCII is normative; a JavaScript engine has to rewrite the pattern to reproduce it. Roughly half of these cases exist purely to pin one of the four documented divergences.",
+  "description": "The portable regex subset contains no construct whose meaning depends on which engine reads it. The shorthand classes, '.' and '$' are absent because each of them means something different in Python re and in a JavaScript RegExp. Both implementations compile the pattern verbatim, so these cases test one regex dialect rather than a translation between two.",
   "cases": [
     {
       "id": "regex/full-match-literal",
-      "verifier": { "type": "regex", "pattern": "abc" },
+      "description": "The baseline.",
+      "verifier": {
+        "type": "regex",
+        "pattern": "abc"
+      },
       "candidate": "abc",
-      "expected": { "passed": true, "code": "ok" }
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
     },
     {
       "id": "regex/full-match-requires-whole-string",
-      "description": "full_match is the default because a search-by-default verifier passes far too much.",
-      "verifier": { "type": "regex", "pattern": "abc" },
+      "verifier": {
+        "type": "regex",
+        "pattern": "abc"
+      },
       "candidate": "abcd",
-      "expected": { "passed": false, "code": "no_match" }
+      "expected": {
+        "passed": false,
+        "code": "no_match"
+      }
+    },
+    {
+      "id": "regex/full-match-refuses-a-trailing-newline",
+      "description": "full_match is Python's fullmatch and JavaScript's ^(?:...)$ without the m flag. Neither tolerates a trailing newline, which is why the subset does not need '$'.",
+      "verifier": {
+        "type": "regex",
+        "pattern": "abc"
+      },
+      "candidate": "abc\n",
+      "expected": {
+        "passed": false,
+        "code": "no_match"
+      }
     },
     {
       "id": "regex/search-anywhere",
-      "verifier": { "type": "regex", "pattern": "abc", "mode": "search" },
+      "verifier": {
+        "type": "regex",
+        "pattern": "abc",
+        "mode": "search"
+      },
       "candidate": "xxabcxx",
-      "expected": { "passed": true, "code": "ok" }
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
     },
     {
       "id": "regex/empty-pattern-empty-candidate",
-      "verifier": { "type": "regex", "pattern": "" },
+      "verifier": {
+        "type": "regex",
+        "pattern": ""
+      },
       "candidate": "",
-      "expected": { "passed": true, "code": "ok" }
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
     },
     {
       "id": "regex/empty-pattern-nonempty-candidate",
-      "verifier": { "type": "regex", "pattern": "" },
-      "candidate": "x",
-      "expected": { "passed": false, "code": "no_match" }
+      "verifier": {
+        "type": "regex",
+        "pattern": ""
+      },
+      "candidate": "a",
+      "expected": {
+        "passed": false,
+        "code": "no_match"
+      }
     },
     {
-      "id": "regex/digits-ascii",
-      "verifier": { "type": "regex", "pattern": "\\d+" },
+      "id": "regex/explicit-digit-class",
+      "description": "What \\d used to be written as.",
+      "verifier": {
+        "type": "regex",
+        "pattern": "[0-9]+"
+      },
       "candidate": "12345",
-      "expected": { "passed": true, "code": "ok" }
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
     },
     {
-      "id": "regex/digits-are-ascii-only",
-      "description": "Divergence 4: Python's \\d is Unicode-aware by default, so re.ASCII is normative and Devanagari digits must not match.",
-      "verifier": { "type": "regex", "pattern": "\\d+" },
-      "candidate": "\u0967\u0968\u0969",
-      "expected": { "passed": false, "code": "no_match" }
+      "id": "regex/explicit-digit-class-excludes-devanagari-digits",
+      "description": "[0-9] means the ASCII ten and says so. The point of banning \\d is not that this answer is wrong, it is that \\d gave this answer while looking like it meant 'digits'.",
+      "verifier": {
+        "type": "regex",
+        "pattern": "[0-9]+"
+      },
+      "candidate": "१२३",
+      "expected": {
+        "passed": false,
+        "code": "no_match"
+      }
     },
     {
-      "id": "regex/word-chars-are-ascii-only",
-      "verifier": { "type": "regex", "pattern": "\\w+" },
-      "candidate": "\ud55c\uae00",
-      "expected": { "passed": false, "code": "no_match" }
+      "id": "regex/devanagari-digit-class",
+      "description": "The Devanagari digits, named explicitly. Unreachable through \\d under either engine's reading.",
+      "verifier": {
+        "type": "regex",
+        "pattern": "[\\u0966-\\u096f]+"
+      },
+      "candidate": "१२३",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
     },
     {
-      "id": "regex/whitespace-class-is-ascii-only",
-      "description": "Divergence 4 again, in the other direction: JavaScript's \\s includes U+00A0 and the ASCII-mode Python \\s does not.",
-      "verifier": { "type": "regex", "pattern": "\\s+" },
-      "candidate": "\u00a0",
-      "expected": { "passed": false, "code": "no_match" }
+      "id": "regex/devanagari-letter-class",
+      "description": "नमस्ते. Every code point is in the Devanagari block, including the virama and the vowel sign.",
+      "verifier": {
+        "type": "regex",
+        "pattern": "[\\u0900-\\u097f]+"
+      },
+      "candidate": "नमस्ते",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
     },
     {
-      "id": "regex/whitespace-class-ascii-members",
-      "verifier": { "type": "regex", "pattern": "\\s+" },
-      "candidate": " \t\n\r\f\u000b",
-      "expected": { "passed": true, "code": "ok" }
+      "id": "regex/devanagari-class-excludes-latin",
+      "verifier": {
+        "type": "regex",
+        "pattern": "[\\u0900-\\u097f]+"
+      },
+      "candidate": "namaste",
+      "expected": {
+        "passed": false,
+        "code": "no_match"
+      }
     },
     {
-      "id": "regex/negated-whitespace-outside-class",
-      "verifier": { "type": "regex", "pattern": "\\S+" },
+      "id": "regex/hangul-syllable-class",
+      "description": "한글, precomposed syllables.",
+      "verifier": {
+        "type": "regex",
+        "pattern": "[\\uac00-\\ud7a3]+"
+      },
+      "candidate": "한글",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
+    },
+    {
+      "id": "regex/hangul-jamo-class",
+      "description": "The same word written as conjoining jamo, which lives in a different block and needs a different class.",
+      "verifier": {
+        "type": "regex",
+        "pattern": "[\\u1100-\\u11ff]+"
+      },
+      "candidate": "한",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
+    },
+    {
+      "id": "regex/hangul-syllable-class-excludes-jamo",
+      "description": "Precomposed and decomposed Hangul are not interchangeable to a regex. A verifier that must accept both needs both classes, and making that visible is the argument for explicit classes.",
+      "verifier": {
+        "type": "regex",
+        "pattern": "[\\uac00-\\ud7a3]+"
+      },
+      "candidate": "한",
+      "expected": {
+        "passed": false,
+        "code": "no_match"
+      }
+    },
+    {
+      "id": "regex/hangul-class-excludes-latin",
+      "verifier": {
+        "type": "regex",
+        "pattern": "[\\uac00-\\ud7a3]+"
+      },
+      "candidate": "hangeul",
+      "expected": {
+        "passed": false,
+        "code": "no_match"
+      }
+    },
+    {
+      "id": "regex/hinglish-mixed-script-class",
+      "description": "Hinglish in one class: Latin, Devanagari and a space. \\w would have accepted the Latin half and rejected the rest.",
+      "verifier": {
+        "type": "regex",
+        "pattern": "[a-zA-Z\\u0900-\\u097f ]+"
+      },
+      "candidate": "main ठीक hoon",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
+    },
+    {
+      "id": "regex/explicit-word-class",
+      "description": "What \\w used to be written as.",
+      "verifier": {
+        "type": "regex",
+        "pattern": "[A-Za-z0-9_]+"
+      },
+      "candidate": "snake_case_9",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
+    },
+    {
+      "id": "regex/explicit-whitespace-class",
+      "description": "What \\s used to be written as.",
+      "verifier": {
+        "type": "regex",
+        "pattern": "[ \\t\\n\\r\\f\\v]+"
+      },
+      "candidate": " \t\n",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
+    },
+    {
+      "id": "regex/explicit-whitespace-class-excludes-nbsp",
+      "description": "A no-break space is not in the class unless it is written into the class.",
+      "verifier": {
+        "type": "regex",
+        "pattern": "[ \\t\\n\\r\\f\\v]+"
+      },
+      "candidate": " ",
+      "expected": {
+        "passed": false,
+        "code": "no_match"
+      }
+    },
+    {
+      "id": "regex/whitespace-class-including-nbsp",
+      "verifier": {
+        "type": "regex",
+        "pattern": "[ \\u00a0]+"
+      },
+      "candidate": "  ",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
+    },
+    {
+      "id": "regex/any-character-but-newline",
+      "description": "[^\\n] is what '.' meant in Python. It means the same in JavaScript, which '.' did not.",
+      "verifier": {
+        "type": "regex",
+        "pattern": "a[^\\n]b",
+        "mode": "search"
+      },
+      "candidate": "a\nb",
+      "expected": {
+        "passed": false,
+        "code": "no_match"
+      }
+    },
+    {
+      "id": "regex/any-character-but-newline-accepts-cr",
+      "description": "The divergence that banned the dot: Python's '.' matched a CR here and JavaScript's did not.",
+      "verifier": {
+        "type": "regex",
+        "pattern": "a[^\\n]b",
+        "mode": "search"
+      },
+      "candidate": "a\rb",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
+    },
+    {
+      "id": "regex/any-character-at-all",
+      "description": "[\\u0000-\\uffff] is what '.' with the s flag meant.",
+      "verifier": {
+        "type": "regex",
+        "pattern": "a[\\u0000-\\uffff]b",
+        "mode": "search"
+      },
+      "candidate": "a\nb",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
+    },
+    {
+      "id": "regex/literal-dot-inside-a-class",
+      "description": "A dot inside a character class is a literal in both engines and stays in the subset.",
+      "verifier": {
+        "type": "regex",
+        "pattern": "[.]"
+      },
+      "candidate": ".",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
+    },
+    {
+      "id": "regex/escaped-dot",
+      "verifier": {
+        "type": "regex",
+        "pattern": "3\\.14"
+      },
+      "candidate": "3.14",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
+    },
+    {
+      "id": "regex/escaped-dot-is-not-a-wildcard",
+      "verifier": {
+        "type": "regex",
+        "pattern": "3\\.14"
+      },
+      "candidate": "3x14",
+      "expected": {
+        "passed": false,
+        "code": "no_match"
+      }
+    },
+    {
+      "id": "regex/caret-anchors-start-of-input",
+      "verifier": {
+        "type": "regex",
+        "pattern": "^a",
+        "mode": "search"
+      },
       "candidate": "abc",
-      "expected": { "passed": true, "code": "ok" }
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
     },
     {
-      "id": "regex/dot-excludes-newline",
-      "description": "Divergence 1: JavaScript's dot also excludes CR, U+2028 and U+2029, so the JS side must rewrite dot to [^\\n].",
-      "verifier": { "type": "regex", "pattern": "a.b", "mode": "search" },
+      "id": "regex/caret-does-not-anchor-after-a-newline",
+      "description": "Without the m flag the caret is start of input in both engines, and the m flag is not in the subset.",
+      "verifier": {
+        "type": "regex",
+        "pattern": "^b",
+        "mode": "search"
+      },
       "candidate": "a\nb",
-      "expected": { "passed": false, "code": "no_match" }
-    },
-    {
-      "id": "regex/dot-includes-cr",
-      "description": "The concrete consequence of divergence 1: a bare CR is matched by dot under Python semantics.",
-      "verifier": { "type": "regex", "pattern": "a.b", "mode": "search" },
-      "candidate": "a\rb",
-      "expected": { "passed": true, "code": "ok" }
-    },
-    {
-      "id": "regex/dotall-flag",
-      "verifier": { "type": "regex", "pattern": "a.b", "mode": "search", "flags": ["s"] },
-      "candidate": "a\nb",
-      "expected": { "passed": true, "code": "ok" }
-    },
-    {
-      "id": "regex/dollar-before-trailing-newline",
-      "description": "Divergence 2: Python's $ without MULTILINE matches before a single trailing newline; JavaScript's does not.",
-      "verifier": { "type": "regex", "pattern": "a$", "mode": "search" },
-      "candidate": "a\n",
-      "expected": { "passed": true, "code": "ok" }
-    },
-    {
-      "id": "regex/dollar-not-before-interior-newline",
-      "verifier": { "type": "regex", "pattern": "a$", "mode": "search" },
-      "candidate": "a\nb",
-      "expected": { "passed": false, "code": "no_match" }
-    },
-    {
-      "id": "regex/dollar-not-before-two-trailing-newlines",
-      "verifier": { "type": "regex", "pattern": "a$", "mode": "search" },
-      "candidate": "a\n\n",
-      "expected": { "passed": false, "code": "no_match" }
-    },
-    {
-      "id": "regex/multiline-caret",
-      "description": "Divergence 3: with m, both engines anchor around newlines, but JavaScript also anchors around CR and the Unicode line separators.",
-      "verifier": { "type": "regex", "pattern": "^b", "mode": "search", "flags": ["m"] },
-      "candidate": "a\nb",
-      "expected": { "passed": true, "code": "ok" }
-    },
-    {
-      "id": "regex/caret-without-multiline",
-      "verifier": { "type": "regex", "pattern": "^b", "mode": "search" },
-      "candidate": "a\nb",
-      "expected": { "passed": false, "code": "no_match" }
-    },
-    {
-      "id": "regex/multiline-caret-ignores-cr",
-      "description": "A lone CR is not a line start under Python semantics, so the JavaScript rewrite must not use the native m flag.",
-      "verifier": { "type": "regex", "pattern": "^b", "mode": "search", "flags": ["m"] },
-      "candidate": "a\rb",
-      "expected": { "passed": false, "code": "no_match" }
-    },
-    {
-      "id": "regex/multiline-dollar",
-      "verifier": { "type": "regex", "pattern": "a$", "mode": "search", "flags": ["m"] },
-      "candidate": "a\nb",
-      "expected": { "passed": true, "code": "ok" }
-    },
-    {
-      "id": "regex/multiline-dollar-ignores-cr",
-      "verifier": { "type": "regex", "pattern": "a$", "mode": "search", "flags": ["m"] },
-      "candidate": "a\rb",
-      "expected": { "passed": false, "code": "no_match" }
+      "expected": {
+        "passed": false,
+        "code": "no_match"
+      }
     },
     {
       "id": "regex/ignore-case-ascii",
-      "verifier": { "type": "regex", "pattern": "abc", "flags": ["i"] },
+      "verifier": {
+        "type": "regex",
+        "pattern": "abc",
+        "flags": [
+          "i"
+        ]
+      },
       "candidate": "ABC",
-      "expected": { "passed": true, "code": "ok" }
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
     },
     {
-      "id": "regex/ignore-case-does-not-affect-caseless-script",
-      "verifier": { "type": "regex", "pattern": "\ud55c\uae00", "flags": ["i"] },
-      "candidate": "\ud55c\uae00",
-      "expected": { "passed": true, "code": "ok" }
+      "id": "regex/ignore-case-does-not-fold-the-kelvin-sign",
+      "description": "U+212A folds to 'k' under Python's default IGNORECASE, and not under re.ASCII or a JavaScript RegExp without the u flag. Confining 'i' to ASCII patterns and compiling Python under re.ASCII makes the two agree.",
+      "verifier": {
+        "type": "regex",
+        "pattern": "[a-z]+",
+        "flags": [
+          "i"
+        ]
+      },
+      "candidate": "K",
+      "expected": {
+        "passed": false,
+        "code": "no_match"
+      }
     },
     {
-      "id": "regex/escaped-metacharacters",
-      "description": "A currency amount, which is nothing but metacharacters in disguise.",
-      "verifier": { "type": "regex", "pattern": "\\$\\d+\\.\\d{2}" },
-      "candidate": "$12.34",
-      "expected": { "passed": true, "code": "ok" }
+      "id": "regex/ignore-case-does-not-fold-the-long-s",
+      "verifier": {
+        "type": "regex",
+        "pattern": "[a-z]+",
+        "flags": [
+          "i"
+        ]
+      },
+      "candidate": "ſ",
+      "expected": {
+        "passed": false,
+        "code": "no_match"
+      }
     },
     {
-      "id": "regex/escaped-metacharacters-wrong-shape",
-      "verifier": { "type": "regex", "pattern": "\\$\\d+\\.\\d{2}" },
-      "candidate": "$12.3",
-      "expected": { "passed": false, "code": "no_match" }
+      "id": "regex/caseless-script-needs-no-flag",
+      "description": "Hangul has no case, so the flag it would have needed is one it cannot have.",
+      "verifier": {
+        "type": "regex",
+        "pattern": "한글"
+      },
+      "candidate": "한글",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
     },
     {
       "id": "regex/character-class-with-ranges",
-      "verifier": { "type": "regex", "pattern": "[A-Fa-f0-9]{6}" },
-      "candidate": "9fD3b0",
-      "expected": { "passed": true, "code": "ok" }
+      "verifier": {
+        "type": "regex",
+        "pattern": "[A-Fa-f0-9]{6}"
+      },
+      "candidate": "1F2e3D",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
     },
     {
       "id": "regex/negated-character-class",
-      "verifier": { "type": "regex", "pattern": "[^,]+" },
-      "candidate": "no commas here",
-      "expected": { "passed": true, "code": "ok" }
+      "verifier": {
+        "type": "regex",
+        "pattern": "[^,]+"
+      },
+      "candidate": "abc def",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
     },
     {
       "id": "regex/class-with-escaped-bracket",
-      "verifier": { "type": "regex", "pattern": "[\\]a]+" },
-      "candidate": "a]a",
-      "expected": { "passed": true, "code": "ok" }
+      "verifier": {
+        "type": "regex",
+        "pattern": "[\\]a]+"
+      },
+      "candidate": "]a]",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
     },
     {
       "id": "regex/lazy-quantifier",
-      "verifier": { "type": "regex", "pattern": "<.*?>", "mode": "search" },
+      "verifier": {
+        "type": "regex",
+        "pattern": "<[^>]*?>",
+        "mode": "search"
+      },
       "candidate": "<a><b>",
-      "expected": { "passed": true, "code": "ok" }
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
     },
     {
       "id": "regex/alternation-and-groups",
-      "verifier": { "type": "regex", "pattern": "(cat|dog)s?" },
+      "verifier": {
+        "type": "regex",
+        "pattern": "(cat|dog)s?"
+      },
       "candidate": "dogs",
-      "expected": { "passed": true, "code": "ok" }
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
     },
     {
       "id": "regex/non-capturing-and-lookahead",
-      "verifier": { "type": "regex", "pattern": "(?:ab)+(?=c)", "mode": "search" },
+      "verifier": {
+        "type": "regex",
+        "pattern": "(?:ab)+(?=c)",
+        "mode": "search"
+      },
       "candidate": "ababc",
-      "expected": { "passed": true, "code": "ok" }
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
     },
     {
       "id": "regex/negative-lookahead",
-      "verifier": { "type": "regex", "pattern": "foo(?!bar)", "mode": "search" },
+      "verifier": {
+        "type": "regex",
+        "pattern": "foo(?!bar)",
+        "mode": "search"
+      },
       "candidate": "foobar",
-      "expected": { "passed": false, "code": "no_match" }
-    },
-    {
-      "id": "regex/word-boundary",
-      "verifier": { "type": "regex", "pattern": "\\bcat\\b", "mode": "search" },
-      "candidate": "the cat sat",
-      "expected": { "passed": true, "code": "ok" }
+      "expected": {
+        "passed": false,
+        "code": "no_match"
+      }
     },
     {
       "id": "regex/bounded-repetition",
-      "verifier": { "type": "regex", "pattern": "a{2,4}" },
+      "verifier": {
+        "type": "regex",
+        "pattern": "a{2,4}"
+      },
       "candidate": "aaa",
-      "expected": { "passed": true, "code": "ok" }
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
     },
     {
       "id": "regex/bounded-repetition-too-many",
-      "verifier": { "type": "regex", "pattern": "a{2,4}" },
+      "verifier": {
+        "type": "regex",
+        "pattern": "a{2,4}"
+      },
       "candidate": "aaaaa",
-      "expected": { "passed": false, "code": "no_match" }
+      "expected": {
+        "passed": false,
+        "code": "no_match"
+      }
     },
     {
       "id": "regex/crlf-literal",
-      "verifier": { "type": "regex", "pattern": "a\\r\\nb" },
+      "verifier": {
+        "type": "regex",
+        "pattern": "a\\r\\nb"
+      },
       "candidate": "a\r\nb",
-      "expected": { "passed": true, "code": "ok" }
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
     },
     {
       "id": "regex/unicode-escape",
-      "verifier": { "type": "regex", "pattern": "\\u0915\\u093c" },
-      "candidate": "\u0915\u093c",
-      "expected": { "passed": true, "code": "ok" }
+      "description": "क़ as a base letter plus nukta, written with escapes.",
+      "verifier": {
+        "type": "regex",
+        "pattern": "\\u0915\\u093c"
+      },
+      "candidate": "क़",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
+    },
+    {
+      "id": "regex/escaped-metacharacters",
+      "description": "A dollar sign as a literal is still available; only the anchor is gone.",
+      "verifier": {
+        "type": "regex",
+        "pattern": "\\$[0-9]+\\.[0-9]{2}"
+      },
+      "candidate": "$12.50",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
+    },
+    {
+      "id": "regex/escaped-metacharacters-wrong-shape",
+      "verifier": {
+        "type": "regex",
+        "pattern": "\\$[0-9]+\\.[0-9]{2}"
+      },
+      "candidate": "$12.5",
+      "expected": {
+        "passed": false,
+        "code": "no_match"
+      }
+    },
+    {
+      "id": "regex/invalid-shorthand-digit",
+      "description": "\\d is Unicode-aware in Python and ASCII-only in JavaScript.",
+      "verifier": {
+        "type": "regex",
+        "pattern": "\\d+"
+      },
+      "candidate": "123",
+      "expected": {
+        "passed": false,
+        "code": "invalid_pattern"
+      }
+    },
+    {
+      "id": "regex/invalid-shorthand-not-digit",
+      "verifier": {
+        "type": "regex",
+        "pattern": "\\D+"
+      },
+      "candidate": "abc",
+      "expected": {
+        "passed": false,
+        "code": "invalid_pattern"
+      }
+    },
+    {
+      "id": "regex/invalid-shorthand-word",
+      "verifier": {
+        "type": "regex",
+        "pattern": "\\w+"
+      },
+      "candidate": "abc",
+      "expected": {
+        "passed": false,
+        "code": "invalid_pattern"
+      }
+    },
+    {
+      "id": "regex/invalid-shorthand-not-word",
+      "verifier": {
+        "type": "regex",
+        "pattern": "\\W+"
+      },
+      "candidate": "!!!",
+      "expected": {
+        "passed": false,
+        "code": "invalid_pattern"
+      }
+    },
+    {
+      "id": "regex/invalid-shorthand-space",
+      "verifier": {
+        "type": "regex",
+        "pattern": "\\s+"
+      },
+      "candidate": " ",
+      "expected": {
+        "passed": false,
+        "code": "invalid_pattern"
+      }
+    },
+    {
+      "id": "regex/invalid-shorthand-not-space",
+      "verifier": {
+        "type": "regex",
+        "pattern": "\\S+"
+      },
+      "candidate": "abc",
+      "expected": {
+        "passed": false,
+        "code": "invalid_pattern"
+      }
+    },
+    {
+      "id": "regex/invalid-word-boundary",
+      "description": "\\b is the worst of them: it finds no boundary anywhere in a Hangul string under the ASCII reading.",
+      "verifier": {
+        "type": "regex",
+        "pattern": "\\bcat\\b",
+        "mode": "search"
+      },
+      "candidate": "a cat here",
+      "expected": {
+        "passed": false,
+        "code": "invalid_pattern"
+      }
+    },
+    {
+      "id": "regex/invalid-not-word-boundary",
+      "verifier": {
+        "type": "regex",
+        "pattern": "\\Bcat",
+        "mode": "search"
+      },
+      "candidate": "concat",
+      "expected": {
+        "passed": false,
+        "code": "invalid_pattern"
+      }
+    },
+    {
+      "id": "regex/invalid-shorthand-digit-inside-class",
+      "verifier": {
+        "type": "regex",
+        "pattern": "[\\d]+"
+      },
+      "candidate": "123",
+      "expected": {
+        "passed": false,
+        "code": "invalid_pattern"
+      }
+    },
+    {
+      "id": "regex/invalid-shorthand-word-inside-class",
+      "verifier": {
+        "type": "regex",
+        "pattern": "[\\w-]+"
+      },
+      "candidate": "a-b",
+      "expected": {
+        "passed": false,
+        "code": "invalid_pattern"
+      }
+    },
+    {
+      "id": "regex/invalid-shorthand-space-inside-class",
+      "verifier": {
+        "type": "regex",
+        "pattern": "[\\s]+"
+      },
+      "candidate": " ",
+      "expected": {
+        "passed": false,
+        "code": "invalid_pattern"
+      }
+    },
+    {
+      "id": "regex/invalid-shorthand-not-space-inside-class",
+      "verifier": {
+        "type": "regex",
+        "pattern": "[\\S]+"
+      },
+      "candidate": "abc",
+      "expected": {
+        "passed": false,
+        "code": "invalid_pattern"
+      }
+    },
+    {
+      "id": "regex/invalid-dot",
+      "description": "Python excludes only the newline; JavaScript also excludes CR and the line separators.",
+      "verifier": {
+        "type": "regex",
+        "pattern": "a.b"
+      },
+      "candidate": "axb",
+      "expected": {
+        "passed": false,
+        "code": "invalid_pattern"
+      }
+    },
+    {
+      "id": "regex/invalid-dot-inside-a-group",
+      "verifier": {
+        "type": "regex",
+        "pattern": "(a.)+"
+      },
+      "candidate": "axay",
+      "expected": {
+        "passed": false,
+        "code": "invalid_pattern"
+      }
+    },
+    {
+      "id": "regex/invalid-dollar",
+      "description": "Python's '$' also matches before one trailing newline.",
+      "verifier": {
+        "type": "regex",
+        "pattern": "a$",
+        "mode": "search"
+      },
+      "candidate": "a",
+      "expected": {
+        "passed": false,
+        "code": "invalid_pattern"
+      }
+    },
+    {
+      "id": "regex/invalid-dollar-in-an-anchored-pattern",
+      "description": "The ^...$ idiom is unavailable and unnecessary; mode full_match is the anchored form.",
+      "verifier": {
+        "type": "regex",
+        "pattern": "^abc$"
+      },
+      "candidate": "abc",
+      "expected": {
+        "passed": false,
+        "code": "invalid_pattern"
+      }
+    },
+    {
+      "id": "regex/invalid-ignore-case-on-a-non-ascii-pattern",
+      "description": "The two engines fold non-ASCII case differently, so 'i' is confined to ASCII patterns.",
+      "verifier": {
+        "type": "regex",
+        "pattern": "été",
+        "flags": [
+          "i"
+        ]
+      },
+      "candidate": "ÉTÉ",
+      "expected": {
+        "passed": false,
+        "code": "invalid_pattern"
+      }
     },
     {
       "id": "regex/invalid-backreference",
-      "verifier": { "type": "regex", "pattern": "(a)\\1" },
+      "verifier": {
+        "type": "regex",
+        "pattern": "(a)\\1"
+      },
       "candidate": "aa",
-      "expected": { "passed": false, "code": "invalid_pattern" }
+      "expected": {
+        "passed": false,
+        "code": "invalid_pattern"
+      }
     },
     {
       "id": "regex/invalid-named-group",
-      "verifier": { "type": "regex", "pattern": "(?P<word>a)" },
+      "verifier": {
+        "type": "regex",
+        "pattern": "(?P<word>a)"
+      },
       "candidate": "a",
-      "expected": { "passed": false, "code": "invalid_pattern" }
+      "expected": {
+        "passed": false,
+        "code": "invalid_pattern"
+      }
     },
     {
       "id": "regex/invalid-lookbehind",
-      "verifier": { "type": "regex", "pattern": "(?<=a)b", "mode": "search" },
+      "verifier": {
+        "type": "regex",
+        "pattern": "(?<=a)b",
+        "mode": "search"
+      },
       "candidate": "ab",
-      "expected": { "passed": false, "code": "invalid_pattern" }
+      "expected": {
+        "passed": false,
+        "code": "invalid_pattern"
+      }
     },
     {
       "id": "regex/invalid-inline-flags",
-      "verifier": { "type": "regex", "pattern": "(?i)abc" },
+      "verifier": {
+        "type": "regex",
+        "pattern": "(?i)abc"
+      },
       "candidate": "ABC",
-      "expected": { "passed": false, "code": "invalid_pattern" }
+      "expected": {
+        "passed": false,
+        "code": "invalid_pattern"
+      }
     },
     {
       "id": "regex/invalid-unicode-property",
-      "verifier": { "type": "regex", "pattern": "\\p{L}+" },
+      "description": "\\p{L} would have been the portable answer to the shorthand problem, and neither engine supports it in the form the other does.",
+      "verifier": {
+        "type": "regex",
+        "pattern": "\\p{L}+"
+      },
       "candidate": "abc",
-      "expected": { "passed": false, "code": "invalid_pattern" }
+      "expected": {
+        "passed": false,
+        "code": "invalid_pattern"
+      }
     },
     {
       "id": "regex/invalid-string-anchor",
-      "verifier": { "type": "regex", "pattern": "\\Aabc", "mode": "search" },
+      "verifier": {
+        "type": "regex",
+        "pattern": "\\Aabc",
+        "mode": "search"
+      },
       "candidate": "abc",
-      "expected": { "passed": false, "code": "invalid_pattern" }
+      "expected": {
+        "passed": false,
+        "code": "invalid_pattern"
+      }
     },
     {
       "id": "regex/invalid-unbalanced-paren",
-      "verifier": { "type": "regex", "pattern": "(abc" },
+      "verifier": {
+        "type": "regex",
+        "pattern": "(abc"
+      },
       "candidate": "abc",
-      "expected": { "passed": false, "code": "invalid_pattern" }
+      "expected": {
+        "passed": false,
+        "code": "invalid_pattern"
+      }
     },
     {
       "id": "regex/invalid-unterminated-class",
-      "verifier": { "type": "regex", "pattern": "[abc" },
+      "verifier": {
+        "type": "regex",
+        "pattern": "[abc"
+      },
       "candidate": "a",
-      "expected": { "passed": false, "code": "invalid_pattern" }
+      "expected": {
+        "passed": false,
+        "code": "invalid_pattern"
+      }
     },
     {
       "id": "regex/invalid-bare-close-bracket",
-      "description": "Python reads '[]]' as an unterminated class and JavaScript reads it as an empty class plus a literal, so the subset requires the escape.",
-      "verifier": { "type": "regex", "pattern": "[]]" },
+      "verifier": {
+        "type": "regex",
+        "pattern": "[]]"
+      },
       "candidate": "]",
-      "expected": { "passed": false, "code": "invalid_pattern" }
+      "expected": {
+        "passed": false,
+        "code": "invalid_pattern"
+      }
     },
     {
       "id": "regex/invalid-possessive-quantifier",
-      "verifier": { "type": "regex", "pattern": "a*+" },
+      "verifier": {
+        "type": "regex",
+        "pattern": "a*+"
+      },
       "candidate": "aaa",
-      "expected": { "passed": false, "code": "invalid_pattern" }
-    },
-    {
-      "id": "regex/invalid-negated-whitespace-in-class",
-      "verifier": { "type": "regex", "pattern": "[\\S]+" },
-      "candidate": "abc",
-      "expected": { "passed": false, "code": "invalid_pattern" }
+      "expected": {
+        "passed": false,
+        "code": "invalid_pattern"
+      }
     },
     {
       "id": "regex/invalid-quantifier-without-atom",
-      "verifier": { "type": "regex", "pattern": "*abc" },
+      "verifier": {
+        "type": "regex",
+        "pattern": "*abc"
+      },
       "candidate": "abc",
-      "expected": { "passed": false, "code": "invalid_pattern" }
+      "expected": {
+        "passed": false,
+        "code": "invalid_pattern"
+      }
     },
     {
       "id": "regex/invalid-bare-brace",
-      "verifier": { "type": "regex", "pattern": "a{b" },
+      "verifier": {
+        "type": "regex",
+        "pattern": "a{b"
+      },
       "candidate": "a{b",
-      "expected": { "passed": false, "code": "invalid_pattern" }
+      "expected": {
+        "passed": false,
+        "code": "invalid_pattern"
+      }
+    },
+    {
+      "id": "regex/invalid-trailing-backslash",
+      "verifier": {
+        "type": "regex",
+        "pattern": "abc\\"
+      },
+      "candidate": "abc",
+      "expected": {
+        "passed": false,
+        "code": "invalid_pattern"
+      }
     }
   ]
 }

@@ -375,35 +375,72 @@ Codes: `ok`, `invalid_json`, `schema_violation`.
 
 #### `regex`
 
-**The normative semantics are Python `re` semantics with the `re.ASCII` flag.** A JavaScript
-implementation must rewrite the pattern to reproduce them, because the two engines disagree in
-at least four places that matter. This is stated as a direction of translation rather than as a
-"be careful" note, because a "be careful" note is not testable.
+**The subset contains no construct whose meaning depends on which engine reads it.** That is the
+entire design rule, and every restriction below follows from it. Implementations compile the
+pattern verbatim: there is no translation between dialects, because a translator is a second
+implementation of regex semantics and it would need its own conformance suite to be trustworthy.
 
-Configuration: `pattern`, `mode` (`full_match` default, or `search`), and `flags`, a subset of
-`i`, `m`, `s`. No other flag is portable and no other flag is accepted.
+Configuration: `pattern`, `mode` (`full_match` default, or `search`), and `flags`, which may
+contain `i` and nothing else.
 
-Supported syntax: literal characters; `.`; character classes `[...]` with ranges, negation and
-escapes; the escapes `\d \D \w \W \s \S \b \B \n \r \t \f \v \0` and any punctuation escape;
+Supported syntax: literal characters; character classes `[...]` with ranges, negation and
+escapes; the escapes `\n \r \t \f \v \0`, `\xHH`, `\uHHHH` and any punctuation escape;
 quantifiers `* + ? {m} {m,} {m,n}` with the lazy `?` suffix; groups `( )`, `(?: )`, `(?= )`,
-`(?! )`; alternation `|`; anchors `^` and `$`.
+`(?! )`; alternation `|`; the anchor `^`.
 
-Rejected with `invalid_pattern`: backreferences, named groups, lookbehind, atomic groups and
-possessive quantifiers, inline flag groups `(?i)`, `\A \Z \z \G`, `\p{...}` and `\P{...}`,
-`\S` inside a character class, and any malformed pattern.
+##### The shorthand classes are forbidden
 
-The four divergences and how they are resolved:
+`\w \W \d \D \b \B \s \S` are rejected with `invalid_pattern`, and rejected again at template
+load time so that a bad pattern is found before a set is generated rather than after it is
+published. Write the character class out: `[0-9]`, `[A-Za-z0-9_]`, `[\u0900-\u097F]`.
 
-| Construct | Python `re` + `re.ASCII` | Plain JavaScript | Resolution |
-| --- | --- | --- | --- |
-| `.` without `s` | any char except `\n` | also excludes `\r \u2028 \u2029` | JS rewrites `.` to `[^\n]`, or `[\s\S]` with `s`, and never passes the JS `s` flag |
-| `$` without `m` | end, or before a single trailing `\n` | end only | JS rewrites `$` to `(?=\n?$)` |
-| `^` / `$` with `m` | around `\n` only | also around `\r \u2028 \u2029` | JS rewrites to `(?:^\|(?<=\n))` and `(?=\n\|$)`, and never passes the JS `m` flag |
-| `\d \w \b \s` | ASCII-only under `re.ASCII` | ASCII for `\d \w \b`, Unicode for `\s` | JS rewrites `\s` to `[ \t\n\r\f\v]` and `\S` to `[^ \t\n\r\f\v]` |
+They are forbidden because they are Unicode-aware in Python and ASCII-only in a JavaScript
+`RegExp` without the `u` flag. Either reading is defensible and neither is portable, so an
+earlier revision of this spec pinned the ASCII reading and had the JavaScript side rewrite
+patterns to match. **That was the wrong choice.** ASCII semantics say that Devanagari has no word
+characters, that `०१२` are not digits, and that there is no word boundary anywhere in a Hangul
+string. For a benchmark whose targets are Hindi, Hinglish and Korean, a `\w` that silently means
+"Latin only" is not a portability compromise, it is a wrong answer that looks like a working
+pattern. An explicit class cannot make that mistake quietly.
 
-Two consequences are out of subset and are not covered by any guarantee: the `i` flag over
-characters whose simple and full case foldings differ (`ß`, `ﬀ`), and quantified `.` spanning
-astral characters, which a UTF-16 engine counts as two units and Python counts as one.
+##### `.` and `$` are forbidden for the same reason
+
+| Construct | Python `re` | JavaScript `RegExp` |
+| --- | --- | --- |
+| `.` | any character except `\n` | also excludes `\r`, U+2028, U+2029 |
+| `$` without `m` | end of string, or before one trailing `\n` | end of input only |
+| `^` and `$` with `m` | around `\n` only | also around `\r`, U+2028, U+2029 |
+
+None of these differences is expressible as a flag, so keeping the constructs would mean keeping
+the translator. Instead: write `[^\n]` where you meant `.`, or `[\u0000-\uffff]` for any
+character at all; use `mode: full_match` where you meant to anchor the end. `^` stays, and means
+start of input in both engines. `m` and `s` are gone from the flag subset because there is no
+longer a `$` or a `.` for them to modify.
+
+Where `mode` is not available — inside a JSON Schema `pattern`, which is a search by
+definition — end of input is spelled `(?![\u0000-\uffff])`, a negative lookahead asserting that no
+character follows. It is built from constructs already in the subset, and unlike `$` the two
+engines read it identically, including before a trailing newline. So the familiar `^...$` becomes
+`^...(?![\u0000-\uffff])`. This is longer, and being longer is the price of meaning one thing.
+
+##### The `i` flag is confined to ASCII patterns
+
+Case folding is the last construct on which the engines disagree. A JavaScript `RegExp` without
+`u` folds Greek and Cyrillic but refuses to fold a non-ASCII character down to an ASCII one, so
+`[a-z]` with `i` does not match U+212A KELVIN SIGN; Python under `re.ASCII` folds nothing outside
+ASCII at all, and without `re.ASCII` it does match the Kelvin sign. Confined to an ASCII-only
+pattern, with Python compiling under `re.ASCII`, the two agree exactly. A pattern containing any
+non-ASCII character is rejected if `i` is set. Nothing is lost for this specification's target
+scripts, because Devanagari and Hangul are caseless.
+
+Also rejected with `invalid_pattern`: backreferences, named groups, lookbehind, atomic groups and
+possessive quantifiers, inline flag groups `(?i)`, `\A \Z \z \G`, `\p{...}` and `\P{...}`, and any
+malformed pattern.
+
+One consequence remains out of subset and is not covered by any guarantee: a quantified class
+spanning astral characters, which a UTF-16 engine counts as two units and Python counts as one.
+Patterns should stay within the Basic Multilingual Plane, which includes all of Devanagari and
+Hangul.
 
 Codes: `ok`, `no_match`, `invalid_pattern`.
 

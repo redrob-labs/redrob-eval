@@ -20,6 +20,8 @@ from typing import Any
 from .__about__ import SPEC_VERSION
 from .canonical import content_hash
 from .errors import SpecError, TemplateLoadError
+from .verify.json_schema_subset import SchemaSubsetError, validate_schema_document
+from .verify.regex_subset import RegexSubsetError, validate as validate_regex_subset
 
 SCHEMA_FILENAME = "verifiable-task-v1.schema.json"
 CORE_FILENAME = "template.json"
@@ -168,7 +170,60 @@ def load_template(path: str | os.PathLike[str], locale: str | None = None) -> di
         )
     validate_document(merged, "template")
     _validate_parameter_shapes(merged)
+    _validate_verifier_patterns(merged)
     return merged
+
+
+_DERIVATION_REFERENCE = "{{"
+
+
+def _validate_verifier_patterns(template: dict[str, Any]) -> None:
+    """Reject an out-of-subset regex when the template is loaded, not when it is scored.
+
+    A pattern that uses a shorthand class is wrong for every instance the template will
+    ever produce, so finding out at scoring time means an entire generated set is already
+    published before anyone notices. The error names the offending construct.
+
+    A binding leaf may be a ``{{derivation}}`` reference rather than a literal, and those
+    are resolved per instance and checked then.
+    """
+
+    def check(node: Any, path: str) -> None:
+        if isinstance(node, list):
+            for index, item in enumerate(node):
+                check(item, f"{path}[{index}]")
+            return
+        if not isinstance(node, dict):
+            return
+
+        if node.get("type") == "regex":
+            pattern = node.get("pattern")
+            if isinstance(pattern, str) and _DERIVATION_REFERENCE not in pattern:
+                try:
+                    validate_regex_subset(pattern, node.get("flags", []))
+                except RegexSubsetError as exc:
+                    raise SpecError(
+                        f"template {template['id']}: verifier at {path} has a pattern "
+                        f"outside the portable subset: {exc}"
+                    ) from exc
+
+        # A JSON Schema's own `pattern` and `patternProperties` keys go through the same
+        # subset, so they are checked here too.
+        if node.get("type") == "json_schema" and isinstance(node.get("schema"), dict):
+            try:
+                validate_schema_document(node["schema"])
+            except (SchemaSubsetError, RegexSubsetError) as exc:
+                raise SpecError(
+                    f"template {template['id']}: verifier at {path} carries a schema "
+                    f"outside the supported subset: {exc}"
+                ) from exc
+
+        for key, value in node.items():
+            if key != "schema":
+                check(value, f"{path}.{key}")
+
+    if "verifier" in template:
+        check(template["verifier"], "verifier")
 
 
 def _validate_parameter_shapes(template: dict[str, Any]) -> None:

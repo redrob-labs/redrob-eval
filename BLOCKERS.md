@@ -153,32 +153,69 @@ list requires implementing it twice and adding conformance cases, which is the i
 
 ---
 
-## 5. Regex: Python's semantics are normative, TypeScript rewrites to match
+## 5. Regex: the subset holds nothing engine-dependent, and there is no translator
 
-**Decision.** `re` and `RegExp` disagree about `.`, `$`, `\d`, `\w`, `\s` and `\b`. One of them has
-to be the definition.
+**Superseded during the pre-merge pass.** The original decision is kept below because the
+reasoning that produced it is the reasoning that had to be undone, and a record that only shows
+the final answer is not a record.
 
-**Options.** (a) Forbid every construct that differs, leaving a subset too small to be useful.
-(b) Define ECMAScript semantics as normative and make Python emulate. (c) Define Python's
-`re.ASCII` semantics as normative and make TypeScript rewrite the pattern before compiling.
+### What was decided first, and why it was wrong
 
-**Chose (c).** Python's `re` is closer to what a template author writes by hand, and the rewrite is
-mechanical: `.` becomes `[^\n]` (or `[\s\S]` under the `s` flag), `\s` and `\S` become explicit
-ASCII sets, `^` and `$` become lookarounds that reproduce Python's multiline behaviour, and the
-`u` flag is never set so that `\d` and `\w` stay ASCII. Both sides scan the pattern with the same
-token model and reject the same constructs: backreferences, named groups, lookbehind, inline
-flags, `\A`, `\Z`, `\z`, `\G`, possessive and atomic quantifiers, `\p{...}`, and unescaped `{`.
+`re` and `RegExp` disagree about `.`, `$`, `\d`, `\w`, `\s` and `\b`. The first decision made
+Python's `re.ASCII` semantics normative and had the TypeScript side rewrite each pattern before
+compiling: `.` to `[^\n]`, `\s` to an explicit ASCII set, `^` and `$` to lookarounds reproducing
+Python's multiline behaviour, and never the `u` flag so that `\d` and `\w` stayed ASCII.
 
-**Two known divergences remain, documented in the spec and excluded from the conformance suite:**
+It was wrong for a reason that has nothing to do with regex. **Pinning ASCII semantics means
+Devanagari contains no word characters, `०१२` are not digits, and a Hangul string has no word
+boundary anywhere in it.** For a benchmark whose targets are Hindi, Hinglish and Korean, `\w` was
+not a portability compromise — it was a wrong answer that looked like a working pattern, and
+looked like one on both implementations, so the conformance suite agreed with itself all the way
+down. Two implementations that agree on the wrong answer is exactly the failure the suite cannot
+detect on its own.
 
-- **Case folding under `i`.** Python casefolds fully (`ß` matches `SS`); JavaScript uses simple
-  case folding. Only affects a handful of characters, chiefly German and ligatures.
-- **Astral characters under a quantified `.`.** Without the `u` flag, JavaScript's `.` consumes one
-  UTF-16 code unit and Python's consumes one code point, so `.{2}` counts an emoji differently.
-  Devanagari and Hangul are in the BMP and are unaffected, which is why the suite's Unicode cases
-  stay correct.
+The second problem was the translator itself. A layer that rewrites one regex dialect into another
+is a second implementation of regex semantics, and it needed a conformance suite of its own to be
+trustworthy. It did not have one.
 
-Closing either would mean rewriting the pattern much more aggressively. Neither is closed.
+### What is decided now
+
+The subset contains no construct whose meaning depends on which engine reads it, and both
+implementations compile the pattern verbatim.
+
+- **`\w \W \d \D \b \B \s \S` are rejected**, at verify time with `invalid_pattern` and at
+  template load time with an error naming the construct. Write the class out: `[0-9]`,
+  `[A-Za-z0-9_]`, `[\u0900-\u097F]`.
+- **`.` is rejected.** Python excludes only `\n`; JavaScript also excludes `\r`, U+2028 and
+  U+2029. Write `[^\n]`, or `[\u0000-\uffff]` for any character at all.
+- **`$` is rejected.** Python's `$` also matches before one trailing newline. Use
+  `mode: full_match` to anchor, or, where mode is unavailable, the lookahead
+  `(?![\u0000-\uffff])`, which both engines read identically.
+- **`^` stays.** Without `m` it is start of input in both engines.
+- **The flag subset is `i` alone, and only on an ASCII-only pattern.** `m` and `s` are gone
+  because there is no `$` or `.` left for them to modify. `i` is confined because a JavaScript
+  `RegExp` without `u` folds Greek and Cyrillic but will not fold a non-ASCII character down to an
+  ASCII one, while Python under `re.ASCII` folds nothing outside ASCII; restricted to an ASCII
+  pattern the two coincide exactly. Devanagari and Hangul are caseless, so nothing is lost here.
+- **`re.ASCII` is still passed on the Python side,** and now has exactly one job: confining
+  `IGNORECASE` to ASCII folding.
+
+**Deviation from the pre-merge instruction, stated plainly.** That instruction named only the
+shorthand classes and asked for the rewriting layer to be removed. Banning `.` and `$` was not
+requested. It is nonetheless entailed: with `.` and `$` still in the subset the translator cannot
+be removed without introducing the divergence it existed to hide, so the choice was between
+removing them and keeping a rewriting layer for two constructs. Removing them is the option
+consistent with the reason the shorthand classes were banned.
+
+**What it costs.** `^...$` inside a JSON Schema `pattern` is the idiom everyone writes, and it is
+now spelled `^...(?![\u0000-\uffff])`. That is uglier. It is also unambiguous, which `$` was not.
+
+**One divergence remains, documented in the spec and excluded from the suite:** a quantified class
+spanning astral characters, which a UTF-16 engine counts as two units and Python as one. Patterns
+are documented as BMP-only, and Devanagari and Hangul are in the BMP.
+
+**The case-folding divergence recorded in the original decision is now closed** rather than
+documented, by confining `i` to ASCII patterns.
 
 ---
 

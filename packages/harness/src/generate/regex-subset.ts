@@ -3,32 +3,38 @@
 /**
  * The portable regex subset, per spec section 6.1.
  *
- * Python `re` under `re.ASCII` is the normative engine, so this module does two jobs:
- * it rejects the same patterns the Python scanner rejects, and it rewrites the ones it
- * accepts so that a plain JavaScript `RegExp` reproduces Python's semantics.
+ * The subset contains no construct whose meaning depends on which engine reads it. That
+ * is the whole design rule, and it is why the shorthand classes, `.` and `$` are absent:
+ * each of them means something different in Python `re` and in a JavaScript `RegExp`, and
+ * the difference is not expressible as a flag.
  *
- * The four rewrites, each pinned by conformance cases:
+ * The shorthand classes are the important case for this project. `\w`, `\d` and `\b` are
+ * Unicode-aware in Python and ASCII-only in a JavaScript `RegExp` without the `u` flag.
+ * Either reading is defensible; neither is portable. Forcing them to agree meant pinning
+ * ASCII semantics, and ASCII semantics say that Devanagari and Hangul contain no word
+ * characters and no digits, which is wrong for a benchmark whose targets are Hindi,
+ * Hinglish and Korean. An explicit `[\u0900-\u097F]` says what it means in both engines
+ * and in the reader's head.
  *
- *   `.`      -> `[^\n]`, or `[\s\S]` with the s flag; the JS `s` flag is never used,
- *              because JS excludes CR and the Unicode line separators from `.` and
- *              Python does not.
- *   `^`      -> `(?:^|(?<=\n))` with the m flag; the JS `m` flag is never used, because
- *              it also anchors around CR, U+2028 and U+2029.
- *   `$`      -> `(?=\n|$)` with m, `(?=\n?$)` without; Python's `$` matches before a
- *              single trailing newline and JavaScript's does not.
- *   `\s` `\S`-> explicit classes; `re.ASCII` makes Python's `\s` ASCII-only while
- *              JavaScript's stays Unicode-aware.
+ * Because nothing here is dialect-dependent, this module compiles the pattern verbatim.
+ * An earlier revision translated `.`, `^`, `$`, `\s` and `\S` into JavaScript source that
+ * reproduced Python's semantics. That translator is gone: a layer that rewrites one regex
+ * dialect into another is a place bugs hide, and every construct that needed it has been
+ * removed from the subset instead.
  *
  * Mirrors packages/generate/src/redrob_generate/verify/regex_subset.py.
  */
 
-const CLASS_ESCAPES = new Set([...'dDwWsnrtfv0']);
-const ATOM_ESCAPES = new Set([...'dDwWsSbBnrtfv0']);
-const REJECTED_ESCAPE_LETTERS = new Set([...'AZzGpPkNcLUQEB123456789']);
+/** Escapes for characters that cannot be written literally. Identical in both engines. */
+const CHARACTER_ESCAPES = new Set([...'nrtfv0']);
+/** Banned with a message of their own, because "not in the subset" is unhelpful when the
+ *  construct is one every regex author reaches for by reflex. */
+const SHORTHAND_CLASSES = new Set([...'dDwWsSbB']);
+const REJECTED_ESCAPE_LETTERS = new Set([...'AZzGpPkNcLUQE123456789']);
 const HEX_DIGITS = new Set([...'0123456789abcdefABCDEF']);
 
-/** ASCII whitespace, spelled out because the two engines disagree about `\s`. */
-const ASCII_WHITESPACE_CLASS_BODY = ' \\t\\n\\r\\f\\v';
+/** The only flag in the subset. See {@link validateFlags} for the condition on it. */
+export const SUPPORTED_FLAGS = ['i'] as const;
 
 export class RegexSubsetError extends Error {
   constructor(message: string) {
@@ -40,25 +46,31 @@ export class RegexSubsetError extends Error {
 type TokenKind =
   | 'literal'
   | 'escape'
-  | 'anchor'
   | 'class'
   | 'group'
   | 'close'
   | 'quantifier'
   | 'alternation'
-  | 'dot'
-  | 'caret'
-  | 'dollar';
+  | 'caret';
 
 export interface Token {
   kind: TokenKind;
   text: string;
 }
 
-const ATOM_KINDS = new Set<TokenKind>(['literal', 'dot', 'class', 'escape', 'close']);
+const ATOM_KINDS = new Set<TokenKind>(['literal', 'class', 'escape', 'close']);
 
 function isAlphanumeric(character: string): boolean {
   return /^[0-9A-Za-z]$/.test(character);
+}
+
+function shorthandError(letter: string): RegexSubsetError {
+  return new RegexSubsetError(
+    `shorthand class \\${letter} is not in the portable subset; write the character ` +
+      'class out, for example [0-9] or [\\u0900-\\u097F]. The shorthand classes are ' +
+      'Unicode-aware in Python and ASCII-only in JavaScript, and the ASCII reading ' +
+      'excludes Devanagari and Hangul',
+  );
 }
 
 /** Tokenise a pattern or throw {@link RegexSubsetError}. */
@@ -92,19 +104,17 @@ export function scan(pattern: string): Token[] {
         continue;
       }
       if (isAlphanumeric(escaped)) {
+        if (SHORTHAND_CLASSES.has(escaped)) throw shorthandError(escaped);
         if (REJECTED_ESCAPE_LETTERS.has(escaped)) {
           throw new RegexSubsetError(
             `escape \\${escaped} is outside the portable subset ` +
               '(backreferences, \\A \\Z \\z \\G and \\p are not allowed)',
           );
         }
-        if (!ATOM_ESCAPES.has(escaped)) {
+        if (!CHARACTER_ESCAPES.has(escaped)) {
           throw new RegexSubsetError(`escape \\${escaped} is not in the portable subset`);
         }
-        tokens.push({
-          kind: escaped === 'b' || escaped === 'B' ? 'anchor' : 'escape',
-          text: `\\${escaped}`,
-        });
+        tokens.push({ kind: 'escape', text: `\\${escaped}` });
         index += 2;
         continue;
       }
@@ -186,20 +196,28 @@ export function scan(pattern: string): Token[] {
     }
 
     if (character === '.') {
-      tokens.push({ kind: 'dot', text: '.' });
-      index += 1;
-      continue;
+      throw new RegexSubsetError(
+        "'.' is not in the portable subset; write the character class out, for example " +
+          '[^\\n] for any character but a newline or [\\u0000-\\uffff] for any character. ' +
+          "Python excludes only the newline from '.' while JavaScript also excludes CR, " +
+          'U+2028 and U+2029',
+      );
     }
+
     if (character === '^') {
       tokens.push({ kind: 'caret', text: '^' });
       index += 1;
       continue;
     }
+
     if (character === '$') {
-      tokens.push({ kind: 'dollar', text: '$' });
-      index += 1;
-      continue;
+      throw new RegexSubsetError(
+        "'$' is not in the portable subset; use mode 'full_match' to anchor the end of " +
+          "the candidate. Python's '$' also matches before one trailing newline and " +
+          "JavaScript's does not",
+      );
     }
+
     if (character === '|') {
       tokens.push({ kind: 'alternation', text: '|' });
       index += 1;
@@ -240,12 +258,8 @@ function scanClass(pattern: string, start: number): [string, number] {
         continue;
       }
       if (isAlphanumeric(escaped)) {
-        if (escaped === 'S') {
-          throw new RegexSubsetError(
-            '\\S inside a character class is outside the portable subset',
-          );
-        }
-        if (!CLASS_ESCAPES.has(escaped)) {
+        if (SHORTHAND_CLASSES.has(escaped)) throw shorthandError(escaped);
+        if (!CHARACTER_ESCAPES.has(escaped)) {
           throw new RegexSubsetError(`escape \\${escaped} is not allowed inside a character class`);
         }
       }
@@ -275,75 +289,46 @@ function scanBraceQuantifier(pattern: string, start: number): [string, number] {
   if (parts.length === 2 && parts[1] !== '' && !isDigits(parts[1] as string)) {
     throw new RegexSubsetError("unescaped '{' that is not a quantifier");
   }
-  if (
-    parts.length === 2 &&
-    isDigits(parts[1] as string) &&
-    Number(parts[1]) < Number(parts[0])
-  ) {
+  if (parts.length === 2 && isDigits(parts[1] as string) && Number(parts[1]) < Number(parts[0])) {
     throw new RegexSubsetError('quantifier maximum is below its minimum');
   }
   return [pattern.slice(start, end + 1), end + 1 - start];
 }
 
+/**
+ * Throw unless every flag is in the subset and permitted for this pattern.
+ *
+ * `i` is confined to ASCII-only patterns. Case folding is the one remaining place the two
+ * engines disagree: a JavaScript `RegExp` without the `u` flag folds Greek and Cyrillic
+ * but refuses to fold a non-ASCII character down to an ASCII one, while Python under
+ * `re.ASCII` folds nothing outside ASCII at all. Restricted to an ASCII pattern the two
+ * coincide exactly, and outside it they cannot be made to without a translator.
+ *
+ * Nothing is lost for this project's targets, since Devanagari and Hangul are caseless.
+ */
+export function validateFlags(pattern: string, flags: readonly string[] = []): void {
+  if (!Array.isArray(flags)) throw new RegexSubsetError('flags must be a list');
+  for (const flag of flags) {
+    if (!(SUPPORTED_FLAGS as readonly string[]).includes(flag)) {
+      throw new RegexSubsetError(
+        `flag '${flag}' is not in the portable subset; the subset has no 'm' or 's' ` +
+          "because it has no '$' or '.' for them to modify",
+      );
+    }
+  }
+  // eslint-disable-next-line no-control-regex
+  if (flags.includes('i') && /[^\u0000-\u007f]/.test(pattern)) {
+    throw new RegexSubsetError(
+      "flag 'i' is only permitted on an ASCII-only pattern, because the two engines fold " +
+        'non-ASCII case differently; write the alternatives out explicitly',
+    );
+  }
+}
+
 /** Throw if a pattern is outside the portable subset. */
-export function validate(pattern: string): void {
+export function validate(pattern: string, flags: readonly string[] = []): void {
   scan(pattern);
-}
-
-function rewriteClassBody(body: string): string {
-  let out = '';
-  let index = 0;
-  while (index < body.length) {
-    const character = body[index] as string;
-    if (character === '\\') {
-      const escaped = body[index + 1] as string;
-      if (escaped === 's') {
-        out += ASCII_WHITESPACE_CLASS_BODY;
-        index += 2;
-        continue;
-      }
-      out += character + escaped;
-      index += 2;
-      continue;
-    }
-    out += character;
-    index += 1;
-  }
-  return out;
-}
-
-export interface RewriteOptions {
-  multiline: boolean;
-  dotAll: boolean;
-}
-
-/** Translate a subset pattern into JavaScript source with Python `re` semantics. */
-export function rewrite(tokens: readonly Token[], options: RewriteOptions): string {
-  let out = '';
-  for (const token of tokens) {
-    switch (token.kind) {
-      case 'dot':
-        out += options.dotAll ? '[\\s\\S]' : '[^\\n]';
-        break;
-      case 'caret':
-        out += options.multiline ? '(?:^|(?<=\\n))' : '^';
-        break;
-      case 'dollar':
-        out += options.multiline ? '(?=\\n|$)' : '(?=\\n?$)';
-        break;
-      case 'escape':
-        if (token.text === '\\s') out += `[${ASCII_WHITESPACE_CLASS_BODY}]`;
-        else if (token.text === '\\S') out += `[^${ASCII_WHITESPACE_CLASS_BODY}]`;
-        else out += token.text;
-        break;
-      case 'class':
-        out += rewriteClassBody(token.text);
-        break;
-      default:
-        out += token.text;
-    }
-  }
-  return out;
+  validateFlags(pattern, flags);
 }
 
 export interface CompiledPattern {
@@ -354,26 +339,26 @@ export interface CompiledPattern {
 /**
  * Compile a subset pattern for one of the two modes.
  *
- * `full_match` anchors with `^(?:...)$`, where the JavaScript `$` means end of input
- * because the `m` flag is never passed. That is exactly Python's `fullmatch`, which
- * unlike `re.match(r'...$')` does not allow a trailing newline.
+ * The pattern is passed to `RegExp` verbatim. `full_match` wraps it in `^(?:...)$`, which
+ * is anchoring for the mode rather than a dialect translation: with no `m` flag the
+ * JavaScript `$` means end of input, which is exactly what Python's `fullmatch` means and
+ * is not what `re.search(r'...$')` means. The `u` flag is never set, so a `\uHHHH` escape
+ * is a code unit in both engines.
  */
 export function compileSubsetPattern(
   pattern: string,
   mode: 'full_match' | 'search',
   flags: readonly string[],
 ): CompiledPattern {
-  const tokens = scan(pattern);
-  const multiline = flags.includes('m');
-  const dotAll = flags.includes('s');
-  const body = rewrite(tokens, { multiline, dotAll });
-  const source = mode === 'full_match' ? `^(?:${body})$` : body;
+  scan(pattern);
+  validateFlags(pattern, flags);
+  const source = mode === 'full_match' ? `^(?:${pattern})$` : pattern;
   const jsFlags = flags.includes('i') ? 'i' : '';
   try {
     return { regexp: new RegExp(source, jsFlags), source };
   } catch (error) {
     throw new RegexSubsetError(
-      `rewritten pattern did not compile: ${(error as Error).message} (source ${source})`,
+      `pattern did not compile: ${(error as Error).message} (source ${source})`,
     );
   }
 }

@@ -65,9 +65,10 @@ export {
 export {
   compileSubsetPattern,
   RegexSubsetError,
-  rewrite as rewriteRegexPattern,
   scan as scanRegexPattern,
+  SUPPORTED_FLAGS as SUPPORTED_REGEX_FLAGS,
   validate as validateRegexPattern,
+  validateFlags as validateRegexFlags,
   type Token as RegexToken,
 } from './regex-subset';
 

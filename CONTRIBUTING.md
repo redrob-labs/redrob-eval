@@ -24,6 +24,33 @@ Two long-lived branches:
 - **`develop` is the integration branch.** Everything lands here first. It is the base you branch
   from and the base your pull request targets.
 
+```mermaid
+gitGraph
+   commit id: "4bddd21" tag: "v0.1.0"
+   branch develop
+   commit id: "gitflow"
+   branch feature/verifier-list
+   commit id: "spec v2"
+   checkout develop
+   merge feature/verifier-list
+   branch release/0.2.0
+   commit id: "bump to 0.2.0"
+   commit id: "fix found in QA"
+   checkout develop
+   commit id: "0.3.0 work carries on"
+   checkout main
+   merge release/0.2.0 tag: "v0.2.0"
+   checkout develop
+   merge release/0.2.0
+   checkout main
+   branch hotfix/0.2.1
+   commit id: "fix + bump"
+   checkout main
+   merge hotfix/0.2.1 tag: "v0.2.1"
+   checkout develop
+   merge hotfix/0.2.1
+```
+
 Short-lived branches, all named for what they do:
 
 | Prefix | Branch from | Merge into | For |
@@ -45,13 +72,96 @@ git checkout -b feature/short-description
 git push -u origin feature/short-description   # then open a PR into develop
 ```
 
-A release is the only way work reaches `main`:
+### Squash into `develop`, never into or out of `main`
+
+This is the rule the rest of the model depends on, so it is worth stating on its own.
+
+- **Feature, fix and refactor PRs into `develop`: squash.** One branch becomes one commit and
+  `develop` stays readable.
+- **Release and hotfix merges: real merge commits, `--no-ff`, never squash or rebase.**
+
+A squash does not record that the two branches share history — it produces a brand new commit
+holding the same text. So if you squash a hotfix into `main` and then squash it into `develop`,
+Git does not know those are the same fix. The next release merge sees both sides changing the same
+lines with no common ancestor to compare against, and reports a conflict for a fix that was already
+applied on purpose. **Almost every "gitflow keeps colliding" story is this.** Real merge commits
+give Git the shared ancestry it needs, and a change that has already flowed forward is silently
+recognised as already present.
+
+### Cutting a release and tagging it
 
 ```bash
-git checkout -b release/0.2.0 develop
-# version bump, changelog, no new features
-# PR into main, tag main as v0.2.0, then merge the tag back into develop
+git checkout develop && git pull
+git checkout -b release/0.2.0
+
+# bump the five version fields, update the changelog
+git commit -am "Release 0.2.0"
+git push -u origin release/0.2.0
+# open a PR into main, run the manual QA pass below, merge it with a MERGE COMMIT
+
+git checkout main && git pull
+git tag -a v0.2.0 -m "redrob-eval 0.2.0"   # annotated, on the merge commit
+git push origin v0.2.0
+# publish it as a GitHub release -- this is what Zenodo mints the DOI from
+
+git checkout develop && git pull           # and take the release back
+git merge --no-ff release/0.2.0
+git push
 ```
+
+The tag goes on `main` **after** the merge, never on the release branch: the tag has to name the
+commit that is actually production. Use `-a` so the tag carries an author, date and message;
+`git describe` prefers annotated tags and Zenodo reads them.
+
+### Making a hotfix
+
+```bash
+git checkout main && git pull
+git checkout -b hotfix/0.2.1        # from main -- this is the whole point
+# fix it, bump the patch version in the five files
+git push -u origin hotfix/0.2.1
+# PR into main, merge with a MERGE COMMIT, tag v0.2.1, publish
+
+git checkout develop && git pull    # then forward it
+git merge --no-ff hotfix/0.2.1
+git push
+```
+
+Branch from `main`, not `develop`. `develop` holds unreleased features, so a fix built on top of it
+drags them into production when it merges. Avoiding that is the only reason hotfix branches exist.
+
+**If a release branch is open when the hotfix lands, merge the hotfix into the release branch
+instead of into `develop`.** The release branch then carries it to `develop` through its own
+merge-back, so the fix travels once, and — more importantly — the thing QA is testing now contains
+the fix that is already in production.
+
+### Why the three do not collide
+
+The rule is: **fix each defect once, on the oldest branch that has it, then merge forward.** Fixes
+travel `hotfix → main → develop` and `release → main → develop`. They never travel backwards, and
+nothing is ever fixed twice.
+
+| Where the bug is | Fix it on | Reaches |
+| --- | --- | --- |
+| In production and in `develop` | `hotfix/` from `main` | `main` by PR, `develop` by merge-back |
+| Found during release QA | the `release/` branch | `main` and `develop`, by its two merge-backs |
+| Only in unreleased work | `develop` | `develop` alone; production never had it |
+
+Because `develop` receives the actual commit rather than a retyped copy of it, the next release
+merge sees that commit in shared history and does nothing with it a second time. `develop` moving
+on is fine and expected: the release branch was cut at a known point, and the merge only replays
+what each side changed since that point.
+
+Three things genuinely do conflict, and only the last one is a mistake:
+
+1. **The version fields, always.** If `release/0.2.0` is open and a hotfix takes `main` to `0.1.1`,
+   merging that hotfix conflicts on all five version fields. This is expected rather than a
+   problem — resolve it by keeping the release branch's number, `0.2.0`.
+2. **Code that both sides really did change.** If a feature on `develop` rewrote the function a
+   hotfix patched, the merge-back conflicts and it *should*. Resolve it once, in `develop`, with
+   both versions visible.
+3. **The same bug fixed independently in two places.** This is the avoidable one, and it is what
+   the "fix it once, merge forward" rule exists to prevent.
 
 ## Releases and QA
 

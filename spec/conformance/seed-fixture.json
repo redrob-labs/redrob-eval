@@ -1,0 +1,108 @@
+{
+  "spec_version": "redrob-verifiable-task/v1",
+  "description": "Frozen seed derivation vectors. Both implementations recompute message_utf8_hex, sha256 and seed from the three inputs and must reproduce every field exactly. message_utf8_hex is included so that a third implementation can be debugged one step at a time rather than only at the final integer.",
+  "formula": "uint64_be(sha256(generator_version || \"\\x00\" || template_id || \"\\x00\" || instance_index)[0:8])",
+  "notes": [
+    "The separator is a single NUL byte, so no two distinct input triples can produce the same message.",
+    "instance_index is rendered as an unpadded ASCII decimal string.",
+    "The seed is written as a decimal string because a uint64 does not survive a double."
+  ],
+  "cases": [
+    {
+      "generator_version": "0.1.0",
+      "template_id": "math.linear_equation",
+      "instance_index": 0,
+      "message_utf8_hex": "302e312e30006d6174682e6c696e6561725f6571756174696f6e0030",
+      "sha256": "96d35b09d254e8153d464d52df95c922bec78de517d5fe39b12e09e30f7560be",
+      "seed": "10868130423516751893"
+    },
+    {
+      "generator_version": "0.1.0",
+      "template_id": "math.linear_equation",
+      "instance_index": 1,
+      "message_utf8_hex": "302e312e30006d6174682e6c696e6561725f6571756174696f6e0031",
+      "sha256": "71f0833c4c4a5d3a29154760a7e3cb8fbe53ec263c651ff873c932733ef19b97",
+      "seed": "8210206415697632570"
+    },
+    {
+      "generator_version": "0.1.0",
+      "template_id": "math.linear_equation",
+      "instance_index": 9,
+      "message_utf8_hex": "302e312e30006d6174682e6c696e6561725f6571756174696f6e0039",
+      "sha256": "b625315286d0ba946ecbaa0ba341f3b804e83f22501bee2feecb642826f66472",
+      "seed": "13124950919560084116"
+    },
+    {
+      "generator_version": "0.1.0",
+      "template_id": "math.linear_equation",
+      "instance_index": 10,
+      "message_utf8_hex": "302e312e30006d6174682e6c696e6561725f6571756174696f6e003130",
+      "sha256": "ac5d259472834d06de0709b58c17a7b6023d103680140b8546cde76604f84258",
+      "seed": "12420124666864291078"
+    },
+    {
+      "generator_version": "0.1.0",
+      "template_id": "math.linear_equation",
+      "instance_index": 999999,
+      "message_utf8_hex": "302e312e30006d6174682e6c696e6561725f6571756174696f6e00393939393939",
+      "sha256": "4827d8710e619c990d5d8f583d1253ba6ffc1f01110ede0591fdc21c232ea786",
+      "seed": "5199362274906709145"
+    },
+    {
+      "generator_version": "0.1.0",
+      "template_id": "extraction.quarterly_ledger",
+      "instance_index": 0,
+      "message_utf8_hex": "302e312e300065787472616374696f6e2e717561727465726c795f6c65646765720030",
+      "sha256": "fb55671a79602879a41130f19562b1c53b4a1cc61fe53f5f172cb17e905b4daf",
+      "seed": "18110494839943473273"
+    },
+    {
+      "generator_version": "0.1.0",
+      "template_id": "format.release_note",
+      "instance_index": 0,
+      "message_utf8_hex": "302e312e3000666f726d61742e72656c656173655f6e6f74650030",
+      "sha256": "54d38d3daff4e7f7cd3eb1299e3a189c4f36a1119c74f3439c8d8b389bcc0baa",
+      "seed": "6112384415356479479"
+    },
+    {
+      "generator_version": "0.2.0",
+      "template_id": "math.linear_equation",
+      "instance_index": 0,
+      "message_utf8_hex": "302e322e30006d6174682e6c696e6561725f6571756174696f6e0030",
+      "sha256": "9128e3952198dcbdda7af726e2fce2b78359650d5e80d449d89a9a06b286e679",
+      "seed": "10459860364221275325"
+    },
+    {
+      "generator_version": "1.0.0",
+      "template_id": "a",
+      "instance_index": 0,
+      "message_utf8_hex": "312e302e3000610030",
+      "sha256": "e6ec505c60dbeb8414994d238e02cc5ebaa8d309680f29cd33e9fc3558f66926",
+      "seed": "16639763080919378820"
+    },
+    {
+      "generator_version": "0.1.0",
+      "template_id": "a",
+      "instance_index": 0,
+      "message_utf8_hex": "302e312e3000610030",
+      "sha256": "fe97b2c7884e95f472278d4d684ad093b6ca83c02bc164693ef7e77ffee39609",
+      "seed": "18345328177172092404"
+    },
+    {
+      "generator_version": "0.1.0",
+      "template_id": "a-b_c.d",
+      "instance_index": 42,
+      "message_utf8_hex": "302e312e3000612d625f632e64003432",
+      "sha256": "e1c0db87949fb7cf7a52814eefcf2c9b9a280a2a0ee70672529981238ebe52fb",
+      "seed": "16267243229422794703"
+    },
+    {
+      "generator_version": "0.1.0",
+      "template_id": "x",
+      "instance_index": 4294967296,
+      "message_utf8_hex": "302e312e3000780034323934393637323936",
+      "sha256": "3f1232c4a3b80a70e9f40293659a02e05b5e0aea4068614f8bfe9e42df1a1dbc",
+      "seed": "4544750794111978096"
+    }
+  ]
+}

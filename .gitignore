@@ -86,6 +86,9 @@ exports/*
 # router training artifacts / venv
 train/artifacts/
 .venv-train/
+.venv-generate/
+**/*.egg-info/
+.pytest_cache/
 **/__pycache__/
 *.py[cod]
 *.pt
@@ -102,3 +105,9 @@ apps/web/next-env.d.ts
 
 # parity research outputs (keep README + requirements)
 scripts/parity/results/
+
+# build and test output from development tasks. Published *evaluation* run logs are a
+# different thing entirely and belong versioned with a manifest; this is the transcript of
+# a build, which is reproducible by re-running the build. CI uploads it as a workflow
+# artifact instead, so it stays inspectable without entering history.
+logs/

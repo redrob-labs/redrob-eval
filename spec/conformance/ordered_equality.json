@@ -1,0 +1,540 @@
+{
+  "spec_version": "redrob-verifiable-task/v1",
+  "verifier_type": "ordered_equality",
+  "description": "Position-by-position comparison. Duplicates are always significant here, and order is the whole assertion.",
+  "cases": [
+    {
+      "id": "ordered/lines-in-order",
+      "verifier": {
+        "type": "ordered_equality",
+        "expected": ["first", "second", "third"],
+        "parse": {
+          "mode": "lines"
+        }
+      },
+      "candidate": "first\nsecond\nthird",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
+    },
+    {
+      "id": "ordered/lines-out-of-order",
+      "description": "The same members in the wrong order is the failure this type exists to catch.",
+      "verifier": {
+        "type": "ordered_equality",
+        "expected": ["first", "second", "third"],
+        "parse": {
+          "mode": "lines"
+        }
+      },
+      "candidate": "second\nfirst\nthird",
+      "expected": {
+        "passed": false,
+        "code": "element_mismatch"
+      }
+    },
+    {
+      "id": "ordered/too-few",
+      "verifier": {
+        "type": "ordered_equality",
+        "expected": ["a", "b", "c"],
+        "parse": {
+          "mode": "lines"
+        }
+      },
+      "candidate": "a\nb",
+      "expected": {
+        "passed": false,
+        "code": "cardinality_mismatch"
+      }
+    },
+    {
+      "id": "ordered/too-many",
+      "verifier": {
+        "type": "ordered_equality",
+        "expected": ["a", "b"],
+        "parse": {
+          "mode": "lines"
+        }
+      },
+      "candidate": "a\nb\nc",
+      "expected": {
+        "passed": false,
+        "code": "cardinality_mismatch"
+      }
+    },
+    {
+      "id": "ordered/duplicates-are-always-significant",
+      "description": "Unlike set_equality, there is no collapse policy: a repeated element occupies a position.",
+      "verifier": {
+        "type": "ordered_equality",
+        "expected": ["a", "a", "b"],
+        "parse": {
+          "mode": "lines"
+        }
+      },
+      "candidate": "a\na\nb",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
+    },
+    {
+      "id": "ordered/duplicate-collapsed-by-model",
+      "verifier": {
+        "type": "ordered_equality",
+        "expected": ["a", "a", "b"],
+        "parse": {
+          "mode": "lines"
+        }
+      },
+      "candidate": "a\nb",
+      "expected": {
+        "passed": false,
+        "code": "cardinality_mismatch"
+      }
+    },
+    {
+      "id": "ordered/empty-both",
+      "verifier": {
+        "type": "ordered_equality",
+        "expected": [],
+        "parse": {
+          "mode": "lines"
+        }
+      },
+      "candidate": "",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
+    },
+    {
+      "id": "ordered/empty-candidate",
+      "verifier": {
+        "type": "ordered_equality",
+        "expected": ["a"],
+        "parse": {
+          "mode": "lines"
+        }
+      },
+      "candidate": "",
+      "expected": {
+        "passed": false,
+        "code": "cardinality_mismatch"
+      }
+    },
+    {
+      "id": "ordered/trailing-newline-ignored",
+      "verifier": {
+        "type": "ordered_equality",
+        "expected": ["a", "b"],
+        "parse": {
+          "mode": "lines"
+        }
+      },
+      "candidate": "a\nb\n",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
+    },
+    {
+      "id": "ordered/mixed-line-endings",
+      "verifier": {
+        "type": "ordered_equality",
+        "expected": ["a", "b", "c"],
+        "parse": {
+          "mode": "lines"
+        }
+      },
+      "candidate": "a\r\nb\rc\n",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
+    },
+    {
+      "id": "ordered/blank-lines-dropped",
+      "verifier": {
+        "type": "ordered_equality",
+        "expected": ["a", "b"],
+        "parse": {
+          "mode": "lines"
+        }
+      },
+      "candidate": "a\n\n\nb",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
+    },
+    {
+      "id": "ordered/blank-lines-kept",
+      "verifier": {
+        "type": "ordered_equality",
+        "expected": ["a", "", "b"],
+        "parse": {
+          "mode": "lines",
+          "drop_empty": false
+        }
+      },
+      "candidate": "a\n\nb",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
+    },
+    {
+      "id": "ordered/delimiter-mode",
+      "verifier": {
+        "type": "ordered_equality",
+        "expected": ["Mon", "Tue", "Wed"],
+        "parse": {
+          "mode": "delimiter",
+          "delimiter": ","
+        }
+      },
+      "candidate": "Mon, Tue, Wed",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
+    },
+    {
+      "id": "ordered/delimiter-mode-untrimmed",
+      "verifier": {
+        "type": "ordered_equality",
+        "expected": ["Mon", "Tue"],
+        "parse": {
+          "mode": "delimiter",
+          "delimiter": ",",
+          "trim_elements": false
+        }
+      },
+      "candidate": "Mon,Tue",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
+    },
+    {
+      "id": "ordered/json-array-mode",
+      "verifier": {
+        "type": "ordered_equality",
+        "expected": [3, 1, 2],
+        "parse": {
+          "mode": "json_array"
+        },
+        "element_comparator": "json"
+      },
+      "candidate": "[3,1,2]",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
+    },
+    {
+      "id": "ordered/json-array-wrong-order",
+      "verifier": {
+        "type": "ordered_equality",
+        "expected": [3, 1, 2],
+        "parse": {
+          "mode": "json_array"
+        },
+        "element_comparator": "json"
+      },
+      "candidate": "[1,2,3]",
+      "expected": {
+        "passed": false,
+        "code": "element_mismatch"
+      }
+    },
+    {
+      "id": "ordered/json-array-parse-error",
+      "verifier": {
+        "type": "ordered_equality",
+        "expected": [1],
+        "parse": {
+          "mode": "json_array"
+        },
+        "element_comparator": "json"
+      },
+      "candidate": "1, 2, 3",
+      "expected": {
+        "passed": false,
+        "code": "parse_error"
+      }
+    },
+    {
+      "id": "ordered/json-comparator-integer-and-float-are-equal",
+      "description": "1 and 1.0 are the same JSON value; a strict typeof-based comparison would disagree.",
+      "verifier": {
+        "type": "ordered_equality",
+        "expected": [1, 2],
+        "parse": {
+          "mode": "json_array"
+        },
+        "element_comparator": "json"
+      },
+      "candidate": "[1.0,2.0]",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
+    },
+    {
+      "id": "ordered/json-comparator-true-is-not-one",
+      "verifier": {
+        "type": "ordered_equality",
+        "expected": [1],
+        "parse": {
+          "mode": "json_array"
+        },
+        "element_comparator": "json"
+      },
+      "candidate": "[true]",
+      "expected": {
+        "passed": false,
+        "code": "element_mismatch"
+      }
+    },
+    {
+      "id": "ordered/numeric-comparator-with-relative-tolerance",
+      "verifier": {
+        "type": "ordered_equality",
+        "expected": [1000000, 2000000],
+        "parse": {
+          "mode": "delimiter",
+          "delimiter": ","
+        },
+        "element_comparator": "numeric",
+        "numeric_rel_tol": 0.001
+      },
+      "candidate": "1000500, 1999000",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
+    },
+    {
+      "id": "ordered/numeric-comparator-first-position-fails",
+      "verifier": {
+        "type": "ordered_equality",
+        "expected": [1, 2, 3],
+        "parse": {
+          "mode": "delimiter",
+          "delimiter": ","
+        },
+        "element_comparator": "numeric"
+      },
+      "candidate": "9, 2, 3",
+      "expected": {
+        "passed": false,
+        "code": "element_mismatch"
+      }
+    },
+    {
+      "id": "ordered/case-insensitive-comparator",
+      "verifier": {
+        "type": "ordered_equality",
+        "expected": ["North", "South"],
+        "parse": {
+          "mode": "lines"
+        },
+        "element_comparator": "case_insensitive_string"
+      },
+      "candidate": "NORTH\nsouth",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
+    },
+    {
+      "id": "ordered/devanagari-sequence",
+      "verifier": {
+        "type": "ordered_equality",
+        "expected": ["एक", "दो", "तीन"],
+        "parse": {
+          "mode": "lines"
+        }
+      },
+      "candidate": "एक\nदो\nतीन",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
+    },
+    {
+      "id": "ordered/hangul-sequence-out-of-order",
+      "verifier": {
+        "type": "ordered_equality",
+        "expected": ["하나", "둘", "셋"],
+        "parse": {
+          "mode": "lines"
+        }
+      },
+      "candidate": "하나\n셋\n둘",
+      "expected": {
+        "passed": false,
+        "code": "element_mismatch"
+      }
+    },
+    {
+      "id": "ordered/astral-sequence",
+      "verifier": {
+        "type": "ordered_equality",
+        "expected": ["👍", "👎"],
+        "parse": {
+          "mode": "lines"
+        }
+      },
+      "candidate": "👍\n👎",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
+    },
+    {
+      "id": "ordered/nbsp-only-element-dropped",
+      "description": "An NBSP-only element trims to empty and is then dropped, which changes the cardinality.",
+      "verifier": {
+        "type": "ordered_equality",
+        "expected": ["a", "b"],
+        "parse": {
+          "mode": "delimiter",
+          "delimiter": ","
+        }
+      },
+      "candidate": "a, ,b",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
+    },
+    {
+      "id": "ordered/hangul-jamo-element-normalised-by-default",
+      "verifier": {
+        "type": "ordered_equality",
+        "expected": ["가", "b"],
+        "parse": {
+          "mode": "lines"
+        }
+      },
+      "candidate": "가\nb",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
+    },
+    {
+      "id": "ordered/hangul-jamo-element-under-normalisation-none",
+      "verifier": {
+        "type": "ordered_equality",
+        "expected": ["가", "b"],
+        "parse": {
+          "mode": "lines"
+        },
+        "normalization": "none"
+      },
+      "candidate": "가\nb",
+      "expected": {
+        "passed": false,
+        "code": "element_mismatch"
+      }
+    },
+    {
+      "id": "ordered/combining-acute-element-normalised-by-default",
+      "verifier": {
+        "type": "ordered_equality",
+        "expected": ["café"],
+        "parse": {
+          "mode": "lines"
+        }
+      },
+      "candidate": "café",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
+    },
+    {
+      "id": "ordered/astral-elements-in-order",
+      "verifier": {
+        "type": "ordered_equality",
+        "expected": ["😀", "🇮🇳"],
+        "parse": {
+          "mode": "lines"
+        }
+      },
+      "candidate": "😀\n🇮🇳",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
+    },
+    {
+      "id": "ordered/astral-elements-out-of-order",
+      "verifier": {
+        "type": "ordered_equality",
+        "expected": ["😀", "🇮🇳"],
+        "parse": {
+          "mode": "lines"
+        }
+      },
+      "candidate": "🇮🇳\n😀",
+      "expected": {
+        "passed": false,
+        "code": "element_mismatch"
+      }
+    },
+    {
+      "id": "ordered/zwj-sequence-element",
+      "verifier": {
+        "type": "ordered_equality",
+        "expected": ["👩‍👩‍👧", "👍🏽"],
+        "parse": {
+          "mode": "lines"
+        }
+      },
+      "candidate": "👩‍👩‍👧\n👍🏽",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
+    },
+    {
+      "id": "ordered/mixed-script-elements",
+      "verifier": {
+        "type": "ordered_equality",
+        "expected": ["ok", "नमस्ते", "한글", "😀"],
+        "parse": {
+          "mode": "delimiter",
+          "delimiter": ","
+        }
+      },
+      "candidate": "ok, नमस्ते, 한글, 😀",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
+    },
+    {
+      "id": "ordered/nfkc-folds-a-ligature-element",
+      "verifier": {
+        "type": "ordered_equality",
+        "expected": ["fi"],
+        "parse": {
+          "mode": "lines"
+        },
+        "normalization": "NFKC"
+      },
+      "candidate": "ﬁ",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
+    }
+  ]
+}

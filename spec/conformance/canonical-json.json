@@ -1,0 +1,245 @@
+{
+  "spec_version": "redrob-verifiable-task/v1",
+  "description": "Frozen canonical JSON vectors. Both implementations serialise value and must produce canonical byte for byte, and the same SHA-256 over its UTF-8 encoding. Most of these exist because Python's repr and ECMAScript's Number::toString present the same digits differently.",
+  "cases": [
+    {
+      "id": "null",
+      "value": null,
+      "canonical": "null",
+      "sha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
+    },
+    {
+      "id": "true",
+      "value": true,
+      "canonical": "true",
+      "sha256": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b"
+    },
+    {
+      "id": "false",
+      "value": false,
+      "canonical": "false",
+      "sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+    },
+    {
+      "id": "empty-object",
+      "value": {},
+      "canonical": "{}",
+      "sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+    },
+    {
+      "id": "empty-array",
+      "value": [],
+      "canonical": "[]",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "id": "zero",
+      "value": 0,
+      "canonical": "0",
+      "sha256": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9"
+    },
+    {
+      "id": "negative-zero-float",
+      "value": -0.0,
+      "canonical": "0",
+      "sha256": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9"
+    },
+    {
+      "id": "integral-float",
+      "value": 1.0,
+      "canonical": "1",
+      "sha256": "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b"
+    },
+    {
+      "id": "max-safe-integer",
+      "value": 9007199254740991,
+      "canonical": "9007199254740991",
+      "sha256": "f40b423c2dd95ff2b2f027e22208f438cf7242862e5e746860e697308c9add26"
+    },
+    {
+      "id": "min-safe-integer",
+      "value": -9007199254740991,
+      "canonical": "-9007199254740991",
+      "sha256": "4c933a456bb8f2e9894b2d0b26480439cd72d52fb8a27cbf8fd7f323f22c7815"
+    },
+    {
+      "id": "one-tenth",
+      "value": 0.1,
+      "canonical": "0.1",
+      "sha256": "14be4b45f18e0d8c67b4f719b5144eee88497e413709d11d85b096d8e2346310"
+    },
+    {
+      "id": "one-third",
+      "value": 0.3333333333333333,
+      "canonical": "0.3333333333333333",
+      "sha256": "e965f1b975608cb0d1dad8c30d17e0fe1bdea42df938c0bdc29d75c97b45c44b"
+    },
+    {
+      "id": "exponent-lower-boundary",
+      "value": 1e-6,
+      "canonical": "0.000001",
+      "sha256": "159fb29a827ad04b260aa6c8ab6d8637f8f2b38af5c4f3cb49d6a21205e040f8"
+    },
+    {
+      "id": "exponent-just-below-boundary",
+      "value": 1e-7,
+      "canonical": "1e-7",
+      "sha256": "5b33e02f2c5103a05d32f6ba9cb058294452bfbf393967f68bb30c1bdcbbab22"
+    },
+    {
+      "id": "exponent-nano",
+      "value": 1e-9,
+      "canonical": "1e-9",
+      "sha256": "102fcc97f45d32e96cc83b03636d643deb8bf0606adf3b1625329c4cf0eba52c"
+    },
+    {
+      "id": "exponent-upper-boundary",
+      "value": 1e21,
+      "canonical": "1e+21",
+      "sha256": "241c4643fa70b1dcde1205b71be4e3bebb17e9f880c8e1a33d0ead6c27271d3c"
+    },
+    {
+      "id": "exponent-just-below-upper",
+      "value": 1e20,
+      "canonical": "100000000000000000000",
+      "sha256": "c344e9487bfbd5c4e03c9fb90d62a5dde5e00b54d55c46e9f4a803aea162b80c"
+    },
+    {
+      "id": "smallest-subnormal",
+      "value": 5e-324,
+      "canonical": "5e-324",
+      "sha256": "c46e7ca1be4c8734f373a56530787288fa2058d73d07855e9247e949f811a42a"
+    },
+    {
+      "id": "largest-double",
+      "value": 1.7976931348623157e308,
+      "canonical": "1.7976931348623157e+308",
+      "sha256": "c2784e1abd6317452708f3fbf9641c16b959561bc621a1d408c23a20aa2cb585"
+    },
+    {
+      "id": "negative-fraction",
+      "value": -2.5,
+      "canonical": "-2.5",
+      "sha256": "20fb508cd069b7fbaf72c798394a7995c9a3ded09ccf19a294fdb9415fd03317"
+    },
+    {
+      "id": "empty-string",
+      "value": "",
+      "canonical": "\"\"",
+      "sha256": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126"
+    },
+    {
+      "id": "string-with-quote-and-backslash",
+      "value": "he said \"\\\" once",
+      "canonical": "\"he said \\\"\\\\\\\" once\"",
+      "sha256": "f9a83be2afde4c4a1cc08b8fa3e46305fdecc2d0803f96134a1353d95043755d"
+    },
+    {
+      "id": "string-with-control-characters",
+      "value": "a\u0000b\u001fc\td\ne",
+      "canonical": "\"a\\u0000b\\u001fc\\td\\ne\"",
+      "sha256": "1fa357c87219756f9407c85721853d0385abd2d3a66d652084e3c9d05b7d8e9a"
+    },
+    {
+      "id": "string-with-del",
+      "value": "ab",
+      "canonical": "\"ab\"",
+      "sha256": "373c8d06d55897183a658ec10f29e4f98a0c18f53e8d66cd4c1037caa00be0c2"
+    },
+    {
+      "id": "string-devanagari",
+      "value": "नमस्ते",
+      "canonical": "\"नमस्ते\"",
+      "sha256": "edf96c10c150674cdf9e71d5d0d3dbbf7f22857c8cf7bd51a00554cdfc351b9a"
+    },
+    {
+      "id": "string-hangul",
+      "value": "안녕하세요",
+      "canonical": "\"안녕하세요\"",
+      "sha256": "9a6c8c285a96f15d38765326909eebdead2bbcd9fa8ad587ae44899e0ff522ed"
+    },
+    {
+      "id": "string-astral",
+      "value": "👍",
+      "canonical": "\"👍\"",
+      "sha256": "203ceb6a09046401bdc44571e054396af79dd976304b5e362e613a21e9bb822c"
+    },
+    {
+      "id": "string-line-separator",
+      "value": "a b c",
+      "canonical": "\"a b c\"",
+      "sha256": "18c6bee2c10cadf5dec772e4b216f9060a21814a302ce989e183178afcf43e1a"
+    },
+    {
+      "id": "keys-sorted",
+      "value": {
+        "b": 1,
+        "a": 2,
+        "A": 3,
+        "": 4,
+        "안": 5,
+        "é": 6
+      },
+      "canonical": "{\"\":4,\"A\":3,\"a\":2,\"b\":1,\"é\":6,\"안\":5}",
+      "sha256": "983451378480e851b224abfc9a53b29ec2e2297757c68761b3c5a679cab3e883"
+    },
+    {
+      "id": "nested",
+      "value": {
+        "z": [
+          1,
+          {
+            "y": [
+              2,
+              {
+                "x": null
+              }
+            ]
+          }
+        ],
+        "a": {
+          "b": {
+            "c": [true, false]
+          }
+        }
+      },
+      "canonical": "{\"a\":{\"b\":{\"c\":[true,false]}},\"z\":[1,{\"y\":[2,{\"x\":null}]}]}",
+      "sha256": "28d547a1a24cbddc91f0bbd7c3ddb4d771c51e6fc4489e55084c7786b09895b1"
+    },
+    {
+      "id": "mixed-array",
+      "value": [1, "two", null, true, [], {}, 3.5],
+      "canonical": "[1,\"two\",null,true,[],{},3.5]",
+      "sha256": "f64330a57794fbe6bcaaf67fecc97b56ed220844fdc416ca8ed6ba2d2ad4a330"
+    },
+    {
+      "id": "array-of-floats",
+      "value": [1e-9, 1e21, 0.1, -0.0],
+      "canonical": "[1e-9,1e+21,0.1,0]",
+      "sha256": "2821d4412c446eb4c740c6ba4d53984138250d19d25747d0ac06f7866658ae4a"
+    },
+    {
+      "id": "keys-astral-versus-bmp",
+      "value": {
+        "￿": 1,
+        "👍": 2,
+        "z": 3
+      },
+      "canonical": "{\"z\":3,\"￿\":1,\"👍\":2}",
+      "sha256": "225593855a6a5f3241e5b3688842d023ff281cded8c27da5c80384480f2500f0"
+    },
+    {
+      "id": "keys-code-point-order",
+      "value": {
+        "😀": 1,
+        "": 2,
+        "a": 3
+      },
+      "canonical": "{\"a\":3,\"\":2,\"😀\":1}",
+      "sha256": "f3d4db98c3d18f7f8d405f091f7e34be7db621fc83961988c21370340001b0d2"
+    }
+  ],
+  "notes": [
+    "Object keys sort by Unicode code point. A JavaScript implementation cannot use the default Array.prototype.sort, which orders by UTF-16 code unit and therefore puts astral keys before U+E000..U+FFFF. The keys-astral-versus-bmp case exists to catch exactly that."
+  ]
+}

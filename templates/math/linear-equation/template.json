@@ -1,0 +1,26 @@
+{
+  "spec_version": "redrob-verifiable-task/v1",
+  "id": "math.linear_equation",
+  "version": "1.0.0",
+  "family": "math",
+  "parameters": [
+    { "name": "a", "type": "integer", "min": -12, "max": 12, "exclude": [0, 1, -1] },
+    { "name": "b", "type": "integer", "min": -40, "max": 40 },
+    { "name": "c", "type": "integer", "min": -60, "max": 60 },
+    { "name": "shift", "type": "integer", "min": -9, "max": 9, "exclude": [0] }
+  ],
+  "derivations": [
+    { "name": "rhs", "expr": "c + shift", "description": "right hand side once the shift is folded in" },
+    { "name": "answer", "expr": "(rhs - b) / a", "description": "the value of x" },
+    { "name": "b_term", "expr": "('+ ' + str(b)) if b >= 0 else ('- ' + str(-b))", "description": "signed b, so the prompt never reads 'x + -3'" },
+    { "name": "shift_term", "expr": "('+ ' + str(shift)) if shift >= 0 else ('- ' + str(-shift))", "description": "signed shift, for the same reason" }
+  ],
+  "verifier": {
+    "type": "numeric_tolerance",
+    "expected": "{{answer}}",
+    "abs_tol": 0.0001,
+    "rel_tol": 1e-9,
+    "trim": true
+  },
+  "notes": "Verified with numeric_tolerance rather than sympy_equiv so that the family runs in both implementations. A symbolic variant would swap the verifier for sympy_equiv and become Python-only. abs_tol is 1e-4 because the prompt asks for four decimal places, so the worst honest rounding error is 5e-5."
+}

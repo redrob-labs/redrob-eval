@@ -1,0 +1,170 @@
+name: Conformance
+
+# Two implementations of one spec are only safe if something forces them to agree. This
+# workflow runs the Python suite and the TypeScript suite over the same files in
+# spec/conformance/, then regenerates a set and diffs it against the previous run. A
+# divergence between the two, or an emitter that is not reproducible, fails the build.
+#
+# Every job writes its output to logs/ and uploads it as a workflow artifact. logs/ is
+# gitignored, so a future run stays inspectable -- including the failing ones, which are
+# the ones worth reading -- without any of it entering the repository's history. Build and
+# test output is reproducible by re-running the build; published *evaluation* run logs are
+# a different category and belong versioned with a manifest.
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+defaults:
+  run:
+    # `shell: bash` means `bash --noprofile --norc -eo pipefail`. The pipefail is load
+    # bearing: the default shell for a `run` step does not set it, so `pytest | tee` would
+    # report tee's exit code and a failing suite would pass the build silently.
+    shell: bash
+
+jobs:
+  typescript:
+    name: TypeScript conformance
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: yarn
+      - run: yarn install --frozen-lockfile
+      - run: mkdir -p logs
+      - name: Generated spec types match the schema
+        run: yarn generate:spec-types:check 2>&1 | tee logs/spec-types-drift.log
+      - name: TypeScript suite
+        run: yarn test 2>&1 | tee logs/yarn-test.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: typescript-conformance
+          path: logs/
+          retention-days: 30
+
+  python:
+    name: Python conformance
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.11', '3.12']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: python -m pip install --upgrade pip
+      - run: pip install -e "packages/generate[dev]"
+      - run: mkdir -p logs
+      - name: Python suite
+        run: pytest packages/generate -q 2>&1 | tee logs/pytest.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: python-conformance-${{ matrix.python-version }}
+          path: logs/
+          retention-days: 30
+
+  zero-divergence:
+    name: Zero divergence
+    runs-on: ubuntu-latest
+    # Each suite already checks its own side against the expected verdict in the case file.
+    # This job diffs the two implementations' actual output so that a disagreement is
+    # reported as a list of case ids rather than as two separate red builds.
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: yarn
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: yarn install --frozen-lockfile
+      - run: pip install -e packages/generate
+      - name: Diff Python verdicts against TypeScript verdicts
+        run: |
+          mkdir -p logs
+          npx tsx scripts/generate-verdicts.mts > logs/ts-verdicts.json
+          python scripts/generate_verdicts.py > logs/py-verdicts.json
+          # The diff is kept whether or not it is empty, because an empty diff is the
+          # evidence and a non-empty one is the bug report.
+          diff -u logs/py-verdicts.json logs/ts-verdicts.json | tee logs/verdict-diff.log
+          echo "zero divergence across $(( $(wc -l < logs/py-verdicts.json) - 2 )) cases"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: zero-divergence
+          path: logs/
+          retention-days: 30
+
+  reproducible-emit:
+    name: Reproducible emit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -e packages/generate
+      - name: Emit the same set twice and diff it
+        run: |
+          mkdir -p logs
+          for template in templates/math/linear-equation templates/extraction/quarterly-ledger templates/format/release-note; do
+            redrob-generate emit --template "$template" --count 8 --out /tmp/run-a --created-at 2026-01-01T00:00:00Z --citation-year 2026 --quiet
+            redrob-generate emit --template "$template" --count 8 --out /tmp/run-b --created-at 2026-01-01T00:00:00Z --citation-year 2026 --quiet
+            diff -r /tmp/run-a /tmp/run-b
+            echo "$template: byte-identical across two emits" | tee -a logs/reproducible-emit.log
+            rm -rf /tmp/run-a /tmp/run-b
+          done
+      - name: The checked-in example set is still what the emitter produces
+        run: |
+          redrob-generate emit --template templates/math/linear-equation --count 3 \
+            --out spec/conformance/example-set --created-at 2026-01-01T00:00:00Z \
+            --citation-year 2026 --quiet
+          git diff --exit-code -- spec/conformance/example-set
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reproducible-emit
+          path: logs/
+          retention-days: 30
+
+  no-python:
+    name: Quickstart without Python
+    runs-on: ubuntu-latest
+    # Generation is optional. The workbench must install, typecheck and build on a machine
+    # that has no interpreter at all, so this job removes Python from PATH before building.
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: yarn
+      - run: yarn install --frozen-lockfile
+      - name: Build with Python hidden
+        run: |
+          mkdir -p logs
+          mkdir -p "$HOME/no-python"
+          for entry in $(echo "$PATH" | tr ':' '\n'); do
+            [ -d "$entry" ] || continue
+            for tool in "$entry"/*; do
+              name=$(basename "$tool")
+              case "$name" in
+                python|python2|python3|python3.*|pip|pip3) continue ;;
+              esac
+              [ -e "$HOME/no-python/$name" ] || ln -s "$tool" "$HOME/no-python/$name" 2>/dev/null || true
+            done
+          done
+          PATH="$HOME/no-python" bash -c 'command -v python3 && exit 1; yarn build' 2>&1 | tee logs/build-without-python.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: build-without-python
+          path: logs/
+          retention-days: 30

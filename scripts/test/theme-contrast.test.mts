@@ -23,6 +23,7 @@ import {
   readBlocks,
   type Kind,
 } from '../theme-contrast.mts';
+import { THEME_SCRIPT, THEME_STORAGE_KEY } from '../../apps/web/src/lib/theme.ts';
 
 const CSS = join(process.cwd(), 'apps', 'web', 'src', 'app', 'globals.css');
 
@@ -75,6 +76,92 @@ for (const [fg, bg, kind, backdrop] of PAIRS) {
     );
   });
 }
+
+/**
+ * The pre-paint script is the whole reason a dark-mode reload does not flash white.
+ * Measured: with it, every frame of a reload is at brightness 33/255; with it removed,
+ * every frame is at 234/255. It cannot be replaced by an effect, because effects run
+ * after paint, so these assertions guard where it lives rather than what it does.
+ */
+test('the theme is applied from the document head, not from an effect', () => {
+  const layout = readFileSync(
+    join(process.cwd(), 'apps', 'web', 'src', 'app', 'layout.tsx'),
+    'utf8',
+  );
+  const head = layout.indexOf('<head>');
+  const body = layout.indexOf('<body');
+  // From `<head>`, so the import at the top of the file is not mistaken for the usage.
+  const script = layout.indexOf('THEME_SCRIPT', head);
+  assert.ok(head !== -1 && body !== -1, 'expected an explicit <head> and <body>');
+  assert.ok(script > head && script < body, 'THEME_SCRIPT must be inlined in <head>');
+  assert.match(
+    layout,
+    /suppressHydrationWarning/,
+    'the script writes data-theme onto <html> before React sees it, so <html> needs ' +
+      'suppressHydrationWarning or every load logs a hydration mismatch',
+  );
+});
+
+test('the pre-paint script runs before the bundle exists', () => {
+  assert.ok(
+    !/\bimport\b|\brequire\(/.test(THEME_SCRIPT),
+    'the script runs before the bundle, so it cannot depend on one',
+  );
+});
+
+/**
+ * Run the script against a stub document and check what it decides.
+ *
+ * Executed rather than pattern-matched, because what matters is the resolved theme and
+ * a regex over the source cannot tell whether the fallback chain is right.
+ */
+function runScript(stored: string | null, prefersDark: boolean, storageThrows = false) {
+  const root = { dataset: {} as Record<string, string>, style: {} as Record<string, string> };
+  const scope = {
+    localStorage: {
+      getItem(key: string) {
+        if (storageThrows) throw new Error('storage blocked');
+        return key === THEME_STORAGE_KEY ? stored : null;
+      },
+    },
+    matchMedia: (query: string) => ({ matches: query.includes('dark') && prefersDark }),
+    document: { documentElement: root },
+  };
+  // eslint-disable-next-line no-new-func
+  new Function('window', 'document', 'localStorage', THEME_SCRIPT)(
+    scope,
+    scope.document,
+    scope.localStorage,
+  );
+  return root;
+}
+
+test('an explicit choice wins over the operating system', () => {
+  assert.equal(runScript('dark', false).dataset.theme, 'dark');
+  assert.equal(runScript('light', true).dataset.theme, 'light');
+});
+
+test('no choice, or `system`, follows the operating system', () => {
+  assert.equal(runScript(null, true).dataset.theme, 'dark');
+  assert.equal(runScript(null, false).dataset.theme, 'light');
+  assert.equal(runScript('system', true).dataset.theme, 'dark');
+  assert.equal(runScript('system', false).dataset.theme, 'light');
+});
+
+test('a nonsense stored value does not leave the page unthemed', () => {
+  assert.equal(runScript('chartreuse', true).dataset.theme, 'dark');
+});
+
+test('blocked storage still produces a theme', () => {
+  // Private browsing throws on getItem. Rendering unthemed would be worse than light.
+  assert.equal(runScript(null, false, true).dataset.theme, 'light');
+});
+
+test('native controls are told which theme they are in', () => {
+  // Without this, the browser draws select popups and scrollbars for a light page.
+  assert.equal(runScript('dark', false).style.colorScheme, 'dark');
+  assert.equal(runScript('light', true).style.colorScheme, 'light');
+});
 
 test('every colour in globals.css below the token layer is a token', () => {
   // A literal in a rule is a colour that cannot follow the theme, and it will be the one

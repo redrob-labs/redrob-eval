@@ -35,9 +35,9 @@ Import trace:
     ./apps/web/src/app/api/deploy/terminal/[id]/inject/route.ts
 
 
-✓ Compiled successfully in 3.4s
+✓ Compiled successfully in 3.7s
   Running TypeScript ...
-  Finished TypeScript in 3.2s ...
+  Finished TypeScript in 3.4s ...
   Collecting page data using 3 workers ...
   Generating static pages using 3 workers (0/15) ...
   Generating static pages using 3 workers (3/15) 
@@ -95,4 +95,4 @@ Route (app)
 ○  (Static)   prerendered as static content
 ƒ  (Dynamic)  server-rendered on demand
 
-Done in 9.52s.
+Done in 10.19s.

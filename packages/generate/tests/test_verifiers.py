@@ -10,7 +10,10 @@ from __future__ import annotations
 
 import pytest
 
+from typing import Any
+
 from redrob_generate.errors import UnsupportedVerifierError
+from redrob_generate.verify.declarative import MAX_ALL_OF_DEPTH
 from redrob_generate.verify import (
     ALL_VERIFIER_TYPES,
     DECLARATIVE_VERIFIER_TYPES,
@@ -92,6 +95,35 @@ def test_all_of_rejects_an_executable_child_before_evaluating_anything() -> None
     assert verdict.code == "unsupported_verifier", (
         "a refused composite must not be reported as an ordinary mismatch, because a "
         "mismatch means the composite ran"
+    )
+
+
+@pytest.mark.parametrize("depth", range(MAX_ALL_OF_DEPTH + 1))
+def test_an_executable_child_at_any_permitted_depth_makes_the_composite_raise(depth: int) -> None:
+    """The conformance corpus covers depths 0, 1, 2 and the maximum.
+
+    This covers the rest, so the claim is "at every permitted depth" rather than "at the
+    depths someone thought of". Each level carries a passing declarative sibling, so a
+    lazy implementation would have something to return before reaching the executable
+    child.
+    """
+    node: Any = {
+        "type": "all_of",
+        "verifiers": [
+            {"type": "exact", "expected": "42"},
+            {"type": "sympy_equiv", "expected": "x", "symbols": ["x"]},
+        ],
+    }
+    for _ in range(depth):
+        node = {"type": "all_of", "verifiers": [{"type": "exact", "expected": "42"}, node]}
+
+    with pytest.raises(UnsupportedVerifierError):
+        run_verifier(node, "42")
+
+    verdict = run_verifier_or_fail(node, "42")
+    assert verdict.passed is False
+    assert verdict.code == "unsupported_verifier", (
+        "a refused composite reported as an ordinary verdict would mean it ran"
     )
 
 

@@ -145,6 +145,60 @@ step 09-spec-types-drift yarn generate:spec-types:check
 step 10-zero-divergence zero_divergence
 step 11-existing-verifiers-unaffected yarn verify:phase1
 
+# 5. The one line this branch adds to the shared root tsconfig must not change what Compare,
+#    Evolve or Deploy compile to. Next.js embeds a random BUILD_ID and two random encryption
+#    keys, so a raw hash diff is noise; the snapshot normalises the build id away and the
+#    five per-build random files are excluded, which a control run proves is enough.
+build_output_unchanged() {
+  local status=0
+  local snapshot="$ROOT/scripts/snapshot-build-output.py"
+  local noise='  (trace|trace-build|prerender-manifest\.json|server/server-reference-manifest\.(js|json))$'
+
+  echo "--- build with the tsconfig line present"
+  rm -rf apps/web/.next
+  yarn build >/dev/null 2>&1 || return 1
+  python3 "$snapshot" | grep -vE "$noise" >/tmp/dod-build-with.txt
+
+  echo "--- control: a second build of the identical tree"
+  rm -rf apps/web/.next
+  yarn build >/dev/null 2>&1 || return 1
+  python3 "$snapshot" | grep -vE "$noise" >/tmp/dod-build-control.txt
+  if diff /tmp/dod-build-with.txt /tmp/dod-build-control.txt; then
+    echo "    two builds of the same tree agree on $(wc -l </tmp/dod-build-with.txt) artifacts,"
+    echo "    so a difference below would be attributable to the tsconfig line"
+  else
+    echo "    the build is not reproducible even without a change, so this check cannot conclude"
+    return 1
+  fi
+
+  echo "--- build with the tsconfig line removed"
+  cp tsconfig.json /tmp/dod-tsconfig-keep.json
+  python3 - <<'PY'
+import json, re
+from pathlib import Path
+path = Path("tsconfig.json")
+text = path.read_text()
+# Drop the added option and the comment above it, leaving the file otherwise byte-identical.
+text = re.sub(r',\n(?:\s*//[^\n]*\n)*\s*"allowImportingTsExtensions": true', "", text)
+path.write_text(text)
+assert "allowImportingTsExtensions" not in path.read_text()
+PY
+  rm -rf apps/web/.next
+  yarn build >/dev/null 2>&1 || status=1
+  python3 "$snapshot" | grep -vE "$noise" >/tmp/dod-build-without.txt
+  cp /tmp/dod-tsconfig-keep.json tsconfig.json
+
+  if diff /tmp/dod-build-with.txt /tmp/dod-build-without.txt; then
+    echo "    identical across $(wc -l </tmp/dod-build-with.txt) artifacts"
+    grep -E '  server/app/(compare|evolve|deploy)\.html$' /tmp/dod-build-with.txt
+  else
+    status=1
+  fi
+  return $status
+}
+
+step 12-build-output-unchanged build_output_unchanged
+
 echo
 if [ "$FAILURES" -eq 0 ]; then
   echo "all checks passed"

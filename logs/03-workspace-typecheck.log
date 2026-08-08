@@ -4,4 +4,4 @@ yarn run v1.22.22
 $ yarn workspace @redrob/harness typecheck && yarn workspace @redrob/tokenizers typecheck
 $ tsc -p tsconfig.json --noEmit
 $ tsc -p tsconfig.json --noEmit
-Done in 2.24s.
+Done in 2.38s.

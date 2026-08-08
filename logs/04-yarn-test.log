@@ -6,1645 +6,2620 @@ TAP version 13
 # Subtest: the default command is the CLI, not an interpreter path
 ok 1 - the default command is the CLI, not an interpreter path
   ---
-  duration_ms: 0.456141
+  duration_ms: 0.546931
   ...
 # Subtest: probing an absent command reports unavailable instead of throwing
 ok 2 - probing an absent command reports unavailable instead of throwing
   ---
-  duration_ms: 3.188185
+  duration_ms: 3.697625
   ...
 # Subtest: verifying with an absent command reports unavailable instead of throwing
 ok 3 - verifying with an absent command reports unavailable instead of throwing
   ---
-  duration_ms: 2.236964
+  duration_ms: 2.332978
   ...
 # Subtest: a command that produces no JSON is a bridge failure, not a silent pass
 ok 4 - a command that produces no JSON is a bridge failure, not a silent pass
   ---
-  duration_ms: 4.563006
+  duration_ms: 7.630747
   ...
 # Subtest: non-JSON output is reported rather than parsed optimistically
 ok 5 - non-JSON output is reported rather than parsed optimistically
   ---
-  duration_ms: 2.131492
+  duration_ms: 2.782637
   ...
 # Subtest: every declarative verifier type has a conformance file
 ok 6 - every declarative verifier type has a conformance file
   ---
-  duration_ms: 1.919063
+  duration_ms: 2.32628
   ...
 # Subtest: all_of.json is well formed
 ok 7 - all_of.json is well formed
   ---
-  duration_ms: 0.231638
+  duration_ms: 0.302215
   ...
 # Subtest: all_of/empty-list-passes
 ok 8 - all_of/empty-list-passes
   ---
-  duration_ms: 0.202588
+  duration_ms: 0.245301
   ...
 # Subtest: all_of/single-child-passing
 ok 9 - all_of/single-child-passing
   ---
-  duration_ms: 0.112223
+  duration_ms: 0.145955
   ...
 # Subtest: all_of/single-child-failing-propagates-code
 ok 10 - all_of/single-child-failing-propagates-code
   ---
-  duration_ms: 0.07125
+  duration_ms: 1.498028
   ...
 # Subtest: all_of/all-children-pass
 ok 11 - all_of/all-children-pass
   ---
-  duration_ms: 0.660027
+  duration_ms: 0.738121
   ...
 # Subtest: all_of/first-failure-wins-line-count
 ok 12 - all_of/first-failure-wins-line-count
   ---
-  duration_ms: 0.17295
+  duration_ms: 0.149496
   ...
 # Subtest: all_of/first-failure-wins-reordered
 ok 13 - all_of/first-failure-wins-reordered
   ---
-  duration_ms: 0.117856
+  duration_ms: 0.162673
   ...
 # Subtest: all_of/schema-then-exact-both-pass
 ok 14 - all_of/schema-then-exact-both-pass
   ---
-  duration_ms: 0.77226
+  duration_ms: 0.847811
   ...
 # Subtest: all_of/schema-catches-wrong-value-first
 ok 15 - all_of/schema-catches-wrong-value-first
   ---
-  duration_ms: 0.323938
+  duration_ms: 0.324482
   ...
 # Subtest: all_of/exact-catches-wrong-serialisation
 ok 16 - all_of/exact-catches-wrong-serialisation
   ---
-  duration_ms: 0.171539
+  duration_ms: 0.179867
   ...
 # Subtest: all_of/invalid-json-surfaces-from-the-first-child
 ok 17 - all_of/invalid-json-surfaces-from-the-first-child
   ---
-  duration_ms: 0.072612
+  duration_ms: 0.079778
   ...
 # Subtest: all_of/nested-composition
 ok 18 - all_of/nested-composition
   ---
-  duration_ms: 0.088737
+  duration_ms: 0.092708
   ...
 # Subtest: all_of/nested-composition-inner-failure
 ok 19 - all_of/nested-composition-inner-failure
   ---
-  duration_ms: 0.162875
+  duration_ms: 0.168429
   ...
 # Subtest: all_of/nested-composition-outer-failure-wins
 ok 20 - all_of/nested-composition-outer-failure-wins
   ---
-  duration_ms: 0.037124
+  duration_ms: 0.042463
   ...
 # Subtest: all_of/three-deep-nesting
 ok 21 - all_of/three-deep-nesting
   ---
-  duration_ms: 0.034665
+  duration_ms: 0.038409
   ...
 # Subtest: all_of/three-deep-nesting-failure
 ok 22 - all_of/three-deep-nesting-failure
   ---
-  duration_ms: 0.036486
+  duration_ms: 0.038148
   ...
 # Subtest: all_of/regex-invalid-pattern-propagates
 ok 23 - all_of/regex-invalid-pattern-propagates
   ---
-  duration_ms: 0.127587
+  duration_ms: 0.098181
   ...
 # Subtest: all_of/set-then-ordered
 ok 24 - all_of/set-then-ordered
   ---
-  duration_ms: 0.314538
+  duration_ms: 0.299314
   ...
 # Subtest: all_of/unicode-children
 ok 25 - all_of/unicode-children
   ---
-  duration_ms: 0.05935
+  duration_ms: 0.0528
   ...
 # Subtest: all_of/empty-candidate-against-several-children
 ok 26 - all_of/empty-candidate-against-several-children
   ---
-  duration_ms: 0.040765
+  duration_ms: 0.03723
   ...
 # Subtest: all_of/single-passing-child-does-not-mask-later-failure
 ok 27 - all_of/single-passing-child-does-not-mask-later-failure
   ---
-  duration_ms: 0.11101
+  duration_ms: 0.124523
+  ...
+# Subtest: all_of/maximum-permitted-depth-passes
+ok 28 - all_of/maximum-permitted-depth-passes
+  ---
+  duration_ms: 0.038258
+  ...
+# Subtest: all_of/maximum-permitted-depth-failure-propagates
+ok 29 - all_of/maximum-permitted-depth-failure-propagates
+  ---
+  duration_ms: 0.034364
+  ...
+# Subtest: all_of/rejects-sympy-equiv-child
+ok 30 - all_of/rejects-sympy-equiv-child
+  ---
+  duration_ms: 0.333121
+  ...
+# Subtest: all_of/rejects-python-unittest-child
+ok 31 - all_of/rejects-python-unittest-child
+  ---
+  duration_ms: 0.060517
+  ...
+# Subtest: all_of/rejects-executable-after-passing-declarative
+ok 32 - all_of/rejects-executable-after-passing-declarative
+  ---
+  duration_ms: 0.046938
+  ...
+# Subtest: all_of/rejects-executable-after-failing-declarative
+ok 33 - all_of/rejects-executable-after-failing-declarative
+  ---
+  duration_ms: 0.063923
+  ...
+# Subtest: all_of/rejects-executable-before-declarative
+ok 34 - all_of/rejects-executable-before-declarative
+  ---
+  duration_ms: 0.055996
+  ...
+# Subtest: all_of/rejects-executable-nested-one-deep
+ok 35 - all_of/rejects-executable-nested-one-deep
+  ---
+  duration_ms: 0.045484
+  ...
+# Subtest: all_of/rejects-executable-nested-two-deep
+ok 36 - all_of/rejects-executable-nested-two-deep
+  ---
+  duration_ms: 0.042473
+  ...
+# Subtest: all_of/rejects-executable-nested-two-deep-behind-a-failure
+ok 37 - all_of/rejects-executable-nested-two-deep-behind-a-failure
+  ---
+  duration_ms: 0.042313
+  ...
+# Subtest: all_of/rejects-executable-at-maximum-permitted-depth
+ok 38 - all_of/rejects-executable-at-maximum-permitted-depth
+  ---
+  duration_ms: 0.090926
+  ...
+# Subtest: all_of/rejects-unknown-child-type
+ok 39 - all_of/rejects-unknown-child-type
+  ---
+  duration_ms: 0.052128
+  ...
+# Subtest: all_of/rejects-child-with-no-type-tag
+ok 40 - all_of/rejects-child-with-no-type-tag
+  ---
+  duration_ms: 0.04348
+  ...
+# Subtest: all_of/rejects-unknown-type-nested-deep
+ok 41 - all_of/rejects-unknown-type-nested-deep
+  ---
+  duration_ms: 0.042872
+  ...
+# Subtest: all_of/rejects-nesting-beyond-maximum-depth
+ok 42 - all_of/rejects-nesting-beyond-maximum-depth
+  ---
+  duration_ms: 0.067339
+  ...
+# Subtest: all_of/rejects-missing-verifiers-list
+ok 43 - all_of/rejects-missing-verifiers-list
+  ---
+  duration_ms: 0.036618
   ...
 # Subtest: exact.json is well formed
-ok 28 - exact.json is well formed
+ok 44 - exact.json is well formed
   ---
-  duration_ms: 0.06543
+  duration_ms: 0.063929
   ...
 # Subtest: exact/identical
-ok 29 - exact/identical
+ok 45 - exact/identical
   ---
-  duration_ms: 0.038793
+  duration_ms: 0.062524
   ...
 # Subtest: exact/empty-matches-empty
-ok 30 - exact/empty-matches-empty
+ok 46 - exact/empty-matches-empty
   ---
-  duration_ms: 0.033759
+  duration_ms: 0.029359
   ...
 # Subtest: exact/empty-candidate-nonempty-expected
-ok 31 - exact/empty-candidate-nonempty-expected
+ok 47 - exact/empty-candidate-nonempty-expected
   ---
-  duration_ms: 0.030211
+  duration_ms: 0.030362
   ...
 # Subtest: exact/trailing-whitespace-not-trimmed
-ok 32 - exact/trailing-whitespace-not-trimmed
+ok 48 - exact/trailing-whitespace-not-trimmed
   ---
-  duration_ms: 0.030582
+  duration_ms: 0.027742
   ...
 # Subtest: exact/trailing-whitespace-trimmed
-ok 33 - exact/trailing-whitespace-trimmed
+ok 49 - exact/trailing-whitespace-trimmed
   ---
-  duration_ms: 0.036616
+  duration_ms: 0.109571
   ...
 # Subtest: exact/trim-ideographic-space
-ok 34 - exact/trim-ideographic-space
+ok 50 - exact/trim-ideographic-space
   ---
-  duration_ms: 0.036193
+  duration_ms: 0.038501
   ...
 # Subtest: exact/collapse-internal-runs
-ok 35 - exact/collapse-internal-runs
+ok 51 - exact/collapse-internal-runs
   ---
-  duration_ms: 0.139857
+  duration_ms: 0.080964
   ...
 # Subtest: exact/no-collapse-internal-runs
-ok 36 - exact/no-collapse-internal-runs
+ok 52 - exact/no-collapse-internal-runs
   ---
-  duration_ms: 0.036227
+  duration_ms: 0.034377
   ...
 # Subtest: exact/collapse-nbsp-to-space
-ok 37 - exact/collapse-nbsp-to-space
+ok 53 - exact/collapse-nbsp-to-space
   ---
-  duration_ms: 0.034887
+  duration_ms: 0.06817
   ...
 # Subtest: exact/nbsp-without-collapse
-ok 38 - exact/nbsp-without-collapse
+ok 54 - exact/nbsp-without-collapse
   ---
-  duration_ms: 0.030427
+  duration_ms: 0.031392
   ...
 # Subtest: exact/case-sensitive-by-default
-ok 39 - exact/case-sensitive-by-default
+ok 55 - exact/case-sensitive-by-default
   ---
-  duration_ms: 1.762659
+  duration_ms: 0.463517
   ...
 # Subtest: exact/case-insensitive
-ok 40 - exact/case-insensitive
+ok 56 - exact/case-insensitive
   ---
-  duration_ms: 0.079486
+  duration_ms: 0.084909
   ...
 # Subtest: exact/crlf-normalised
-ok 41 - exact/crlf-normalised
+ok 57 - exact/crlf-normalised
   ---
-  duration_ms: 0.044297
+  duration_ms: 0.038047
   ...
 # Subtest: exact/lone-cr-normalised
-ok 42 - exact/lone-cr-normalised
+ok 58 - exact/lone-cr-normalised
   ---
-  duration_ms: 0.03219
+  duration_ms: 0.027386
   ...
 # Subtest: exact/crlf-not-normalised
-ok 43 - exact/crlf-not-normalised
+ok 59 - exact/crlf-not-normalised
   ---
-  duration_ms: 0.052986
+  duration_ms: 0.025381
   ...
 # Subtest: exact/devanagari-nfc
-ok 44 - exact/devanagari-nfc
+ok 60 - exact/devanagari-nfc
   ---
-  duration_ms: 0.047642
+  duration_ms: 0.080493
   ...
 # Subtest: exact/devanagari-unnormalised
-ok 45 - exact/devanagari-unnormalised
+ok 61 - exact/devanagari-unnormalised
   ---
-  duration_ms: 0.027732
+  duration_ms: 0.035246
   ...
 # Subtest: exact/hangul-jamo-nfc
-ok 46 - exact/hangul-jamo-nfc
+ok 62 - exact/hangul-jamo-nfc
   ---
-  duration_ms: 0.029815
+  duration_ms: 0.030308
   ...
 # Subtest: exact/hangul-jamo-unnormalised
-ok 47 - exact/hangul-jamo-unnormalised
+ok 63 - exact/hangul-jamo-unnormalised
   ---
-  duration_ms: 0.026897
+  duration_ms: 0.025884
   ...
 # Subtest: exact/nfkc-ligature
-ok 48 - exact/nfkc-ligature
+ok 64 - exact/nfkc-ligature
   ---
-  duration_ms: 0.042108
+  duration_ms: 0.058329
   ...
 # Subtest: exact/nfc-does-not-fold-ligature
-ok 49 - exact/nfc-does-not-fold-ligature
-  ---
-  duration_ms: 0.036237
-  ...
-# Subtest: exact/nfd-decomposes
-ok 50 - exact/nfd-decomposes
-  ---
-  duration_ms: 0.030031
-  ...
-# Subtest: exact/full-pipeline
-ok 51 - exact/full-pipeline
-  ---
-  duration_ms: 0.049944
-  ...
-# Subtest: exact/astral-emoji-equal
-ok 52 - exact/astral-emoji-equal
-  ---
-  duration_ms: 0.028184
-  ...
-# Subtest: exact/astral-emoji-different
-ok 53 - exact/astral-emoji-different
-  ---
-  duration_ms: 0.029025
-  ...
-# Subtest: exact/whitespace-only-candidate-trimmed
-ok 54 - exact/whitespace-only-candidate-trimmed
-  ---
-  duration_ms: 0.028329
-  ...
-# Subtest: exact/devanagari-case-insensitive-is-identity
-ok 55 - exact/devanagari-case-insensitive-is-identity
-  ---
-  duration_ms: 0.029617
-  ...
-# Subtest: format_constraint.json is well formed
-ok 56 - format_constraint.json is well formed
-  ---
-  duration_ms: 0.06561
-  ...
-# Subtest: format/no-constraints-accepts-anything
-ok 57 - format/no-constraints-accepts-anything
-  ---
-  duration_ms: 0.040691
-  ...
-# Subtest: format/min-length-satisfied
-ok 58 - format/min-length-satisfied
-  ---
-  duration_ms: 0.034108
-  ...
-# Subtest: format/min-length-boundary-below
-ok 59 - format/min-length-boundary-below
-  ---
-  duration_ms: 0.032918
-  ...
-# Subtest: format/max-length-boundary
-ok 60 - format/max-length-boundary
-  ---
-  duration_ms: 0.030521
-  ...
-# Subtest: format/empty-candidate-with-min-length
-ok 61 - format/empty-candidate-with-min-length
-  ---
-  duration_ms: 0.029683
-  ...
-# Subtest: format/length-counts-code-points-not-utf16-units
-ok 62 - format/length-counts-code-points-not-utf16-units
-  ---
-  duration_ms: 0.032506
-  ...
-# Subtest: format/length-counts-combining-marks-separately
-ok 63 - format/length-counts-combining-marks-separately
-  ---
-  duration_ms: 0.034093
-  ...
-# Subtest: format/hangul-precomposed-length
-ok 64 - format/hangul-precomposed-length
+ok 65 - exact/nfc-does-not-fold-ligature
   ---
   duration_ms: 0.02884
   ...
-# Subtest: format/trim-before-length
-ok 65 - format/trim-before-length
+# Subtest: exact/nfd-decomposes
+ok 66 - exact/nfd-decomposes
   ---
-  duration_ms: 0.035971
+  duration_ms: 0.032291
+  ...
+# Subtest: exact/full-pipeline
+ok 67 - exact/full-pipeline
+  ---
+  duration_ms: 0.051718
+  ...
+# Subtest: exact/astral-emoji-equal
+ok 68 - exact/astral-emoji-equal
+  ---
+  duration_ms: 0.02459
+  ...
+# Subtest: exact/astral-emoji-different
+ok 69 - exact/astral-emoji-different
+  ---
+  duration_ms: 0.024688
+  ...
+# Subtest: exact/whitespace-only-candidate-trimmed
+ok 70 - exact/whitespace-only-candidate-trimmed
+  ---
+  duration_ms: 0.026283
+  ...
+# Subtest: exact/devanagari-case-insensitive-is-identity
+ok 71 - exact/devanagari-case-insensitive-is-identity
+  ---
+  duration_ms: 0.025193
+  ...
+# Subtest: format_constraint.json is well formed
+ok 72 - format_constraint.json is well formed
+  ---
+  duration_ms: 0.052209
+  ...
+# Subtest: format/no-constraints-accepts-anything
+ok 73 - format/no-constraints-accepts-anything
+  ---
+  duration_ms: 0.036752
+  ...
+# Subtest: format/min-length-satisfied
+ok 74 - format/min-length-satisfied
+  ---
+  duration_ms: 4.321172
+  ...
+# Subtest: format/min-length-boundary-below
+ok 75 - format/min-length-boundary-below
+  ---
+  duration_ms: 0.10347
+  ...
+# Subtest: format/max-length-boundary
+ok 76 - format/max-length-boundary
+  ---
+  duration_ms: 0.03955
+  ...
+# Subtest: format/empty-candidate-with-min-length
+ok 77 - format/empty-candidate-with-min-length
+  ---
+  duration_ms: 0.027318
+  ...
+# Subtest: format/length-counts-code-points-not-utf16-units
+ok 78 - format/length-counts-code-points-not-utf16-units
+  ---
+  duration_ms: 0.035271
+  ...
+# Subtest: format/length-counts-combining-marks-separately
+ok 79 - format/length-counts-combining-marks-separately
+  ---
+  duration_ms: 0.031769
+  ...
+# Subtest: format/hangul-precomposed-length
+ok 80 - format/hangul-precomposed-length
+  ---
+  duration_ms: 0.02472
+  ...
+# Subtest: format/trim-before-length
+ok 81 - format/trim-before-length
+  ---
+  duration_ms: 0.034753
   ...
 # Subtest: format/no-trim-before-length
-ok 66 - format/no-trim-before-length
+ok 82 - format/no-trim-before-length
   ---
-  duration_ms: 0.029229
+  duration_ms: 0.024907
   ...
 # Subtest: format/crlf-normalised-shortens-length
-ok 67 - format/crlf-normalised-shortens-length
+ok 83 - format/crlf-normalised-shortens-length
   ---
-  duration_ms: 0.028666
+  duration_ms: 0.024894
   ...
 # Subtest: format/crlf-not-normalised
-ok 68 - format/crlf-not-normalised
+ok 84 - format/crlf-not-normalised
   ---
-  duration_ms: 1.250921
+  duration_ms: 0.023745
   ...
 # Subtest: format/line-count-exact
-ok 69 - format/line-count-exact
+ok 85 - format/line-count-exact
   ---
-  duration_ms: 0.079521
+  duration_ms: 0.025908
   ...
 # Subtest: format/trailing-newline-adds-no-line
-ok 70 - format/trailing-newline-adds-no-line
+ok 86 - format/trailing-newline-adds-no-line
   ---
-  duration_ms: 0.038696
+  duration_ms: 0.026568
   ...
 # Subtest: format/two-trailing-newlines-add-one-line
-ok 71 - format/two-trailing-newlines-add-one-line
+ok 87 - format/two-trailing-newlines-add-one-line
   ---
-  duration_ms: 0.03694
+  duration_ms: 0.025935
   ...
 # Subtest: format/empty-string-has-zero-lines
-ok 72 - format/empty-string-has-zero-lines
+ok 88 - format/empty-string-has-zero-lines
   ---
-  duration_ms: 0.030697
+  duration_ms: 0.024548
   ...
 # Subtest: format/single-line-has-one-line
-ok 73 - format/single-line-has-one-line
+ok 89 - format/single-line-has-one-line
   ---
-  duration_ms: 0.029589
+  duration_ms: 0.021282
   ...
 # Subtest: format/mixed-line-endings-counted-uniformly
-ok 74 - format/mixed-line-endings-counted-uniformly
+ok 90 - format/mixed-line-endings-counted-uniformly
   ---
-  duration_ms: 0.028247
+  duration_ms: 0.021755
   ...
 # Subtest: format/unicode-line-separator-is-not-a-line-ending
-ok 75 - format/unicode-line-separator-is-not-a-line-ending
+ok 91 - format/unicode-line-separator-is-not-a-line-ending
   ---
-  duration_ms: 0.028039
+  duration_ms: 0.033243
   ...
 # Subtest: format/too-many-lines
-ok 76 - format/too-many-lines
+ok 92 - format/too-many-lines
   ---
-  duration_ms: 0.030427
+  duration_ms: 0.023024
   ...
 # Subtest: format/required-substring-present
-ok 77 - format/required-substring-present
+ok 93 - format/required-substring-present
   ---
-  duration_ms: 0.036739
+  duration_ms: 1.217585
   ...
 # Subtest: format/required-substring-absent
-ok 78 - format/required-substring-absent
+ok 94 - format/required-substring-absent
   ---
-  duration_ms: 0.093684
+  duration_ms: 0.045254
   ...
 # Subtest: format/required-substring-case-sensitive-by-default
-ok 79 - format/required-substring-case-sensitive-by-default
+ok 95 - format/required-substring-case-sensitive-by-default
   ---
-  duration_ms: 0.034145
+  duration_ms: 0.029135
   ...
 # Subtest: format/required-substring-case-insensitive
-ok 80 - format/required-substring-case-insensitive
+ok 96 - format/required-substring-case-insensitive
   ---
-  duration_ms: 0.029266
+  duration_ms: 0.032259
   ...
 # Subtest: format/empty-required-substring-always-present
-ok 81 - format/empty-required-substring-always-present
+ok 97 - format/empty-required-substring-always-present
   ---
-  duration_ms: 0.024395
+  duration_ms: 0.021715
   ...
 # Subtest: format/forbidden-substring-present
-ok 82 - format/forbidden-substring-present
+ok 98 - format/forbidden-substring-present
   ---
-  duration_ms: 0.031604
+  duration_ms: 0.026588
   ...
 # Subtest: format/forbidden-substring-absent
-ok 83 - format/forbidden-substring-absent
+ok 99 - format/forbidden-substring-absent
   ---
-  duration_ms: 0.031331
+  duration_ms: 0.021203
   ...
 # Subtest: format/forbidden-substring-case-insensitive
-ok 84 - format/forbidden-substring-case-insensitive
+ok 100 - format/forbidden-substring-case-insensitive
   ---
-  duration_ms: 0.033134
+  duration_ms: 0.036412
   ...
 # Subtest: format/forbidden-substring-case-sensitive-misses-other-casing
-ok 85 - format/forbidden-substring-case-sensitive-misses-other-casing
+ok 101 - format/forbidden-substring-case-sensitive-misses-other-casing
   ---
-  duration_ms: 0.06413
+  duration_ms: 0.021098
   ...
 # Subtest: format/devanagari-required-substring
-ok 86 - format/devanagari-required-substring
+ok 102 - format/devanagari-required-substring
   ---
-  duration_ms: 0.032196
+  duration_ms: 0.021452
   ...
 # Subtest: format/hangul-forbidden-substring
-ok 87 - format/hangul-forbidden-substring
+ok 103 - format/hangul-forbidden-substring
   ---
-  duration_ms: 0.026148
+  duration_ms: 0.021286
   ...
 # Subtest: format/length-is-checked-before-line-count
-ok 88 - format/length-is-checked-before-line-count
+ok 104 - format/length-is-checked-before-line-count
   ---
-  duration_ms: 0.027823
+  duration_ms: 0.021818
   ...
 # Subtest: format/line-count-is-checked-before-substrings
-ok 89 - format/line-count-is-checked-before-substrings
+ok 105 - format/line-count-is-checked-before-substrings
   ---
-  duration_ms: 0.028981
+  duration_ms: 0.022096
   ...
 # Subtest: format/required-is-checked-before-forbidden
-ok 90 - format/required-is-checked-before-forbidden
+ok 106 - format/required-is-checked-before-forbidden
   ---
-  duration_ms: 0.027845
+  duration_ms: 0.02159
   ...
 # Subtest: format/full-release-note-shape
-ok 91 - format/full-release-note-shape
-  ---
-  duration_ms: 0.051323
-  ...
-# Subtest: format/full-release-note-shape-with-banned-word
-ok 92 - format/full-release-note-shape-with-banned-word
-  ---
-  duration_ms: 0.031655
-  ...
-# Subtest: json_schema.json is well formed
-ok 93 - json_schema.json is well formed
-  ---
-  duration_ms: 0.061841
-  ...
-# Subtest: json_schema/object-valid
-ok 94 - json_schema/object-valid
-  ---
-  duration_ms: 0.083271
-  ...
-# Subtest: json_schema/missing-required
-ok 95 - json_schema/missing-required
-  ---
-  duration_ms: 0.138694
-  ...
-# Subtest: json_schema/not-json
-ok 96 - json_schema/not-json
-  ---
-  duration_ms: 0.044026
-  ...
-# Subtest: json_schema/empty-candidate
-ok 97 - json_schema/empty-candidate
-  ---
-  duration_ms: 0.034663
-  ...
-# Subtest: json_schema/truncated-json
-ok 98 - json_schema/truncated-json
-  ---
-  duration_ms: 0.034094
-  ...
-# Subtest: json_schema/trailing-comma-is-not-json
-ok 99 - json_schema/trailing-comma-is-not-json
-  ---
-  duration_ms: 0.033161
-  ...
-# Subtest: json_schema/code-fence-is-not-json
-ok 100 - json_schema/code-fence-is-not-json
-  ---
-  duration_ms: 0.036301
-  ...
-# Subtest: json_schema/array-of-integers
-ok 101 - json_schema/array-of-integers
-  ---
-  duration_ms: 0.152811
-  ...
-# Subtest: json_schema/array-wrong-item-type
-ok 102 - json_schema/array-wrong-item-type
-  ---
-  duration_ms: 0.091358
-  ...
-# Subtest: json_schema/array-too-short
-ok 103 - json_schema/array-too-short
-  ---
-  duration_ms: 0.046206
-  ...
-# Subtest: json_schema/integer-accepts-integral-float
-ok 104 - json_schema/integer-accepts-integral-float
-  ---
-  duration_ms: 0.065144
-  ...
-# Subtest: json_schema/integer-rejects-fraction
-ok 105 - json_schema/integer-rejects-fraction
-  ---
-  duration_ms: 0.039363
-  ...
-# Subtest: json_schema/boolean-is-not-integer
-ok 106 - json_schema/boolean-is-not-integer
-  ---
-  duration_ms: 0.02988
-  ...
-# Subtest: json_schema/null-type
-ok 107 - json_schema/null-type
-  ---
-  duration_ms: 0.025565
-  ...
-# Subtest: json_schema/type-union
-ok 108 - json_schema/type-union
-  ---
-  duration_ms: 0.026793
-  ...
-# Subtest: json_schema/type-union-violation
-ok 109 - json_schema/type-union-violation
-  ---
-  duration_ms: 0.029817
-  ...
-# Subtest: json_schema/deeply-nested-valid
-ok 110 - json_schema/deeply-nested-valid
-  ---
-  duration_ms: 1.583936
-  ...
-# Subtest: json_schema/deeply-nested-violation-at-leaf
-ok 111 - json_schema/deeply-nested-violation-at-leaf
-  ---
-  duration_ms: 0.074789
-  ...
-# Subtest: json_schema/enum-member
-ok 112 - json_schema/enum-member
-  ---
-  duration_ms: 0.069457
-  ...
-# Subtest: json_schema/enum-non-member
-ok 113 - json_schema/enum-non-member
-  ---
-  duration_ms: 0.03302
-  ...
-# Subtest: json_schema/const-structural
-ok 114 - json_schema/const-structural
-  ---
-  duration_ms: 0.070891
-  ...
-# Subtest: json_schema/const-mismatch
-ok 115 - json_schema/const-mismatch
-  ---
-  duration_ms: 0.035344
-  ...
-# Subtest: json_schema/min-length-counts-code-points-devanagari
-ok 116 - json_schema/min-length-counts-code-points-devanagari
-  ---
-  duration_ms: 0.02815
-  ...
-# Subtest: json_schema/max-length-counts-code-points-hangul
-ok 117 - json_schema/max-length-counts-code-points-hangul
-  ---
-  duration_ms: 0.028495
-  ...
-# Subtest: json_schema/max-length-counts-astral-as-one
-ok 118 - json_schema/max-length-counts-astral-as-one
-  ---
-  duration_ms: 0.023456
-  ...
-# Subtest: json_schema/pattern-matches
-ok 119 - json_schema/pattern-matches
-  ---
-  duration_ms: 0.256275
-  ...
-# Subtest: json_schema/pattern-violation
-ok 120 - json_schema/pattern-violation
-  ---
-  duration_ms: 0.072744
-  ...
-# Subtest: json_schema/pattern-is-unanchored-search
-ok 121 - json_schema/pattern-is-unanchored-search
-  ---
-  duration_ms: 0.035415
-  ...
-# Subtest: json_schema/unique-items-violation
-ok 122 - json_schema/unique-items-violation
-  ---
-  duration_ms: 0.077791
-  ...
-# Subtest: json_schema/unique-items-numeric-equality
-ok 123 - json_schema/unique-items-numeric-equality
-  ---
-  duration_ms: 0.031553
-  ...
-# Subtest: json_schema/unique-items-boolean-is-not-one
-ok 124 - json_schema/unique-items-boolean-is-not-one
-  ---
-  duration_ms: 0.027242
-  ...
-# Subtest: json_schema/unique-items-structural
-ok 125 - json_schema/unique-items-structural
-  ---
-  duration_ms: 0.031543
-  ...
-# Subtest: json_schema/additional-properties-false
-ok 126 - json_schema/additional-properties-false
-  ---
-  duration_ms: 0.038882
-  ...
-# Subtest: json_schema/additional-properties-schema
-ok 127 - json_schema/additional-properties-schema
-  ---
-  duration_ms: 0.031591
-  ...
-# Subtest: json_schema/pattern-properties
-ok 128 - json_schema/pattern-properties
-  ---
-  duration_ms: 0.115438
-  ...
-# Subtest: json_schema/pattern-properties-violation
-ok 129 - json_schema/pattern-properties-violation
-  ---
-  duration_ms: 0.051437
-  ...
-# Subtest: json_schema/any-of
-ok 130 - json_schema/any-of
-  ---
-  duration_ms: 0.076734
-  ...
-# Subtest: json_schema/one-of-exactly-one
-ok 131 - json_schema/one-of-exactly-one
-  ---
-  duration_ms: 0.047516
-  ...
-# Subtest: json_schema/one-of-two-matches-fails
-ok 132 - json_schema/one-of-two-matches-fails
-  ---
-  duration_ms: 0.031876
-  ...
-# Subtest: json_schema/all-of
-ok 133 - json_schema/all-of
-  ---
-  duration_ms: 0.042868
-  ...
-# Subtest: json_schema/not
-ok 134 - json_schema/not
-  ---
-  duration_ms: 0.028495
-  ...
-# Subtest: json_schema/not-violation
-ok 135 - json_schema/not-violation
-  ---
-  duration_ms: 0.028554
-  ...
-# Subtest: json_schema/local-ref
-ok 136 - json_schema/local-ref
-  ---
-  duration_ms: 0.107742
-  ...
-# Subtest: json_schema/local-ref-violation
-ok 137 - json_schema/local-ref-violation
-  ---
-  duration_ms: 0.046897
-  ...
-# Subtest: json_schema/boolean-schema-true
-ok 138 - json_schema/boolean-schema-true
-  ---
-  duration_ms: 0.023857
-  ...
-# Subtest: json_schema/boolean-schema-false
-ok 139 - json_schema/boolean-schema-false
-  ---
-  duration_ms: 0.02233
-  ...
-# Subtest: json_schema/multiple-of
-ok 140 - json_schema/multiple-of
-  ---
-  duration_ms: 0.02944
-  ...
-# Subtest: json_schema/multiple-of-violation
-ok 141 - json_schema/multiple-of-violation
-  ---
-  duration_ms: 0.025455
-  ...
-# Subtest: json_schema/exclusive-minimum-boundary
-ok 142 - json_schema/exclusive-minimum-boundary
-  ---
-  duration_ms: 0.025299
-  ...
-# Subtest: json_schema/inclusive-minimum-boundary
-ok 143 - json_schema/inclusive-minimum-boundary
-  ---
-  duration_ms: 0.021349
-  ...
-# Subtest: json_schema/prefix-items
-ok 144 - json_schema/prefix-items
-  ---
-  duration_ms: 0.051995
-  ...
-# Subtest: json_schema/prefix-items-extra-rejected
-ok 145 - json_schema/prefix-items-extra-rejected
-  ---
-  duration_ms: 0.031917
-  ...
-# Subtest: json_schema/property-names
-ok 146 - json_schema/property-names
-  ---
-  duration_ms: 0.117282
-  ...
-# Subtest: json_schema/dependent-required
-ok 147 - json_schema/dependent-required
-  ---
-  duration_ms: 0.035572
-  ...
-# Subtest: json_schema/min-max-properties
-ok 148 - json_schema/min-max-properties
-  ---
-  duration_ms: 0.02747
-  ...
-# Subtest: json_schema/contains-with-min-contains
-ok 149 - json_schema/contains-with-min-contains
-  ---
-  duration_ms: 0.058124
-  ...
-# Subtest: json_schema/contains-not-enough
-ok 150 - json_schema/contains-not-enough
-  ---
-  duration_ms: 0.02726
-  ...
-# Subtest: json_schema/empty-schema-accepts-anything
-ok 151 - json_schema/empty-schema-accepts-anything
-  ---
-  duration_ms: 0.026836
-  ...
-# Subtest: numeric_tolerance.json is well formed
-ok 152 - numeric_tolerance.json is well formed
-  ---
-  duration_ms: 0.038297
-  ...
-# Subtest: numeric/integer-exact
-ok 153 - numeric/integer-exact
-  ---
-  duration_ms: 0.051707
-  ...
-# Subtest: numeric/trim-by-default
-ok 154 - numeric/trim-by-default
-  ---
-  duration_ms: 0.025897
-  ...
-# Subtest: numeric/trim-disabled
-ok 155 - numeric/trim-disabled
-  ---
-  duration_ms: 0.021688
-  ...
-# Subtest: numeric/empty-candidate
-ok 156 - numeric/empty-candidate
-  ---
-  duration_ms: 0.020047
-  ...
-# Subtest: numeric/prose-candidate
-ok 157 - numeric/prose-candidate
-  ---
-  duration_ms: 0.020826
-  ...
-# Subtest: numeric/two-numbers
-ok 158 - numeric/two-numbers
-  ---
-  duration_ms: 0.020562
-  ...
-# Subtest: numeric/hex-rejected
-ok 159 - numeric/hex-rejected
-  ---
-  duration_ms: 0.022306
-  ...
-# Subtest: numeric/underscore-separator-rejected
-ok 160 - numeric/underscore-separator-rejected
-  ---
-  duration_ms: 0.0198
-  ...
-# Subtest: numeric/devanagari-digits-rejected
-ok 161 - numeric/devanagari-digits-rejected
-  ---
-  duration_ms: 0.073902
-  ...
-# Subtest: numeric/thousands-separator-allowed
-ok 162 - numeric/thousands-separator-allowed
-  ---
-  duration_ms: 0.030207
-  ...
-# Subtest: numeric/thousands-separator-not-allowed
-ok 163 - numeric/thousands-separator-not-allowed
-  ---
-  duration_ms: 0.060933
-  ...
-# Subtest: numeric/leading-plus
-ok 164 - numeric/leading-plus
-  ---
-  duration_ms: 0.03346
-  ...
-# Subtest: numeric/leading-point
-ok 165 - numeric/leading-point
-  ---
-  duration_ms: 0.028173
-  ...
-# Subtest: numeric/trailing-point
-ok 166 - numeric/trailing-point
-  ---
-  duration_ms: 0.02156
-  ...
-# Subtest: numeric/scientific-notation
-ok 167 - numeric/scientific-notation
-  ---
-  duration_ms: 0.021803
-  ...
-# Subtest: numeric/negative-zero-equals-zero
-ok 168 - numeric/negative-zero-equals-zero
-  ---
-  duration_ms: 0.021232
-  ...
-# Subtest: numeric/abs-tolerance-inside
-ok 169 - numeric/abs-tolerance-inside
-  ---
-  duration_ms: 0.034291
-  ...
-# Subtest: numeric/abs-tolerance-outside
-ok 170 - numeric/abs-tolerance-outside
-  ---
-  duration_ms: 0.038209
-  ...
-# Subtest: numeric/binary-float-artifact-exact
-ok 171 - numeric/binary-float-artifact-exact
-  ---
-  duration_ms: 0.030653
-  ...
-# Subtest: numeric/binary-float-artifact-tolerated
-ok 172 - numeric/binary-float-artifact-tolerated
-  ---
-  duration_ms: 0.02779
-  ...
-# Subtest: numeric/relative-tolerance-inside
-ok 173 - numeric/relative-tolerance-inside
-  ---
-  duration_ms: 0.021653
-  ...
-# Subtest: numeric/relative-tolerance-outside
-ok 174 - numeric/relative-tolerance-outside
-  ---
-  duration_ms: 0.027171
-  ...
-# Subtest: numeric/relative-tolerance-against-zero-degenerates
-ok 175 - numeric/relative-tolerance-against-zero-degenerates
-  ---
-  duration_ms: 0.024059
-  ...
-# Subtest: numeric/boundary-difference-equals-tolerance
-ok 176 - numeric/boundary-difference-equals-tolerance
-  ---
-  duration_ms: 0.023603
-  ...
-# Subtest: numeric/nan-not-accepted-by-default
-ok 177 - numeric/nan-not-accepted-by-default
-  ---
-  duration_ms: 0.044694
-  ...
-# Subtest: numeric/nan-accepted-when-configured
-ok 178 - numeric/nan-accepted-when-configured
-  ---
-  duration_ms: 0.038979
-  ...
-# Subtest: numeric/nan-candidate-finite-expectation
-ok 179 - numeric/nan-candidate-finite-expectation
-  ---
-  duration_ms: 0.024636
-  ...
-# Subtest: numeric/finite-candidate-nan-expectation
-ok 180 - numeric/finite-candidate-nan-expectation
-  ---
-  duration_ms: 0.025581
-  ...
-# Subtest: numeric/nan-beats-huge-tolerance
-ok 181 - numeric/nan-beats-huge-tolerance
-  ---
-  duration_ms: 0.022767
-  ...
-# Subtest: numeric/positive-infinity-matches
-ok 182 - numeric/positive-infinity-matches
-  ---
-  duration_ms: 0.027092
-  ...
-# Subtest: numeric/infinity-abbreviation
-ok 183 - numeric/infinity-abbreviation
-  ---
-  duration_ms: 0.025798
-  ...
-# Subtest: numeric/infinity-sign-must-match
-ok 184 - numeric/infinity-sign-must-match
-  ---
-  duration_ms: 0.025236
-  ...
-# Subtest: numeric/finite-against-infinity
-ok 185 - numeric/finite-against-infinity
-  ---
-  duration_ms: 0.02408
-  ...
-# Subtest: numeric/overflow-to-infinity
-ok 186 - numeric/overflow-to-infinity
-  ---
-  duration_ms: 0.024475
-  ...
-# Subtest: numeric/underflow-to-zero
-ok 187 - numeric/underflow-to-zero
-  ---
-  duration_ms: 0.023535
-  ...
-# Subtest: numeric/subnormal
-ok 188 - numeric/subnormal
-  ---
-  duration_ms: 0.023427
-  ...
-# Subtest: numeric/large-magnitude-relative
-ok 189 - numeric/large-magnitude-relative
-  ---
-  duration_ms: 0.058829
-  ...
-# Subtest: ordered_equality.json is well formed
-ok 190 - ordered_equality.json is well formed
-  ---
-  duration_ms: 0.042263
-  ...
-# Subtest: ordered/lines-in-order
-ok 191 - ordered/lines-in-order
-  ---
-  duration_ms: 0.033324
-  ...
-# Subtest: ordered/lines-out-of-order
-ok 192 - ordered/lines-out-of-order
-  ---
-  duration_ms: 0.028391
-  ...
-# Subtest: ordered/too-few
-ok 193 - ordered/too-few
-  ---
-  duration_ms: 0.046394
-  ...
-# Subtest: ordered/too-many
-ok 194 - ordered/too-many
-  ---
-  duration_ms: 0.027623
-  ...
-# Subtest: ordered/duplicates-are-always-significant
-ok 195 - ordered/duplicates-are-always-significant
-  ---
-  duration_ms: 0.045444
-  ...
-# Subtest: ordered/duplicate-collapsed-by-model
-ok 196 - ordered/duplicate-collapsed-by-model
-  ---
-  duration_ms: 0.029048
-  ...
-# Subtest: ordered/empty-both
-ok 197 - ordered/empty-both
-  ---
-  duration_ms: 0.055902
-  ...
-# Subtest: ordered/empty-candidate
-ok 198 - ordered/empty-candidate
-  ---
-  duration_ms: 0.030243
-  ...
-# Subtest: ordered/trailing-newline-ignored
-ok 199 - ordered/trailing-newline-ignored
-  ---
-  duration_ms: 0.029409
-  ...
-# Subtest: ordered/mixed-line-endings
-ok 200 - ordered/mixed-line-endings
-  ---
-  duration_ms: 0.026343
-  ...
-# Subtest: ordered/blank-lines-dropped
-ok 201 - ordered/blank-lines-dropped
-  ---
-  duration_ms: 0.024004
-  ...
-# Subtest: ordered/blank-lines-kept
-ok 202 - ordered/blank-lines-kept
-  ---
-  duration_ms: 0.027345
-  ...
-# Subtest: ordered/delimiter-mode
-ok 203 - ordered/delimiter-mode
-  ---
-  duration_ms: 0.029326
-  ...
-# Subtest: ordered/delimiter-mode-untrimmed
-ok 204 - ordered/delimiter-mode-untrimmed
-  ---
-  duration_ms: 0.02619
-  ...
-# Subtest: ordered/json-array-mode
-ok 205 - ordered/json-array-mode
-  ---
-  duration_ms: 0.033356
-  ...
-# Subtest: ordered/json-array-wrong-order
-ok 206 - ordered/json-array-wrong-order
-  ---
-  duration_ms: 0.028038
-  ...
-# Subtest: ordered/json-array-parse-error
-ok 207 - ordered/json-array-parse-error
-  ---
-  duration_ms: 0.036226
-  ...
-# Subtest: ordered/json-comparator-integer-and-float-are-equal
-ok 208 - ordered/json-comparator-integer-and-float-are-equal
-  ---
-  duration_ms: 0.024241
-  ...
-# Subtest: ordered/json-comparator-true-is-not-one
-ok 209 - ordered/json-comparator-true-is-not-one
-  ---
-  duration_ms: 0.024777
-  ...
-# Subtest: ordered/numeric-comparator-with-relative-tolerance
-ok 210 - ordered/numeric-comparator-with-relative-tolerance
-  ---
-  duration_ms: 0.043592
-  ...
-# Subtest: ordered/numeric-comparator-first-position-fails
-ok 211 - ordered/numeric-comparator-first-position-fails
-  ---
-  duration_ms: 0.029141
-  ...
-# Subtest: ordered/case-insensitive-comparator
-ok 212 - ordered/case-insensitive-comparator
-  ---
-  duration_ms: 0.027065
-  ...
-# Subtest: ordered/devanagari-sequence
-ok 213 - ordered/devanagari-sequence
-  ---
-  duration_ms: 0.026909
-  ...
-# Subtest: ordered/hangul-sequence-out-of-order
-ok 214 - ordered/hangul-sequence-out-of-order
-  ---
-  duration_ms: 0.026874
-  ...
-# Subtest: ordered/astral-sequence
-ok 215 - ordered/astral-sequence
-  ---
-  duration_ms: 0.0254
-  ...
-# Subtest: ordered/nbsp-only-element-dropped
-ok 216 - ordered/nbsp-only-element-dropped
-  ---
-  duration_ms: 0.02489
-  ...
-# Subtest: regex.json is well formed
-ok 217 - regex.json is well formed
-  ---
-  duration_ms: 0.047441
-  ...
-# Subtest: regex/full-match-literal
-ok 218 - regex/full-match-literal
-  ---
-  duration_ms: 0.051072
-  ...
-# Subtest: regex/full-match-requires-whole-string
-ok 219 - regex/full-match-requires-whole-string
-  ---
-  duration_ms: 0.04201
-  ...
-# Subtest: regex/search-anywhere
-ok 220 - regex/search-anywhere
-  ---
-  duration_ms: 0.028954
-  ...
-# Subtest: regex/empty-pattern-empty-candidate
-ok 221 - regex/empty-pattern-empty-candidate
+ok 107 - format/full-release-note-shape
   ---
   duration_ms: 0.030011
   ...
+# Subtest: format/full-release-note-shape-with-banned-word
+ok 108 - format/full-release-note-shape-with-banned-word
+  ---
+  duration_ms: 0.024787
+  ...
+# Subtest: json_schema.json is well formed
+ok 109 - json_schema.json is well formed
+  ---
+  duration_ms: 0.055735
+  ...
+# Subtest: json_schema/object-valid
+ok 110 - json_schema/object-valid
+  ---
+  duration_ms: 0.075784
+  ...
+# Subtest: json_schema/missing-required
+ok 111 - json_schema/missing-required
+  ---
+  duration_ms: 0.123117
+  ...
+# Subtest: json_schema/not-json
+ok 112 - json_schema/not-json
+  ---
+  duration_ms: 0.038987
+  ...
+# Subtest: json_schema/empty-candidate
+ok 113 - json_schema/empty-candidate
+  ---
+  duration_ms: 0.031145
+  ...
+# Subtest: json_schema/truncated-json
+ok 114 - json_schema/truncated-json
+  ---
+  duration_ms: 0.038831
+  ...
+# Subtest: json_schema/trailing-comma-is-not-json
+ok 115 - json_schema/trailing-comma-is-not-json
+  ---
+  duration_ms: 0.02916
+  ...
+# Subtest: json_schema/code-fence-is-not-json
+ok 116 - json_schema/code-fence-is-not-json
+  ---
+  duration_ms: 0.027539
+  ...
+# Subtest: json_schema/array-of-integers
+ok 117 - json_schema/array-of-integers
+  ---
+  duration_ms: 0.135248
+  ...
+# Subtest: json_schema/array-wrong-item-type
+ok 118 - json_schema/array-wrong-item-type
+  ---
+  duration_ms: 0.054811
+  ...
+# Subtest: json_schema/array-too-short
+ok 119 - json_schema/array-too-short
+  ---
+  duration_ms: 0.034101
+  ...
+# Subtest: json_schema/integer-accepts-integral-float
+ok 120 - json_schema/integer-accepts-integral-float
+  ---
+  duration_ms: 0.061843
+  ...
+# Subtest: json_schema/integer-rejects-fraction
+ok 121 - json_schema/integer-rejects-fraction
+  ---
+  duration_ms: 0.033245
+  ...
+# Subtest: json_schema/boolean-is-not-integer
+ok 122 - json_schema/boolean-is-not-integer
+  ---
+  duration_ms: 0.022005
+  ...
+# Subtest: json_schema/null-type
+ok 123 - json_schema/null-type
+  ---
+  duration_ms: 0.02082
+  ...
+# Subtest: json_schema/type-union
+ok 124 - json_schema/type-union
+  ---
+  duration_ms: 0.020016
+  ...
+# Subtest: json_schema/type-union-violation
+ok 125 - json_schema/type-union-violation
+  ---
+  duration_ms: 0.02087
+  ...
+# Subtest: json_schema/deeply-nested-valid
+ok 126 - json_schema/deeply-nested-valid
+  ---
+  duration_ms: 0.067325
+  ...
+# Subtest: json_schema/deeply-nested-violation-at-leaf
+ok 127 - json_schema/deeply-nested-violation-at-leaf
+  ---
+  duration_ms: 0.039434
+  ...
+# Subtest: json_schema/enum-member
+ok 128 - json_schema/enum-member
+  ---
+  duration_ms: 0.04525
+  ...
+# Subtest: json_schema/enum-non-member
+ok 129 - json_schema/enum-non-member
+  ---
+  duration_ms: 0.026883
+  ...
+# Subtest: json_schema/const-structural
+ok 130 - json_schema/const-structural
+  ---
+  duration_ms: 0.061936
+  ...
+# Subtest: json_schema/const-mismatch
+ok 131 - json_schema/const-mismatch
+  ---
+  duration_ms: 0.030122
+  ...
+# Subtest: json_schema/min-length-counts-code-points-devanagari
+ok 132 - json_schema/min-length-counts-code-points-devanagari
+  ---
+  duration_ms: 0.025289
+  ...
+# Subtest: json_schema/max-length-counts-code-points-hangul
+ok 133 - json_schema/max-length-counts-code-points-hangul
+  ---
+  duration_ms: 0.02626
+  ...
+# Subtest: json_schema/max-length-counts-astral-as-one
+ok 134 - json_schema/max-length-counts-astral-as-one
+  ---
+  duration_ms: 0.022363
+  ...
+# Subtest: json_schema/pattern-matches
+ok 135 - json_schema/pattern-matches
+  ---
+  duration_ms: 0.223018
+  ...
+# Subtest: json_schema/pattern-violation
+ok 136 - json_schema/pattern-violation
+  ---
+  duration_ms: 0.077172
+  ...
+# Subtest: json_schema/pattern-is-unanchored-search
+ok 137 - json_schema/pattern-is-unanchored-search
+  ---
+  duration_ms: 0.079361
+  ...
+# Subtest: json_schema/unique-items-violation
+ok 138 - json_schema/unique-items-violation
+  ---
+  duration_ms: 0.071407
+  ...
+# Subtest: json_schema/unique-items-numeric-equality
+ok 139 - json_schema/unique-items-numeric-equality
+  ---
+  duration_ms: 0.033197
+  ...
+# Subtest: json_schema/unique-items-boolean-is-not-one
+ok 140 - json_schema/unique-items-boolean-is-not-one
+  ---
+  duration_ms: 0.024862
+  ...
+# Subtest: json_schema/unique-items-structural
+ok 141 - json_schema/unique-items-structural
+  ---
+  duration_ms: 0.029396
+  ...
+# Subtest: json_schema/additional-properties-false
+ok 142 - json_schema/additional-properties-false
+  ---
+  duration_ms: 0.037791
+  ...
+# Subtest: json_schema/additional-properties-schema
+ok 143 - json_schema/additional-properties-schema
+  ---
+  duration_ms: 0.029039
+  ...
+# Subtest: json_schema/pattern-properties
+ok 144 - json_schema/pattern-properties
+  ---
+  duration_ms: 0.108438
+  ...
+# Subtest: json_schema/pattern-properties-violation
+ok 145 - json_schema/pattern-properties-violation
+  ---
+  duration_ms: 0.039449
+  ...
+# Subtest: json_schema/any-of
+ok 146 - json_schema/any-of
+  ---
+  duration_ms: 0.070465
+  ...
+# Subtest: json_schema/one-of-exactly-one
+ok 147 - json_schema/one-of-exactly-one
+  ---
+  duration_ms: 0.049593
+  ...
+# Subtest: json_schema/one-of-two-matches-fails
+ok 148 - json_schema/one-of-two-matches-fails
+  ---
+  duration_ms: 0.028723
+  ...
+# Subtest: json_schema/all-of
+ok 149 - json_schema/all-of
+  ---
+  duration_ms: 0.041028
+  ...
+# Subtest: json_schema/not
+ok 150 - json_schema/not
+  ---
+  duration_ms: 0.03183
+  ...
+# Subtest: json_schema/not-violation
+ok 151 - json_schema/not-violation
+  ---
+  duration_ms: 0.032809
+  ...
+# Subtest: json_schema/local-ref
+ok 152 - json_schema/local-ref
+  ---
+  duration_ms: 0.120852
+  ...
+# Subtest: json_schema/local-ref-violation
+ok 153 - json_schema/local-ref-violation
+  ---
+  duration_ms: 0.057498
+  ...
+# Subtest: json_schema/boolean-schema-true
+ok 154 - json_schema/boolean-schema-true
+  ---
+  duration_ms: 0.028315
+  ...
+# Subtest: json_schema/boolean-schema-false
+ok 155 - json_schema/boolean-schema-false
+  ---
+  duration_ms: 0.026036
+  ...
+# Subtest: json_schema/multiple-of
+ok 156 - json_schema/multiple-of
+  ---
+  duration_ms: 0.034085
+  ...
+# Subtest: json_schema/multiple-of-violation
+ok 157 - json_schema/multiple-of-violation
+  ---
+  duration_ms: 0.032823
+  ...
+# Subtest: json_schema/exclusive-minimum-boundary
+ok 158 - json_schema/exclusive-minimum-boundary
+  ---
+  duration_ms: 0.029833
+  ...
+# Subtest: json_schema/inclusive-minimum-boundary
+ok 159 - json_schema/inclusive-minimum-boundary
+  ---
+  duration_ms: 1.113031
+  ...
+# Subtest: json_schema/prefix-items
+ok 160 - json_schema/prefix-items
+  ---
+  duration_ms: 0.118984
+  ...
+# Subtest: json_schema/prefix-items-extra-rejected
+ok 161 - json_schema/prefix-items-extra-rejected
+  ---
+  duration_ms: 0.049736
+  ...
+# Subtest: json_schema/property-names
+ok 162 - json_schema/property-names
+  ---
+  duration_ms: 0.14898
+  ...
+# Subtest: json_schema/dependent-required
+ok 163 - json_schema/dependent-required
+  ---
+  duration_ms: 0.0462
+  ...
+# Subtest: json_schema/min-max-properties
+ok 164 - json_schema/min-max-properties
+  ---
+  duration_ms: 0.034974
+  ...
+# Subtest: json_schema/contains-with-min-contains
+ok 165 - json_schema/contains-with-min-contains
+  ---
+  duration_ms: 0.070677
+  ...
+# Subtest: json_schema/contains-not-enough
+ok 166 - json_schema/contains-not-enough
+  ---
+  duration_ms: 0.035113
+  ...
+# Subtest: json_schema/empty-schema-accepts-anything
+ok 167 - json_schema/empty-schema-accepts-anything
+  ---
+  duration_ms: 0.035336
+  ...
+# Subtest: numeric_tolerance.json is well formed
+ok 168 - numeric_tolerance.json is well formed
+  ---
+  duration_ms: 0.055312
+  ...
+# Subtest: numeric/integer-exact
+ok 169 - numeric/integer-exact
+  ---
+  duration_ms: 0.055413
+  ...
+# Subtest: numeric/trim-by-default
+ok 170 - numeric/trim-by-default
+  ---
+  duration_ms: 0.030134
+  ...
+# Subtest: numeric/trim-disabled
+ok 171 - numeric/trim-disabled
+  ---
+  duration_ms: 0.026463
+  ...
+# Subtest: numeric/empty-candidate
+ok 172 - numeric/empty-candidate
+  ---
+  duration_ms: 0.025148
+  ...
+# Subtest: numeric/prose-candidate
+ok 173 - numeric/prose-candidate
+  ---
+  duration_ms: 0.025854
+  ...
+# Subtest: numeric/two-numbers
+ok 174 - numeric/two-numbers
+  ---
+  duration_ms: 0.024613
+  ...
+# Subtest: numeric/hex-rejected
+ok 175 - numeric/hex-rejected
+  ---
+  duration_ms: 0.023766
+  ...
+# Subtest: numeric/underscore-separator-rejected
+ok 176 - numeric/underscore-separator-rejected
+  ---
+  duration_ms: 0.0233
+  ...
+# Subtest: numeric/devanagari-digits-rejected
+ok 177 - numeric/devanagari-digits-rejected
+  ---
+  duration_ms: 0.085108
+  ...
+# Subtest: numeric/thousands-separator-allowed
+ok 178 - numeric/thousands-separator-allowed
+  ---
+  duration_ms: 0.033383
+  ...
+# Subtest: numeric/thousands-separator-not-allowed
+ok 179 - numeric/thousands-separator-not-allowed
+  ---
+  duration_ms: 0.061357
+  ...
+# Subtest: numeric/leading-plus
+ok 180 - numeric/leading-plus
+  ---
+  duration_ms: 0.036829
+  ...
+# Subtest: numeric/leading-point
+ok 181 - numeric/leading-point
+  ---
+  duration_ms: 0.029276
+  ...
+# Subtest: numeric/trailing-point
+ok 182 - numeric/trailing-point
+  ---
+  duration_ms: 0.023351
+  ...
+# Subtest: numeric/scientific-notation
+ok 183 - numeric/scientific-notation
+  ---
+  duration_ms: 0.02323
+  ...
+# Subtest: numeric/negative-zero-equals-zero
+ok 184 - numeric/negative-zero-equals-zero
+  ---
+  duration_ms: 0.0238
+  ...
+# Subtest: numeric/abs-tolerance-inside
+ok 185 - numeric/abs-tolerance-inside
+  ---
+  duration_ms: 0.03836
+  ...
+# Subtest: numeric/abs-tolerance-outside
+ok 186 - numeric/abs-tolerance-outside
+  ---
+  duration_ms: 0.043337
+  ...
+# Subtest: numeric/binary-float-artifact-exact
+ok 187 - numeric/binary-float-artifact-exact
+  ---
+  duration_ms: 0.032214
+  ...
+# Subtest: numeric/binary-float-artifact-tolerated
+ok 188 - numeric/binary-float-artifact-tolerated
+  ---
+  duration_ms: 0.032207
+  ...
+# Subtest: numeric/relative-tolerance-inside
+ok 189 - numeric/relative-tolerance-inside
+  ---
+  duration_ms: 0.025708
+  ...
+# Subtest: numeric/relative-tolerance-outside
+ok 190 - numeric/relative-tolerance-outside
+  ---
+  duration_ms: 0.026322
+  ...
+# Subtest: numeric/relative-tolerance-against-zero-degenerates
+ok 191 - numeric/relative-tolerance-against-zero-degenerates
+  ---
+  duration_ms: 0.024499
+  ...
+# Subtest: numeric/boundary-difference-equals-tolerance
+ok 192 - numeric/boundary-difference-equals-tolerance
+  ---
+  duration_ms: 0.025778
+  ...
+# Subtest: numeric/nan-not-accepted-by-default
+ok 193 - numeric/nan-not-accepted-by-default
+  ---
+  duration_ms: 0.025085
+  ...
+# Subtest: numeric/nan-accepted-when-configured
+ok 194 - numeric/nan-accepted-when-configured
+  ---
+  duration_ms: 0.028188
+  ...
+# Subtest: numeric/nan-candidate-finite-expectation
+ok 195 - numeric/nan-candidate-finite-expectation
+  ---
+  duration_ms: 0.023761
+  ...
+# Subtest: numeric/finite-candidate-nan-expectation
+ok 196 - numeric/finite-candidate-nan-expectation
+  ---
+  duration_ms: 0.023327
+  ...
+# Subtest: numeric/nan-beats-huge-tolerance
+ok 197 - numeric/nan-beats-huge-tolerance
+  ---
+  duration_ms: 0.02313
+  ...
+# Subtest: numeric/positive-infinity-matches
+ok 198 - numeric/positive-infinity-matches
+  ---
+  duration_ms: 0.02666
+  ...
+# Subtest: numeric/infinity-abbreviation
+ok 199 - numeric/infinity-abbreviation
+  ---
+  duration_ms: 0.024263
+  ...
+# Subtest: numeric/infinity-sign-must-match
+ok 200 - numeric/infinity-sign-must-match
+  ---
+  duration_ms: 0.023257
+  ...
+# Subtest: numeric/finite-against-infinity
+ok 201 - numeric/finite-against-infinity
+  ---
+  duration_ms: 0.023323
+  ...
+# Subtest: numeric/overflow-to-infinity
+ok 202 - numeric/overflow-to-infinity
+  ---
+  duration_ms: 0.026421
+  ...
+# Subtest: numeric/underflow-to-zero
+ok 203 - numeric/underflow-to-zero
+  ---
+  duration_ms: 0.022543
+  ...
+# Subtest: numeric/subnormal
+ok 204 - numeric/subnormal
+  ---
+  duration_ms: 0.022607
+  ...
+# Subtest: numeric/large-magnitude-relative
+ok 205 - numeric/large-magnitude-relative
+  ---
+  duration_ms: 0.025966
+  ...
+# Subtest: ordered_equality.json is well formed
+ok 206 - ordered_equality.json is well formed
+  ---
+  duration_ms: 0.043284
+  ...
+# Subtest: ordered/lines-in-order
+ok 207 - ordered/lines-in-order
+  ---
+  duration_ms: 0.033348
+  ...
+# Subtest: ordered/lines-out-of-order
+ok 208 - ordered/lines-out-of-order
+  ---
+  duration_ms: 0.028462
+  ...
+# Subtest: ordered/too-few
+ok 209 - ordered/too-few
+  ---
+  duration_ms: 0.028679
+  ...
+# Subtest: ordered/too-many
+ok 210 - ordered/too-many
+  ---
+  duration_ms: 0.024374
+  ...
+# Subtest: ordered/duplicates-are-always-significant
+ok 211 - ordered/duplicates-are-always-significant
+  ---
+  duration_ms: 0.028688
+  ...
+# Subtest: ordered/duplicate-collapsed-by-model
+ok 212 - ordered/duplicate-collapsed-by-model
+  ---
+  duration_ms: 0.025079
+  ...
+# Subtest: ordered/empty-both
+ok 213 - ordered/empty-both
+  ---
+  duration_ms: 0.063069
+  ...
+# Subtest: ordered/empty-candidate
+ok 214 - ordered/empty-candidate
+  ---
+  duration_ms: 0.031083
+  ...
+# Subtest: ordered/trailing-newline-ignored
+ok 215 - ordered/trailing-newline-ignored
+  ---
+  duration_ms: 0.028819
+  ...
+# Subtest: ordered/mixed-line-endings
+ok 216 - ordered/mixed-line-endings
+  ---
+  duration_ms: 0.026567
+  ...
+# Subtest: ordered/blank-lines-dropped
+ok 217 - ordered/blank-lines-dropped
+  ---
+  duration_ms: 0.024988
+  ...
+# Subtest: ordered/blank-lines-kept
+ok 218 - ordered/blank-lines-kept
+  ---
+  duration_ms: 0.025462
+  ...
+# Subtest: ordered/delimiter-mode
+ok 219 - ordered/delimiter-mode
+  ---
+  duration_ms: 0.028447
+  ...
+# Subtest: ordered/delimiter-mode-untrimmed
+ok 220 - ordered/delimiter-mode-untrimmed
+  ---
+  duration_ms: 0.028319
+  ...
+# Subtest: ordered/json-array-mode
+ok 221 - ordered/json-array-mode
+  ---
+  duration_ms: 0.033592
+  ...
+# Subtest: ordered/json-array-wrong-order
+ok 222 - ordered/json-array-wrong-order
+  ---
+  duration_ms: 0.02872
+  ...
+# Subtest: ordered/json-array-parse-error
+ok 223 - ordered/json-array-parse-error
+  ---
+  duration_ms: 0.039223
+  ...
+# Subtest: ordered/json-comparator-integer-and-float-are-equal
+ok 224 - ordered/json-comparator-integer-and-float-are-equal
+  ---
+  duration_ms: 0.023326
+  ...
+# Subtest: ordered/json-comparator-true-is-not-one
+ok 225 - ordered/json-comparator-true-is-not-one
+  ---
+  duration_ms: 0.386663
+  ...
+# Subtest: ordered/numeric-comparator-with-relative-tolerance
+ok 226 - ordered/numeric-comparator-with-relative-tolerance
+  ---
+  duration_ms: 0.097909
+  ...
+# Subtest: ordered/numeric-comparator-first-position-fails
+ok 227 - ordered/numeric-comparator-first-position-fails
+  ---
+  duration_ms: 0.044568
+  ...
+# Subtest: ordered/case-insensitive-comparator
+ok 228 - ordered/case-insensitive-comparator
+  ---
+  duration_ms: 0.035379
+  ...
+# Subtest: ordered/devanagari-sequence
+ok 229 - ordered/devanagari-sequence
+  ---
+  duration_ms: 0.032456
+  ...
+# Subtest: ordered/hangul-sequence-out-of-order
+ok 230 - ordered/hangul-sequence-out-of-order
+  ---
+  duration_ms: 0.030684
+  ...
+# Subtest: ordered/astral-sequence
+ok 231 - ordered/astral-sequence
+  ---
+  duration_ms: 0.025784
+  ...
+# Subtest: ordered/nbsp-only-element-dropped
+ok 232 - ordered/nbsp-only-element-dropped
+  ---
+  duration_ms: 0.026829
+  ...
+# Subtest: regex.json is well formed
+ok 233 - regex.json is well formed
+  ---
+  duration_ms: 0.070069
+  ...
+# Subtest: regex/full-match-literal
+ok 234 - regex/full-match-literal
+  ---
+  duration_ms: 0.055557
+  ...
+# Subtest: regex/full-match-requires-whole-string
+ok 235 - regex/full-match-requires-whole-string
+  ---
+  duration_ms: 0.045226
+  ...
+# Subtest: regex/full-match-refuses-a-trailing-newline
+ok 236 - regex/full-match-refuses-a-trailing-newline
+  ---
+  duration_ms: 0.027181
+  ...
+# Subtest: regex/search-anywhere
+ok 237 - regex/search-anywhere
+  ---
+  duration_ms: 0.028026
+  ...
+# Subtest: regex/empty-pattern-empty-candidate
+ok 238 - regex/empty-pattern-empty-candidate
+  ---
+  duration_ms: 0.031759
+  ...
 # Subtest: regex/empty-pattern-nonempty-candidate
-ok 222 - regex/empty-pattern-nonempty-candidate
+ok 239 - regex/empty-pattern-nonempty-candidate
   ---
-  duration_ms: 0.032255
+  duration_ms: 0.034333
   ...
-# Subtest: regex/digits-ascii
-ok 223 - regex/digits-ascii
+# Subtest: regex/explicit-digit-class
+ok 240 - regex/explicit-digit-class
   ---
-  duration_ms: 0.077598
+  duration_ms: 0.084024
   ...
-# Subtest: regex/digits-are-ascii-only
-ok 224 - regex/digits-are-ascii-only
+# Subtest: regex/explicit-digit-class-excludes-devanagari-digits
+ok 241 - regex/explicit-digit-class-excludes-devanagari-digits
   ---
-  duration_ms: 0.08077
+  duration_ms: 0.047773
   ...
-# Subtest: regex/word-chars-are-ascii-only
-ok 225 - regex/word-chars-are-ascii-only
+# Subtest: regex/devanagari-digit-class
+ok 242 - regex/devanagari-digit-class
   ---
-  duration_ms: 0.042328
+  duration_ms: 0.046613
   ...
-# Subtest: regex/whitespace-class-is-ascii-only
-ok 226 - regex/whitespace-class-is-ascii-only
+# Subtest: regex/devanagari-letter-class
+ok 243 - regex/devanagari-letter-class
   ---
-  duration_ms: 0.040297
+  duration_ms: 0.037225
   ...
-# Subtest: regex/whitespace-class-ascii-members
-ok 227 - regex/whitespace-class-ascii-members
+# Subtest: regex/devanagari-class-excludes-latin
+ok 244 - regex/devanagari-class-excludes-latin
   ---
-  duration_ms: 0.035893
+  duration_ms: 0.034744
   ...
-# Subtest: regex/negated-whitespace-outside-class
-ok 228 - regex/negated-whitespace-outside-class
+# Subtest: regex/hangul-syllable-class
+ok 245 - regex/hangul-syllable-class
   ---
-  duration_ms: 0.034581
+  duration_ms: 0.035355
   ...
-# Subtest: regex/dot-excludes-newline
-ok 229 - regex/dot-excludes-newline
+# Subtest: regex/hangul-jamo-class
+ok 246 - regex/hangul-jamo-class
   ---
-  duration_ms: 0.041292
+  duration_ms: 0.033084
   ...
-# Subtest: regex/dot-includes-cr
-ok 230 - regex/dot-includes-cr
+# Subtest: regex/hangul-syllable-class-excludes-jamo
+ok 247 - regex/hangul-syllable-class-excludes-jamo
   ---
-  duration_ms: 0.035651
+  duration_ms: 0.034653
   ...
-# Subtest: regex/dotall-flag
-ok 231 - regex/dotall-flag
+# Subtest: regex/hangul-class-excludes-latin
+ok 248 - regex/hangul-class-excludes-latin
   ---
-  duration_ms: 0.038526
+  duration_ms: 0.117785
   ...
-# Subtest: regex/dollar-before-trailing-newline
-ok 232 - regex/dollar-before-trailing-newline
+# Subtest: regex/hinglish-mixed-script-class
+ok 249 - regex/hinglish-mixed-script-class
   ---
-  duration_ms: 0.055051
+  duration_ms: 0.058596
   ...
-# Subtest: regex/dollar-not-before-interior-newline
-ok 233 - regex/dollar-not-before-interior-newline
+# Subtest: regex/explicit-word-class
+ok 250 - regex/explicit-word-class
   ---
-  duration_ms: 0.038631
+  duration_ms: 0.0368
   ...
-# Subtest: regex/dollar-not-before-two-trailing-newlines
-ok 234 - regex/dollar-not-before-two-trailing-newlines
+# Subtest: regex/explicit-whitespace-class
+ok 251 - regex/explicit-whitespace-class
   ---
-  duration_ms: 0.025435
+  duration_ms: 0.082251
   ...
-# Subtest: regex/multiline-caret
-ok 235 - regex/multiline-caret
+# Subtest: regex/explicit-whitespace-class-excludes-nbsp
+ok 252 - regex/explicit-whitespace-class-excludes-nbsp
   ---
-  duration_ms: 0.039334
+  duration_ms: 0.039354
   ...
-# Subtest: regex/caret-without-multiline
-ok 236 - regex/caret-without-multiline
+# Subtest: regex/whitespace-class-including-nbsp
+ok 253 - regex/whitespace-class-including-nbsp
   ---
-  duration_ms: 0.032247
+  duration_ms: 0.031715
   ...
-# Subtest: regex/multiline-caret-ignores-cr
-ok 237 - regex/multiline-caret-ignores-cr
+# Subtest: regex/any-character-but-newline
+ok 254 - regex/any-character-but-newline
   ---
-  duration_ms: 0.036557
+  duration_ms: 0.062674
   ...
-# Subtest: regex/multiline-dollar
-ok 238 - regex/multiline-dollar
+# Subtest: regex/any-character-but-newline-accepts-cr
+ok 255 - regex/any-character-but-newline-accepts-cr
   ---
-  duration_ms: 0.037712
+  duration_ms: 0.038975
   ...
-# Subtest: regex/multiline-dollar-ignores-cr
-ok 239 - regex/multiline-dollar-ignores-cr
+# Subtest: regex/any-character-at-all
+ok 256 - regex/any-character-at-all
   ---
-  duration_ms: 0.051642
+  duration_ms: 0.032042
+  ...
+# Subtest: regex/literal-dot-inside-a-class
+ok 257 - regex/literal-dot-inside-a-class
+  ---
+  duration_ms: 0.027249
+  ...
+# Subtest: regex/escaped-dot
+ok 258 - regex/escaped-dot
+  ---
+  duration_ms: 0.033497
+  ...
+# Subtest: regex/escaped-dot-is-not-a-wildcard
+ok 259 - regex/escaped-dot-is-not-a-wildcard
+  ---
+  duration_ms: 0.030102
+  ...
+# Subtest: regex/caret-anchors-start-of-input
+ok 260 - regex/caret-anchors-start-of-input
+  ---
+  duration_ms: 0.026864
+  ...
+# Subtest: regex/caret-does-not-anchor-after-a-newline
+ok 261 - regex/caret-does-not-anchor-after-a-newline
+  ---
+  duration_ms: 0.024462
   ...
 # Subtest: regex/ignore-case-ascii
-ok 240 - regex/ignore-case-ascii
+ok 262 - regex/ignore-case-ascii
   ---
-  duration_ms: 0.043511
+  duration_ms: 0.043335
   ...
-# Subtest: regex/ignore-case-does-not-affect-caseless-script
-ok 241 - regex/ignore-case-does-not-affect-caseless-script
+# Subtest: regex/ignore-case-does-not-fold-the-kelvin-sign
+ok 263 - regex/ignore-case-does-not-fold-the-kelvin-sign
   ---
-  duration_ms: 0.042641
+  duration_ms: 1.188924
   ...
-# Subtest: regex/escaped-metacharacters
-ok 242 - regex/escaped-metacharacters
+# Subtest: regex/ignore-case-does-not-fold-the-long-s
+ok 264 - regex/ignore-case-does-not-fold-the-long-s
   ---
-  duration_ms: 0.061215
+  duration_ms: 0.101466
   ...
-# Subtest: regex/escaped-metacharacters-wrong-shape
-ok 243 - regex/escaped-metacharacters-wrong-shape
+# Subtest: regex/caseless-script-needs-no-flag
+ok 265 - regex/caseless-script-needs-no-flag
   ---
-  duration_ms: 0.057225
+  duration_ms: 0.067036
   ...
 # Subtest: regex/character-class-with-ranges
-ok 244 - regex/character-class-with-ranges
+ok 266 - regex/character-class-with-ranges
   ---
-  duration_ms: 0.065503
+  duration_ms: 0.06324
   ...
 # Subtest: regex/negated-character-class
-ok 245 - regex/negated-character-class
+ok 267 - regex/negated-character-class
   ---
-  duration_ms: 0.037876
+  duration_ms: 0.038567
   ...
 # Subtest: regex/class-with-escaped-bracket
-ok 246 - regex/class-with-escaped-bracket
+ok 268 - regex/class-with-escaped-bracket
   ---
-  duration_ms: 0.036962
+  duration_ms: 0.033819
   ...
 # Subtest: regex/lazy-quantifier
-ok 247 - regex/lazy-quantifier
+ok 269 - regex/lazy-quantifier
   ---
-  duration_ms: 0.038508
+  duration_ms: 0.03525
   ...
 # Subtest: regex/alternation-and-groups
-ok 248 - regex/alternation-and-groups
+ok 270 - regex/alternation-and-groups
   ---
-  duration_ms: 0.05402
+  duration_ms: 0.043712
   ...
 # Subtest: regex/non-capturing-and-lookahead
-ok 249 - regex/non-capturing-and-lookahead
+ok 271 - regex/non-capturing-and-lookahead
   ---
-  duration_ms: 0.042718
+  duration_ms: 0.037
   ...
 # Subtest: regex/negative-lookahead
-ok 250 - regex/negative-lookahead
+ok 272 - regex/negative-lookahead
   ---
-  duration_ms: 0.040469
-  ...
-# Subtest: regex/word-boundary
-ok 251 - regex/word-boundary
-  ---
-  duration_ms: 0.043148
+  duration_ms: 0.033803
   ...
 # Subtest: regex/bounded-repetition
-ok 252 - regex/bounded-repetition
+ok 273 - regex/bounded-repetition
   ---
-  duration_ms: 0.043697
+  duration_ms: 0.046379
   ...
 # Subtest: regex/bounded-repetition-too-many
-ok 253 - regex/bounded-repetition-too-many
+ok 274 - regex/bounded-repetition-too-many
   ---
-  duration_ms: 0.041828
+  duration_ms: 0.044897
   ...
 # Subtest: regex/crlf-literal
-ok 254 - regex/crlf-literal
+ok 275 - regex/crlf-literal
   ---
-  duration_ms: 0.034497
+  duration_ms: 0.037501
   ...
 # Subtest: regex/unicode-escape
-ok 255 - regex/unicode-escape
+ok 276 - regex/unicode-escape
   ---
-  duration_ms: 0.06629
+  duration_ms: 0.062364
+  ...
+# Subtest: regex/escaped-metacharacters
+ok 277 - regex/escaped-metacharacters
+  ---
+  duration_ms: 0.045851
+  ...
+# Subtest: regex/escaped-metacharacters-wrong-shape
+ok 278 - regex/escaped-metacharacters-wrong-shape
+  ---
+  duration_ms: 0.050628
+  ...
+# Subtest: regex/invalid-shorthand-digit
+ok 279 - regex/invalid-shorthand-digit
+  ---
+  duration_ms: 0.063567
+  ...
+# Subtest: regex/invalid-shorthand-not-digit
+ok 280 - regex/invalid-shorthand-not-digit
+  ---
+  duration_ms: 0.029788
+  ...
+# Subtest: regex/invalid-shorthand-word
+ok 281 - regex/invalid-shorthand-word
+  ---
+  duration_ms: 0.02806
+  ...
+# Subtest: regex/invalid-shorthand-not-word
+ok 282 - regex/invalid-shorthand-not-word
+  ---
+  duration_ms: 0.026983
+  ...
+# Subtest: regex/invalid-shorthand-space
+ok 283 - regex/invalid-shorthand-space
+  ---
+  duration_ms: 0.027091
+  ...
+# Subtest: regex/invalid-shorthand-not-space
+ok 284 - regex/invalid-shorthand-not-space
+  ---
+  duration_ms: 0.027699
+  ...
+# Subtest: regex/invalid-word-boundary
+ok 285 - regex/invalid-word-boundary
+  ---
+  duration_ms: 0.029557
+  ...
+# Subtest: regex/invalid-not-word-boundary
+ok 286 - regex/invalid-not-word-boundary
+  ---
+  duration_ms: 0.027004
+  ...
+# Subtest: regex/invalid-shorthand-digit-inside-class
+ok 287 - regex/invalid-shorthand-digit-inside-class
+  ---
+  duration_ms: 0.030373
+  ...
+# Subtest: regex/invalid-shorthand-word-inside-class
+ok 288 - regex/invalid-shorthand-word-inside-class
+  ---
+  duration_ms: 0.028174
+  ...
+# Subtest: regex/invalid-shorthand-space-inside-class
+ok 289 - regex/invalid-shorthand-space-inside-class
+  ---
+  duration_ms: 0.026628
+  ...
+# Subtest: regex/invalid-shorthand-not-space-inside-class
+ok 290 - regex/invalid-shorthand-not-space-inside-class
+  ---
+  duration_ms: 0.027227
+  ...
+# Subtest: regex/invalid-dot
+ok 291 - regex/invalid-dot
+  ---
+  duration_ms: 0.082448
+  ...
+# Subtest: regex/invalid-dot-inside-a-group
+ok 292 - regex/invalid-dot-inside-a-group
+  ---
+  duration_ms: 0.029733
+  ...
+# Subtest: regex/invalid-dollar
+ok 293 - regex/invalid-dollar
+  ---
+  duration_ms: 0.080276
+  ...
+# Subtest: regex/invalid-dollar-in-an-anchored-pattern
+ok 294 - regex/invalid-dollar-in-an-anchored-pattern
+  ---
+  duration_ms: 0.0288
+  ...
+# Subtest: regex/invalid-ignore-case-on-a-non-ascii-pattern
+ok 295 - regex/invalid-ignore-case-on-a-non-ascii-pattern
+  ---
+  duration_ms: 0.036335
   ...
 # Subtest: regex/invalid-backreference
-ok 256 - regex/invalid-backreference
+ok 296 - regex/invalid-backreference
   ---
-  duration_ms: 0.043645
+  duration_ms: 1.838632
   ...
 # Subtest: regex/invalid-named-group
-ok 257 - regex/invalid-named-group
+ok 297 - regex/invalid-named-group
   ---
-  duration_ms: 0.03618
+  duration_ms: 0.121437
   ...
 # Subtest: regex/invalid-lookbehind
-ok 258 - regex/invalid-lookbehind
+ok 298 - regex/invalid-lookbehind
   ---
-  duration_ms: 0.038011
+  duration_ms: 0.044527
   ...
 # Subtest: regex/invalid-inline-flags
-ok 259 - regex/invalid-inline-flags
+ok 299 - regex/invalid-inline-flags
   ---
-  duration_ms: 0.034503
+  duration_ms: 0.038184
   ...
 # Subtest: regex/invalid-unicode-property
-ok 260 - regex/invalid-unicode-property
+ok 300 - regex/invalid-unicode-property
   ---
-  duration_ms: 0.032622
+  duration_ms: 0.03914
   ...
 # Subtest: regex/invalid-string-anchor
-ok 261 - regex/invalid-string-anchor
+ok 301 - regex/invalid-string-anchor
   ---
-  duration_ms: 0.034343
+  duration_ms: 0.033377
   ...
 # Subtest: regex/invalid-unbalanced-paren
-ok 262 - regex/invalid-unbalanced-paren
+ok 302 - regex/invalid-unbalanced-paren
   ---
-  duration_ms: 0.035387
+  duration_ms: 0.034768
   ...
 # Subtest: regex/invalid-unterminated-class
-ok 263 - regex/invalid-unterminated-class
+ok 303 - regex/invalid-unterminated-class
   ---
-  duration_ms: 0.036003
+  duration_ms: 0.032746
   ...
 # Subtest: regex/invalid-bare-close-bracket
-ok 264 - regex/invalid-bare-close-bracket
+ok 304 - regex/invalid-bare-close-bracket
   ---
-  duration_ms: 0.03516
+  duration_ms: 0.028969
   ...
 # Subtest: regex/invalid-possessive-quantifier
-ok 265 - regex/invalid-possessive-quantifier
+ok 305 - regex/invalid-possessive-quantifier
   ---
-  duration_ms: 0.034844
-  ...
-# Subtest: regex/invalid-negated-whitespace-in-class
-ok 266 - regex/invalid-negated-whitespace-in-class
-  ---
-  duration_ms: 0.03366
+  duration_ms: 0.032294
   ...
 # Subtest: regex/invalid-quantifier-without-atom
-ok 267 - regex/invalid-quantifier-without-atom
+ok 306 - regex/invalid-quantifier-without-atom
   ---
-  duration_ms: 0.039728
+  duration_ms: 0.040434
   ...
 # Subtest: regex/invalid-bare-brace
-ok 268 - regex/invalid-bare-brace
+ok 307 - regex/invalid-bare-brace
   ---
-  duration_ms: 0.034464
+  duration_ms: 0.041124
+  ...
+# Subtest: regex/invalid-trailing-backslash
+ok 308 - regex/invalid-trailing-backslash
+  ---
+  duration_ms: 0.028268
   ...
 # Subtest: set_equality.json is well formed
-ok 269 - set_equality.json is well formed
+ok 309 - set_equality.json is well formed
   ---
-  duration_ms: 0.071604
+  duration_ms: 0.056214
   ...
 # Subtest: set/lines-same-order
-ok 270 - set/lines-same-order
+ok 310 - set/lines-same-order
   ---
-  duration_ms: 0.093154
+  duration_ms: 0.100891
   ...
 # Subtest: set/lines-different-order
-ok 271 - set/lines-different-order
+ok 311 - set/lines-different-order
   ---
-  duration_ms: 0.041726
+  duration_ms: 0.039469
   ...
 # Subtest: set/lines-trailing-newline-dropped
-ok 272 - set/lines-trailing-newline-dropped
+ok 312 - set/lines-trailing-newline-dropped
   ---
-  duration_ms: 2.961004
+  duration_ms: 0.025166
   ...
 # Subtest: set/lines-crlf-normalised
-ok 273 - set/lines-crlf-normalised
+ok 313 - set/lines-crlf-normalised
   ---
-  duration_ms: 0.126622
+  duration_ms: 0.065501
   ...
 # Subtest: set/lines-mixed-line-endings
-ok 274 - set/lines-mixed-line-endings
+ok 314 - set/lines-mixed-line-endings
   ---
-  duration_ms: 0.059837
+  duration_ms: 0.033008
   ...
 # Subtest: set/missing-element
-ok 275 - set/missing-element
+ok 315 - set/missing-element
   ---
-  duration_ms: 0.031556
+  duration_ms: 0.027991
   ...
 # Subtest: set/extra-element
-ok 276 - set/extra-element
+ok 316 - set/extra-element
   ---
-  duration_ms: 0.024644
+  duration_ms: 0.023594
   ...
 # Subtest: set/right-count-wrong-member
-ok 277 - set/right-count-wrong-member
+ok 317 - set/right-count-wrong-member
   ---
-  duration_ms: 0.025967
+  duration_ms: 0.026186
   ...
 # Subtest: set/duplicates-collapsed-by-default
-ok 278 - set/duplicates-collapsed-by-default
+ok 318 - set/duplicates-collapsed-by-default
   ---
-  duration_ms: 0.022464
+  duration_ms: 0.021983
   ...
 # Subtest: set/duplicates-significant
-ok 279 - set/duplicates-significant
+ok 319 - set/duplicates-significant
   ---
-  duration_ms: 0.022865
+  duration_ms: 0.023385
   ...
 # Subtest: set/multiset-equality
-ok 280 - set/multiset-equality
+ok 320 - set/multiset-equality
   ---
-  duration_ms: 0.020529
+  duration_ms: 0.021301
   ...
 # Subtest: set/multiset-wrong-multiplicity
-ok 281 - set/multiset-wrong-multiplicity
+ok 321 - set/multiset-wrong-multiplicity
   ---
-  duration_ms: 0.022885
+  duration_ms: 0.020391
   ...
 # Subtest: set/delimiter-mode
-ok 282 - set/delimiter-mode
+ok 322 - set/delimiter-mode
   ---
-  duration_ms: 0.02229
+  duration_ms: 0.022944
   ...
 # Subtest: set/delimiter-without-trimming
-ok 283 - set/delimiter-without-trimming
+ok 323 - set/delimiter-without-trimming
   ---
-  duration_ms: 0.019852
+  duration_ms: 0.020397
   ...
 # Subtest: set/delimiter-multichar
-ok 284 - set/delimiter-multichar
+ok 324 - set/delimiter-multichar
   ---
-  duration_ms: 0.021795
+  duration_ms: 0.021142
   ...
 # Subtest: set/empty-elements-dropped
-ok 285 - set/empty-elements-dropped
+ok 325 - set/empty-elements-dropped
   ---
-  duration_ms: 0.020365
+  duration_ms: 0.019279
   ...
 # Subtest: set/empty-elements-kept
-ok 286 - set/empty-elements-kept
+ok 326 - set/empty-elements-kept
   ---
-  duration_ms: 0.022429
+  duration_ms: 0.02503
   ...
 # Subtest: set/empty-candidate-empty-expectation
-ok 287 - set/empty-candidate-empty-expectation
+ok 327 - set/empty-candidate-empty-expectation
   ---
-  duration_ms: 0.020795
+  duration_ms: 0.018279
   ...
 # Subtest: set/empty-candidate-nonempty-expectation
-ok 288 - set/empty-candidate-nonempty-expectation
+ok 328 - set/empty-candidate-nonempty-expectation
   ---
-  duration_ms: 0.018898
+  duration_ms: 0.019482
   ...
 # Subtest: set/json-array-mode
-ok 289 - set/json-array-mode
+ok 329 - set/json-array-mode
   ---
-  duration_ms: 0.021455
+  duration_ms: 0.02082
   ...
 # Subtest: set/json-array-not-json
-ok 290 - set/json-array-not-json
+ok 330 - set/json-array-not-json
   ---
-  duration_ms: 0.032395
+  duration_ms: 0.031679
   ...
 # Subtest: set/json-array-is-an-object
-ok 291 - set/json-array-is-an-object
+ok 331 - set/json-array-is-an-object
   ---
-  duration_ms: 0.01775
+  duration_ms: 0.020264
   ...
 # Subtest: set/case-insensitive-comparator
-ok 292 - set/case-insensitive-comparator
+ok 332 - set/case-insensitive-comparator
   ---
-  duration_ms: 0.025556
+  duration_ms: 0.025195
   ...
 # Subtest: set/case-sensitive-by-default
-ok 293 - set/case-sensitive-by-default
+ok 333 - set/case-sensitive-by-default
   ---
-  duration_ms: 0.020467
+  duration_ms: 0.021114
   ...
 # Subtest: set/case-insensitive-collapses-duplicates
-ok 294 - set/case-insensitive-collapses-duplicates
+ok 334 - set/case-insensitive-collapses-duplicates
   ---
-  duration_ms: 0.019886
+  duration_ms: 0.020196
   ...
 # Subtest: set/numeric-comparator
-ok 295 - set/numeric-comparator
+ok 335 - set/numeric-comparator
   ---
-  duration_ms: 0.142337
+  duration_ms: 0.208303
   ...
 # Subtest: set/numeric-comparator-with-tolerance
-ok 296 - set/numeric-comparator-with-tolerance
+ok 336 - set/numeric-comparator-with-tolerance
   ---
-  duration_ms: 0.05954
+  duration_ms: 0.063271
   ...
 # Subtest: set/numeric-comparator-outside-tolerance
-ok 297 - set/numeric-comparator-outside-tolerance
+ok 337 - set/numeric-comparator-outside-tolerance
   ---
-  duration_ms: 0.028388
+  duration_ms: 0.028019
   ...
 # Subtest: set/numeric-comparator-unparseable-element
-ok 298 - set/numeric-comparator-unparseable-element
+ok 338 - set/numeric-comparator-unparseable-element
   ---
-  duration_ms: 0.043118
+  duration_ms: 0.026571
   ...
 # Subtest: set/json-comparator-structural
-ok 299 - set/json-comparator-structural
+ok 339 - set/json-comparator-structural
   ---
-  duration_ms: 0.083971
+  duration_ms: 0.06723
   ...
 # Subtest: set/json-comparator-nested-mismatch
-ok 300 - set/json-comparator-nested-mismatch
+ok 340 - set/json-comparator-nested-mismatch
   ---
-  duration_ms: 0.087115
+  duration_ms: 0.089681
   ...
 # Subtest: set/devanagari-elements
-ok 301 - set/devanagari-elements
+ok 341 - set/devanagari-elements
   ---
-  duration_ms: 0.035209
+  duration_ms: 0.040906
   ...
 # Subtest: set/hangul-elements-with-nbsp-trimmed
-ok 302 - set/hangul-elements-with-nbsp-trimmed
+ok 342 - set/hangul-elements-with-nbsp-trimmed
   ---
-  duration_ms: 0.022768
+  duration_ms: 0.026732
   ...
 # Subtest: set/astral-elements
-ok 303 - set/astral-elements
+ok 343 - set/astral-elements
   ---
-  duration_ms: 0.019301
+  duration_ms: 0.022756
+  ...
+# Subtest: the rejection rows assert a refusal, not merely a failing verdict
+ok 344 - the rejection rows assert a refusal, not merely a failing verdict
+  ---
+  duration_ms: 0.857145
   ...
 # Subtest: seed fixture: identical seeds across implementations
-ok 304 - seed fixture: identical seeds across implementations
+ok 345 - seed fixture: identical seeds across implementations
   ---
-  duration_ms: 0.752909
+  duration_ms: 0.873278
   ...
 # Subtest: canonical JSON fixture: identical bytes across implementations
-ok 305 - canonical JSON fixture: identical bytes across implementations
+ok 346 - canonical JSON fixture: identical bytes across implementations
   ---
-  duration_ms: 0.359846
+  duration_ms: 0.400356
+  ...
+# Subtest: the oracle corpus is not empty
+ok 347 - the oracle corpus is not empty
+  ---
+  duration_ms: 1.10966
+  ...
+# Subtest: ajv is a dev dependency and no shipped module imports it
+ok 348 - ajv is a dev dependency and no shipped module imports it
+  ---
+  duration_ms: 0.610442
+  ...
+# Subtest: ajv agrees with the subset validator: json_schema/object-valid\#0
+ok 349 - ajv agrees with the subset validator: json_schema/object-valid\#0
+  ---
+  duration_ms: 34.108554
+  ...
+# Subtest: ajv agrees with the subset validator: json_schema/missing-required\#1
+ok 350 - ajv agrees with the subset validator: json_schema/missing-required\#1
+  ---
+  duration_ms: 0.820711
+  ...
+# Subtest: ajv agrees with the subset validator: json_schema/not-json\#2
+ok 351 - ajv agrees with the subset validator: json_schema/not-json\#2
+  ---
+  duration_ms: 0.070096
+  ...
+# Subtest: ajv agrees with the subset validator: json_schema/empty-candidate\#3
+ok 352 - ajv agrees with the subset validator: json_schema/empty-candidate\#3
+  ---
+  duration_ms: 0.044951
+  ...
+# Subtest: ajv agrees with the subset validator: json_schema/truncated-json\#4
+ok 353 - ajv agrees with the subset validator: json_schema/truncated-json\#4
+  ---
+  duration_ms: 0.088915
+  ...
+# Subtest: ajv agrees with the subset validator: json_schema/trailing-comma-is-not-json\#5
+ok 354 - ajv agrees with the subset validator: json_schema/trailing-comma-is-not-json\#5
+  ---
+  duration_ms: 0.04315
+  ...
+# Subtest: ajv agrees with the subset validator: json_schema/code-fence-is-not-json\#6
+ok 355 - ajv agrees with the subset validator: json_schema/code-fence-is-not-json\#6
+  ---
+  duration_ms: 0.1437
+  ...
+# Subtest: ajv agrees with the subset validator: json_schema/array-of-integers\#7
+ok 356 - ajv agrees with the subset validator: json_schema/array-of-integers\#7
+  ---
+  duration_ms: 1.155781
+  ...
+# Subtest: ajv agrees with the subset validator: json_schema/array-wrong-item-type\#8
+ok 357 - ajv agrees with the subset validator: json_schema/array-wrong-item-type\#8
+  ---
+  duration_ms: 0.876263
+  ...
+# Subtest: ajv agrees with the subset validator: json_schema/array-too-short\#9
+ok 358 - ajv agrees with the subset validator: json_schema/array-too-short\#9
+  ---
+  duration_ms: 0.593983
+  ...
+# Subtest: ajv agrees with the subset validator: json_schema/integer-accepts-integral-float\#10
+ok 359 - ajv agrees with the subset validator: json_schema/integer-accepts-integral-float\#10
+  ---
+  duration_ms: 0.333923
+  ...
+# Subtest: ajv agrees with the subset validator: json_schema/integer-rejects-fraction\#11
+ok 360 - ajv agrees with the subset validator: json_schema/integer-rejects-fraction\#11
+  ---
+  duration_ms: 0.297649
+  ...
+# Subtest: ajv agrees with the subset validator: json_schema/boolean-is-not-integer\#12
+ok 361 - ajv agrees with the subset validator: json_schema/boolean-is-not-integer\#12
+  ---
+  duration_ms: 0.353877
+  ...
+# Subtest: ajv agrees with the subset validator: json_schema/null-type\#13
+ok 362 - ajv agrees with the subset validator: json_schema/null-type\#13
+  ---
+  duration_ms: 0.381166
+  ...
+# Subtest: ajv agrees with the subset validator: json_schema/type-union\#14
+ok 363 - ajv agrees with the subset validator: json_schema/type-union\#14
+  ---
+  duration_ms: 0.39296
+  ...
+# Subtest: ajv agrees with the subset validator: json_schema/type-union-violation\#15
+ok 364 - ajv agrees with the subset validator: json_schema/type-union-violation\#15
+  ---
+  duration_ms: 0.309038
+  ...
+# Subtest: ajv agrees with the subset validator: json_schema/deeply-nested-valid\#16
+ok 365 - ajv agrees with the subset validator: json_schema/deeply-nested-valid\#16
+  ---
+  duration_ms: 5.316074
+  ...
+# Subtest: ajv agrees with the subset validator: json_schema/deeply-nested-violation-at-leaf\#17
+ok 366 - ajv agrees with the subset validator: json_schema/deeply-nested-violation-at-leaf\#17
+  ---
+  duration_ms: 3.142826
+  ...
+# Subtest: ajv agrees with the subset validator: json_schema/enum-member\#18
+ok 367 - ajv agrees with the subset validator: json_schema/enum-member\#18
+  ---
+  duration_ms: 0.439932
+  ...
+# Subtest: ajv agrees with the subset validator: json_schema/enum-non-member\#19
+ok 368 - ajv agrees with the subset validator: json_schema/enum-non-member\#19
+  ---
+  duration_ms: 0.331111
+  ...
+# Subtest: ajv agrees with the subset validator: json_schema/const-structural\#20
+ok 369 - ajv agrees with the subset validator: json_schema/const-structural\#20
+  ---
+  duration_ms: 0.796756
+  ...
+# Subtest: ajv agrees with the subset validator: json_schema/const-mismatch\#21
+ok 370 - ajv agrees with the subset validator: json_schema/const-mismatch\#21
+  ---
+  duration_ms: 0.510485
+  ...
+# Subtest: ajv agrees with the subset validator: json_schema/min-length-counts-code-points-devanagari\#22
+ok 371 - ajv agrees with the subset validator: json_schema/min-length-counts-code-points-devanagari\#22
+  ---
+  duration_ms: 0.507579
+  ...
+# Subtest: ajv agrees with the subset validator: json_schema/max-length-counts-code-points-hangul\#23
+ok 372 - ajv agrees with the subset validator: json_schema/max-length-counts-code-points-hangul\#23
+  ---
+  duration_ms: 0.393022
+  ...
+# Subtest: ajv agrees with the subset validator: json_schema/max-length-counts-astral-as-one\#24
+ok 373 - ajv agrees with the subset validator: json_schema/max-length-counts-astral-as-one\#24
+  ---
+  duration_ms: 0.352438
+  ...
+# Subtest: ajv agrees with the subset validator: json_schema/pattern-matches\#25
+ok 374 - ajv agrees with the subset validator: json_schema/pattern-matches\#25
+  ---
+  duration_ms: 0.9606
+  ...
+# Subtest: ajv agrees with the subset validator: json_schema/pattern-violation\#26
+ok 375 - ajv agrees with the subset validator: json_schema/pattern-violation\#26
+  ---
+  duration_ms: 0.511615
+  ...
+# Subtest: ajv agrees with the subset validator: json_schema/pattern-is-unanchored-search\#27
+ok 376 - ajv agrees with the subset validator: json_schema/pattern-is-unanchored-search\#27
+  ---
+  duration_ms: 0.430031
+  ...
+# Subtest: ajv agrees with the subset validator: json_schema/unique-items-violation\#28
+ok 377 - ajv agrees with the subset validator: json_schema/unique-items-violation\#28
+  ---
+  duration_ms: 0.511809
+  ...
+# Subtest: ajv agrees with the subset validator: json_schema/unique-items-numeric-equality\#29
+ok 378 - ajv agrees with the subset validator: json_schema/unique-items-numeric-equality\#29
+  ---
+  duration_ms: 0.417255
+  ...
+# Subtest: ajv agrees with the subset validator: json_schema/unique-items-boolean-is-not-one\#30
+ok 379 - ajv agrees with the subset validator: json_schema/unique-items-boolean-is-not-one\#30
+  ---
+  duration_ms: 0.47439
+  ...
+# Subtest: ajv agrees with the subset validator: json_schema/unique-items-structural\#31
+ok 380 - ajv agrees with the subset validator: json_schema/unique-items-structural\#31
+  ---
+  duration_ms: 0.433734
+  ...
+# Subtest: ajv agrees with the subset validator: json_schema/additional-properties-false\#32
+ok 381 - ajv agrees with the subset validator: json_schema/additional-properties-false\#32
+  ---
+  duration_ms: 0.664524
+  ...
+# Subtest: ajv agrees with the subset validator: json_schema/additional-properties-schema\#33
+ok 382 - ajv agrees with the subset validator: json_schema/additional-properties-schema\#33
+  ---
+  duration_ms: 0.6034
+  ...
+# Subtest: ajv agrees with the subset validator: json_schema/pattern-properties\#34
+ok 383 - ajv agrees with the subset validator: json_schema/pattern-properties\#34
+  ---
+  duration_ms: 4.943484
+  ...
+# Subtest: ajv agrees with the subset validator: json_schema/pattern-properties-violation\#35
+ok 384 - ajv agrees with the subset validator: json_schema/pattern-properties-violation\#35
+  ---
+  duration_ms: 0.658221
+  ...
+# Subtest: ajv agrees with the subset validator: json_schema/any-of\#36
+ok 385 - ajv agrees with the subset validator: json_schema/any-of\#36
+  ---
+  duration_ms: 3.506935
+  ...
+# Subtest: ajv agrees with the subset validator: json_schema/one-of-exactly-one\#37
+ok 386 - ajv agrees with the subset validator: json_schema/one-of-exactly-one\#37
+  ---
+  duration_ms: 0.861337
+  ...
+# Subtest: ajv agrees with the subset validator: json_schema/one-of-two-matches-fails\#38
+ok 387 - ajv agrees with the subset validator: json_schema/one-of-two-matches-fails\#38
+  ---
+  duration_ms: 0.569439
+  ...
+# Subtest: ajv agrees with the subset validator: json_schema/all-of\#39
+ok 388 - ajv agrees with the subset validator: json_schema/all-of\#39
+  ---
+  duration_ms: 0.627818
+  ...
+# Subtest: ajv agrees with the subset validator: json_schema/not\#40
+ok 389 - ajv agrees with the subset validator: json_schema/not\#40
+  ---
+  duration_ms: 0.466643
+  ...
+# Subtest: ajv agrees with the subset validator: json_schema/not-violation\#41
+ok 390 - ajv agrees with the subset validator: json_schema/not-violation\#41
+  ---
+  duration_ms: 0.410887
+  ...
+# Subtest: ajv agrees with the subset validator: json_schema/local-ref\#42
+ok 391 - ajv agrees with the subset validator: json_schema/local-ref\#42
+  ---
+  duration_ms: 5.008028
+  ...
+# Subtest: ajv agrees with the subset validator: json_schema/local-ref-violation\#43
+ok 392 - ajv agrees with the subset validator: json_schema/local-ref-violation\#43
+  ---
+  duration_ms: 0.723546
+  ...
+# Subtest: ajv agrees with the subset validator: json_schema/boolean-schema-true\#44
+ok 393 - ajv agrees with the subset validator: json_schema/boolean-schema-true\#44
+  ---
+  duration_ms: 0.205418
+  ...
+# Subtest: ajv agrees with the subset validator: json_schema/boolean-schema-false\#45
+ok 394 - ajv agrees with the subset validator: json_schema/boolean-schema-false\#45
+  ---
+  duration_ms: 0.192544
+  ...
+# Subtest: ajv agrees with the subset validator: json_schema/multiple-of\#46
+ok 395 - ajv agrees with the subset validator: json_schema/multiple-of\#46
+  ---
+  duration_ms: 2.219182
+  ...
+# Subtest: ajv agrees with the subset validator: json_schema/multiple-of-violation\#47
+ok 396 - ajv agrees with the subset validator: json_schema/multiple-of-violation\#47
+  ---
+  duration_ms: 0.442739
+  ...
+# Subtest: ajv agrees with the subset validator: json_schema/exclusive-minimum-boundary\#48
+ok 397 - ajv agrees with the subset validator: json_schema/exclusive-minimum-boundary\#48
+  ---
+  duration_ms: 0.366496
+  ...
+# Subtest: ajv agrees with the subset validator: json_schema/inclusive-minimum-boundary\#49
+ok 398 - ajv agrees with the subset validator: json_schema/inclusive-minimum-boundary\#49
+  ---
+  duration_ms: 0.319986
+  ...
+# Subtest: ajv agrees with the subset validator: json_schema/prefix-items\#50
+ok 399 - ajv agrees with the subset validator: json_schema/prefix-items\#50
+  ---
+  duration_ms: 2.123834
+  ...
+# Subtest: ajv agrees with the subset validator: json_schema/prefix-items-extra-rejected\#51
+ok 400 - ajv agrees with the subset validator: json_schema/prefix-items-extra-rejected\#51
+  ---
+  duration_ms: 0.562957
+  ...
+# Subtest: ajv agrees with the subset validator: json_schema/property-names\#52
+ok 401 - ajv agrees with the subset validator: json_schema/property-names\#52
+  ---
+  duration_ms: 0.743433
+  ...
+# Subtest: ajv agrees with the subset validator: json_schema/dependent-required\#53
+ok 402 - ajv agrees with the subset validator: json_schema/dependent-required\#53
+  ---
+  duration_ms: 0.540269
+  ...
+# Subtest: ajv agrees with the subset validator: json_schema/min-max-properties\#54
+ok 403 - ajv agrees with the subset validator: json_schema/min-max-properties\#54
+  ---
+  duration_ms: 0.440822
+  ...
+# Subtest: ajv agrees with the subset validator: json_schema/contains-with-min-contains\#55
+ok 404 - ajv agrees with the subset validator: json_schema/contains-with-min-contains\#55
+  ---
+  duration_ms: 2.536311
+  ...
+# Subtest: ajv agrees with the subset validator: json_schema/contains-not-enough\#56
+ok 405 - ajv agrees with the subset validator: json_schema/contains-not-enough\#56
+  ---
+  duration_ms: 0.667014
+  ...
+# Subtest: ajv agrees with the subset validator: json_schema/empty-schema-accepts-anything\#57
+ok 406 - ajv agrees with the subset validator: json_schema/empty-schema-accepts-anything\#57
+  ---
+  duration_ms: 0.207237
+  ...
+# Subtest: ajv agrees with the subset validator: all_of/schema-then-exact-both-pass\#58
+ok 407 - ajv agrees with the subset validator: all_of/schema-then-exact-both-pass\#58
+  ---
+  duration_ms: 0.771169
+  ...
+# Subtest: ajv agrees with the subset validator: all_of/schema-catches-wrong-value-first\#59
+ok 408 - ajv agrees with the subset validator: all_of/schema-catches-wrong-value-first\#59
+  ---
+  duration_ms: 0.690545
+  ...
+# Subtest: ajv agrees with the subset validator: all_of/exact-catches-wrong-serialisation\#60
+ok 409 - ajv agrees with the subset validator: all_of/exact-catches-wrong-serialisation\#60
+  ---
+  duration_ms: 6.502655
+  ...
+# Subtest: ajv agrees with the subset validator: all_of/invalid-json-surfaces-from-the-first-child\#61
+ok 410 - ajv agrees with the subset validator: all_of/invalid-json-surfaces-from-the-first-child\#61
+  ---
+  duration_ms: 0.061178
+  ...
+# Subtest: ajv agrees with the recorded expectation: json_schema/object-valid\#0
+ok 411 - ajv agrees with the recorded expectation: json_schema/object-valid\#0
+  ---
+  duration_ms: 0.067856
+  ...
+# Subtest: ajv agrees with the recorded expectation: json_schema/missing-required\#1
+ok 412 - ajv agrees with the recorded expectation: json_schema/missing-required\#1
+  ---
+  duration_ms: 0.034953
+  ...
+# Subtest: ajv agrees with the recorded expectation: json_schema/not-json\#2
+ok 413 - ajv agrees with the recorded expectation: json_schema/not-json\#2
+  ---
+  duration_ms: 0.032388
+  ...
+# Subtest: ajv agrees with the recorded expectation: json_schema/empty-candidate\#3
+ok 414 - ajv agrees with the recorded expectation: json_schema/empty-candidate\#3
+  ---
+  duration_ms: 0.029477
+  ...
+# Subtest: ajv agrees with the recorded expectation: json_schema/truncated-json\#4
+ok 415 - ajv agrees with the recorded expectation: json_schema/truncated-json\#4
+  ---
+  duration_ms: 0.030696
+  ...
+# Subtest: ajv agrees with the recorded expectation: json_schema/trailing-comma-is-not-json\#5
+ok 416 - ajv agrees with the recorded expectation: json_schema/trailing-comma-is-not-json\#5
+  ---
+  duration_ms: 0.028939
+  ...
+# Subtest: ajv agrees with the recorded expectation: json_schema/code-fence-is-not-json\#6
+ok 417 - ajv agrees with the recorded expectation: json_schema/code-fence-is-not-json\#6
+  ---
+  duration_ms: 0.028618
+  ...
+# Subtest: ajv agrees with the recorded expectation: json_schema/array-of-integers\#7
+ok 418 - ajv agrees with the recorded expectation: json_schema/array-of-integers\#7
+  ---
+  duration_ms: 0.027038
+  ...
+# Subtest: ajv agrees with the recorded expectation: json_schema/array-wrong-item-type\#8
+ok 419 - ajv agrees with the recorded expectation: json_schema/array-wrong-item-type\#8
+  ---
+  duration_ms: 0.057071
+  ...
+# Subtest: ajv agrees with the recorded expectation: json_schema/array-too-short\#9
+ok 420 - ajv agrees with the recorded expectation: json_schema/array-too-short\#9
+  ---
+  duration_ms: 0.029967
+  ...
+# Subtest: ajv agrees with the recorded expectation: json_schema/integer-accepts-integral-float\#10
+ok 421 - ajv agrees with the recorded expectation: json_schema/integer-accepts-integral-float\#10
+  ---
+  duration_ms: 0.024425
+  ...
+# Subtest: ajv agrees with the recorded expectation: json_schema/integer-rejects-fraction\#11
+ok 422 - ajv agrees with the recorded expectation: json_schema/integer-rejects-fraction\#11
+  ---
+  duration_ms: 0.027439
+  ...
+# Subtest: ajv agrees with the recorded expectation: json_schema/boolean-is-not-integer\#12
+ok 423 - ajv agrees with the recorded expectation: json_schema/boolean-is-not-integer\#12
+  ---
+  duration_ms: 0.029558
+  ...
+# Subtest: ajv agrees with the recorded expectation: json_schema/null-type\#13
+ok 424 - ajv agrees with the recorded expectation: json_schema/null-type\#13
+  ---
+  duration_ms: 0.024758
+  ...
+# Subtest: ajv agrees with the recorded expectation: json_schema/type-union\#14
+ok 425 - ajv agrees with the recorded expectation: json_schema/type-union\#14
+  ---
+  duration_ms: 0.023227
+  ...
+# Subtest: ajv agrees with the recorded expectation: json_schema/type-union-violation\#15
+ok 426 - ajv agrees with the recorded expectation: json_schema/type-union-violation\#15
+  ---
+  duration_ms: 0.025121
+  ...
+# Subtest: ajv agrees with the recorded expectation: json_schema/deeply-nested-valid\#16
+ok 427 - ajv agrees with the recorded expectation: json_schema/deeply-nested-valid\#16
+  ---
+  duration_ms: 0.028022
+  ...
+# Subtest: ajv agrees with the recorded expectation: json_schema/deeply-nested-violation-at-leaf\#17
+ok 428 - ajv agrees with the recorded expectation: json_schema/deeply-nested-violation-at-leaf\#17
+  ---
+  duration_ms: 0.028399
+  ...
+# Subtest: ajv agrees with the recorded expectation: json_schema/enum-member\#18
+ok 429 - ajv agrees with the recorded expectation: json_schema/enum-member\#18
+  ---
+  duration_ms: 0.024428
+  ...
+# Subtest: ajv agrees with the recorded expectation: json_schema/enum-non-member\#19
+ok 430 - ajv agrees with the recorded expectation: json_schema/enum-non-member\#19
+  ---
+  duration_ms: 0.037236
+  ...
+# Subtest: ajv agrees with the recorded expectation: json_schema/const-structural\#20
+ok 431 - ajv agrees with the recorded expectation: json_schema/const-structural\#20
+  ---
+  duration_ms: 0.033468
+  ...
+# Subtest: ajv agrees with the recorded expectation: json_schema/const-mismatch\#21
+ok 432 - ajv agrees with the recorded expectation: json_schema/const-mismatch\#21
+  ---
+  duration_ms: 0.036656
+  ...
+# Subtest: ajv agrees with the recorded expectation: json_schema/min-length-counts-code-points-devanagari\#22
+ok 433 - ajv agrees with the recorded expectation: json_schema/min-length-counts-code-points-devanagari\#22
+  ---
+  duration_ms: 0.025357
+  ...
+# Subtest: ajv agrees with the recorded expectation: json_schema/max-length-counts-code-points-hangul\#23
+ok 434 - ajv agrees with the recorded expectation: json_schema/max-length-counts-code-points-hangul\#23
+  ---
+  duration_ms: 0.024766
+  ...
+# Subtest: ajv agrees with the recorded expectation: json_schema/max-length-counts-astral-as-one\#24
+ok 435 - ajv agrees with the recorded expectation: json_schema/max-length-counts-astral-as-one\#24
+  ---
+  duration_ms: 0.022925
+  ...
+# Subtest: ajv agrees with the recorded expectation: json_schema/pattern-matches\#25
+ok 436 - ajv agrees with the recorded expectation: json_schema/pattern-matches\#25
+  ---
+  duration_ms: 0.024659
+  ...
+# Subtest: ajv agrees with the recorded expectation: json_schema/pattern-violation\#26
+ok 437 - ajv agrees with the recorded expectation: json_schema/pattern-violation\#26
+  ---
+  duration_ms: 0.025194
+  ...
+# Subtest: ajv agrees with the recorded expectation: json_schema/pattern-is-unanchored-search\#27
+ok 438 - ajv agrees with the recorded expectation: json_schema/pattern-is-unanchored-search\#27
+  ---
+  duration_ms: 0.023293
+  ...
+# Subtest: ajv agrees with the recorded expectation: json_schema/unique-items-violation\#28
+ok 439 - ajv agrees with the recorded expectation: json_schema/unique-items-violation\#28
+  ---
+  duration_ms: 0.027368
+  ...
+# Subtest: ajv agrees with the recorded expectation: json_schema/unique-items-numeric-equality\#29
+ok 440 - ajv agrees with the recorded expectation: json_schema/unique-items-numeric-equality\#29
+  ---
+  duration_ms: 0.027112
+  ...
+# Subtest: ajv agrees with the recorded expectation: json_schema/unique-items-boolean-is-not-one\#30
+ok 441 - ajv agrees with the recorded expectation: json_schema/unique-items-boolean-is-not-one\#30
+  ---
+  duration_ms: 0.023316
+  ...
+# Subtest: ajv agrees with the recorded expectation: json_schema/unique-items-structural\#31
+ok 442 - ajv agrees with the recorded expectation: json_schema/unique-items-structural\#31
+  ---
+  duration_ms: 0.029601
+  ...
+# Subtest: ajv agrees with the recorded expectation: json_schema/additional-properties-false\#32
+ok 443 - ajv agrees with the recorded expectation: json_schema/additional-properties-false\#32
+  ---
+  duration_ms: 0.026549
+  ...
+# Subtest: ajv agrees with the recorded expectation: json_schema/additional-properties-schema\#33
+ok 444 - ajv agrees with the recorded expectation: json_schema/additional-properties-schema\#33
+  ---
+  duration_ms: 0.026325
+  ...
+# Subtest: ajv agrees with the recorded expectation: json_schema/pattern-properties\#34
+ok 445 - ajv agrees with the recorded expectation: json_schema/pattern-properties\#34
+  ---
+  duration_ms: 0.027041
+  ...
+# Subtest: ajv agrees with the recorded expectation: json_schema/pattern-properties-violation\#35
+ok 446 - ajv agrees with the recorded expectation: json_schema/pattern-properties-violation\#35
+  ---
+  duration_ms: 0.028685
+  ...
+# Subtest: ajv agrees with the recorded expectation: json_schema/any-of\#36
+ok 447 - ajv agrees with the recorded expectation: json_schema/any-of\#36
+  ---
+  duration_ms: 0.025213
+  ...
+# Subtest: ajv agrees with the recorded expectation: json_schema/one-of-exactly-one\#37
+ok 448 - ajv agrees with the recorded expectation: json_schema/one-of-exactly-one\#37
+  ---
+  duration_ms: 0.024686
+  ...
+# Subtest: ajv agrees with the recorded expectation: json_schema/one-of-two-matches-fails\#38
+ok 449 - ajv agrees with the recorded expectation: json_schema/one-of-two-matches-fails\#38
+  ---
+  duration_ms: 0.024991
+  ...
+# Subtest: ajv agrees with the recorded expectation: json_schema/all-of\#39
+ok 450 - ajv agrees with the recorded expectation: json_schema/all-of\#39
+  ---
+  duration_ms: 0.02333
+  ...
+# Subtest: ajv agrees with the recorded expectation: json_schema/not\#40
+ok 451 - ajv agrees with the recorded expectation: json_schema/not\#40
+  ---
+  duration_ms: 0.023084
+  ...
+# Subtest: ajv agrees with the recorded expectation: json_schema/not-violation\#41
+ok 452 - ajv agrees with the recorded expectation: json_schema/not-violation\#41
+  ---
+  duration_ms: 0.024588
+  ...
+# Subtest: ajv agrees with the recorded expectation: json_schema/local-ref\#42
+ok 453 - ajv agrees with the recorded expectation: json_schema/local-ref\#42
+  ---
+  duration_ms: 0.025323
+  ...
+# Subtest: ajv agrees with the recorded expectation: json_schema/local-ref-violation\#43
+ok 454 - ajv agrees with the recorded expectation: json_schema/local-ref-violation\#43
+  ---
+  duration_ms: 0.025637
+  ...
+# Subtest: ajv agrees with the recorded expectation: json_schema/boolean-schema-true\#44
+ok 455 - ajv agrees with the recorded expectation: json_schema/boolean-schema-true\#44
+  ---
+  duration_ms: 0.023497
+  ...
+# Subtest: ajv agrees with the recorded expectation: json_schema/boolean-schema-false\#45
+ok 456 - ajv agrees with the recorded expectation: json_schema/boolean-schema-false\#45
+  ---
+  duration_ms: 0.023647
+  ...
+# Subtest: ajv agrees with the recorded expectation: json_schema/multiple-of\#46
+ok 457 - ajv agrees with the recorded expectation: json_schema/multiple-of\#46
+  ---
+  duration_ms: 0.02503
+  ...
+# Subtest: ajv agrees with the recorded expectation: json_schema/multiple-of-violation\#47
+ok 458 - ajv agrees with the recorded expectation: json_schema/multiple-of-violation\#47
+  ---
+  duration_ms: 0.031498
+  ...
+# Subtest: ajv agrees with the recorded expectation: json_schema/exclusive-minimum-boundary\#48
+ok 459 - ajv agrees with the recorded expectation: json_schema/exclusive-minimum-boundary\#48
+  ---
+  duration_ms: 0.024863
+  ...
+# Subtest: ajv agrees with the recorded expectation: json_schema/inclusive-minimum-boundary\#49
+ok 460 - ajv agrees with the recorded expectation: json_schema/inclusive-minimum-boundary\#49
+  ---
+  duration_ms: 0.022648
+  ...
+# Subtest: ajv agrees with the recorded expectation: json_schema/prefix-items\#50
+ok 461 - ajv agrees with the recorded expectation: json_schema/prefix-items\#50
+  ---
+  duration_ms: 0.024848
+  ...
+# Subtest: ajv agrees with the recorded expectation: json_schema/prefix-items-extra-rejected\#51
+ok 462 - ajv agrees with the recorded expectation: json_schema/prefix-items-extra-rejected\#51
+  ---
+  duration_ms: 0.024505
+  ...
+# Subtest: ajv agrees with the recorded expectation: json_schema/property-names\#52
+ok 463 - ajv agrees with the recorded expectation: json_schema/property-names\#52
+  ---
+  duration_ms: 0.029489
+  ...
+# Subtest: ajv agrees with the recorded expectation: json_schema/dependent-required\#53
+ok 464 - ajv agrees with the recorded expectation: json_schema/dependent-required\#53
+  ---
+  duration_ms: 0.046191
+  ...
+# Subtest: ajv agrees with the recorded expectation: json_schema/min-max-properties\#54
+ok 465 - ajv agrees with the recorded expectation: json_schema/min-max-properties\#54
+  ---
+  duration_ms: 0.029508
+  ...
+# Subtest: ajv agrees with the recorded expectation: json_schema/contains-with-min-contains\#55
+ok 466 - ajv agrees with the recorded expectation: json_schema/contains-with-min-contains\#55
+  ---
+  duration_ms: 0.027508
+  ...
+# Subtest: ajv agrees with the recorded expectation: json_schema/contains-not-enough\#56
+ok 467 - ajv agrees with the recorded expectation: json_schema/contains-not-enough\#56
+  ---
+  duration_ms: 0.028865
+  ...
+# Subtest: ajv agrees with the recorded expectation: json_schema/empty-schema-accepts-anything\#57
+ok 468 - ajv agrees with the recorded expectation: json_schema/empty-schema-accepts-anything\#57
+  ---
+  duration_ms: 0.04634
+  ...
+# Subtest: ajv agrees with the recorded expectation: all_of/schema-then-exact-both-pass\#58
+ok 469 - ajv agrees with the recorded expectation: all_of/schema-then-exact-both-pass\#58
+  ---
+  duration_ms: 0.022797
+  ...
+# Subtest: ajv agrees with the recorded expectation: all_of/schema-catches-wrong-value-first\#59
+ok 470 - ajv agrees with the recorded expectation: all_of/schema-catches-wrong-value-first\#59
+  ---
+  duration_ms: 0.023471
+  ...
+# Subtest: ajv agrees with the recorded expectation: all_of/exact-catches-wrong-serialisation\#60
+ok 471 - ajv agrees with the recorded expectation: all_of/exact-catches-wrong-serialisation\#60
+  ---
+  duration_ms: 0.058487
+  ...
+# Subtest: ajv agrees with the recorded expectation: all_of/invalid-json-surfaces-from-the-first-child\#61
+ok 472 - ajv agrees with the recorded expectation: all_of/invalid-json-surfaces-from-the-first-child\#61
+  ---
+  duration_ms: 0.033966
   ...
 # Subtest: the tripwire itself works
-ok 306 - the tripwire itself works
+ok 473 - the tripwire itself works
   ---
-  duration_ms: 1.024536
+  duration_ms: 0.646136
   ...
 # Subtest: running every conformance case opens no socket
-ok 307 - running every conformance case opens no socket
+ok 474 - running every conformance case opens no socket
   ---
-  duration_ms: 8.78545
+  duration_ms: 6.580273
   ...
 # Subtest: reading, hashing and auditing a generated set opens no socket
-ok 308 - reading, hashing and auditing a generated set opens no socket
+ok 475 - reading, hashing and auditing a generated set opens no socket
   ---
-  duration_ms: 6.724417
+  duration_ms: 3.496674
   ...
 # Subtest: a json_schema verifier refuses a remote $ref rather than fetching it
-ok 309 - a json_schema verifier refuses a remote $ref rather than fetching it
+ok 476 - a json_schema verifier refuses a remote $ref rather than fetching it
   ---
-  duration_ms: 0.284754
+  duration_ms: 0.200438
   ...
 # Subtest: reads the example set and its manifest
-ok 310 - reads the example set and its manifest
+ok 477 - reads the example set and its manifest
   ---
-  duration_ms: 3.983068
+  duration_ms: 4.522803
   ...
 # Subtest: every seed in the example set recomputes
-ok 311 - every seed in the example set recomputes
+ok 478 - every seed in the example set recomputes
   ---
-  duration_ms: 1.643831
+  duration_ms: 1.659454
   ...
 # Subtest: a tampered seed is caught
-ok 312 - a tampered seed is caught
+ok 479 - a tampered seed is caught
   ---
-  duration_ms: 1.080883
+  duration_ms: 1.127576
   ...
 # Subtest: the template content hash agrees with Python
-ok 313 - the template content hash agrees with Python
+ok 480 - the template content hash agrees with Python
   ---
-  duration_ms: 3.397077
+  duration_ms: 1.659865
   ...
 # Subtest: the instances agree with the manifest about their template
-ok 314 - the instances agree with the manifest about their template
+ok 481 - the instances agree with the manifest about their template
   ---
-  duration_ms: 1.820507
+  duration_ms: 1.422871
   ...
 # Subtest: a locale layer may not redeclare the task
-ok 315 - a locale layer may not redeclare the task
+ok 482 - a locale layer may not redeclare the task
   ---
-  duration_ms: 0.332026
+  duration_ms: 0.333792
   ...
 # Subtest: a malformed instance line is an error, not a skipped row
-ok 316 - a malformed instance line is an error, not a skipped row
+ok 483 - a malformed instance line is an error, not a skipped row
   ---
-  duration_ms: 0.153323
+  duration_ms: 0.157421
   ...
 # Subtest: the expected answer in each instance satisfies its own verifier
-ok 317 - the expected answer in each instance satisfies its own verifier
+ok 484 - the expected answer in each instance satisfies its own verifier
   ---
-  duration_ms: 6.199909
+  duration_ms: 1.709559
   ...
 # Subtest: contentHash is stable and prefixed
-ok 318 - contentHash is stable and prefixed
+ok 485 - contentHash is stable and prefixed
   ---
-  duration_ms: 0.515874
+  duration_ms: 0.529537
+  ...
+# Subtest: \\w is refused outside a character class
+ok 486 - \\w is refused outside a character class
+  ---
+  duration_ms: 1.072477
+  ...
+# Subtest: \\W is refused outside a character class
+ok 487 - \\W is refused outside a character class
+  ---
+  duration_ms: 0.157107
+  ...
+# Subtest: \\d is refused outside a character class
+ok 488 - \\d is refused outside a character class
+  ---
+  duration_ms: 0.068277
+  ...
+# Subtest: \\D is refused outside a character class
+ok 489 - \\D is refused outside a character class
+  ---
+  duration_ms: 0.054251
+  ...
+# Subtest: \\b is refused outside a character class
+ok 490 - \\b is refused outside a character class
+  ---
+  duration_ms: 0.056843
+  ...
+# Subtest: \\B is refused outside a character class
+ok 491 - \\B is refused outside a character class
+  ---
+  duration_ms: 0.06042
+  ...
+# Subtest: \\s is refused outside a character class
+ok 492 - \\s is refused outside a character class
+  ---
+  duration_ms: 0.052595
+  ...
+# Subtest: \\S is refused outside a character class
+ok 493 - \\S is refused outside a character class
+  ---
+  duration_ms: 0.050591
+  ...
+# Subtest: \\w is refused inside a character class
+ok 494 - \\w is refused inside a character class
+  ---
+  duration_ms: 0.327862
+  ...
+# Subtest: \\W is refused inside a character class
+ok 495 - \\W is refused inside a character class
+  ---
+  duration_ms: 0.248663
+  ...
+# Subtest: \\d is refused inside a character class
+ok 496 - \\d is refused inside a character class
+  ---
+  duration_ms: 0.063361
+  ...
+# Subtest: \\D is refused inside a character class
+ok 497 - \\D is refused inside a character class
+  ---
+  duration_ms: 0.043553
+  ...
+# Subtest: \\s is refused inside a character class
+ok 498 - \\s is refused inside a character class
+  ---
+  duration_ms: 0.035817
+  ...
+# Subtest: \\S is refused inside a character class
+ok 499 - \\S is refused inside a character class
+  ---
+  duration_ms: 0.088422
+  ...
+# Subtest: the m and s flags are gone from the subset
+ok 500 - the m and s flags are gone from the subset
+  ---
+  duration_ms: 0.529181
+  ...
+# Subtest: the i flag is refused on a non-ASCII pattern
+ok 501 - the i flag is refused on a non-ASCII pattern
+  ---
+  duration_ms: 0.245483
+  ...
+# Subtest: an out-of-subset flag reaches the verdict as invalid_pattern, never as a pass
+ok 502 - an out-of-subset flag reaches the verdict as invalid_pattern, never as a pass
+  ---
+  duration_ms: 0.16445
+  ...
+# Subtest: the compiled source is the pattern verbatim, with no dialect translation
+ok 503 - the compiled source is the pattern verbatim, with no dialect translation
+  ---
+  duration_ms: 0.071584
+  ...
+# Subtest: the portable end-of-input assertion behaves the same as Python across a trailing newline
+ok 504 - the portable end-of-input assertion behaves the same as Python across a trailing newline
+  ---
+  duration_ms: 0.133572
   ...
 # Subtest: spec-types.generated.ts is up to date with the JSON schema
-ok 319 - spec-types.generated.ts is up to date with the JSON schema
+ok 505 - spec-types.generated.ts is up to date with the JSON schema
   ---
-  duration_ms: 129.256049
+  duration_ms: 119.556612
   ...
 # Subtest: runVerifier throws UnsupportedVerifierError for sympy_equiv
-ok 320 - runVerifier throws UnsupportedVerifierError for sympy_equiv
+ok 506 - runVerifier throws UnsupportedVerifierError for sympy_equiv
   ---
-  duration_ms: 0.831406
+  duration_ms: 0.938073
   ...
 # Subtest: runVerifierOrFail returns a failing verdict for sympy_equiv
-ok 321 - runVerifierOrFail returns a failing verdict for sympy_equiv
+ok 507 - runVerifierOrFail returns a failing verdict for sympy_equiv
   ---
-  duration_ms: 0.121587
+  duration_ms: 0.215121
   ...
 # Subtest: sympy_equiv is classified as executable, not declarative
-ok 322 - sympy_equiv is classified as executable, not declarative
+ok 508 - sympy_equiv is classified as executable, not declarative
   ---
-  duration_ms: 0.071674
+  duration_ms: 0.123969
   ...
 # Subtest: runVerifier throws UnsupportedVerifierError for python_unittest
-ok 323 - runVerifier throws UnsupportedVerifierError for python_unittest
+ok 509 - runVerifier throws UnsupportedVerifierError for python_unittest
   ---
-  duration_ms: 0.061361
+  duration_ms: 0.091557
   ...
 # Subtest: runVerifierOrFail returns a failing verdict for python_unittest
-ok 324 - runVerifierOrFail returns a failing verdict for python_unittest
+ok 510 - runVerifierOrFail returns a failing verdict for python_unittest
   ---
-  duration_ms: 0.104625
+  duration_ms: 0.068562
   ...
 # Subtest: python_unittest is classified as executable, not declarative
-ok 325 - python_unittest is classified as executable, not declarative
+ok 511 - python_unittest is classified as executable, not declarative
   ---
-  duration_ms: 0.044731
+  duration_ms: 0.053132
+  ...
+# Subtest: an executable child 0 level(s) down makes the whole composite raise
+ok 512 - an executable child 0 level(s) down makes the whole composite raise
+  ---
+  duration_ms: 0.211049
+  ...
+# Subtest: an executable child 1 level(s) down makes the whole composite raise
+ok 513 - an executable child 1 level(s) down makes the whole composite raise
+  ---
+  duration_ms: 0.080522
+  ...
+# Subtest: an executable child 2 level(s) down makes the whole composite raise
+ok 514 - an executable child 2 level(s) down makes the whole composite raise
+  ---
+  duration_ms: 0.203997
+  ...
+# Subtest: an executable child 3 level(s) down makes the whole composite raise
+ok 515 - an executable child 3 level(s) down makes the whole composite raise
+  ---
+  duration_ms: 0.304926
+  ...
+# Subtest: an executable child 4 level(s) down makes the whole composite raise
+ok 516 - an executable child 4 level(s) down makes the whole composite raise
+  ---
+  duration_ms: 0.702293
+  ...
+# Subtest: an executable child 5 level(s) down makes the whole composite raise
+ok 517 - an executable child 5 level(s) down makes the whole composite raise
+  ---
+  duration_ms: 0.100827
+  ...
+# Subtest: an executable child 6 level(s) down makes the whole composite raise
+ok 518 - an executable child 6 level(s) down makes the whole composite raise
+  ---
+  duration_ms: 0.113168
+  ...
+# Subtest: an executable child 7 level(s) down makes the whole composite raise
+ok 519 - an executable child 7 level(s) down makes the whole composite raise
+  ---
+  duration_ms: 0.058418
+  ...
+# Subtest: an executable child 8 level(s) down makes the whole composite raise
+ok 520 - an executable child 8 level(s) down makes the whole composite raise
+  ---
+  duration_ms: 0.052435
   ...
 # Subtest: an unknown verifier type is also an error, not a pass
-ok 326 - an unknown verifier type is also an error, not a pass
+ok 521 - an unknown verifier type is also an error, not a pass
   ---
-  duration_ms: 0.123322
+  duration_ms: 0.113309
   ...
 # Subtest: a verifier with no type tag is an error, not a pass
-ok 327 - a verifier with no type tag is an error, not a pass
+ok 522 - a verifier with no type tag is an error, not a pass
   ---
-  duration_ms: 0.082338
+  duration_ms: 0.062695
   ...
-1..327
-# tests 327
+1..522
+# tests 522
 # suites 0
-# pass 327
+# pass 522
 # fail 0
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 491.551881
-Done in 0.54s.
+# duration_ms 678.00343
+Done in 0.73s.

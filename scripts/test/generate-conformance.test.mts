@@ -20,10 +20,14 @@ import {
   DECLARATIVE_VERIFIER_TYPES,
   deriveSeed,
   runVerifier,
+  runVerifierOrFail,
   seedMessage,
   seedToString,
+  UnsupportedVerifierError,
+  VerifierConfigError,
   type ConformanceCase,
   type ConformanceFile,
+  type ConformanceRejection,
   type Verifier,
 } from '../../packages/harness/src/generate/index';
 
@@ -60,13 +64,14 @@ for (const filename of verifierFiles) {
       document.cases.length >= MINIMUM_CASES_PER_TYPE,
       `${filename} has ${document.cases.length} cases, the spec requires at least ${MINIMUM_CASES_PER_TYPE}`,
     );
-    const identifiers = document.cases.map((entry) => entry.id);
+    const rows = [...document.cases, ...(document.rejections ?? [])];
+    const identifiers = rows.map((entry) => entry.id);
     assert.equal(new Set(identifiers).size, identifiers.length, `${filename} has duplicate ids`);
-    for (const entry of document.cases) {
-      assert.equal(
-        (entry.verifier as { type: string }).type,
-        verifierType,
-        `${entry.id} declares the wrong verifier type for ${filename}`,
+    for (const entry of rows) {
+      const declared = (entry.verifier as { type?: string }).type;
+      assert.ok(
+        declared === verifierType || declared === undefined,
+        `${entry.id} declares a ${declared} verifier in ${filename}`,
       );
       assert.equal(seen.has(entry.id), false, `case id ${entry.id} is used twice`);
       seen.add(entry.id);
@@ -83,7 +88,42 @@ for (const filename of verifierFiles) {
       );
     });
   }
+
+  // Rows asserting that a configuration is refused rather than evaluated. Both halves
+  // matter: the raise is the contract for a caller that wants to know its verifier is
+  // unusable, and the verdict is what a caller scoring a whole set gets instead of an
+  // aborted run. Neither is allowed to be a pass.
+  for (const entry of (document.rejections ?? []) as ConformanceRejection[]) {
+    test(`${entry.id}`, () => {
+      const expectedError =
+        entry.raises === 'unsupported_verifier' ? UnsupportedVerifierError : VerifierConfigError;
+      assert.throws(
+        () => runVerifier(entry.verifier as Verifier, entry.candidate),
+        expectedError,
+        `${entry.id}: ${entry.description ?? ''}`,
+      );
+
+      if (entry.raises === 'unsupported_verifier') {
+        const verdict = runVerifierOrFail(entry.verifier as Verifier, entry.candidate);
+        assert.equal(verdict.passed, false, `${entry.id} must never report a pass`);
+        assert.equal(verdict.code, entry.expected.code, entry.id);
+      }
+    });
+  }
 }
+
+test('the rejection rows assert a refusal, not merely a failing verdict', () => {
+  let count = 0;
+  for (const filename of verifierFiles) {
+    const document = load<ConformanceFile>(filename);
+    for (const entry of (document.rejections ?? []) as ConformanceRejection[]) {
+      assert.equal(entry.expected.passed, false, entry.id);
+      assert.equal(entry.expected.code, 'unsupported_verifier', entry.id);
+      count += 1;
+    }
+  }
+  assert.ok(count > 0, 'the rejection suite is empty, so it proves nothing');
+});
 
 // ------------------------------------------------------------------- fixtures
 

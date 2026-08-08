@@ -186,11 +186,11 @@ export type FormatConstraintVerifier = {
 };
 
 /**
- * Composition. Runs declarative verifiers in order and returns the first failure verbatim. Declarative tier; executable children are not allowed.
+ * Composition. Runs declarative verifiers in order and returns the first failure verbatim. Declarative tier. Children reference verifier_declarative rather than verifier, so an executable child is a schema violation and not merely a runtime error: a composite that can hide an executable verifier behind a declarative one is a way to obtain a verdict from partially checked output, which is the failure this specification exists to prevent.
  */
 export type AllOfVerifier = {
   "type": "all_of";
-  "verifiers": Verifier[];
+  "verifiers": DeclarativeVerifier[];
 };
 
 /**
@@ -221,9 +221,14 @@ export type PythonUnittestVerifier = {
 };
 
 /**
- * Tagged union of every verifier type. Types exact through format_constraint are the declarative tier and must behave identically in every implementation. Types sympy_equiv and python_unittest are the executable tier and are Python only.
+ * The declarative tier only. Every member must produce an identical verdict in every implementation, which is what the conformance suite enforces. Referenced wherever an executable verifier would be unsafe to permit, chiefly as an all_of child.
  */
-export type Verifier = ExactVerifier | NumericToleranceVerifier | JsonSchemaVerifier | RegexVerifier | SetEqualityVerifier | OrderedEqualityVerifier | FormatConstraintVerifier | AllOfVerifier | SympyEquivVerifier | PythonUnittestVerifier;
+export type DeclarativeVerifier = ExactVerifier | NumericToleranceVerifier | JsonSchemaVerifier | RegexVerifier | SetEqualityVerifier | OrderedEqualityVerifier | FormatConstraintVerifier | AllOfVerifier;
+
+/**
+ * Tagged union of every verifier type. Types exact through all_of are the declarative tier and must behave identically in every implementation. Types sympy_equiv and python_unittest are the executable tier and are Python only.
+ */
+export type Verifier = DeclarativeVerifier | SympyEquivVerifier | PythonUnittestVerifier;
 
 /**
  * A verifier as written in a template: the same tagged union, but any string leaf may be a derivation reference of the form {{name}} that the generator resolves per instance.
@@ -370,11 +375,30 @@ export type ConformanceCase = {
   };
 };
 
+/**
+ * One row of the suite asserting that a verifier configuration is refused rather than evaluated. The verifier here is deliberately typed as a bare object, because these configurations are invalid by construction and could not appear in a field typed as #/$defs/verifier. Strict dispatch must raise the named error; lenient dispatch must return the stated verdict, which is always a failure.
+ */
+export type ConformanceRejection = {
+  "id": string;
+  "description"?: string;
+  "verifier": {
+    [key: string]: unknown;
+  };
+  "candidate": string;
+  /** unsupported_verifier for a type this implementation must refuse; verifier_config for a configuration that is malformed rather than unsupported. */
+  "raises": "unsupported_verifier" | "verifier_config";
+  "expected": {
+    "passed": false;
+    "code": VerdictCode;
+  };
+};
+
 export type ConformanceFile = {
   "spec_version": SpecVersion;
   "verifier_type": string;
   "description"?: string;
   "cases": ConformanceCase[];
+  "rejections"?: ConformanceRejection[];
 };
 
 export const VERDICT_CODES = [

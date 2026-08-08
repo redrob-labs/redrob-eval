@@ -464,10 +464,24 @@ Composition. `verifiers` is an ordered list of declarative verifiers; each is ru
 the same candidate, and the **first failing verdict is returned verbatim**, code and all. An
 empty list passes, which is the identity element and a legitimate way to say "no constraint".
 
-Children must be declarative. An executable child is a configuration error, because `all_of` is
-declarative by definition and a composite that is declarative on one implementation and
-unsupported on another would be the exact silent-skip hazard this spec exists to prevent.
-Nesting is allowed to a depth of 8.
+**Children must be declarative, and this is checked before anything is evaluated.** An
+implementation must walk the whole composite first, to every depth, and raise the
+unsupported-verifier error if any descendant is an executable type or a type it does not know. It
+must not evaluate the declarative children and return a verdict.
+
+The eagerness is normative rather than an implementation note. A lazy check that inspects each
+child as it is reached lets a declarative child that fails early return a verdict before an
+executable sibling is ever looked at, so the composite reports a result for output that was only
+partially checked. That result is not a weaker verdict, it is a wrong one, and nothing in it tells
+the caller which part of the contract went unexamined. `all_of` exists to compose checks, and a
+composition that can quietly drop one of its terms is worse than no composition at all.
+
+The schema enforces the same rule structurally: `verifiers` references `#/$defs/verifier_declarative`,
+not `#/$defs/verifier`, so a template carrying an executable child fails to load rather than
+failing at scoring time.
+
+Nesting is allowed to a depth of 8, counting the outermost composite as depth 0. Depth 9 is a
+configuration error, and it too is detected by the initial walk rather than on arrival.
 
 Order matters and is the point: put the check whose failure is most diagnostic first. A template
 that wants both "the extracted values are right" and "the serialisation is right" should run

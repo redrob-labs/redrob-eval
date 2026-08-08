@@ -16,7 +16,7 @@ import json
 import sys
 from pathlib import Path
 
-from redrob_generate.verify import DECLARATIVE_VERIFIER_TYPES, run_verifier
+from redrob_generate.verify import DECLARATIVE_VERIFIER_TYPES, run_verifier_or_fail
 
 DIRECTORY = Path(__file__).resolve().parent.parent / "spec" / "conformance"
 
@@ -27,9 +27,17 @@ def main() -> int:
         if path.stem not in DECLARATIVE_VERIFIER_TYPES:
             continue
         document = json.loads(path.read_text(encoding="utf-8"))
-        for case in document["cases"]:
-            verdict = run_verifier(case["verifier"], case["candidate"])
-            verdicts[case["id"]] = [verdict.passed, verdict.code]
+        # Rejection rows are dumped too, so a configuration that must be refused is
+        # compared across implementations rather than only within each one. A malformed
+        # configuration raises rather than producing a verdict, and the raise is recorded
+        # as such: turning it into a verdict here would hide the difference the comparison
+        # is looking for.
+        for case in document["cases"] + document.get("rejections", []):
+            try:
+                verdict = run_verifier_or_fail(case["verifier"], case["candidate"])
+                verdicts[case["id"]] = [verdict.passed, verdict.code]
+            except ValueError:
+                verdicts[case["id"]] = ["raises", "verifier_config"]
 
     # Separators pinned to match JSON.stringify, so that a diff of the two dumps shows a
     # disagreement about verdicts rather than about whitespace.

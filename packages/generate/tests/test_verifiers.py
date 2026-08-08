@@ -17,6 +17,7 @@ from redrob_generate.verify import (
     EXECUTABLE_VERIFIER_TYPES,
     is_declarative,
     run_verifier,
+    run_verifier_or_fail,
 )
 
 
@@ -59,7 +60,7 @@ def test_is_declarative() -> None:
 def test_all_of_rejects_an_executable_child() -> None:
     """all_of is declarative by definition; an executable child would make it
     unsupported on one implementation and passing on the other."""
-    with pytest.raises(ValueError, match="must be declarative"):
+    with pytest.raises(UnsupportedVerifierError, match="must be declarative"):
         run_verifier(
             {
                 "type": "all_of",
@@ -67,6 +68,31 @@ def test_all_of_rejects_an_executable_child() -> None:
             },
             "x",
         )
+
+
+def test_all_of_rejects_an_executable_child_before_evaluating_anything() -> None:
+    """The eager case, which is the one that matters.
+
+    The first child fails, so a lazy implementation returns its mismatch verdict and never
+    reaches the executable sibling. That verdict describes output only half of the
+    contract was applied to, and nothing in it says so.
+    """
+    composite = {
+        "type": "all_of",
+        "verifiers": [
+            {"type": "exact", "expected": "not the candidate"},
+            {"type": "sympy_equiv", "expected": "x"},
+        ],
+    }
+    with pytest.raises(UnsupportedVerifierError):
+        run_verifier(composite, "x")
+
+    verdict = run_verifier_or_fail(composite, "x")
+    assert verdict.passed is False
+    assert verdict.code == "unsupported_verifier", (
+        "a refused composite must not be reported as an ordinary mismatch, because a "
+        "mismatch means the composite ran"
+    )
 
 
 def test_json_schema_rejects_out_of_subset_keywords() -> None:

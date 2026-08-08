@@ -108,6 +108,7 @@ export {
 } from './verdict';
 
 export {
+  assertAllOfIsDeclarative,
   coerceExpectedNumber,
   compareNumbers,
   DECLARATIVE_VERIFIERS,
@@ -127,6 +128,8 @@ export type {
   AllOfVerifier,
   ConformanceCase,
   ConformanceFile,
+  ConformanceRejection,
+  DeclarativeVerifier,
   ElementParse,
   ExactVerifier,
   Fertility,

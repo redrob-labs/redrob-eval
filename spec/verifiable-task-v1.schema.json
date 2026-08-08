@@ -332,13 +332,13 @@
     },
     "verifier_all_of": {
       "title": "AllOfVerifier",
-      "description": "Composition. Runs declarative verifiers in order and returns the first failure verbatim. Declarative tier; executable children are not allowed.",
+      "description": "Composition. Runs declarative verifiers in order and returns the first failure verbatim. Declarative tier. Children reference verifier_declarative rather than verifier, so an executable child is a schema violation and not merely a runtime error: a composite that can hide an executable verifier behind a declarative one is a way to obtain a verdict from partially checked output, which is the failure this specification exists to prevent.",
       "type": "object",
       "properties": {
         "type": { "type": "string", "const": "all_of" },
         "verifiers": {
           "type": "array",
-          "items": { "$ref": "#/$defs/verifier" }
+          "items": { "$ref": "#/$defs/verifier_declarative" }
         }
       },
       "required": ["type", "verifiers"],
@@ -400,9 +400,9 @@
       "required": ["type", "test_source"],
       "additionalProperties": false
     },
-    "verifier": {
-      "title": "Verifier",
-      "description": "Tagged union of every verifier type. Types exact through format_constraint are the declarative tier and must behave identically in every implementation. Types sympy_equiv and python_unittest are the executable tier and are Python only.",
+    "verifier_declarative": {
+      "title": "DeclarativeVerifier",
+      "description": "The declarative tier only. Every member must produce an identical verdict in every implementation, which is what the conformance suite enforces. Referenced wherever an executable verifier would be unsafe to permit, chiefly as an all_of child.",
       "oneOf": [
         { "$ref": "#/$defs/verifier_exact" },
         { "$ref": "#/$defs/verifier_numeric_tolerance" },
@@ -411,7 +411,14 @@
         { "$ref": "#/$defs/verifier_set_equality" },
         { "$ref": "#/$defs/verifier_ordered_equality" },
         { "$ref": "#/$defs/verifier_format_constraint" },
-        { "$ref": "#/$defs/verifier_all_of" },
+        { "$ref": "#/$defs/verifier_all_of" }
+      ]
+    },
+    "verifier": {
+      "title": "Verifier",
+      "description": "Tagged union of every verifier type. Types exact through all_of are the declarative tier and must behave identically in every implementation. Types sympy_equiv and python_unittest are the executable tier and are Python only.",
+      "oneOf": [
+        { "$ref": "#/$defs/verifier_declarative" },
         { "$ref": "#/$defs/verifier_sympy_equiv" },
         { "$ref": "#/$defs/verifier_python_unittest" }
       ]
@@ -692,6 +699,33 @@
       "required": ["id", "verifier", "candidate", "expected"],
       "additionalProperties": false
     },
+    "conformance_rejection": {
+      "title": "ConformanceRejection",
+      "description": "One row of the suite asserting that a verifier configuration is refused rather than evaluated. The verifier here is deliberately typed as a bare object, because these configurations are invalid by construction and could not appear in a field typed as #/$defs/verifier. Strict dispatch must raise the named error; lenient dispatch must return the stated verdict, which is always a failure.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "description": { "type": "string" },
+        "verifier": { "type": "object" },
+        "candidate": { "type": "string" },
+        "raises": {
+          "description": "unsupported_verifier for a type this implementation must refuse; verifier_config for a configuration that is malformed rather than unsupported.",
+          "type": "string",
+          "enum": ["unsupported_verifier", "verifier_config"]
+        },
+        "expected": {
+          "type": "object",
+          "properties": {
+            "passed": { "type": "boolean", "const": false },
+            "code": { "$ref": "#/$defs/verdict_code" }
+          },
+          "required": ["passed", "code"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["id", "verifier", "candidate", "raises", "expected"],
+      "additionalProperties": false
+    },
     "conformance_file": {
       "title": "ConformanceFile",
       "type": "object",
@@ -702,6 +736,10 @@
         "cases": {
           "type": "array",
           "items": { "$ref": "#/$defs/conformance_case" }
+        },
+        "rejections": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/conformance_rejection" }
         }
       },
       "required": ["spec_version", "verifier_type", "cases"],

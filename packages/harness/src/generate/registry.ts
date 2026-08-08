@@ -12,13 +12,15 @@
  */
 import type { Verifier } from './spec-types.generated';
 import { fail, UnsupportedVerifierError, type Verdict } from './verdict';
-import { DECLARATIVE_VERIFIERS, DECLARATIVE_VERIFIER_TYPES } from './verifiers';
-
-export const EXECUTABLE_VERIFIER_TYPES = ['sympy_equiv', 'python_unittest'] as const;
+import {
+  DECLARATIVE_VERIFIERS,
+  DECLARATIVE_VERIFIER_TYPES,
+  EXECUTABLE_VERIFIER_TYPES,
+} from './verifiers';
 
 export type ExecutableVerifierType = (typeof EXECUTABLE_VERIFIER_TYPES)[number];
 
-export { DECLARATIVE_VERIFIER_TYPES };
+export { DECLARATIVE_VERIFIER_TYPES, EXECUTABLE_VERIFIER_TYPES };
 
 export const ALL_VERIFIER_TYPES = [
   ...DECLARATIVE_VERIFIER_TYPES,

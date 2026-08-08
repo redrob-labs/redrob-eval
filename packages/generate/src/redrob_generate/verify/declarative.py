@@ -15,6 +15,7 @@ import re
 from typing import Any, Mapping
 
 from ..canonical import canonical_json, js_number_to_string
+from ..errors import UnsupportedVerifierError
 from .base import (
     Verdict,
     apply_unicode_normalization,
@@ -30,6 +31,7 @@ from .base import (
     parse_spec_number,
     strip_spec_whitespace,
 )
+from .executable import EXECUTABLE_VERIFIER_TYPES
 from .json_schema_subset import SchemaSubsetError, validate_schema_document
 from .regex_subset import RegexSubsetError, validate as validate_regex_subset
 
@@ -370,23 +372,53 @@ def verify_format_constraint(config: Mapping[str, Any], candidate: str) -> Verdi
 MAX_ALL_OF_DEPTH = 8
 
 
-def verify_all_of(config: Mapping[str, Any], candidate: str, depth: int = 0) -> Verdict:
+def assert_all_of_is_declarative(
+    config: Mapping[str, Any], depth: int = 0, path: str = "all_of"
+) -> None:
+    """Walk the whole composite and refuse it if any descendant is not declarative.
+
+    Eager, and that is the entire point. Checking each child as it is reached would let a
+    declarative child that fails early return a verdict before an executable sibling is
+    ever looked at, so the composite would report a result for output that was only
+    partially checked. A verdict derived from part of a contract is not a weaker verdict,
+    it is a wrong one, and the caller has no way to tell.
+    """
     if depth > MAX_ALL_OF_DEPTH:
-        raise ValueError(f"all_of nests deeper than {MAX_ALL_OF_DEPTH} levels")
-    for child in config["verifiers"]:
-        child_type = child.get("type")
+        raise ValueError(f"{path} nests deeper than {MAX_ALL_OF_DEPTH} levels")
+    children = config.get("verifiers")
+    if not isinstance(children, list):
+        raise ValueError(f"{path} has no 'verifiers' list")
+    for index, child in enumerate(children):
+        where = f"{path}.verifiers[{index}]"
+        child_type = child.get("type") if isinstance(child, Mapping) else None
         if child_type == "all_of":
-            verdict = verify_all_of(child, candidate, depth + 1)
+            assert_all_of_is_declarative(child, depth + 1, where)
+            continue
+        if child_type in EXECUTABLE_VERIFIER_TYPES:
+            raise UnsupportedVerifierError(
+                str(child_type),
+                f"{where} is an executable verifier; all_of children must be declarative "
+                "so that the composite means the same thing in every implementation",
+            )
+        if child_type not in DECLARATIVE_VERIFIERS:
+            raise UnsupportedVerifierError(
+                str(child_type), f"{where} is not a verifier type this implementation knows"
+            )
+
+
+def verify_all_of(config: Mapping[str, Any], candidate: str) -> Verdict:
+    assert_all_of_is_declarative(config)
+    return _run_all_of(config, candidate)
+
+
+def _run_all_of(config: Mapping[str, Any], candidate: str) -> Verdict:
+    """Evaluate a composite already proved declarative by the walk above."""
+    for child in config["verifiers"]:
+        child_type = child["type"]
+        if child_type == "all_of":
+            verdict = _run_all_of(child, candidate)
         else:
-            handler = DECLARATIVE_VERIFIERS.get(child_type)
-            if handler is None:
-                # An executable child would be declarative on Python and unsupported on
-                # TypeScript, which is exactly the silent divergence all_of must not create.
-                raise ValueError(
-                    f"all_of child {child_type!r} is not a declarative verifier; "
-                    "all_of children must be declarative"
-                )
-            verdict = handler(child, candidate)
+            verdict = DECLARATIVE_VERIFIERS[child_type](child, candidate)
         if not verdict.passed:
             return verdict
     return ok()

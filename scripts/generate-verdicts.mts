@@ -15,12 +15,13 @@ import path from 'node:path';
 import {
   DECLARATIVE_VERIFIER_TYPES,
   runVerifierOrFail,
+  VerifierConfigError,
   type ConformanceFile,
   type Verifier,
 } from '../packages/harness/src/generate/index';
 
 const directory = path.join(process.cwd(), 'spec', 'conformance');
-const verdicts: Record<string, [boolean, string]> = {};
+const verdicts: Record<string, [boolean | 'raises', string]> = {};
 
 for (const filename of readdirSync(directory).sort()) {
   if (!filename.endsWith('.json')) continue;
@@ -28,9 +29,18 @@ for (const filename of readdirSync(directory).sort()) {
   const document = JSON.parse(
     readFileSync(path.join(directory, filename), 'utf8'),
   ) as ConformanceFile;
-  for (const entry of document.cases) {
-    const verdict = runVerifierOrFail(entry.verifier as Verifier, entry.candidate);
-    verdicts[entry.id] = [verdict.passed, verdict.code];
+  // Rejection rows are dumped too, so a configuration that must be refused is compared
+  // across implementations rather than only within each one. A malformed configuration
+  // raises rather than producing a verdict, and the raise is recorded as such: turning it
+  // into a verdict here would hide the difference the comparison is looking for.
+  for (const entry of [...document.cases, ...(document.rejections ?? [])]) {
+    try {
+      const verdict = runVerifierOrFail(entry.verifier as Verifier, entry.candidate);
+      verdicts[entry.id] = [verdict.passed, verdict.code];
+    } catch (error) {
+      if (!(error instanceof VerifierConfigError)) throw error;
+      verdicts[entry.id] = ['raises', 'verifier_config'];
+    }
   }
 }
 

@@ -72,6 +72,50 @@ members. It has its own conformance file with 20 cases.
 **This is an addition to the spec surface the prompt described.** If it is unwanted, deleting it
 means reworking the extraction template's contract, not just removing a file.
 
+### 3a. Assessment: should `all_of` remain a verifier type at all?
+
+Requested during the pre-merge pass. Not changed in this task; recorded for a human decision.
+
+**The alternative.** A template's `verifier` field becomes a *list* of verifiers rather than one
+verifier, run in order, first failure wins. That is the same behaviour `all_of` provides, and it
+costs nothing in spec surface: no new type, no composition semantics, no nesting depth, no
+recursive walk, and no separate conformance file.
+
+**What the alternative removes, concretely.** Ten items: the `verifier_all_of` definition, the
+`verifier_declarative` definition that exists only to constrain its children, the eager
+declarative-tree walk in both implementations, the depth limit and its off-by-one, the recursion in
+both `verifyAllOf` and `_run_all_of`, the 22 `all_of` conformance cases, the 14 rejection rows added
+in this pass, the `conformance_rejection` schema definition those rows needed, and the argument in
+§6.1 explaining why the walk must be eager. Most of the risk this pass was spent removing exists
+only because composition is a value rather than a field.
+
+**What the alternative loses.** Nesting, which no template uses and which I cannot construct a
+motivating example for. A list is flat; `all_of` inside `all_of` groups checks, but since the
+semantics are "first failure wins" across the whole tree, grouping changes nothing observable. The
+nesting is expressive power with no expressible difference, which is the worst kind.
+
+**It also loses a real thing:** `all_of` is a *value*, so it can appear anywhere a verifier can —
+today only at a template's root, but a future `any_of`, or a per-field verifier inside a structured
+comparison, would want composition to nest. A list at the root cannot be reused that way. Whether
+that matters depends on whether the tier is ever extended, and nothing in the current design says
+it will be.
+
+**Assessment.** The list is the better design on the evidence available. `all_of` was reached for
+because "a template has one verifier" felt like a fixed constraint, and it was not — it is one line
+of the schema. The cost of keeping `all_of` is not that it is wrong, it is that it introduces
+recursion, a depth limit and a tree walk into the one part of the system that must be provably
+identical across two languages, in exchange for expressive power no template uses.
+
+**Recommendation, for a human to accept or reject:** replace `all_of` with a list-valued `verifier`
+field before the spec is cited anywhere. After that the change is a v2, and the whole point of the
+draft notice in §0 is that this window is open now and closes at the preprint. If the tier is
+expected to grow an `any_of` or a `not`, keep `all_of` instead and accept the machinery, because
+adding composition back after removing it is worse than never removing it.
+
+Not changed in this pass because it touches the schema, both implementations, the extraction
+template's contract and 36 conformance rows, and doing that unattended on the strength of my own
+assessment is exactly the kind of decision this record exists to defer.
+
 ---
 
 ## 4. JSON Schema: a documented subset, not a library

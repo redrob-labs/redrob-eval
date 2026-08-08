@@ -6,40 +6,74 @@
     {
       "id": "all_of/empty-list-passes",
       "description": "The identity element.",
-      "verifier": { "type": "all_of", "verifiers": [] },
+      "verifier": {
+        "type": "all_of",
+        "verifiers": []
+      },
       "candidate": "anything",
-      "expected": { "passed": true, "code": "ok" }
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
     },
     {
       "id": "all_of/single-child-passing",
       "verifier": {
         "type": "all_of",
-        "verifiers": [{ "type": "exact", "expected": "42" }]
+        "verifiers": [
+          {
+            "type": "exact",
+            "expected": "42"
+          }
+        ]
       },
       "candidate": "42",
-      "expected": { "passed": true, "code": "ok" }
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
     },
     {
       "id": "all_of/single-child-failing-propagates-code",
       "verifier": {
         "type": "all_of",
-        "verifiers": [{ "type": "exact", "expected": "42" }]
+        "verifiers": [
+          {
+            "type": "exact",
+            "expected": "42"
+          }
+        ]
       },
       "candidate": "43",
-      "expected": { "passed": false, "code": "mismatch" }
+      "expected": {
+        "passed": false,
+        "code": "mismatch"
+      }
     },
     {
       "id": "all_of/all-children-pass",
       "verifier": {
         "type": "all_of",
         "verifiers": [
-          { "type": "format_constraint", "max_lines": 1 },
-          { "type": "regex", "pattern": "[0-9]+" },
-          { "type": "numeric_tolerance", "expected": 42 }
+          {
+            "type": "format_constraint",
+            "max_lines": 1
+          },
+          {
+            "type": "regex",
+            "pattern": "[0-9]+"
+          },
+          {
+            "type": "numeric_tolerance",
+            "expected": 42
+          }
         ]
       },
       "candidate": "42",
-      "expected": { "passed": true, "code": "ok" }
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
     },
     {
       "id": "all_of/first-failure-wins-line-count",
@@ -47,12 +81,21 @@
       "verifier": {
         "type": "all_of",
         "verifiers": [
-          { "type": "format_constraint", "max_lines": 1 },
-          { "type": "numeric_tolerance", "expected": 42 }
+          {
+            "type": "format_constraint",
+            "max_lines": 1
+          },
+          {
+            "type": "numeric_tolerance",
+            "expected": 42
+          }
         ]
       },
       "candidate": "42\n43",
-      "expected": { "passed": false, "code": "line_count_out_of_bounds" }
+      "expected": {
+        "passed": false,
+        "code": "line_count_out_of_bounds"
+      }
     },
     {
       "id": "all_of/first-failure-wins-reordered",
@@ -60,12 +103,21 @@
       "verifier": {
         "type": "all_of",
         "verifiers": [
-          { "type": "numeric_tolerance", "expected": 42 },
-          { "type": "format_constraint", "max_lines": 1 }
+          {
+            "type": "numeric_tolerance",
+            "expected": 42
+          },
+          {
+            "type": "format_constraint",
+            "max_lines": 1
+          }
         ]
       },
       "candidate": "42\n43",
-      "expected": { "passed": false, "code": "not_a_number" }
+      "expected": {
+        "passed": false,
+        "code": "not_a_number"
+      }
     },
     {
       "id": "all_of/schema-then-exact-both-pass",
@@ -78,18 +130,34 @@
             "schema": {
               "type": "object",
               "additionalProperties": false,
-              "required": ["city", "units"],
+              "required": [
+                "city",
+                "units"
+              ],
               "properties": {
-                "city": { "type": "string", "const": "Aveldon" },
-                "units": { "type": "integer", "const": 8143 }
+                "city": {
+                  "type": "string",
+                  "const": "Aveldon"
+                },
+                "units": {
+                  "type": "integer",
+                  "const": 8143
+                }
               }
             }
           },
-          { "type": "exact", "expected": "{\"city\":\"Aveldon\",\"units\":8143}", "trim": true }
+          {
+            "type": "exact",
+            "expected": "{\"city\":\"Aveldon\",\"units\":8143}",
+            "trim": true
+          }
         ]
       },
       "candidate": "{\"city\":\"Aveldon\",\"units\":8143}",
-      "expected": { "passed": true, "code": "ok" }
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
     },
     {
       "id": "all_of/schema-catches-wrong-value-first",
@@ -102,18 +170,34 @@
             "schema": {
               "type": "object",
               "additionalProperties": false,
-              "required": ["city", "units"],
+              "required": [
+                "city",
+                "units"
+              ],
               "properties": {
-                "city": { "type": "string", "const": "Aveldon" },
-                "units": { "type": "integer", "const": 8143 }
+                "city": {
+                  "type": "string",
+                  "const": "Aveldon"
+                },
+                "units": {
+                  "type": "integer",
+                  "const": 8143
+                }
               }
             }
           },
-          { "type": "exact", "expected": "{\"city\":\"Aveldon\",\"units\":8143}", "trim": true }
+          {
+            "type": "exact",
+            "expected": "{\"city\":\"Aveldon\",\"units\":8143}",
+            "trim": true
+          }
         ]
       },
       "candidate": "{\"city\":\"Aveldon\",\"units\":8144}",
-      "expected": { "passed": false, "code": "schema_violation" }
+      "expected": {
+        "passed": false,
+        "code": "schema_violation"
+      }
     },
     {
       "id": "all_of/exact-catches-wrong-serialisation",
@@ -126,81 +210,150 @@
             "schema": {
               "type": "object",
               "additionalProperties": false,
-              "required": ["city", "units"],
+              "required": [
+                "city",
+                "units"
+              ],
               "properties": {
-                "city": { "type": "string", "const": "Aveldon" },
-                "units": { "type": "integer", "const": 8143 }
+                "city": {
+                  "type": "string",
+                  "const": "Aveldon"
+                },
+                "units": {
+                  "type": "integer",
+                  "const": 8143
+                }
               }
             }
           },
-          { "type": "exact", "expected": "{\"city\":\"Aveldon\",\"units\":8143}", "trim": true }
+          {
+            "type": "exact",
+            "expected": "{\"city\":\"Aveldon\",\"units\":8143}",
+            "trim": true
+          }
         ]
       },
       "candidate": "{ \"units\": 8143, \"city\": \"Aveldon\" }",
-      "expected": { "passed": false, "code": "mismatch" }
+      "expected": {
+        "passed": false,
+        "code": "mismatch"
+      }
     },
     {
       "id": "all_of/invalid-json-surfaces-from-the-first-child",
       "verifier": {
         "type": "all_of",
         "verifiers": [
-          { "type": "json_schema", "schema": { "type": "object" } },
-          { "type": "exact", "expected": "{}" }
+          {
+            "type": "json_schema",
+            "schema": {
+              "type": "object"
+            }
+          },
+          {
+            "type": "exact",
+            "expected": "{}"
+          }
         ]
       },
       "candidate": "not json at all",
-      "expected": { "passed": false, "code": "invalid_json" }
+      "expected": {
+        "passed": false,
+        "code": "invalid_json"
+      }
     },
     {
       "id": "all_of/nested-composition",
       "verifier": {
         "type": "all_of",
         "verifiers": [
-          { "type": "format_constraint", "min_length": 1 },
+          {
+            "type": "format_constraint",
+            "min_length": 1
+          },
           {
             "type": "all_of",
             "verifiers": [
-              { "type": "regex", "pattern": "^[A-Z]", "mode": "search" },
-              { "type": "format_constraint", "forbidden_substrings": ["TODO"] }
+              {
+                "type": "regex",
+                "pattern": "^[A-Z]",
+                "mode": "search"
+              },
+              {
+                "type": "format_constraint",
+                "forbidden_substrings": [
+                  "TODO"
+                ]
+              }
             ]
           }
         ]
       },
       "candidate": "Ready to ship",
-      "expected": { "passed": true, "code": "ok" }
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
     },
     {
       "id": "all_of/nested-composition-inner-failure",
       "verifier": {
         "type": "all_of",
         "verifiers": [
-          { "type": "format_constraint", "min_length": 1 },
+          {
+            "type": "format_constraint",
+            "min_length": 1
+          },
           {
             "type": "all_of",
             "verifiers": [
-              { "type": "regex", "pattern": "^[A-Z]", "mode": "search" },
-              { "type": "format_constraint", "forbidden_substrings": ["TODO"] }
+              {
+                "type": "regex",
+                "pattern": "^[A-Z]",
+                "mode": "search"
+              },
+              {
+                "type": "format_constraint",
+                "forbidden_substrings": [
+                  "TODO"
+                ]
+              }
             ]
           }
         ]
       },
       "candidate": "Ready to ship, TODO check the changelog",
-      "expected": { "passed": false, "code": "forbidden_substring_present" }
+      "expected": {
+        "passed": false,
+        "code": "forbidden_substring_present"
+      }
     },
     {
       "id": "all_of/nested-composition-outer-failure-wins",
       "verifier": {
         "type": "all_of",
         "verifiers": [
-          { "type": "format_constraint", "min_length": 100 },
+          {
+            "type": "format_constraint",
+            "min_length": 100
+          },
           {
             "type": "all_of",
-            "verifiers": [{ "type": "regex", "pattern": "^[A-Z]", "mode": "search" }]
+            "verifiers": [
+              {
+                "type": "regex",
+                "pattern": "^[A-Z]",
+                "mode": "search"
+              }
+            ]
           }
         ]
       },
       "candidate": "short",
-      "expected": { "passed": false, "code": "length_out_of_bounds" }
+      "expected": {
+        "passed": false,
+        "code": "length_out_of_bounds"
+      }
     },
     {
       "id": "all_of/three-deep-nesting",
@@ -212,14 +365,22 @@
             "verifiers": [
               {
                 "type": "all_of",
-                "verifiers": [{ "type": "exact", "expected": "deep" }]
+                "verifiers": [
+                  {
+                    "type": "exact",
+                    "expected": "deep"
+                  }
+                ]
               }
             ]
           }
         ]
       },
       "candidate": "deep",
-      "expected": { "passed": true, "code": "ok" }
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
     },
     {
       "id": "all_of/three-deep-nesting-failure",
@@ -231,14 +392,22 @@
             "verifiers": [
               {
                 "type": "all_of",
-                "verifiers": [{ "type": "exact", "expected": "deep" }]
+                "verifiers": [
+                  {
+                    "type": "exact",
+                    "expected": "deep"
+                  }
+                ]
               }
             ]
           }
         ]
       },
       "candidate": "shallow",
-      "expected": { "passed": false, "code": "mismatch" }
+      "expected": {
+        "passed": false,
+        "code": "mismatch"
+      }
     },
     {
       "id": "all_of/regex-invalid-pattern-propagates",
@@ -246,12 +415,21 @@
       "verifier": {
         "type": "all_of",
         "verifiers": [
-          { "type": "format_constraint", "min_length": 1 },
-          { "type": "regex", "pattern": "(unclosed" }
+          {
+            "type": "format_constraint",
+            "min_length": 1
+          },
+          {
+            "type": "regex",
+            "pattern": "(unclosed"
+          }
         ]
       },
       "candidate": "anything",
-      "expected": { "passed": false, "code": "invalid_pattern" }
+      "expected": {
+        "passed": false,
+        "code": "invalid_pattern"
+      }
     },
     {
       "id": "all_of/set-then-ordered",
@@ -261,43 +439,80 @@
         "verifiers": [
           {
             "type": "set_equality",
-            "expected": ["a", "b", "c"],
-            "parse": { "mode": "lines" }
+            "expected": [
+              "a",
+              "b",
+              "c"
+            ],
+            "parse": {
+              "mode": "lines"
+            }
           },
           {
             "type": "ordered_equality",
-            "expected": ["a", "b", "c"],
-            "parse": { "mode": "lines" }
+            "expected": [
+              "a",
+              "b",
+              "c"
+            ],
+            "parse": {
+              "mode": "lines"
+            }
           }
         ]
       },
       "candidate": "c\nb\na",
-      "expected": { "passed": false, "code": "element_mismatch" }
+      "expected": {
+        "passed": false,
+        "code": "element_mismatch"
+      }
     },
     {
       "id": "all_of/unicode-children",
       "verifier": {
         "type": "all_of",
         "verifiers": [
-          { "type": "format_constraint", "min_length": 6, "max_length": 6 },
-          { "type": "exact", "expected": "\u0928\u092e\u0938\u094d\u0924\u0947" }
+          {
+            "type": "format_constraint",
+            "min_length": 6,
+            "max_length": 6
+          },
+          {
+            "type": "exact",
+            "expected": "नमस्ते"
+          }
         ]
       },
-      "candidate": "\u0928\u092e\u0938\u094d\u0924\u0947",
-      "expected": { "passed": true, "code": "ok" }
+      "candidate": "नमस्ते",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
     },
     {
       "id": "all_of/empty-candidate-against-several-children",
       "verifier": {
         "type": "all_of",
         "verifiers": [
-          { "type": "format_constraint", "min_length": 1 },
-          { "type": "numeric_tolerance", "expected": 0 },
-          { "type": "exact", "expected": "" }
+          {
+            "type": "format_constraint",
+            "min_length": 1
+          },
+          {
+            "type": "numeric_tolerance",
+            "expected": 0
+          },
+          {
+            "type": "exact",
+            "expected": ""
+          }
         ]
       },
       "candidate": "",
-      "expected": { "passed": false, "code": "length_out_of_bounds" }
+      "expected": {
+        "passed": false,
+        "code": "length_out_of_bounds"
+      }
     },
     {
       "id": "all_of/single-passing-child-does-not-mask-later-failure",
@@ -305,12 +520,562 @@
       "verifier": {
         "type": "all_of",
         "verifiers": [
-          { "type": "format_constraint", "min_length": 1 },
-          { "type": "exact", "expected": "never" }
+          {
+            "type": "format_constraint",
+            "min_length": 1
+          },
+          {
+            "type": "exact",
+            "expected": "never"
+          }
         ]
       },
       "candidate": "something",
-      "expected": { "passed": false, "code": "mismatch" }
+      "expected": {
+        "passed": false,
+        "code": "mismatch"
+      }
+    },
+    {
+      "id": "all_of/maximum-permitted-depth-passes",
+      "description": "Depth 8 is permitted, so the rejection of depth 9 is a limit rather than an off-by-one.",
+      "verifier": {
+        "type": "all_of",
+        "verifiers": [
+          {
+            "type": "all_of",
+            "verifiers": [
+              {
+                "type": "all_of",
+                "verifiers": [
+                  {
+                    "type": "all_of",
+                    "verifiers": [
+                      {
+                        "type": "all_of",
+                        "verifiers": [
+                          {
+                            "type": "all_of",
+                            "verifiers": [
+                              {
+                                "type": "all_of",
+                                "verifiers": [
+                                  {
+                                    "type": "all_of",
+                                    "verifiers": [
+                                      {
+                                        "type": "all_of",
+                                        "verifiers": [
+                                          {
+                                            "type": "exact",
+                                            "expected": "42"
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "candidate": "42",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
+    },
+    {
+      "id": "all_of/maximum-permitted-depth-failure-propagates",
+      "description": "And a failure still travels all the way back up from the innermost child.",
+      "verifier": {
+        "type": "all_of",
+        "verifiers": [
+          {
+            "type": "all_of",
+            "verifiers": [
+              {
+                "type": "all_of",
+                "verifiers": [
+                  {
+                    "type": "all_of",
+                    "verifiers": [
+                      {
+                        "type": "all_of",
+                        "verifiers": [
+                          {
+                            "type": "all_of",
+                            "verifiers": [
+                              {
+                                "type": "all_of",
+                                "verifiers": [
+                                  {
+                                    "type": "all_of",
+                                    "verifiers": [
+                                      {
+                                        "type": "all_of",
+                                        "verifiers": [
+                                          {
+                                            "type": "exact",
+                                            "expected": "not the candidate"
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "candidate": "42",
+      "expected": {
+        "passed": false,
+        "code": "mismatch"
+      }
+    }
+  ],
+  "rejections": [
+    {
+      "id": "all_of/rejects-sympy-equiv-child",
+      "description": "An executable child makes the whole composite unsupported.",
+      "verifier": {
+        "type": "all_of",
+        "verifiers": [
+          {
+            "type": "sympy_equiv",
+            "expected": "x + 1",
+            "symbols": [
+              "x"
+            ]
+          }
+        ]
+      },
+      "candidate": "x + 1",
+      "raises": "unsupported_verifier",
+      "expected": {
+        "passed": false,
+        "code": "unsupported_verifier"
+      }
+    },
+    {
+      "id": "all_of/rejects-python-unittest-child",
+      "description": "The other executable type, refused the same way.",
+      "verifier": {
+        "type": "all_of",
+        "verifiers": [
+          {
+            "type": "python_unittest",
+            "test_source": "import unittest\n"
+          }
+        ]
+      },
+      "candidate": "def f(): pass",
+      "raises": "unsupported_verifier",
+      "expected": {
+        "passed": false,
+        "code": "unsupported_verifier"
+      }
+    },
+    {
+      "id": "all_of/rejects-executable-after-passing-declarative",
+      "description": "The declarative child would pass; the composite must still refuse rather than report ok.",
+      "verifier": {
+        "type": "all_of",
+        "verifiers": [
+          {
+            "type": "exact",
+            "expected": "42"
+          },
+          {
+            "type": "sympy_equiv",
+            "expected": "x + 1",
+            "symbols": [
+              "x"
+            ]
+          }
+        ]
+      },
+      "candidate": "42",
+      "raises": "unsupported_verifier",
+      "expected": {
+        "passed": false,
+        "code": "unsupported_verifier"
+      }
+    },
+    {
+      "id": "all_of/rejects-executable-after-failing-declarative",
+      "description": "The eager case. A lazy implementation returns the first child's mismatch and never looks at the executable sibling, reporting a verdict for output it only partially checked.",
+      "verifier": {
+        "type": "all_of",
+        "verifiers": [
+          {
+            "type": "exact",
+            "expected": "not the candidate"
+          },
+          {
+            "type": "sympy_equiv",
+            "expected": "x + 1",
+            "symbols": [
+              "x"
+            ]
+          }
+        ]
+      },
+      "candidate": "42",
+      "raises": "unsupported_verifier",
+      "expected": {
+        "passed": false,
+        "code": "unsupported_verifier"
+      }
+    },
+    {
+      "id": "all_of/rejects-executable-before-declarative",
+      "description": "Order does not matter; the walk covers every child.",
+      "verifier": {
+        "type": "all_of",
+        "verifiers": [
+          {
+            "type": "sympy_equiv",
+            "expected": "x + 1",
+            "symbols": [
+              "x"
+            ]
+          },
+          {
+            "type": "exact",
+            "expected": "42"
+          }
+        ]
+      },
+      "candidate": "42",
+      "raises": "unsupported_verifier",
+      "expected": {
+        "passed": false,
+        "code": "unsupported_verifier"
+      }
+    },
+    {
+      "id": "all_of/rejects-executable-nested-one-deep",
+      "description": "Nesting does not launder an executable child.",
+      "verifier": {
+        "type": "all_of",
+        "verifiers": [
+          {
+            "type": "exact",
+            "expected": "42"
+          },
+          {
+            "type": "all_of",
+            "verifiers": [
+              {
+                "type": "sympy_equiv",
+                "expected": "x + 1",
+                "symbols": [
+                  "x"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "candidate": "42",
+      "raises": "unsupported_verifier",
+      "expected": {
+        "passed": false,
+        "code": "unsupported_verifier"
+      }
+    },
+    {
+      "id": "all_of/rejects-executable-nested-two-deep",
+      "description": "Still refused two levels down.",
+      "verifier": {
+        "type": "all_of",
+        "verifiers": [
+          {
+            "type": "all_of",
+            "verifiers": [
+              {
+                "type": "all_of",
+                "verifiers": [
+                  {
+                    "type": "python_unittest",
+                    "test_source": "import unittest\n"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "candidate": "42",
+      "raises": "unsupported_verifier",
+      "expected": {
+        "passed": false,
+        "code": "unsupported_verifier"
+      }
+    },
+    {
+      "id": "all_of/rejects-executable-nested-two-deep-behind-a-failure",
+      "description": "Eager at depth as well: the failing sibling must not short-circuit the walk.",
+      "verifier": {
+        "type": "all_of",
+        "verifiers": [
+          {
+            "type": "exact",
+            "expected": "not the candidate"
+          },
+          {
+            "type": "all_of",
+            "verifiers": [
+              {
+                "type": "all_of",
+                "verifiers": [
+                  {
+                    "type": "sympy_equiv",
+                    "expected": "x + 1",
+                    "symbols": [
+                      "x"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "candidate": "42",
+      "raises": "unsupported_verifier",
+      "expected": {
+        "passed": false,
+        "code": "unsupported_verifier"
+      }
+    },
+    {
+      "id": "all_of/rejects-executable-at-maximum-permitted-depth",
+      "description": "Depth 8 is the deepest a composite may nest, and an executable verifier is refused there too, which is the last place a walk that gives up early would miss.",
+      "verifier": {
+        "type": "all_of",
+        "verifiers": [
+          {
+            "type": "all_of",
+            "verifiers": [
+              {
+                "type": "all_of",
+                "verifiers": [
+                  {
+                    "type": "all_of",
+                    "verifiers": [
+                      {
+                        "type": "all_of",
+                        "verifiers": [
+                          {
+                            "type": "all_of",
+                            "verifiers": [
+                              {
+                                "type": "all_of",
+                                "verifiers": [
+                                  {
+                                    "type": "all_of",
+                                    "verifiers": [
+                                      {
+                                        "type": "all_of",
+                                        "verifiers": [
+                                          {
+                                            "type": "sympy_equiv",
+                                            "expected": "x + 1",
+                                            "symbols": [
+                                              "x"
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "candidate": "42",
+      "raises": "unsupported_verifier",
+      "expected": {
+        "passed": false,
+        "code": "unsupported_verifier"
+      }
+    },
+    {
+      "id": "all_of/rejects-unknown-child-type",
+      "description": "A type no implementation knows is refused, not skipped.",
+      "verifier": {
+        "type": "all_of",
+        "verifiers": [
+          {
+            "type": "telepathy"
+          }
+        ]
+      },
+      "candidate": "42",
+      "raises": "unsupported_verifier",
+      "expected": {
+        "passed": false,
+        "code": "unsupported_verifier"
+      }
+    },
+    {
+      "id": "all_of/rejects-child-with-no-type-tag",
+      "description": "A child with no type tag cannot be dispatched and must not be ignored.",
+      "verifier": {
+        "type": "all_of",
+        "verifiers": [
+          {
+            "expected": "42"
+          }
+        ]
+      },
+      "candidate": "42",
+      "raises": "unsupported_verifier",
+      "expected": {
+        "passed": false,
+        "code": "unsupported_verifier"
+      }
+    },
+    {
+      "id": "all_of/rejects-unknown-type-nested-deep",
+      "description": "The same at depth.",
+      "verifier": {
+        "type": "all_of",
+        "verifiers": [
+          {
+            "type": "all_of",
+            "verifiers": [
+              {
+                "type": "all_of",
+                "verifiers": [
+                  {
+                    "type": "all_of",
+                    "verifiers": [
+                      {
+                        "type": "not_a_verifier"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "candidate": "42",
+      "raises": "unsupported_verifier",
+      "expected": {
+        "passed": false,
+        "code": "unsupported_verifier"
+      }
+    },
+    {
+      "id": "all_of/rejects-nesting-beyond-maximum-depth",
+      "description": "Depth 9 exceeds the limit. A configuration error rather than an unsupported type, and still never a pass.",
+      "verifier": {
+        "type": "all_of",
+        "verifiers": [
+          {
+            "type": "all_of",
+            "verifiers": [
+              {
+                "type": "all_of",
+                "verifiers": [
+                  {
+                    "type": "all_of",
+                    "verifiers": [
+                      {
+                        "type": "all_of",
+                        "verifiers": [
+                          {
+                            "type": "all_of",
+                            "verifiers": [
+                              {
+                                "type": "all_of",
+                                "verifiers": [
+                                  {
+                                    "type": "all_of",
+                                    "verifiers": [
+                                      {
+                                        "type": "all_of",
+                                        "verifiers": [
+                                          {
+                                            "type": "all_of",
+                                            "verifiers": [
+                                              {
+                                                "type": "exact",
+                                                "expected": "42"
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "candidate": "42",
+      "raises": "verifier_config",
+      "expected": {
+        "passed": false,
+        "code": "unsupported_verifier"
+      }
+    },
+    {
+      "id": "all_of/rejects-missing-verifiers-list",
+      "description": "A composite with no children list is malformed, not an empty composite.",
+      "verifier": {
+        "type": "all_of"
+      },
+      "candidate": "42",
+      "raises": "verifier_config",
+      "expected": {
+        "passed": false,
+        "code": "unsupported_verifier"
+      }
     }
   ]
 }

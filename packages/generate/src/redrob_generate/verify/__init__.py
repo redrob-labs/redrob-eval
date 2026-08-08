@@ -53,6 +53,29 @@ def run_verifier(
     return _REGISTRY[verifier_type](verifier, candidate)
 
 
+def run_verifier_or_fail(
+    verifier: Mapping[str, Any],
+    candidate: str,
+    *,
+    allow_executable: bool = True,
+) -> Verdict:
+    """The same dispatch, with an unsupported type turned into a failing verdict.
+
+    The peer of ``runVerifierOrFail`` on the TypeScript side, and it exists for the same
+    reason: a caller scoring a whole set wants one bad verifier to fail its own item
+    rather than abort the run. Still a failure, never a pass, so nothing scored this way
+    can be counted as correct by mistake.
+    """
+    try:
+        return run_verifier(verifier, candidate, allow_executable=allow_executable)
+    except UnsupportedVerifierError as exc:
+        return fail(
+            "unsupported_verifier",
+            str(exc),
+            verifier_type=exc.verifier_type,
+        )
+
+
 __all__ = [
     "ALL_VERIFIER_TYPES",
     "DECLARATIVE_VERIFIER_TYPES",
@@ -65,4 +88,5 @@ __all__ = [
     "is_declarative",
     "ok",
     "run_verifier",
+    "run_verifier_or_fail",
 ]

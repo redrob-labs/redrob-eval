@@ -16,9 +16,14 @@ from pathlib import Path
 import pytest
 
 from redrob_generate.canonical import canonical_json
+from redrob_generate.errors import UnsupportedVerifierError
 from redrob_generate.seed import derive_seed, seed_message
 from redrob_generate.spec import find_spec_dir, validate_document
-from redrob_generate.verify import DECLARATIVE_VERIFIER_TYPES, run_verifier
+from redrob_generate.verify import (
+    DECLARATIVE_VERIFIER_TYPES,
+    run_verifier,
+    run_verifier_or_fail,
+)
 
 CONFORMANCE_DIR = find_spec_dir() / "conformance"
 MINIMUM_CASES_PER_TYPE = 15
@@ -42,7 +47,16 @@ def _all_cases() -> list[tuple[str, dict]]:
     return cases
 
 
+def _all_rejections() -> list[tuple[str, dict]]:
+    rejections: list[tuple[str, dict]] = []
+    for path in VERIFIER_FILES:
+        for case in _load(path).get("rejections", []):
+            rejections.append((case["id"], case))
+    return rejections
+
+
 ALL_CASES = _all_cases()
+ALL_REJECTIONS = _all_rejections()
 
 
 def test_every_declarative_type_has_a_conformance_file() -> None:
@@ -64,14 +78,14 @@ def test_conformance_file_is_well_formed(path: Path) -> None:
     )
     identifiers = [case["id"] for case in document["cases"]]
     assert len(identifiers) == len(set(identifiers)), f"{path.name} has duplicate case ids"
-    for case in document["cases"]:
-        assert case["verifier"]["type"] == path.stem, (
-            f"{case['id']} declares a {case['verifier']['type']} verifier in {path.name}"
+    for case in document["cases"] + document.get("rejections", []):
+        assert case["verifier"].get("type") in {path.stem, None}, (
+            f"{case['id']} declares a {case['verifier'].get('type')} verifier in {path.name}"
         )
 
 
 def test_case_ids_are_globally_unique() -> None:
-    identifiers = [identifier for identifier, _ in ALL_CASES]
+    identifiers = [identifier for identifier, _ in ALL_CASES + ALL_REJECTIONS]
     assert len(identifiers) == len(set(identifiers))
 
 
@@ -83,6 +97,42 @@ def test_conformance_case(case_id: str, case: dict) -> None:
         f"{case_id}: expected {expected['passed']}/{expected['code']}, "
         f"got {verdict.passed}/{verdict.code} ({verdict.message})"
     )
+
+
+@pytest.mark.parametrize(
+    "case_id,case", ALL_REJECTIONS, ids=[case_id for case_id, _ in ALL_REJECTIONS]
+)
+def test_conformance_rejection(case_id: str, case: dict) -> None:
+    """A refused configuration must raise, and must never produce a passing verdict.
+
+    Both halves matter. The raise is the contract for a caller that wants to know its
+    verifier is unusable; the verdict is what a caller scoring a whole set gets instead of
+    an aborted run. Neither is allowed to be a pass.
+    """
+    expected_error = UnsupportedVerifierError if case["raises"] == "unsupported_verifier" else ValueError
+    with pytest.raises(expected_error):
+        run_verifier(case["verifier"], case["candidate"])
+
+    if case["raises"] == "unsupported_verifier":
+        verdict = run_verifier_or_fail(case["verifier"], case["candidate"])
+        assert (verdict.passed, verdict.code) == (
+            case["expected"]["passed"],
+            case["expected"]["code"],
+        ), f"{case_id}: got {verdict.passed}/{verdict.code}"
+        assert verdict.passed is False
+
+
+def test_all_of_rejections_are_not_merely_failing_verdicts() -> None:
+    """Guard against the check being satisfied by a mismatch that happens to be false.
+
+    Every rejection here names a configuration that is invalid, so a mismatch verdict
+    would mean the composite ran and judged the candidate, which is the behaviour these
+    cases exist to forbid.
+    """
+    assert ALL_REJECTIONS, "the rejection suite is empty, so it proves nothing"
+    for case_id, case in ALL_REJECTIONS:
+        assert case["expected"]["passed"] is False, case_id
+        assert case["expected"]["code"] == "unsupported_verifier", case_id
 
 
 # ------------------------------------------------------------------- fixtures

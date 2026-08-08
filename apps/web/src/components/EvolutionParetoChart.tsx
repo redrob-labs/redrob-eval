@@ -121,12 +121,12 @@ export function EvolutionParetoChart({
         cost: p.meanRelativeCost,
         fill:
           role === 'best'
-            ? '#2b52ff'
+            ? 'var(--brand)'
             : role === 'seed'
-              ? '#c2410c'
+              ? 'var(--series-seed)'
               : p.feasible
-                ? '#64748b'
-                : '#cbd5e1',
+                ? 'var(--chart-tick)'
+                : 'var(--chart-faint)',
         role,
       };
     });
@@ -187,19 +187,19 @@ export function EvolutionParetoChart({
       <div className="chart-frame">
         <ResponsiveContainer width="100%" height={288} minWidth={0}>
           <ScatterChart margin={{ top: 18, right: 20, bottom: 28, left: 10 }}>
-            <CartesianGrid stroke="rgba(15, 23, 42, 0.08)" strokeDasharray="3 3" />
+            <CartesianGrid stroke="var(--chart-grid)" strokeDasharray="3 3" />
             <XAxis
               type="number"
               dataKey="x"
               name="Tokens"
               domain={xDomain}
               allowDataOverflow
-              tick={{ fill: '#64748b', fontSize: 11 }}
+              tick={{ fill: 'var(--chart-tick)', fontSize: 11 }}
               label={{
                 value: '← cheaper (tokens)     costlier →',
                 position: 'insideBottom',
                 offset: -10,
-                fill: '#64748b',
+                fill: 'var(--chart-tick)',
                 fontSize: 11,
               }}
             />
@@ -210,12 +210,12 @@ export function EvolutionParetoChart({
               unit="%"
               domain={yDomain}
               allowDataOverflow
-              tick={{ fill: '#64748b', fontSize: 11 }}
+              tick={{ fill: 'var(--chart-tick)', fontSize: 11 }}
               label={{
                 value: 'Quality %  ↑ better',
                 angle: -90,
                 position: 'insideLeft',
-                fill: '#64748b',
+                fill: 'var(--chart-tick)',
                 fontSize: 11,
               }}
             />
@@ -223,11 +223,11 @@ export function EvolutionParetoChart({
             {qualityFloorPct != null ? (
               <ReferenceLine
                 y={qualityFloorPct}
-                stroke="#a16207"
+                stroke="var(--warn)"
                 strokeDasharray="4 4"
                 label={{
                   value: `floor ${qualityFloorPct.toFixed(0)}%`,
-                  fill: '#a16207',
+                  fill: 'var(--warn)',
                   fontSize: 10,
                   position: 'insideTopRight',
                 }}
@@ -269,8 +269,8 @@ export function EvolutionParetoChart({
             <Scatter
               name="Feasible frontier"
               data={feasible}
-              fill="#64748b"
-              line={{ stroke: '#2b52ff', strokeWidth: 2 }}
+              fill="var(--chart-tick)"
+              line={{ stroke: 'var(--brand)', strokeWidth: 2 }}
               lineJointType="linear"
               isAnimationActive={false}
             >
@@ -281,14 +281,14 @@ export function EvolutionParetoChart({
                 dataKey="label"
                 position="top"
                 offset={8}
-                style={{ fill: '#334155', fontSize: 10, fontWeight: 600 }}
+                style={{ fill: 'var(--chart-label)', fontSize: 10, fontWeight: 600 }}
               />
             </Scatter>
             {infeasible.length > 0 ? (
               <Scatter
                 name="Infeasible"
                 data={infeasible}
-                fill="#94a3b8"
+                fill="var(--chart-axis)"
                 isAnimationActive={false}
               >
                 {infeasible.map((entry) => (

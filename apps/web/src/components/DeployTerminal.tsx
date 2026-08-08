@@ -55,11 +55,23 @@ export const DeployTerminal = forwardRef<
       setSessionId(id);
       setReused(Boolean(state.reused));
 
+      // xterm paints to a canvas, so it cannot read `var()` the way the rest of the UI
+      // does; the values are resolved once here instead. The surface behind it uses the
+      // same two tokens, so reading them is what keeps the canvas and its frame from
+      // drifting apart. A terminal stays dark in both themes -- that is what a terminal
+      // looks like -- so there is nothing to re-resolve when the theme changes.
+      const styles = getComputedStyle(document.documentElement);
+      const token = (name: string, fallback: string) =>
+        styles.getPropertyValue(name).trim() || fallback;
+
       const term = new Terminal({
         convertEol: true,
         fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
         fontSize: 13,
-        theme: { background: '#0b0f14', cursor: '#6f8bff' },
+        theme: {
+          background: token('--terminal-bg', '#0b0f14'),
+          cursor: token('--terminal-cursor', '#6f8bff'),
+        },
         cursorBlink: true,
         scrollback: 20000,
       });

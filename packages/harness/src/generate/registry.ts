@@ -1,7 +1,7 @@
 // Copyright 2026 Janghoon Lee
 // SPDX-License-Identifier: Apache-2.0
 /**
- * Verifier dispatch, per spec section 6.2.
+ * Verifier dispatch, per spec sections 6.2 and 6.3.
  *
  * The executable tier is Python only. This implementation raises
  * {@link UnsupportedVerifierError} for those types rather than skipping them, because a

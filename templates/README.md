@@ -25,10 +25,14 @@ translation could change the parameters, the comparison would silently become me
 | Template | Family | Verifier |
 | --- | --- | --- |
 | `math/linear-equation` | math | `numeric_tolerance` |
-| `extraction/quarterly-ledger` | extraction | `all_of` [ `json_schema`, `exact` ] |
-| `format/release-note` | format | `format_constraint` |
+| `extraction/quarterly-ledger` | extraction | [ `json_schema`, `exact` ] |
+| `format/release-note` | format | [ `format_constraint`, `format_constraint` ] |
 
-All three are `locale: en`.
+All three are `locale: en`. A bracketed verifier is the list form: every element runs and all
+must pass, and the verdict names which element failed. `format/release-note` uses two
+`format_constraint` elements rather than one because `case_sensitive` applies to every substring
+check in a single constraint at once, and that template needs an exactly-cased header alongside a
+banned word caught in any casing.
 
 ## Non-English templates
 

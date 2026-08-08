@@ -156,7 +156,9 @@ On **Evolve**, pick a catalog dataset or **Custom goal** (goal + rubric + input-
 - [Learnings](docs/learnings.md) - living design log
 - [Decision records](docs/decisions/) - why a design is the way it is, one file per decision,
   numbered and never rewritten in place. Start with
-  [0001 Generate module foundation](docs/decisions/0001-generate-foundation.md).
+  [0001 Generate module foundation](docs/decisions/0001-generate-foundation.md), then
+  [0002 Unicode semantics](docs/decisions/0002-unicode-semantics.md) and
+  [0003 List-valued verifier field](docs/decisions/0003-list-valued-verifier-field.md).
 - [Sample exports](exports/samples/README.md) - regenerable report + Pareto
 
 ## Environment

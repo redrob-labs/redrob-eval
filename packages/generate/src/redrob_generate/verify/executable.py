@@ -1,6 +1,6 @@
 # Copyright 2026 Janghoon Lee
 # SPDX-License-Identifier: Apache-2.0
-"""The executable tier, per spec section 6.2. Python only.
+"""The executable tier, per spec section 6.3. Python only.
 
 Both verifiers here execute code derived from a model's output. Nothing in this module
 is a sandbox, and the spec does not pretend otherwise: run these only on content you

@@ -18,7 +18,7 @@ import type { Instance, Manifest, Template } from './spec-types.generated';
 
 export const INSTANCES_FILENAME = 'instances.jsonl';
 export const MANIFEST_FILENAME = 'manifest.json';
-export const SPEC_VERSION = 'redrob-verifiable-task/v1';
+export const SPEC_VERSION = 'redrob-verifiable-task/v2';
 
 export class GeneratedSetError extends Error {
   constructor(message: string) {

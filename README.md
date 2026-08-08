@@ -84,7 +84,7 @@ same seeds from published values and check them, which a conventional seed such 
 allow. Scoring is done by deterministic verifiers, not by a judge model.
 
 What exists today is the foundation, not a feature: the [Redrob Verifiable Task Spec
-v1](spec/verifiable-task-v1.md), a Python generator, verifiers implemented natively in both
+v1](spec/verifiable-task-v2.md), a Python generator, verifiers implemented natively in both
 languages, and a cross-language conformance suite that fails CI if the two ever disagree. There is
 no page, no route and no navigation entry.
 
@@ -134,7 +134,7 @@ Shared rules:
 | `datasets/` | Vendored eval subsets (Apache-compatible licenses only); `video-local/` for non-redistributable checklist manifests |
 | `exports/samples/` | Committed, regenerable sample Evolve report + Pareto SVG |
 | `scripts/parity/` | Optional research comparison vs reference GEPA - **not** needed to run the app |
-| `spec/` | Redrob Verifiable Task Spec v1 + the cross-language conformance suite |
+| `spec/` | Redrob Verifiable Task Spec v2 + the cross-language conformance suite |
 | `templates/` | Generate templates, one directory per family, with locale layers |
 | `packages/generate` | Optional Python generator `redrob-generate` - **not** on the `yarn install && yarn dev` path |
 | `train/` | Optional Python router training - **not** on the `yarn install && yarn dev` path |
@@ -232,7 +232,7 @@ yarn verify:selfhosted   # self-hosted catalog + relative cost, no currency (off
 yarn verify:preference-gen  # preference run planning + matrix (offline)
 yarn export:samples  # write exports/samples report + Pareto SVG
 yarn test            # TypeScript conformance suite for the Generate spec (offline)
-yarn generate:spec-types  # regenerate TS types from spec/verifiable-task-v1.schema.json
+yarn generate:spec-types  # regenerate TS types from spec/verifiable-task-v2.schema.json
 yarn typecheck
 yarn lint
 yarn build

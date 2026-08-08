@@ -23,7 +23,7 @@ from .errors import SpecError, TemplateLoadError
 from .verify.json_schema_subset import SchemaSubsetError, validate_schema_document
 from .verify.regex_subset import RegexSubsetError, validate as validate_regex_subset
 
-SCHEMA_FILENAME = "verifiable-task-v1.schema.json"
+SCHEMA_FILENAME = "verifiable-task-v2.schema.json"
 CORE_FILENAME = "template.json"
 LOCALES_DIRNAME = "locales"
 

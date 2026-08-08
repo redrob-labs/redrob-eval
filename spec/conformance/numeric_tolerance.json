@@ -1,5 +1,5 @@
 {
-  "spec_version": "redrob-verifiable-task/v1",
+  "spec_version": "redrob-verifiable-task/v2",
   "verifier_type": "numeric_tolerance",
   "description": "Number parsing and tolerance comparison, including the NaN and infinity policies that a well-meaning implementation is most likely to get quietly wrong.",
   "cases": [

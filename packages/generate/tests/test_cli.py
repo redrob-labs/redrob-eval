@@ -175,7 +175,7 @@ def test_verify_can_refuse_executable_verifiers(tmp_path: Path, capsys) -> None:
     set_dir = tmp_path / "set"
     set_dir.mkdir()
     instance = {
-        "spec_version": "redrob-verifiable-task/v1",
+        "spec_version": "redrob-verifiable-task/v2",
         "template_id": "t.symbolic",
         "template_version": "1.0.0",
         "template_hash": "sha256:" + "0" * 64,

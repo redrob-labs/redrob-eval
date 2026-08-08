@@ -1,7 +1,7 @@
 # redrob-generate
 
 Parametric generation of verifiable evaluation prompts and their verifiers, and the Python
-reference implementation of the [Redrob Verifiable Task Spec v1](../../spec/verifiable-task-v1.md).
+reference implementation of the [Redrob Verifiable Task Spec v2](../../spec/verifiable-task-v2.md).
 
 An evaluation item here is not a row in a file. It is a template plus a seed, and the seed is
 derived from the generator version, the template id and the instance index rather than chosen.
@@ -79,7 +79,7 @@ The first instance, reformatted for reading (the file itself is one line, canoni
 
 ```json
 {
-  "spec_version": "redrob-verifiable-task/v1",
+  "spec_version": "redrob-verifiable-task/v2",
   "template_id": "math.linear_equation",
   "template_version": "1.0.0",
   "template_hash": "sha256:b7edd219a0af9a7df2d1dfb3c0d44851155deb4909c668c75baab43bf8cfbaf2",
@@ -117,7 +117,7 @@ $ redrob-generate verify --set /tmp/set --outputs outputs.jsonl --json
    "message": "difference 0.010000000000001563 exceeds tolerance 0.0001",
    "detail": {"candidate": 17.99, "expected": 18.0, "difference": 0.010000000000001563, "tolerance": 0.0001},
    "template_id": "math.linear_equation", "verifier_type": "numeric_tolerance"}],
- "set": "/tmp/set", "spec_version": "redrob-verifiable-task/v1"}
+ "set": "/tmp/set", "spec_version": "redrob-verifiable-task/v2"}
 
 $ echo $?
 1

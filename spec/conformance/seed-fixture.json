@@ -1,5 +1,5 @@
 {
-  "spec_version": "redrob-verifiable-task/v1",
+  "spec_version": "redrob-verifiable-task/v2",
   "description": "Frozen seed derivation vectors. Both implementations recompute message_utf8_hex, sha256 and seed from the three inputs and must reproduce every field exactly. message_utf8_hex is included so that a third implementation can be debugged one step at a time rather than only at the final integer.",
   "formula": "uint64_be(sha256(generator_version || \"\\x00\" || template_id || \"\\x00\" || instance_index)[0:8])",
   "notes": [

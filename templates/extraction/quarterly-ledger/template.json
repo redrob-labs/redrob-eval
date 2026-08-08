@@ -1,5 +1,5 @@
 {
-  "spec_version": "redrob-verifiable-task/v1",
+  "spec_version": "redrob-verifiable-task/v2",
   "id": "extraction.quarterly_ledger",
   "version": "1.0.0",
   "family": "extraction",
@@ -44,32 +44,29 @@
     },
     { "name": "answer_json", "expr": "canonical_json(answer)" }
   ],
-  "verifier": {
-    "type": "all_of",
-    "verifiers": [
-      {
-        "type": "json_schema",
-        "schema": {
-          "type": "object",
-          "additionalProperties": false,
-          "required": ["city", "quarter", "year", "units", "returns", "net_units"],
-          "properties": {
-            "city": { "type": "string", "const": "{{city}}" },
-            "quarter": { "type": "string", "const": "{{quarter}}" },
-            "year": { "type": "integer", "const": "{{year}}" },
-            "units": { "type": "integer", "const": "{{units}}" },
-            "returns": { "type": "integer", "const": "{{returns}}" },
-            "net_units": { "type": "integer", "const": "{{net_units}}" }
-          }
+  "verifier": [
+    {
+      "type": "json_schema",
+      "schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["city", "quarter", "year", "units", "returns", "net_units"],
+        "properties": {
+          "city": { "type": "string", "const": "{{city}}" },
+          "quarter": { "type": "string", "const": "{{quarter}}" },
+          "year": { "type": "integer", "const": "{{year}}" },
+          "units": { "type": "integer", "const": "{{units}}" },
+          "returns": { "type": "integer", "const": "{{returns}}" },
+          "net_units": { "type": "integer", "const": "{{net_units}}" }
         }
-      },
-      {
-        "type": "exact",
-        "expected": "{{answer_json}}",
-        "trim": true,
-        "normalize_line_endings": true
       }
-    ]
-  },
-  "notes": "json_schema runs before exact on purpose: a wrong extraction should report a schema violation, which names the offending field, rather than a string mismatch, which does not. The place names are invented so the ground truth cannot leak in from pretraining."
+    },
+    {
+      "type": "exact",
+      "expected": "{{answer_json}}",
+      "trim": true,
+      "normalize_line_endings": true
+    }
+  ],
+  "notes": "json_schema is written before exact on purpose: a wrong extraction should lead with a schema violation, which names the offending field, rather than a string mismatch, which does not. Both run either way, so the per-element report distinguishes a wrong value from a wrong serialisation. The place names are invented so the ground truth cannot leak in from pretraining."
 }

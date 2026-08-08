@@ -59,7 +59,7 @@ def build_instance(
         instance["fertility"] = record.to_dict()
 
     validate_document(instance, "instance")
-    validate_document(verifier, "verifier")
+    validate_document(verifier, "verifier_or_list")
     return instance, record
 
 

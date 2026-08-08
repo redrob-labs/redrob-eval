@@ -13,7 +13,6 @@ import pytest
 from typing import Any
 
 from redrob_generate.errors import UnsupportedVerifierError
-from redrob_generate.verify.declarative import MAX_ALL_OF_DEPTH
 from redrob_generate.verify import (
     ALL_VERIFIER_TYPES,
     DECLARATIVE_VERIFIER_TYPES,
@@ -56,75 +55,96 @@ def test_executable_verifiers_refused_when_execution_is_not_permitted(verifier_t
 
 def test_is_declarative() -> None:
     assert is_declarative("exact")
-    assert is_declarative("all_of")
     assert not is_declarative("sympy_equiv")
+    assert not is_declarative("verifier_list"), (
+        "a verifier list is a shape of the field, not a type the registry dispatches on"
+    )
 
 
-def test_all_of_rejects_an_executable_child() -> None:
-    """all_of is declarative by definition; an executable child would make it
+def test_a_verifier_list_refuses_an_executable_element() -> None:
+    """A list is declarative by definition; an executable element would make it
     unsupported on one implementation and passing on the other."""
-    with pytest.raises(UnsupportedVerifierError, match="must be declarative"):
-        run_verifier(
-            {
-                "type": "all_of",
-                "verifiers": [{"type": "sympy_equiv", "expected": "x"}],
-            },
-            "x",
-        )
+    with pytest.raises(UnsupportedVerifierError, match="declarative"):
+        run_verifier([{"type": "sympy_equiv", "expected": "x"}], "x")
 
 
-def test_all_of_rejects_an_executable_child_before_evaluating_anything() -> None:
-    """The eager case, which is the one that matters.
+def test_a_verifier_list_refuses_an_executable_element_behind_a_failing_one() -> None:
+    """The case that needed an eager pre-walk when this was a combinator.
 
-    The first child fails, so a lazy implementation returns its mismatch verdict and never
-    reaches the executable sibling. That verdict describes output only half of the
-    contract was applied to, and nothing in it says so.
+    The first element fails, and the combinator stopped there, so the executable sibling
+    was never reached and the caller got a mismatch describing output only half the
+    contract had been applied to. Nothing in that verdict said so. Here the refusal needs
+    no separate walk: there is no short circuit, so every element is reached.
     """
-    composite = {
-        "type": "all_of",
-        "verifiers": [
+    verifiers = [
+        {"type": "exact", "expected": "not the candidate"},
+        {"type": "sympy_equiv", "expected": "x"},
+    ]
+    with pytest.raises(UnsupportedVerifierError):
+        run_verifier(verifiers, "x")
+
+    verdict = run_verifier_or_fail(verifiers, "x")
+    assert verdict.passed is False
+    assert verdict.code == "unsupported_verifier", (
+        "a refused list must not be reported as an ordinary mismatch, because a mismatch "
+        "means the list ran"
+    )
+
+
+@pytest.mark.parametrize("position", range(6))
+def test_an_executable_element_at_any_position_makes_the_list_raise(position: int) -> None:
+    """The corpus covers an executable element first, last, and behind a failure.
+
+    This sweeps every position of a longer list, so the claim is "at every position"
+    rather than "at the positions someone thought of". One element fails, so an
+    implementation that stopped early would have something to return before reaching the
+    executable one.
+    """
+    verifiers: list[Any] = [
+        {"type": "exact", "expected": "not the candidate" if index == 1 else "42"}
+        for index in range(6)
+    ]
+    verifiers[position] = {"type": "sympy_equiv", "expected": "x", "symbols": ["x"]}
+
+    with pytest.raises(UnsupportedVerifierError):
+        run_verifier(verifiers, "42")
+
+    verdict = run_verifier_or_fail(verifiers, "42")
+    assert verdict.passed is False
+    assert verdict.code == "unsupported_verifier", (
+        "a refused list reported as an ordinary verdict would mean it ran"
+    )
+
+
+def test_a_verifier_list_runs_every_element() -> None:
+    """The behavioural difference from the combinator, asserted directly.
+
+    Two elements fail. The combinator returned the first and said nothing about the
+    second, so a template with an unusable pattern was indistinguishable from an answer
+    that was merely wrong. The report names both.
+    """
+    verdict = run_verifier(
+        [
             {"type": "exact", "expected": "not the candidate"},
-            {"type": "sympy_equiv", "expected": "x"},
+            {"type": "regex", "pattern": "(unclosed"},
         ],
-    }
-    with pytest.raises(UnsupportedVerifierError):
-        run_verifier(composite, "x")
-
-    verdict = run_verifier_or_fail(composite, "x")
-    assert verdict.passed is False
-    assert verdict.code == "unsupported_verifier", (
-        "a refused composite must not be reported as an ordinary mismatch, because a "
-        "mismatch means the composite ran"
+        "42",
     )
+    assert (verdict.passed, verdict.code) == (False, "mismatch")
+    assert verdict.detail["elements"] == [
+        {"index": 0, "type": "exact", "passed": False, "code": "mismatch"},
+        {"index": 1, "type": "regex", "passed": False, "code": "invalid_pattern"},
+    ]
 
 
-@pytest.mark.parametrize("depth", range(MAX_ALL_OF_DEPTH + 1))
-def test_an_executable_child_at_any_permitted_depth_makes_the_composite_raise(depth: int) -> None:
-    """The conformance corpus covers depths 0, 1, 2 and the maximum.
-
-    This covers the rest, so the claim is "at every permitted depth" rather than "at the
-    depths someone thought of". Each level carries a passing declarative sibling, so a
-    lazy implementation would have something to return before reaching the executable
-    child.
-    """
-    node: Any = {
-        "type": "all_of",
-        "verifiers": [
-            {"type": "exact", "expected": "42"},
-            {"type": "sympy_equiv", "expected": "x", "symbols": ["x"]},
-        ],
-    }
-    for _ in range(depth):
-        node = {"type": "all_of", "verifiers": [{"type": "exact", "expected": "42"}, node]}
-
-    with pytest.raises(UnsupportedVerifierError):
-        run_verifier(node, "42")
-
-    verdict = run_verifier_or_fail(node, "42")
-    assert verdict.passed is False
-    assert verdict.code == "unsupported_verifier", (
-        "a refused composite reported as an ordinary verdict would mean it ran"
-    )
+def test_a_single_verifier_reports_no_elements() -> None:
+    """A one-element list and a bare verifier stay distinguishable in the verdict."""
+    single = run_verifier({"type": "exact", "expected": "42"}, "42")
+    listed = run_verifier([{"type": "exact", "expected": "42"}], "42")
+    assert "elements" not in single.detail
+    assert listed.detail["elements"] == [
+        {"index": 0, "type": "exact", "passed": True, "code": "ok"}
+    ]
 
 
 def test_json_schema_rejects_out_of_subset_keywords() -> None:

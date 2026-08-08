@@ -168,7 +168,7 @@ def test_a_template_with_a_shorthand_class_fails_to_load(tmp_path: Path) -> None
     ever produce. Finding out at scoring time means the set is already published.
     """
     template = {
-        "spec_version": "redrob-verifiable-task/v1",
+        "spec_version": "redrob-verifiable-task/v2",
         "id": "test.shorthand",
         "version": "1.0.0",
         "locale": "en",
@@ -188,7 +188,7 @@ def test_a_template_with_a_shorthand_class_fails_to_load(tmp_path: Path) -> None
 
 def test_a_template_with_a_portable_pattern_loads(tmp_path: Path) -> None:
     template = {
-        "spec_version": "redrob-verifiable-task/v1",
+        "spec_version": "redrob-verifiable-task/v2",
         "id": "test.portable",
         "version": "1.0.0",
         "locale": "en",

@@ -1,10 +1,10 @@
-# Redrob Verifiable Task Spec v1
+# Redrob Verifiable Task Spec v2
 
 > ## ⚠ DRAFT — NOT STABLE, DO NOT CITE THIS BRANCH
 >
 > **This surface may change, including in ways that break existing templates and generated
 > sets, until the accompanying preprint is released.** The version identifier
-> `redrob-verifiable-task/v1` does not yet imply stability; it names the shape of the
+> `redrob-verifiable-task/v2` does not yet imply stability; it names the shape of the
 > document, not a promise about it.
 >
 > **Pin a commit.** Anyone implementing against this specification, generating a set they
@@ -22,9 +22,9 @@
 > then, the record of what is unresolved and why is
 > [`docs/decisions/0001-generate-foundation.md`](../docs/decisions/0001-generate-foundation.md).
 
-Spec version identifier: `redrob-verifiable-task/v1`
+Spec version identifier: `redrob-verifiable-task/v2`
 Status: **draft**, foundation only. No UI, no model execution.
-Machine-checkable half: [`verifiable-task-v1.schema.json`](verifiable-task-v1.schema.json)
+Machine-checkable half: [`verifiable-task-v2.schema.json`](verifiable-task-v2.schema.json)
 Conformance suite: [`conformance/`](conformance/)
 
 ## 0. What this is and why
@@ -81,7 +81,7 @@ prompt body with placeholders, a locale, and a verifier binding.
 
 ```jsonc
 {
-  "spec_version": "redrob-verifiable-task/v1",
+  "spec_version": "redrob-verifiable-task/v2",
   "id": "math.linear_equation",     // stable across every locale variant
   "version": "1.0.0",
   "locale": "en",

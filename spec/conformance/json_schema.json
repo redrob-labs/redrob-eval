@@ -1,5 +1,5 @@
 {
-  "spec_version": "redrob-verifiable-task/v1",
+  "spec_version": "redrob-verifiable-task/v2",
   "verifier_type": "json_schema",
   "description": "Draft 2020-12 conformance over the documented keyword subset. Python runs the full jsonschema library and TypeScript runs a hand-written subset validator, so these cases are the only thing holding the two together.",
   "cases": [

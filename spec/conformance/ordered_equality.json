@@ -1,5 +1,5 @@
 {
-  "spec_version": "redrob-verifiable-task/v1",
+  "spec_version": "redrob-verifiable-task/v2",
   "verifier_type": "ordered_equality",
   "description": "Position-by-position comparison. Duplicates are always significant here, and order is the whole assertion.",
   "cases": [

@@ -1,7 +1,7 @@
 # Templates
 
 Task families for `redrob-generate`, conforming to
-[Redrob Verifiable Task Spec v1](../spec/verifiable-task-v1.md).
+[Redrob Verifiable Task Spec v2](../spec/verifiable-task-v2.md).
 
 ## Layout
 

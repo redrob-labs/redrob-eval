@@ -54,32 +54,38 @@ CONFORMANCE = find_spec_dir() / "conformance"
 DOCUMENTED_DISAGREEMENTS: dict[str, str] = {}
 
 
-def _collect() -> list[tuple[str, Any, str, dict]]:
-    """Every json_schema verifier in the corpus, including those nested in an all_of."""
-    rows: list[tuple[str, Any, str, dict]] = []
+def _collect() -> list[tuple[str, Any, str, dict, str]]:
+    """Every json_schema verifier in the corpus, including elements of a verifier list.
 
-    def walk(verifier: Any, case_id: str, candidate: str, expected: dict) -> None:
-        if not isinstance(verifier, dict):
+    A list element carries its own recorded verdict in ``expected["elements"]``, so unlike
+    the combinator this replaced, a nested schema's expectation is that schema's
+    expectation rather than the case's leading code.
+    """
+    rows: list[tuple[str, Any, str, dict, str]] = []
+
+    def take(verifier: Any, row_id: str, candidate: str, expected: dict) -> None:
+        if not isinstance(verifier, dict) or verifier.get("type") != "json_schema":
             return
-        if verifier.get("type") == "json_schema":
-            rows.append(
-                (
-                    f"{case_id}#{len(rows)}",
-                    verifier["schema"],
-                    candidate,
-                    expected,
-                    verifier.get("normalization", DEFAULT_NORMALIZATION),
-                )
+        rows.append(
+            (
+                row_id,
+                verifier["schema"],
+                candidate,
+                expected,
+                verifier.get("normalization", DEFAULT_NORMALIZATION),
             )
-            return
-        if verifier.get("type") == "all_of":
-            for child in verifier.get("verifiers", []):
-                walk(child, case_id, candidate, expected)
+        )
 
-    for name in ("json_schema.json", "all_of.json"):
+    for name in ("json_schema.json", "verifier_list.json"):
         document = json.loads((CONFORMANCE / name).read_text(encoding="utf-8"))
         for case in document["cases"]:
-            walk(case["verifier"], case["id"], case["candidate"], case["expected"])
+            verifier = case["verifier"]
+            if isinstance(verifier, list):
+                for index, element in enumerate(verifier):
+                    element_verdict = case["expected"].get("elements", [])[index]
+                    take(element, f"{case['id']}[{index}]", case["candidate"], element_verdict)
+                continue
+            take(verifier, case["id"], case["candidate"], case["expected"])
     return rows
 
 
@@ -136,11 +142,6 @@ def test_the_library_agrees_with_the_recorded_expectation(row: tuple) -> None:
     try:
         parsed = json.loads(candidate)
     except ValueError:
-        return
-    # Only meaningful where the whole case turns on this schema. A row nested in an all_of
-    # may be preceded by a sibling that fails first, so the case-level expectation is not
-    # this schema's verdict.
-    if not row_id.startswith("json_schema/"):
         return
     assert _library_verdict(schema, parsed, form) == expected["passed"], (
         f"{row_id}: jsonschema disagrees with the recorded expectation"

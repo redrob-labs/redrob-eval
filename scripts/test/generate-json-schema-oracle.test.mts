@@ -62,39 +62,42 @@ interface Row {
   normalization: UnicodeNormalization;
 }
 
-/** Every json_schema verifier in the corpus, including those nested inside an all_of. */
+/** Every json_schema verifier in the corpus, including elements of a verifier list.
+ *
+ *  A list element carries its own recorded verdict in `expected.elements`, so unlike the
+ *  combinator this replaced, a nested schema's expectation is this schema's expectation
+ *  and not the case's leading code. That is what lets the second check below cover list
+ *  rows instead of skipping them. */
 function collectRows(): Row[] {
   const rows: Row[] = [];
 
-  const walk = (verifier: unknown, id: string, candidate: string, expected: Row['expected']) => {
+  const take = (verifier: unknown, id: string, candidate: string, expected: Row['expected']) => {
     if (!verifier || typeof verifier !== 'object') return;
-    const node = verifier as {
-      type?: string;
-      schema?: unknown;
-      verifiers?: unknown[];
-      normalization?: UnicodeNormalization;
-    };
-    if (node.type === 'json_schema') {
-      rows.push({
-        id: `${id}#${rows.length}`,
-        schema: node.schema,
-        candidate,
-        expected,
-        normalization: node.normalization ?? DEFAULT_NORMALIZATION,
-      });
-      return;
-    }
-    if (node.type === 'all_of' && Array.isArray(node.verifiers)) {
-      for (const child of node.verifiers) walk(child, id, candidate, expected);
-    }
+    const node = verifier as { type?: string; schema?: unknown; normalization?: UnicodeNormalization };
+    if (node.type !== 'json_schema') return;
+    rows.push({
+      id,
+      schema: node.schema,
+      candidate,
+      expected,
+      normalization: node.normalization ?? DEFAULT_NORMALIZATION,
+    });
   };
 
-  for (const filename of ['json_schema.json', 'all_of.json']) {
+  for (const filename of ['json_schema.json', 'verifier_list.json']) {
     const document = JSON.parse(
       fs.readFileSync(path.join(directory, filename), 'utf8'),
     ) as ConformanceFile;
     for (const entry of document.cases) {
-      walk(entry.verifier, entry.id, entry.candidate, entry.expected);
+      if (Array.isArray(entry.verifier)) {
+        entry.verifier.forEach((element, index) => {
+          const elementVerdict = entry.expected.elements?.[index];
+          if (!elementVerdict) return;
+          take(element, `${entry.id}[${index}]`, entry.candidate, elementVerdict);
+        });
+        continue;
+      }
+      take(entry.verifier, entry.id, entry.candidate, entry.expected);
     }
   }
   return rows;
@@ -192,10 +195,6 @@ for (const row of rows) {
     } catch {
       return;
     }
-    // Only meaningful where the whole case turns on this schema. A row nested in an
-    // all_of may be preceded by a sibling that fails first, so the case-level expectation
-    // is not this schema's verdict.
-    if (!row.id.startsWith('json_schema/')) return;
     assert.equal(
       ajvAccepts(row.schema, parsed, row.normalization),
       row.expected.passed,

@@ -18,8 +18,8 @@
  * Deliberately not wired into any route: it reads credentials from the environment and
  * writes to stdout, which is a command line contract, not an HTTP one.
  */
-import { callModel } from "../packages/harness/src/lib/providers/index";
-import { resolveModel } from "../packages/harness/src/lib/catalog/resolve";
+import { callModel } from '../packages/harness/src/lib/providers/index';
+import { resolveModel } from '../packages/harness/src/lib/catalog/resolve';
 
 interface Request {
   model_id: string;
@@ -32,7 +32,7 @@ interface Request {
 async function readStdin(): Promise<string> {
   const chunks: Buffer[] = [];
   for await (const chunk of process.stdin) chunks.push(Buffer.from(chunk));
-  return Buffer.concat(chunks).toString("utf8");
+  return Buffer.concat(chunks).toString('utf8');
 }
 
 function fail(message: string): never {
@@ -49,10 +49,10 @@ async function main(): Promise<void> {
     fail(`request is not JSON: ${(err as Error).message}`);
   }
   if (
-    typeof request.model_id !== "string" ||
-    typeof request.prompt !== "string"
+    typeof request.model_id !== 'string' ||
+    typeof request.prompt !== 'string'
   ) {
-    fail("request needs a string model_id and a string prompt");
+    fail('request needs a string model_id and a string prompt');
   }
 
   const resolved = await resolveModel(request.model_id);

@@ -8,55 +8,55 @@
  * Python tests that assert a publishable artifact refuses such a verdict: one side
  * applies the label, the other side acts on it, and neither is much use alone.
  */
-import { strict as assert } from "node:assert";
-import test from "node:test";
+import { strict as assert } from 'node:assert';
+import test from 'node:test';
 
 import {
   IMPLEMENTATION,
   isAuthoritative,
   localProvenance,
   UNICODE_VERSION,
-} from "../../packages/harness/src/generate/provenance";
+} from '../../packages/harness/src/generate/provenance';
 
-test("provenance and the Python-normative policy", async (t) => {
-  await t.test("a verdict produced here is marked non-authoritative", () => {
-    const provenance = localProvenance("0.1.0");
+test('provenance and the Python-normative policy', async (t) => {
+  await t.test('a verdict produced here is marked non-authoritative', () => {
+    const provenance = localProvenance('0.1.0');
     assert.equal(provenance.implementation, IMPLEMENTATION);
-    assert.equal(provenance.implementation_version, "0.1.0");
+    assert.equal(provenance.implementation_version, '0.1.0');
     assert.equal(provenance.authoritative, false);
   });
 
   await t.test(
-    "there is no argument that makes this side authoritative",
+    'there is no argument that makes this side authoritative',
     () => {
       // Reads as a tautology and is not one. It is checking that `localProvenance` takes
       // no flag that flips `authoritative`, so the policy cannot be bypassed by a caller
       // who would rather it did not apply. If someone adds such a parameter later, the
       // shape assertion below is what notices.
-      assert.deepEqual(Object.keys(localProvenance("x")).sort(), [
-        "authoritative",
-        "implementation",
-        "implementation_version",
-        "unicode_version",
+      assert.deepEqual(Object.keys(localProvenance('x')).sort(), [
+        'authoritative',
+        'implementation',
+        'implementation_version',
+        'unicode_version',
       ]);
       assert.equal(
         localProvenance.length,
         1,
-        "localProvenance takes only a version",
+        'localProvenance takes only a version',
       );
     },
   );
 
   await t.test(
-    "the Unicode version is read off the runtime, not asserted",
+    'the Unicode version is read off the runtime, not asserted',
     () => {
-      assert.equal(UNICODE_VERSION, process.versions.unicode ?? "unknown");
+      assert.equal(UNICODE_VERSION, process.versions.unicode ?? 'unknown');
       assert.match(UNICODE_VERSION, /^\d+\.\d+/);
     },
   );
 
   await t.test(
-    "this runtime and CPython need not agree on the Unicode version",
+    'this runtime and CPython need not agree on the Unicode version',
     () => {
       // Not asserting that they differ -- that depends on which Node and which Python are
       // installed, and they may legitimately coincide. What is asserted is that the value
@@ -67,12 +67,12 @@ test("provenance and the Python-normative policy", async (t) => {
   );
 
   await t.test(
-    "a missing or malformed provenance block is not authoritative",
+    'a missing or malformed provenance block is not authoritative',
     () => {
       assert.equal(isAuthoritative(undefined), false);
       assert.equal(isAuthoritative(null), false);
       assert.equal(isAuthoritative({}), false);
-      assert.equal(isAuthoritative({ authoritative: "true" }), false);
+      assert.equal(isAuthoritative({ authoritative: 'true' }), false);
       assert.equal(isAuthoritative({ authoritative: 1 }), false);
       assert.equal(isAuthoritative({ authoritative: true }), true);
     },

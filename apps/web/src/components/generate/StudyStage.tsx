@@ -111,6 +111,10 @@ export function StudyStage({
         <>
           <section className="cmp-card">
             <div className="pane-label">Provenance</div>
+            <p className="gen-desc">
+              Both runtimes are listed because they read different Unicode tables, which is
+              the whole reason only one of them may be published from.
+            </p>
             <ul className="gen-provenance">
               {run.result.provenance.runtimes.map((runtime) => (
                 <li key={runtime.implementation}>

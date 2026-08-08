@@ -2649,6 +2649,9 @@ body.is-pane-resizing * {
   border-radius: 999px;
   border: 1px solid transparent;
   white-space: nowrap;
+  /* These sit inside column flex containers, where the default stretch would draw a chip
+     the full width of the card. */
+  align-self: flex-start;
 }
 
 .gen-chip-ok {

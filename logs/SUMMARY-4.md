@@ -217,3 +217,48 @@ assumptions are about, and the policy manages the risk rather than removing it.
 **Also not done, deliberately:** no property-based fuzzing, no mutation testing, no new verifier
 types, no registry or DOI work, no docs site, no model API calls, no non-English template
 content, no new model client, and no UI beyond the CLI table.
+
+---
+
+## 9. Addendum: the UI, added after the fact
+
+The scope above forbade UI work beyond the CLI table, and the result was a module with a spec, a
+generator, two verifier implementations, a study runner and no way to reach any of it without a
+terminal. That was raised immediately after this report was written, so `/generate` now exists and
+this section records it rather than leaving the report describing a state that lasted an hour.
+
+Two stages. **Templates** lists every family, its locales and how reviewed each one is, and samples
+instances on demand so the rendered prompt, the parameters behind it and the verifier that will
+score it are all readable. **Study** runs a shipped config and renders the aggregate tables, the
+provenance block and the publication verdict.
+
+Four decisions worth recording, all of them about not letting a UI weaken a guarantee the CLI
+holds:
+
+1. **The publication gate always runs.** The CLI writes the artifact before checking it, so asking
+   is free. Reporting `publishable` when nothing had been checked would be the page asserting
+   something it never established. The refusal displayed is Python's own string, not a second
+   implementation of the rule living in the browser — a second implementation is exactly how the
+   two would eventually disagree.
+2. **A config that reaches a provider is refused by the route**, not merely hidden in the UI.
+   Real model calls stay on the command line, where the spend is a decision someone typed.
+3. **Paths from the browser are confined, not trusted.** A preview path must resolve inside
+   `templates/` and a study config must be one the catalog offered. Without those two checks these
+   routes are an arbitrary-read and an arbitrary-execute primitive with a JSON body.
+4. **A locale layer with no declared `translation_status` reads as `untranslated`.** Negative
+   control 18 defaults it upward instead and confirms the tests catch it. This is the failure mode
+   worth a control because it is silent: nothing errors, the chip turns green, and a reader
+   believes a number describes a language nobody translated.
+
+The catalog is read from disk and needs no interpreter, so a workbench without Python still lists
+what exists and says plainly that sampling is what is missing, instead of failing one button at a
+time. `generate.html` is prerendered in the Python-absent build, which is check 1 of the suite.
+
+Counts move to **678 TypeScript tests** (from 665) and **18 negative controls** (from 17). The
+build-output check compares 782 artifacts rather than 709, and names `generate.html` alongside the
+other three module pages.
+
+**What this addendum does not change:** every caveat in §5 still stands. The tokenizers are still
+proxies, the stub locales are still English, and the deltas the page renders are still exactly zero
+for the reason given above. A UI makes those numbers easier to reach; it does not make them mean
+more than they did.

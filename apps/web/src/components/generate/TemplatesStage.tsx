@@ -1,9 +1,10 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import {
   STATUS_TONE,
+  type CatalogLocale,
   type CatalogTemplate,
   type PreviewInstance,
   type TranslationStatus,
@@ -12,6 +13,21 @@ import {
 function StatusChip({ status }: { status: TranslationStatus }) {
   const { label, tone } = STATUS_TONE[status];
   return <span className={`gen-chip gen-chip-${tone}`}>{label}</span>;
+}
+
+/**
+ * A locale, coloured by how reviewed it is.
+ *
+ * The tag has to be on the chip. Four chips reading "untranslated" three times says a
+ * family has stubs but not which ones, which is the only part a reader can act on.
+ */
+function LocaleChip({ locale }: { locale: CatalogLocale }) {
+  const { label, tone } = STATUS_TONE[locale.translationStatus];
+  return (
+    <span className={`gen-chip gen-chip-${tone}`} title={`${locale.tag}: ${label}`}>
+      {locale.tag}
+    </span>
+  );
 }
 
 /**
@@ -29,55 +45,65 @@ export function TemplatesStage({
   templates: CatalogTemplate[];
   pythonAvailable: boolean;
 }) {
-  const [selected, setSelected] = useState<string | null>(null);
-  const [locale, setLocale] = useState('en');
+  const [chosenPath, setChosenPath] = useState<string | null>(null);
+  const [chosenLocale, setChosenLocale] = useState<string | null>(null);
   const [count, setCount] = useState(3);
-  const [instances, setInstances] = useState<PreviewInstance[] | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<number | null>(0);
+  /** Bumped by the Generate button, which is the only way to re-sample the same inputs. */
+  const [nonce, setNonce] = useState(0);
 
-  const template = templates.find((entry) => entry.path === selected) ?? null;
+  // Falling back to the first entry rather than rendering an empty panel: the page is
+  // reached to look at templates, and there is no reason to make that take a click.
+  const template = templates.find((entry) => entry.path === chosenPath) ?? templates[0] ?? null;
+  const locale =
+    template?.locales.find((l) => l.tag === chosenLocale)?.tag ??
+    template?.locales[0]?.tag ??
+    'en';
+  const path = template?.path;
+  const key = `${path ?? ''}|${locale}|${nonce}`;
 
-  const preview = useCallback(
-    async (path: string, tag: string, n: number) => {
-      setLoading(true);
-      setError(null);
-      setInstances(null);
+  // Results are stored against the request that produced them, so switching template or
+  // locale shows nothing rather than briefly showing the previous template's instances.
+  // That also makes "loading" derivable instead of a third state to keep in sync.
+  const [result, setResult] = useState<{ key: string; instances: PreviewInstance[] } | null>(null);
+  const [failure, setFailure] = useState<{ key: string; message: string } | null>(null);
+  const instances = result?.key === key ? result.instances : null;
+  const error = failure?.key === key ? failure.message : null;
+  const loading = pythonAvailable && path !== undefined && instances === null && error === null;
+
+  useEffect(() => {
+    if (!path || !pythonAvailable) return;
+    let cancelled = false;
+    void (async () => {
       try {
         const res = await fetch('/api/generate/preview', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ templatePath: path, locale: tag, count: n }),
+          body: JSON.stringify({ templatePath: path, locale, count }),
         });
         const body = (await res.json()) as {
           instances?: PreviewInstance[];
           error?: string;
           detail?: string;
         };
+        if (cancelled) return;
         if (!res.ok) throw new Error(body.detail ? `${body.error} — ${body.detail}` : body.error);
-        setInstances(body.instances ?? []);
+        setResult({ key, instances: body.instances ?? [] });
         setExpanded(0);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'preview failed');
-      } finally {
-        setLoading(false);
+        if (cancelled) return;
+        setFailure({ key, message: err instanceof Error ? err.message : 'preview failed' });
       }
-    },
-    [],
-  );
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // `count` is read but not depended on: typing in the number field should not fire a
+    // subprocess per keystroke. The Generate button bumps `nonce`, which is in `key`.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key, path, locale, pythonAvailable]);
 
-  const select = useCallback(
-    (entry: CatalogTemplate) => {
-      setSelected(entry.path);
-      const tag = entry.locales.some((l) => l.tag === locale) ? locale : (entry.locales[0]?.tag ?? 'en');
-      setLocale(tag);
-      setInstances(null);
-      setError(null);
-      if (pythonAvailable) void preview(entry.path, tag, count);
-    },
-    [count, locale, preview, pythonAvailable],
-  );
+  const localeStatus = template?.locales.find((l) => l.tag === locale)?.translationStatus;
 
   return (
     <div className="gen-split">
@@ -91,8 +117,8 @@ export function TemplatesStage({
               <li key={entry.path}>
                 <button
                   type="button"
-                  className={`gen-template${selected === entry.path ? ' on' : ''}`}
-                  onClick={() => select(entry)}
+                  className={`gen-template${template?.path === entry.path ? ' on' : ''}`}
+                  onClick={() => setChosenPath(entry.path)}
                 >
                   <span className="gen-template-id">{entry.id}</span>
                   <span className="gen-template-meta">
@@ -100,7 +126,7 @@ export function TemplatesStage({
                   </span>
                   <span className="gen-locale-row">
                     {entry.locales.map((l) => (
-                      <StatusChip key={l.tag} status={l.translationStatus} />
+                      <LocaleChip key={l.tag} locale={l} />
                     ))}
                   </span>
                 </button>
@@ -112,7 +138,7 @@ export function TemplatesStage({
 
       <section className="cmp-card gen-detail">
         {!template ? (
-          <p className="gen-empty">Pick a template family to see its locales and a sample.</p>
+          <p className="gen-empty">Nothing to show until a template family is on disk.</p>
         ) : (
           <>
             <div className="pane-label">{template.id}</div>
@@ -125,10 +151,7 @@ export function TemplatesStage({
                     key={l.tag}
                     type="button"
                     className={`gen-locale${locale === l.tag ? ' on' : ''}`}
-                    onClick={() => {
-                      setLocale(l.tag);
-                      if (pythonAvailable) void preview(template.path, l.tag, count);
-                    }}
+                    onClick={() => setChosenLocale(l.tag)}
                   >
                     {l.tag}
                     <StatusChip status={l.translationStatus} />
@@ -136,7 +159,7 @@ export function TemplatesStage({
                 ))}
               </div>
               <label className="gen-count">
-                instances
+                instances to sample
                 <input
                   type="number"
                   min={1}
@@ -149,14 +172,13 @@ export function TemplatesStage({
                 type="button"
                 className="app-run-btn"
                 disabled={!pythonAvailable || loading}
-                onClick={() => void preview(template.path, locale, count)}
+                onClick={() => setNonce((n) => n + 1)}
               >
                 {loading ? 'Generating…' : 'Generate'}
               </button>
             </div>
 
-            {template.locales.find((l) => l.tag === locale)?.translationStatus ===
-            'untranslated' ? (
+            {localeStatus === 'untranslated' ? (
               <p className="gen-warn">
                 This locale is a stub: the prompt is the English text copied verbatim, so a
                 token count measured on it describes English. It exists to exercise the
@@ -165,6 +187,12 @@ export function TemplatesStage({
             ) : null}
 
             {error ? <p className="gen-error">{error}</p> : null}
+
+            {!pythonAvailable ? (
+              <p className="gen-empty">
+                Sampling needs the Python CLI. The locales above are read from disk.
+              </p>
+            ) : null}
 
             {instances ? (
               <div className="gen-instances">
@@ -178,10 +206,10 @@ export function TemplatesStage({
                       className="gen-instance-head"
                       onClick={() => setExpanded(expanded === index ? null : index)}
                     >
-                      <span className="gen-instance-n">#{instance.instance_index}</span>
-                      <code className="gen-seed" title="Seed, derived from the template id and index">
-                        {instance.seed}
-                      </code>
+                      <span className="gen-instance-n">instance {instance.instance_index}</span>
+                      <span className="gen-seed">
+                        seed <code>{instance.seed}</code>
+                      </span>
                     </button>
                     {expanded === index ? (
                       <div className="gen-instance-body">
@@ -191,7 +219,7 @@ export function TemplatesStage({
                         <pre className="gen-json">
                           {JSON.stringify(instance.parameters, null, 2)}
                         </pre>
-                        <div className="pane-label">Expected</div>
+                        <div className="pane-label">Verifier that will score the answer</div>
                         <pre className="gen-json">{JSON.stringify(instance.verifier, null, 2)}</pre>
                       </div>
                     ) : null}

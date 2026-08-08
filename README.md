@@ -72,6 +72,40 @@ Nothing else is required for a clean checkout - evaluation runs offline against 
 
 Typical loop: **Compare** to pick a model → **Evolve** under a quality floor → **Deploy** what you chose, then compare the served endpoint against the frontier again.
 
+### Generate (under development, no UI yet)
+
+A fourth module is being built: **Generate**, parametric generation of verifiable evaluation
+prompts together with their verifiers. An item is a template plus a seed rather than a row in a
+file, and the seed is *derived* from the generator version, the template id and the instance index
+rather than chosen. That buys two things a static set cannot have. The items cannot have leaked
+into pretraining, because they did not exist until someone ran the generator. And cherry-picking
+becomes structurally impossible rather than discouraged, because any third party can recompute the
+same seeds from published values and check them, which a conventional seed such as `42` does not
+allow. Scoring is done by deterministic verifiers, not by a judge model.
+
+What exists today is the foundation, not a feature: the [Redrob Verifiable Task Spec
+v1](spec/verifiable-task-v1.md), a Python generator, verifiers implemented natively in both
+languages, and a cross-language conformance suite that fails CI if the two ever disagree. There is
+no page, no route and no navigation entry.
+
+**Python stays optional.** `yarn install && yarn dev` is unchanged and still works on a machine
+with no interpreter installed; CI has a job that builds with Python removed from `PATH` to keep it
+that way. The TypeScript side reads and audits generated sets and runs every declarative verifier
+natively, and it reaches for Python only through an explicit subprocess call that reports absence
+with an actionable message instead of failing.
+
+```bash
+pip install -e packages/generate                     # optional, only to generate
+redrob-generate emit --template templates/math/linear-equation --count 20 --out /tmp/set
+redrob-generate verify --set /tmp/set --outputs answers.jsonl --json
+yarn test                                            # the TypeScript half of the conformance suite
+```
+
+See [`packages/generate/README.md`](packages/generate/README.md) for a worked example and
+[`templates/README.md`](templates/README.md) for the template layout. Templates are English-only
+for now; the locale structure exists, but a translation needs native-speaker review before it can
+be used, and none has had one.
+
 ### Compare's four stages
 
 1. **Setup** - pick a modality, pick models across every source (curated, OpenRouter, direct frontier, self-hosted vLLM), then a catalog dataset, an image prompt suite, or your own prompts pasted or uploaded as JSONL.
@@ -100,6 +134,9 @@ Shared rules:
 | `datasets/` | Vendored eval subsets (Apache-compatible licenses only); `video-local/` for non-redistributable checklist manifests |
 | `exports/samples/` | Committed, regenerable sample Evolve report + Pareto SVG |
 | `scripts/parity/` | Optional research comparison vs reference GEPA - **not** needed to run the app |
+| `spec/` | Redrob Verifiable Task Spec v1 + the cross-language conformance suite |
+| `templates/` | Generate templates, one directory per family, with locale layers |
+| `packages/generate` | Optional Python generator `redrob-generate` - **not** on the `yarn install && yarn dev` path |
 | `train/` | Optional Python router training - **not** on the `yarn install && yarn dev` path |
 
 Workspace packages are marked `"private": true` (consumed in-repo; not published to npm).
@@ -191,6 +228,8 @@ yarn verify:tournament   # preference brackets + preference-derived routing labe
 yarn verify:selfhosted   # self-hosted catalog + relative cost, no currency (offline)
 yarn verify:preference-gen  # preference run planning + matrix (offline)
 yarn export:samples  # write exports/samples report + Pareto SVG
+yarn test            # TypeScript conformance suite for the Generate spec (offline)
+yarn generate:spec-types  # regenerate TS types from spec/verifiable-task-v1.schema.json
 yarn typecheck
 yarn lint
 yarn build

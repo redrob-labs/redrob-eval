@@ -137,6 +137,13 @@ def _read_outputs(source: str) -> dict[int, str]:
             entry = json.loads(line)
         except ValueError as exc:
             raise RedrobGenerateError(f"outputs line {number} is not JSON: {exc}") from exc
+        # Deliberately not accepting one bare line per output: a model output routinely
+        # contains newlines, so that format would silently split an answer in half.
+        if not isinstance(entry, dict) or "instance_index" not in entry or "output" not in entry:
+            raise RedrobGenerateError(
+                f"outputs line {number} must be a JSON object with 'instance_index' and "
+                f"'output'; got {entry!r}"
+            )
         outputs[int(entry["instance_index"])] = str(entry["output"])
     return outputs
 

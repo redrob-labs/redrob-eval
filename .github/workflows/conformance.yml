@@ -1,0 +1,93 @@
+name: Conformance
+
+# Two implementations of one spec are only safe if something forces them to agree. This
+# workflow runs the Python suite and the TypeScript suite over the same files in
+# spec/conformance/, then regenerates a set and diffs it against the previous run. A
+# divergence between the two, or an emitter that is not reproducible, fails the build.
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  typescript:
+    name: TypeScript conformance
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: yarn
+      - run: yarn install --frozen-lockfile
+      - name: Generated spec types match the schema
+        run: yarn generate:spec-types:check
+      - run: yarn test
+
+  python:
+    name: Python conformance
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.11', '3.12']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: python -m pip install --upgrade pip
+      - run: pip install -e "packages/generate[dev]"
+      - run: pytest packages/generate -q
+
+  reproducible-emit:
+    name: Reproducible emit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -e packages/generate
+      - name: Emit the same set twice and diff it
+        run: |
+          for template in templates/math/linear-equation templates/extraction/quarterly-ledger templates/format/release-note; do
+            redrob-generate emit --template "$template" --count 8 --out /tmp/run-a --created-at 2026-01-01T00:00:00Z --citation-year 2026 --quiet
+            redrob-generate emit --template "$template" --count 8 --out /tmp/run-b --created-at 2026-01-01T00:00:00Z --citation-year 2026 --quiet
+            diff -r /tmp/run-a /tmp/run-b
+            rm -rf /tmp/run-a /tmp/run-b
+          done
+      - name: The checked-in example set is still what the emitter produces
+        run: |
+          redrob-generate emit --template templates/math/linear-equation --count 3 \
+            --out spec/conformance/example-set --created-at 2026-01-01T00:00:00Z \
+            --citation-year 2026 --quiet
+          git diff --exit-code -- spec/conformance/example-set
+
+  no-python:
+    name: Quickstart without Python
+    runs-on: ubuntu-latest
+    # Generation is optional. The workbench must install, typecheck and build on a machine
+    # that has no interpreter at all, so this job removes Python from PATH before building.
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: yarn
+      - run: yarn install --frozen-lockfile
+      - name: Build with Python hidden
+        run: |
+          mkdir -p "$HOME/no-python"
+          for entry in $(echo "$PATH" | tr ':' '\n'); do
+            [ -d "$entry" ] || continue
+            for tool in "$entry"/*; do
+              name=$(basename "$tool")
+              case "$name" in
+                python|python2|python3|python3.*|pip|pip3) continue ;;
+              esac
+              [ -e "$HOME/no-python/$name" ] || ln -s "$tool" "$HOME/no-python/$name" 2>/dev/null || true
+            done
+          done
+          PATH="$HOME/no-python" bash -c 'command -v python3 && exit 1; yarn build'

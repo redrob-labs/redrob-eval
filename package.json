@@ -41,6 +41,7 @@
   },
   "devDependencies": {
     "@types/node": "^20",
+    "ajv": "^8.20.0",
     "tsx": "^4.20.5",
     "typescript": "^5"
   }

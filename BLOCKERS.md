@@ -151,6 +151,37 @@ schema over the network.
 **Consequence:** a template author who needs a keyword outside this list is stuck. Widening the
 list requires implementing it twice and adding conformance cases, which is the intended cost.
 
+### 4a. The subset is checked against `ajv`, as a dev dependency
+
+Added during the pre-merge pass. The objection to (b) above was that a hand-written validator can
+be subtly wrong, and the conformance suite cannot see it: parity only proves the two
+implementations agree, and two implementations that share a misreading agree perfectly.
+
+`ajv` is now a **dev** dependency and the corpus runs through it as a third opinion, in
+`scripts/test/generate-json-schema-oracle.test.mts`. It is not imported by any shipped module, and
+a test asserts both that no manifest lists it under `dependencies` and that no file under
+`packages/harness/src/generate/` imports it.
+
+The three-way argument, since no single test states it: the Python conformance suite proves
+`jsonschema` matches each recorded expectation; the TypeScript conformance suite proves the
+hand-written validator matches it; the oracle test proves `ajv` matches it too, and separately that
+`ajv` and the hand-written validator agree case by case. Two independent libraries agreeing with
+both implementations is what rules out a shared misreading.
+
+**Result: no disagreements.** `DOCUMENTED_DISAGREEMENTS` is empty in both files, and an entry in
+it is a claim that a hand-written validator reads the specification better than a library with a
+decade of use, so each one would need its reasoning written out rather than an id.
+
+The oracle was checked against a deliberate fault before being trusted: disabling the
+`uniqueItems` branch in the TypeScript validator turns three oracle rows red, so the test does
+detect a real divergence rather than passing vacuously.
+
+The Python side has no hand-written validator to test — `verify_json_schema` gates the schema and
+then calls `jsonschema` — so `packages/generate/tests/test_json_schema_oracle.py` proves the two
+things that *can* be wrong there: that the hand-written subset gate never changes the library's
+verdict, and that the library matches the recorded expectation, which is the pivot the TypeScript
+oracle test relies on. The file says so rather than implying more.
+
 ---
 
 ## 5. Regex: the subset holds nothing engine-dependent, and there is no translator

@@ -16,7 +16,6 @@ import {
   EXECUTABLE_VERIFIER_TYPES,
   isDeclarative,
   isExecutable,
-  MAX_ALL_OF_DEPTH,
   runVerifier,
   runVerifierOrFail,
   UnsupportedVerifierError,
@@ -65,31 +64,30 @@ for (const verifierType of EXECUTABLE_VERIFIER_TYPES) {
   });
 }
 
-// The conformance corpus covers depths 0, 1, 2 and the maximum. This covers the rest, so
-// the claim is "at every permitted depth" rather than "at the depths someone thought of".
-for (let depth = 0; depth <= MAX_ALL_OF_DEPTH; depth += 1) {
-  test(`an executable child ${depth} level(s) down makes the whole composite raise`, () => {
-    // A passing declarative sibling at each level, so a lazy implementation would have
-    // something to return before it ever reached the executable child.
-    let node: unknown = {
-      type: 'all_of',
-      verifiers: [
-        { type: 'exact', expected: '42' },
-        { type: 'sympy_equiv', expected: 'x', symbols: ['x'] },
-      ],
-    };
-    for (let level = 0; level < depth; level += 1) {
-      node = { type: 'all_of', verifiers: [{ type: 'exact', expected: '42' }, node] };
-    }
+// The corpus covers an executable element first, last, and after a failing sibling. This
+// sweeps every position of a longer list, so the claim is "at every position" rather than
+// "at the positions someone thought of". Under the combinator this replaces, the same
+// claim needed a depth sweep and an eager pre-walk to hold; here it follows from there
+// being no short circuit, which is the point of the refactor.
+const LIST_LENGTH = 6;
+for (let position = 0; position < LIST_LENGTH; position += 1) {
+  test(`an executable element at position ${position} of ${LIST_LENGTH} makes the list raise`, () => {
+    // Passing declarative elements around it, and one that fails, so an implementation
+    // that stopped early would have something to return before reaching the executable
+    // element.
+    const elements: unknown[] = Array.from({ length: LIST_LENGTH }, (_unused, index) =>
+      index === 1 ? { type: 'exact', expected: 'not the candidate' } : { type: 'exact', expected: '42' },
+    );
+    elements[position] = { type: 'sympy_equiv', expected: 'x', symbols: ['x'] };
 
-    assert.throws(() => runVerifier(node as Verifier, '42'), UnsupportedVerifierError);
+    assert.throws(() => runVerifier(elements as Verifier[], '42'), UnsupportedVerifierError);
 
-    const verdict = runVerifierOrFail(node as Verifier, '42');
+    const verdict = runVerifierOrFail(elements as Verifier[], '42');
     assert.equal(verdict.passed, false);
     assert.equal(
       verdict.code,
       'unsupported_verifier',
-      'a refused composite reported as an ordinary verdict would mean it ran',
+      'a refused list reported as an ordinary verdict would mean it ran',
     );
   });
 }

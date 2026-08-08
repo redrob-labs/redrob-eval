@@ -17,7 +17,7 @@ from pathlib import Path
 import pytest
 
 from redrob_generate.canonical import canonical_json
-from redrob_generate.errors import UnsupportedVerifierError
+from redrob_generate.errors import SpecError, UnsupportedVerifierError
 from redrob_generate.seed import derive_seed, seed_message
 from redrob_generate.spec import find_spec_dir, validate_document
 from redrob_generate.verify import (
@@ -29,10 +29,13 @@ from redrob_generate.verify import (
 CONFORMANCE_DIR = find_spec_dir() / "conformance"
 MINIMUM_CASES_PER_TYPE = 15
 
+#: Names a conformance file may carry: one per declarative verifier, plus the
+#: list-valued verifier field, which is a shape of the field rather than a verifier type
+#: and so has no entry in the registry.
+CORPUS_NAMES = frozenset(DECLARATIVE_VERIFIER_TYPES) | {"verifier_list"}
+
 VERIFIER_FILES = sorted(
-    path
-    for path in CONFORMANCE_DIR.glob("*.json")
-    if path.stem in DECLARATIVE_VERIFIER_TYPES
+    path for path in CONFORMANCE_DIR.glob("*.json") if path.stem in CORPUS_NAMES
 )
 
 
@@ -56,16 +59,23 @@ def _all_rejections() -> list[tuple[str, dict]]:
     return rejections
 
 
+def _all_schema_rejections() -> list[tuple[str, dict]]:
+    rows: list[tuple[str, dict]] = []
+    for path in VERIFIER_FILES:
+        for case in _load(path).get("schema_rejections", []):
+            rows.append((case["id"], case))
+    return rows
+
+
 ALL_CASES = _all_cases()
 ALL_REJECTIONS = _all_rejections()
+ALL_SCHEMA_REJECTIONS = _all_schema_rejections()
 
 
 def test_every_declarative_type_has_a_conformance_file() -> None:
     """A verifier type without a case file is a type with no cross-language guarantee."""
     covered = {path.stem for path in VERIFIER_FILES}
-    assert covered == set(DECLARATIVE_VERIFIER_TYPES), (
-        f"missing conformance files for {sorted(set(DECLARATIVE_VERIFIER_TYPES) - covered)}"
-    )
+    assert covered == CORPUS_NAMES, f"missing conformance files for {sorted(CORPUS_NAMES - covered)}"
 
 
 @pytest.mark.parametrize("path", VERIFIER_FILES, ids=lambda path: path.stem)
@@ -79,7 +89,18 @@ def test_conformance_file_is_well_formed(path: Path) -> None:
     )
     identifiers = [case["id"] for case in document["cases"]]
     assert len(identifiers) == len(set(identifiers)), f"{path.name} has duplicate case ids"
-    for case in document["cases"] + document.get("rejections", []):
+    rows = document["cases"] + document.get("rejections", [])
+    if path.stem == "verifier_list":
+        # This file tests a shape of the verifier field rather than a verifier type, so its
+        # rows carry whatever types the shape is being exercised with. What it must contain
+        # is both shapes: a corpus of only lists would leave the single form unchecked.
+        shapes = {isinstance(case["verifier"], list) for case in document["cases"]}
+        assert shapes == {True, False}, f"{path.name} does not cover both shapes of the field"
+        return
+    for case in rows:
+        assert not isinstance(case["verifier"], list), (
+            f"{case['id']} is a verifier list, which belongs in verifier_list.json"
+        )
         assert case["verifier"].get("type") in {path.stem, None}, (
             f"{case['id']} declares a {case['verifier'].get('type')} verifier in {path.name}"
         )
@@ -180,6 +201,43 @@ def test_conformance_case(case_id: str, case: dict) -> None:
         f"got {verdict.passed}/{verdict.code} ({verdict.message})"
     )
 
+    # The per-element report is normative for a list, and the rest of ``detail`` is not.
+    # Comparing it is what makes the report evidence: an implementation that reaches the
+    # right overall verdict by running the wrong elements, or by stopping early, agrees on
+    # ``code`` and disagrees here.
+    if isinstance(case["verifier"], list):
+        assert "elements" in expected, f"{case_id} is a list and declares no element report"
+        assert verdict.detail.get("elements") == expected["elements"], (
+            f"{case_id}: element report is {verdict.detail.get('elements')}"
+        )
+    else:
+        assert "elements" not in expected, f"{case_id} is not a list and declares elements"
+        assert "elements" not in verdict.detail, (
+            f"{case_id}: a single verifier must not report elements"
+        )
+
+
+@pytest.mark.parametrize(
+    "case_id,case",
+    ALL_SCHEMA_REJECTIONS,
+    ids=[case_id for case_id, _ in ALL_SCHEMA_REJECTIONS],
+)
+def test_conformance_schema_rejection(case_id: str, case: dict) -> None:
+    """A document the schema must refuse, and a near-identical one it must accept.
+
+    A runtime refusal and a structural one are different guarantees. The first holds for
+    callers that reach this dispatcher; the second holds for anything that validates the
+    document, including tools this project did not write. Both halves of the row are
+    checked, because a rejection test passes trivially if the schema rejects everything.
+    """
+    with pytest.raises(SpecError):
+        validate_document(case["document"], case["definition"])
+    validate_document(case["valid_counterpart"], case["definition"])
+
+
+def test_schema_rejections_cover_the_executable_element_rule() -> None:
+    assert ALL_SCHEMA_REJECTIONS, "the schema rejection suite is empty, so it proves nothing"
+
 
 @pytest.mark.parametrize(
     "case_id,case", ALL_REJECTIONS, ids=[case_id for case_id, _ in ALL_REJECTIONS]
@@ -204,11 +262,11 @@ def test_conformance_rejection(case_id: str, case: dict) -> None:
         assert verdict.passed is False
 
 
-def test_all_of_rejections_are_not_merely_failing_verdicts() -> None:
+def test_rejections_are_not_merely_failing_verdicts() -> None:
     """Guard against the check being satisfied by a mismatch that happens to be false.
 
     Every rejection here names a configuration that is invalid, so a mismatch verdict
-    would mean the composite ran and judged the candidate, which is the behaviour these
+    would mean the verifier ran and judged the candidate, which is the behaviour these
     cases exist to forbid.
     """
     assert ALL_REJECTIONS, "the rejection suite is empty, so it proves nothing"

@@ -1,5 +1,5 @@
 {
-  "spec_version": "redrob-verifiable-task/v1",
+  "spec_version": "redrob-verifiable-task/v2",
   "verifier_type": "exact",
   "description": "String equality after the declared normalisation pipeline. The interesting cases are the ones where Python and JavaScript have different default notions of whitespace, case and Unicode composition.",
   "cases": [

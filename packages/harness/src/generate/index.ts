@@ -1,8 +1,8 @@
 // Copyright 2026 Janghoon Lee
 // SPDX-License-Identifier: Apache-2.0
 /**
- * TypeScript implementation of the Redrob Verifiable Task Spec v1
- * (`spec/verifiable-task-v1.md`).
+ * TypeScript implementation of the Redrob Verifiable Task Spec v2
+ * (`spec/verifiable-task-v2.md`).
  *
  * This is a peer of the Python implementation under `packages/generate/`, not a client
  * of it: neither is authoritative over the other, and `spec/conformance/` decides when
@@ -81,6 +81,7 @@ export {
   isDeclarative,
   isExecutable,
   runVerifier,
+  runVerifierList,
   runVerifierOrFail,
   type ExecutableVerifierType,
 } from './registry';
@@ -119,13 +120,10 @@ export {
 } from './verdict';
 
 export {
-  assertAllOfIsDeclarative,
   coerceExpectedNumber,
   compareNumbers,
   DECLARATIVE_VERIFIERS,
-  MAX_ALL_OF_DEPTH,
   parseSpecNumber,
-  verifyAllOf,
   verifyExact,
   verifyFormatConstraint,
   verifyJsonSchema,
@@ -136,10 +134,10 @@ export {
 } from './verifiers';
 
 export type {
-  AllOfVerifier,
   ConformanceCase,
   ConformanceFile,
   ConformanceRejection,
+  ConformanceSchemaRejection,
   DeclarativeVerifier,
   ElementParse,
   ExactVerifier,
@@ -158,4 +156,5 @@ export type {
   SetEqualityVerifier,
   Template,
   Verifier,
+  VerifierList,
 } from './spec-types.generated';

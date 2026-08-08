@@ -37,7 +37,7 @@ const templateDirectory = path.join(root, 'templates', 'math', 'linear-equation'
 
 test('reads the example set and its manifest', async () => {
   const set = await readGeneratedSet(setDirectory);
-  assert.equal(set.manifest.spec_version, 'redrob-verifiable-task/v1');
+  assert.equal(set.manifest.spec_version, 'redrob-verifiable-task/v2');
   assert.equal(set.manifest.locale, 'en');
   assert.equal(set.manifest.seed_derivation.method, SEED_METHOD);
   assert.equal(set.instances.length, set.manifest.instance_count);

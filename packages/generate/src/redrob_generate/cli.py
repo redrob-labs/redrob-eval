@@ -163,6 +163,13 @@ def _read_instances(set_dir: Path) -> list[dict[str, Any]]:
     return instances
 
 
+def _verifier_type(verifier: Any) -> str:
+    """A short label for the report. A list is named by its elements, in order."""
+    if isinstance(verifier, list):
+        return "[" + ", ".join(str(element.get("type")) for element in verifier) + "]"
+    return str(verifier.get("type"))
+
+
 def command_verify(args: argparse.Namespace) -> int:
     set_dir = Path(args.set)
     instances = _read_instances(set_dir)
@@ -177,7 +184,7 @@ def command_verify(args: argparse.Namespace) -> int:
                 {
                     "instance_index": index,
                     "template_id": instance["template_id"],
-                    "verifier_type": instance["verifier"]["type"],
+                    "verifier_type": _verifier_type(instance["verifier"]),
                     "passed": False,
                     "code": "parse_error",
                     "message": "no model output was supplied for this instance",
@@ -195,7 +202,7 @@ def command_verify(args: argparse.Namespace) -> int:
             {
                 "instance_index": index,
                 "template_id": instance["template_id"],
-                "verifier_type": instance["verifier"]["type"],
+                "verifier_type": _verifier_type(instance["verifier"]),
                 **verdict.to_dict(),
             }
         )

@@ -84,7 +84,7 @@ same seeds from published values and check them, which a conventional seed such 
 allow. Scoring is done by deterministic verifiers, not by a judge model.
 
 What exists today is the foundation, not a feature: the [Redrob Verifiable Task Spec
-v1](spec/verifiable-task-v1.md), a Python generator, verifiers implemented natively in both
+v1](spec/verifiable-task-v2.md), a Python generator, verifiers implemented natively in both
 languages, and a cross-language conformance suite that fails CI if the two ever disagree. There is
 no page, no route and no navigation entry.
 
@@ -134,7 +134,7 @@ Shared rules:
 | `datasets/` | Vendored eval subsets (Apache-compatible licenses only); `video-local/` for non-redistributable checklist manifests |
 | `exports/samples/` | Committed, regenerable sample Evolve report + Pareto SVG |
 | `scripts/parity/` | Optional research comparison vs reference GEPA - **not** needed to run the app |
-| `spec/` | Redrob Verifiable Task Spec v1 + the cross-language conformance suite |
+| `spec/` | Redrob Verifiable Task Spec v2 + the cross-language conformance suite |
 | `templates/` | Generate templates, one directory per family, with locale layers |
 | `packages/generate` | Optional Python generator `redrob-generate` - **not** on the `yarn install && yarn dev` path |
 | `train/` | Optional Python router training - **not** on the `yarn install && yarn dev` path |
@@ -149,16 +149,17 @@ On **Evolve**, pick a catalog dataset or **Custom goal** (goal + rubric + input-
 
 ## Docs
 
-- [Contributing](CONTRIBUTING.md)
+- [Contributing](CONTRIBUTING.md) - setup, and the branching model: `main` is production and only
+  takes releases, `develop` is what you branch from and target
 - [Security](SECURITY.md)
 - [Methodology](docs/methodology.md) - routing labels, features, export
 - [Preference](docs/preference.md) - blind brackets, and how votes become routing labels
 - [Learnings](docs/learnings.md) - living design log
 - [Decision records](docs/decisions/) - why a design is the way it is, one file per decision,
   numbered and never rewritten in place. Start with
-  [0001 Generate module foundation](docs/decisions/0001-generate-foundation.md).
-- [Contributing](CONTRIBUTING.md) - setup, and the branching model: `main` is production and only
-  takes releases, `develop` is what you branch from and target. Reasoning in
+  [0001 Generate module foundation](docs/decisions/0001-generate-foundation.md), then
+  [0002 Unicode semantics](docs/decisions/0002-unicode-semantics.md),
+  [0003 List-valued verifier field](docs/decisions/0003-list-valued-verifier-field.md) and
   [0004 Branching model](docs/decisions/0004-branching-model.md).
 - [Sample exports](exports/samples/README.md) - regenerable report + Pareto
 
@@ -235,7 +236,7 @@ yarn verify:selfhosted   # self-hosted catalog + relative cost, no currency (off
 yarn verify:preference-gen  # preference run planning + matrix (offline)
 yarn export:samples  # write exports/samples report + Pareto SVG
 yarn test            # TypeScript conformance suite for the Generate spec (offline)
-yarn generate:spec-types  # regenerate TS types from spec/verifiable-task-v1.schema.json
+yarn generate:spec-types  # regenerate TS types from spec/verifiable-task-v2.schema.json
 yarn typecheck
 yarn lint
 yarn build

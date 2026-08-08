@@ -22,7 +22,11 @@ import {
 } from '../packages/harness/src/generate/index';
 
 const directory = path.join(process.cwd(), 'spec', 'conformance');
-const verdicts: Record<string, [boolean | 'raises', string]> = {};
+const verdicts: Record<string, [boolean | 'raises', string] | string[]> = {};
+
+/** Corpus files to dump: one per declarative verifier, plus the list-valued shape of the
+ *  verifier field, which is not a type the registry dispatches on. */
+const CORPUS_NAMES = new Set<string>([...DECLARATIVE_VERIFIER_TYPES, 'verifier_list']);
 
 /**
  * The token stream a pattern scans to, alongside the verdict it produces.
@@ -46,7 +50,7 @@ function tokenSignature(pattern: string): string {
 
 for (const filename of readdirSync(directory).sort()) {
   if (!filename.endsWith('.json')) continue;
-  if (!(DECLARATIVE_VERIFIER_TYPES as readonly string[]).includes(filename.slice(0, -5))) continue;
+  if (!CORPUS_NAMES.has(filename.slice(0, -5))) continue;
   const document = JSON.parse(
     readFileSync(path.join(directory, filename), 'utf8'),
   ) as ConformanceFile;
@@ -58,18 +62,36 @@ for (const filename of readdirSync(directory).sort()) {
     try {
       const verdict = runVerifierOrFail(entry.verifier as Verifier, entry.candidate);
       verdicts[entry.id] = [verdict.passed, verdict.code];
+      // The per-element report is normative for a list, so it is compared here too: an
+      // implementation can reach the right overall code by running the wrong elements, and
+      // that difference is invisible in the pair above.
+      const elements = verdict.detail?.elements as
+        | { index: number; type: string; passed: boolean; code: string }[]
+        | undefined;
+      if (elements !== undefined) {
+        verdicts[`elements:${entry.id}`] = elements.map(
+          (element) => `${element.index}:${element.type}:${capitalise(element.passed)}:${element.code}`,
+        );
+      }
     } catch (error) {
       if (!(error instanceof VerifierConfigError)) throw error;
       verdicts[entry.id] = ['raises', 'verifier_config'];
     }
-    const pattern = (entry.verifier as { type?: string; pattern?: unknown }).pattern;
-    if (
-      (entry.verifier as { type?: string }).type === 'regex' &&
-      typeof pattern === 'string'
-    ) {
-      verdicts[`tokens:${entry.id}`] = ['raises', tokenSignature(pattern)];
-    }
+    const isList = Array.isArray(entry.verifier);
+    const nodes = isList ? (entry.verifier as unknown[]) : [entry.verifier];
+    nodes.forEach((node, index) => {
+      const typed = node as { type?: string; pattern?: unknown } | null;
+      if (typed?.type !== 'regex' || typeof typed.pattern !== 'string') return;
+      const suffix = isList ? `[${index}]` : '';
+      verdicts[`tokens:${entry.id}${suffix}`] = ['raises', tokenSignature(typed.pattern)];
+    });
   }
+}
+
+/** Python renders a bool as `True`/`False`; the element report is compared as text, so this
+ *  side spells it the same way rather than making the diff about `true` versus `True`. */
+function capitalise(value: boolean): string {
+  return value ? 'True' : 'False';
 }
 
 const ordered = Object.keys(verdicts)

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 // GENERATED FILE - DO NOT EDIT.
-// Source: spec/verifiable-task-v1.schema.json
+// Source: spec/verifiable-task-v2.schema.json
 // Regenerate: yarn generate:spec-types
 //
 // Types are derived from the JSON Schema rather than written by hand, so that the
@@ -11,7 +11,7 @@
 /**
  * Identifier of the specification revision a document conforms to.
  */
-export type SpecVersion = "redrob-verifiable-task/v1";
+export type SpecVersion = "redrob-verifiable-task/v2";
 
 /**
  * BCP 47 language tag, restricted to a language subtag with an optional region subtag.
@@ -195,14 +195,6 @@ export type FormatConstraintVerifier = {
 };
 
 /**
- * Composition. Runs declarative verifiers in order and returns the first failure verbatim. Declarative tier. Children reference verifier_declarative rather than verifier, so an executable child is a schema violation and not merely a runtime error: a composite that can hide an executable verifier behind a declarative one is a way to obtain a verdict from partially checked output, which is the failure this specification exists to prevent.
- */
-export type AllOfVerifier = {
-  "type": "all_of";
-  "verifiers": DeclarativeVerifier[];
-};
-
-/**
  * Executable tier. Symbolic equivalence of the candidate expression and the expected expression. Python only.
  */
 export type SympyEquivVerifier = {
@@ -230,22 +222,45 @@ export type PythonUnittestVerifier = {
 };
 
 /**
- * The declarative tier only. Every member must produce an identical verdict in every implementation, which is what the conformance suite enforces. Referenced wherever an executable verifier would be unsafe to permit, chiefly as an all_of child.
+ * The declarative tier only. Every member must produce an identical verdict in every implementation, which is what the conformance suite enforces. Referenced wherever an executable verifier would be unsafe to permit, chiefly as an element of a verifier list.
  */
-export type DeclarativeVerifier = ExactVerifier | NumericToleranceVerifier | JsonSchemaVerifier | RegexVerifier | SetEqualityVerifier | OrderedEqualityVerifier | FormatConstraintVerifier | AllOfVerifier;
+export type DeclarativeVerifier = ExactVerifier | NumericToleranceVerifier | JsonSchemaVerifier | RegexVerifier | SetEqualityVerifier | OrderedEqualityVerifier | FormatConstraintVerifier;
 
 /**
- * Tagged union of every verifier type. Types exact through all_of are the declarative tier and must behave identically in every implementation. Types sympy_equiv and python_unittest are the executable tier and are Python only.
+ * An ordered list of declarative verifiers, all of which must pass. Elements reference verifier_declarative rather than verifier, so an executable element is a schema violation rather than a runtime error: a list that could hide an executable verifier among declarative ones is a way to obtain a verdict from partially checked output. Elements are objects, so a list cannot contain a list; there is no nesting and therefore no depth limit. An empty list passes.
+ */
+export type VerifierList = DeclarativeVerifier[];
+
+/**
+ * Tagged union of every verifier type. Types exact through format_constraint are the declarative tier and must behave identically in every implementation. Types sympy_equiv and python_unittest are the executable tier and are Python only.
  */
 export type Verifier = DeclarativeVerifier | SympyEquivVerifier | PythonUnittestVerifier;
+
+/**
+ * What a verifier field holds: one verifier, or a list of declarative verifiers all of which must pass. The two forms are not interchangeable in one respect, and it is deliberate: the single form admits an executable verifier and the list form does not.
+ */
+export type VerifierOrList = Verifier | VerifierList;
 
 /**
  * A verifier as written in a template: the same tagged union, but any string leaf may be a derivation reference of the form {{name}} that the generator resolves per instance.
  */
 export type VerifierBinding = {
-  "type": "exact" | "numeric_tolerance" | "json_schema" | "regex" | "set_equality" | "ordered_equality" | "format_constraint" | "all_of" | "sympy_equiv" | "python_unittest";
+  "type": "exact" | "numeric_tolerance" | "json_schema" | "regex" | "set_equality" | "ordered_equality" | "format_constraint" | "sympy_equiv" | "python_unittest";
   [key: string]: unknown;
 };
+
+/**
+ * A declarative verifier as written in a template. The type enum omits the executable tier, which is what makes an executable element of a verifier list a schema violation at load time rather than a refusal at scoring time.
+ */
+export type DeclarativeVerifierBinding = {
+  "type": "exact" | "numeric_tolerance" | "json_schema" | "regex" | "set_equality" | "ordered_equality" | "format_constraint";
+  [key: string]: unknown;
+};
+
+/**
+ * A template's verifier field: one verifier binding, or a list of declarative bindings all of which must pass.
+ */
+export type VerifierBindingOrList = VerifierBinding | DeclarativeVerifierBinding[];
 
 /**
  * Closed set of outcome codes. Codes are normative: two implementations that disagree on a code have diverged, even if they agree on pass or fail.
@@ -253,13 +268,25 @@ export type VerifierBinding = {
 export type VerdictCode = "ok" | "mismatch" | "not_a_number" | "out_of_tolerance" | "nan_mismatch" | "infinity_mismatch" | "invalid_json" | "schema_violation" | "no_match" | "invalid_pattern" | "parse_error" | "cardinality_mismatch" | "element_mismatch" | "length_out_of_bounds" | "line_count_out_of_bounds" | "missing_required_substring" | "forbidden_substring_present" | "unsupported_verifier";
 
 /**
- * Result of running one verifier against one candidate. passed and code are normative; message and detail are advisory and may differ between implementations.
+ * One entry of the per-element report a verifier list produces. Unlike the rest of detail, these are normative and are compared by the conformance suite: a collapsed boolean cannot say which element failed, and a per-element report that two implementations disagree about is worse than none.
+ */
+export type VerdictElement = {
+  /** Position of the element in the verifier list, zero based. */
+  "index": number;
+  "type": string;
+  "passed": boolean;
+  "code": VerdictCode;
+};
+
+/**
+ * Result of running one verifier against one candidate. passed and code are normative; message and detail are advisory and may differ between implementations, with one exception: when the verifier field held a list, detail.elements is normative and holds one verdict_element per element, in list order.
  */
 export type Verdict = {
   "passed": boolean;
   "code": VerdictCode;
   "message"?: string;
   "detail"?: {
+    "elements"?: VerdictElement[];
     [key: string]: unknown;
   };
 };
@@ -279,7 +306,7 @@ export type Template = {
   "derivations"?: Derivation[];
   /** Prompt body. {name} interpolates a parameter or derivation; {{ and }} are literal braces. */
   "prompt": string;
-  "verifier": VerifierBinding;
+  "verifier": VerifierBindingOrList;
   "notes"?: string;
 };
 
@@ -313,7 +340,7 @@ export type Instance = {
     [key: string]: unknown;
   };
   "prompt": string;
-  "verifier": Verifier;
+  "verifier": VerifierOrList;
   "fertility"?: Fertility;
 };
 
@@ -376,23 +403,23 @@ export type Manifest = {
 export type ConformanceCase = {
   "id": string;
   "description"?: string;
-  "verifier": Verifier;
+  "verifier": VerifierOrList;
   "candidate": string;
   "expected": {
     "passed": boolean;
     "code": VerdictCode;
+    /** Required when the verifier is a list, forbidden otherwise. Compared entry for entry, so an implementation that reaches the right overall verdict by running the wrong elements fails the row. */
+    "elements"?: VerdictElement[];
   };
 };
 
 /**
- * One row of the suite asserting that a verifier configuration is refused rather than evaluated. The verifier here is deliberately typed as a bare object, because these configurations are invalid by construction and could not appear in a field typed as #/$defs/verifier. Strict dispatch must raise the named error; lenient dispatch must return the stated verdict, which is always a failure.
+ * One row of the suite asserting that a verifier configuration is refused rather than evaluated. The verifier here is deliberately typed as a bare object or array, because these configurations are invalid by construction and could not appear in a field typed as #/$defs/verifier_or_list. Strict dispatch must raise the named error; lenient dispatch must return the stated verdict, which is always a failure.
  */
 export type ConformanceRejection = {
   "id": string;
   "description"?: string;
-  "verifier": {
-    [key: string]: unknown;
-  };
+  "verifier": Record<string, unknown> | unknown[];
   "candidate": string;
   /** unsupported_verifier for a type this implementation must refuse; verifier_config for a configuration that is malformed rather than unsupported. */
   "raises": "unsupported_verifier" | "verifier_config";
@@ -402,12 +429,27 @@ export type ConformanceRejection = {
   };
 };
 
+/**
+ * One row of the suite asserting that a document is refused by schema validation, before any verifier runs. A runtime refusal and a structural one are different guarantees: the first depends on the dispatcher being reached, the second holds for any tool that validates the document, including ones this project did not write. Rows of this kind are checked with a general JSON Schema validator, not with the subset validator the json_schema verifier uses.
+ */
+export type ConformanceSchemaRejection = {
+  "id": string;
+  "description"?: string;
+  /** Name under #/$defs that the document is validated against. */
+  "definition": string;
+  /** The document that must fail validation. Untyped, because it is invalid by construction. */
+  "document": unknown;
+  /** A near-identical document that must validate, so the row cannot pass because of an unrelated defect in the document. */
+  "valid_counterpart": unknown;
+};
+
 export type ConformanceFile = {
   "spec_version": SpecVersion;
   "verifier_type": string;
   "description"?: string;
   "cases": ConformanceCase[];
   "rejections"?: ConformanceRejection[];
+  "schema_rejections"?: ConformanceSchemaRejection[];
 };
 
 export const VERDICT_CODES = [

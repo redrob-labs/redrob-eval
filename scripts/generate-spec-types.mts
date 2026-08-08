@@ -1,5 +1,5 @@
 /**
- * Generate TypeScript types from spec/verifiable-task-v1.schema.json.
+ * Generate TypeScript types from spec/verifiable-task-v2.schema.json.
  * Run: yarn generate:spec-types   (and `--check` in CI, which fails on drift)
  *
  * The types are derived rather than hand-written so that the schema stays the single
@@ -13,7 +13,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
-const schemaPath = path.join(root, 'spec', 'verifiable-task-v1.schema.json');
+const schemaPath = path.join(root, 'spec', 'verifiable-task-v2.schema.json');
 const outputPath = path.join(
   root,
   'packages',
@@ -139,7 +139,7 @@ const banner = `// Copyright 2026 Janghoon Lee
 // SPDX-License-Identifier: Apache-2.0
 //
 // GENERATED FILE - DO NOT EDIT.
-// Source: spec/verifiable-task-v1.schema.json
+// Source: spec/verifiable-task-v2.schema.json
 // Regenerate: yarn generate:spec-types
 //
 // Types are derived from the JSON Schema rather than written by hand, so that the

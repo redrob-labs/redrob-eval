@@ -1,15 +1,15 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://redrob.dev/spec/verifiable-task-v1.schema.json",
-  "title": "Redrob Verifiable Task Spec v1",
-  "description": "Language-neutral schema for parametric verifiable evaluation tasks. The normative prose lives in spec/verifiable-task-v1.md; this file is the machine-checkable half of the same specification. The root of this document is a Template. Instance, Manifest and Verifier are reachable through #/$defs.",
+  "$id": "https://redrob.dev/spec/verifiable-task-v2.schema.json",
+  "title": "Redrob Verifiable Task Spec v2",
+  "description": "Language-neutral schema for parametric verifiable evaluation tasks. The normative prose lives in spec/verifiable-task-v2.md; this file is the machine-checkable half of the same specification. The root of this document is a Template. Instance, Manifest and Verifier are reachable through #/$defs.",
   "$ref": "#/$defs/template",
   "$defs": {
     "spec_version": {
       "title": "SpecVersion",
       "description": "Identifier of the specification revision a document conforms to.",
       "type": "string",
-      "const": "redrob-verifiable-task/v1"
+      "const": "redrob-verifiable-task/v2"
     },
     "locale": {
       "title": "Locale",
@@ -439,25 +439,6 @@
       "required": ["type"],
       "additionalProperties": false
     },
-    "verifier_all_of": {
-      "title": "AllOfVerifier",
-      "description": "Composition. Runs declarative verifiers in order and returns the first failure verbatim. Declarative tier. Children reference verifier_declarative rather than verifier, so an executable child is a schema violation and not merely a runtime error: a composite that can hide an executable verifier behind a declarative one is a way to obtain a verdict from partially checked output, which is the failure this specification exists to prevent.",
-      "type": "object",
-      "properties": {
-        "type": {
-          "type": "string",
-          "const": "all_of"
-        },
-        "verifiers": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/verifier_declarative"
-          }
-        }
-      },
-      "required": ["type", "verifiers"],
-      "additionalProperties": false
-    },
     "verifier_sympy_equiv": {
       "title": "SympyEquivVerifier",
       "description": "Executable tier. Symbolic equivalence of the candidate expression and the expected expression. Python only.",
@@ -526,7 +507,7 @@
     },
     "verifier_declarative": {
       "title": "DeclarativeVerifier",
-      "description": "The declarative tier only. Every member must produce an identical verdict in every implementation, which is what the conformance suite enforces. Referenced wherever an executable verifier would be unsafe to permit, chiefly as an all_of child.",
+      "description": "The declarative tier only. Every member must produce an identical verdict in every implementation, which is what the conformance suite enforces. Referenced wherever an executable verifier would be unsafe to permit, chiefly as an element of a verifier list.",
       "oneOf": [
         {
           "$ref": "#/$defs/verifier_exact"
@@ -548,15 +529,20 @@
         },
         {
           "$ref": "#/$defs/verifier_format_constraint"
-        },
-        {
-          "$ref": "#/$defs/verifier_all_of"
         }
       ]
     },
+    "verifier_list": {
+      "title": "VerifierList",
+      "description": "An ordered list of declarative verifiers, all of which must pass. Elements reference verifier_declarative rather than verifier, so an executable element is a schema violation rather than a runtime error: a list that could hide an executable verifier among declarative ones is a way to obtain a verdict from partially checked output. Elements are objects, so a list cannot contain a list; there is no nesting and therefore no depth limit. An empty list passes.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/verifier_declarative"
+      }
+    },
     "verifier": {
       "title": "Verifier",
-      "description": "Tagged union of every verifier type. Types exact through all_of are the declarative tier and must behave identically in every implementation. Types sympy_equiv and python_unittest are the executable tier and are Python only.",
+      "description": "Tagged union of every verifier type. Types exact through format_constraint are the declarative tier and must behave identically in every implementation. Types sympy_equiv and python_unittest are the executable tier and are Python only.",
       "oneOf": [
         {
           "$ref": "#/$defs/verifier_declarative"
@@ -566,6 +552,18 @@
         },
         {
           "$ref": "#/$defs/verifier_python_unittest"
+        }
+      ]
+    },
+    "verifier_or_list": {
+      "title": "VerifierOrList",
+      "description": "What a verifier field holds: one verifier, or a list of declarative verifiers all of which must pass. The two forms are not interchangeable in one respect, and it is deliberate: the single form admits an executable verifier and the list form does not.",
+      "oneOf": [
+        {
+          "$ref": "#/$defs/verifier"
+        },
+        {
+          "$ref": "#/$defs/verifier_list"
         }
       ]
     },
@@ -584,13 +582,47 @@
             "set_equality",
             "ordered_equality",
             "format_constraint",
-            "all_of",
             "sympy_equiv",
             "python_unittest"
           ]
         }
       },
       "required": ["type"]
+    },
+    "verifier_binding_declarative": {
+      "title": "DeclarativeVerifierBinding",
+      "description": "A declarative verifier as written in a template. The type enum omits the executable tier, which is what makes an executable element of a verifier list a schema violation at load time rather than a refusal at scoring time.",
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "exact",
+            "numeric_tolerance",
+            "json_schema",
+            "regex",
+            "set_equality",
+            "ordered_equality",
+            "format_constraint"
+          ]
+        }
+      },
+      "required": ["type"]
+    },
+    "verifier_binding_or_list": {
+      "title": "VerifierBindingOrList",
+      "description": "A template's verifier field: one verifier binding, or a list of declarative bindings all of which must pass.",
+      "oneOf": [
+        {
+          "$ref": "#/$defs/verifier_binding"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/verifier_binding_declarative"
+          }
+        }
+      ]
     },
     "verdict_code": {
       "title": "VerdictCode",
@@ -617,9 +649,32 @@
         "unsupported_verifier"
       ]
     },
+    "verdict_element": {
+      "title": "VerdictElement",
+      "description": "One entry of the per-element report a verifier list produces. Unlike the rest of detail, these are normative and are compared by the conformance suite: a collapsed boolean cannot say which element failed, and a per-element report that two implementations disagree about is worse than none.",
+      "type": "object",
+      "properties": {
+        "index": {
+          "description": "Position of the element in the verifier list, zero based.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "type": {
+          "type": "string"
+        },
+        "passed": {
+          "type": "boolean"
+        },
+        "code": {
+          "$ref": "#/$defs/verdict_code"
+        }
+      },
+      "required": ["index", "type", "passed", "code"],
+      "additionalProperties": false
+    },
     "verdict": {
       "title": "Verdict",
-      "description": "Result of running one verifier against one candidate. passed and code are normative; message and detail are advisory and may differ between implementations.",
+      "description": "Result of running one verifier against one candidate. passed and code are normative; message and detail are advisory and may differ between implementations, with one exception: when the verifier field held a list, detail.elements is normative and holds one verdict_element per element, in list order.",
       "type": "object",
       "properties": {
         "passed": {
@@ -632,7 +687,15 @@
           "type": "string"
         },
         "detail": {
-          "type": "object"
+          "type": "object",
+          "properties": {
+            "elements": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/verdict_element"
+              }
+            }
+          }
         }
       },
       "required": ["passed", "code"],
@@ -679,7 +742,7 @@
           "type": "string"
         },
         "verifier": {
-          "$ref": "#/$defs/verifier_binding"
+          "$ref": "#/$defs/verifier_binding_or_list"
         },
         "notes": {
           "type": "string"
@@ -759,7 +822,7 @@
           "type": "string"
         },
         "verifier": {
-          "$ref": "#/$defs/verifier"
+          "$ref": "#/$defs/verifier_or_list"
         },
         "fertility": {
           "$ref": "#/$defs/fertility"
@@ -958,7 +1021,7 @@
           "type": "string"
         },
         "verifier": {
-          "$ref": "#/$defs/verifier"
+          "$ref": "#/$defs/verifier_or_list"
         },
         "candidate": {
           "type": "string"
@@ -971,6 +1034,13 @@
             },
             "code": {
               "$ref": "#/$defs/verdict_code"
+            },
+            "elements": {
+              "description": "Required when the verifier is a list, forbidden otherwise. Compared entry for entry, so an implementation that reaches the right overall verdict by running the wrong elements fails the row.",
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/verdict_element"
+              }
             }
           },
           "required": ["passed", "code"],
@@ -982,7 +1052,7 @@
     },
     "conformance_rejection": {
       "title": "ConformanceRejection",
-      "description": "One row of the suite asserting that a verifier configuration is refused rather than evaluated. The verifier here is deliberately typed as a bare object, because these configurations are invalid by construction and could not appear in a field typed as #/$defs/verifier. Strict dispatch must raise the named error; lenient dispatch must return the stated verdict, which is always a failure.",
+      "description": "One row of the suite asserting that a verifier configuration is refused rather than evaluated. The verifier here is deliberately typed as a bare object or array, because these configurations are invalid by construction and could not appear in a field typed as #/$defs/verifier_or_list. Strict dispatch must raise the named error; lenient dispatch must return the stated verdict, which is always a failure.",
       "type": "object",
       "properties": {
         "id": {
@@ -992,7 +1062,7 @@
           "type": "string"
         },
         "verifier": {
-          "type": "object"
+          "type": ["object", "array"]
         },
         "candidate": {
           "type": "string"
@@ -1020,6 +1090,31 @@
       "required": ["id", "verifier", "candidate", "raises", "expected"],
       "additionalProperties": false
     },
+    "conformance_schema_rejection": {
+      "title": "ConformanceSchemaRejection",
+      "description": "One row of the suite asserting that a document is refused by schema validation, before any verifier runs. A runtime refusal and a structural one are different guarantees: the first depends on the dispatcher being reached, the second holds for any tool that validates the document, including ones this project did not write. Rows of this kind are checked with a general JSON Schema validator, not with the subset validator the json_schema verifier uses.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "definition": {
+          "description": "Name under #/$defs that the document is validated against.",
+          "type": "string"
+        },
+        "document": {
+          "description": "The document that must fail validation. Untyped, because it is invalid by construction."
+        },
+        "valid_counterpart": {
+          "description": "A near-identical document that must validate, so the row cannot pass because of an unrelated defect in the document."
+        }
+      },
+      "required": ["id", "definition", "document", "valid_counterpart"],
+      "additionalProperties": false
+    },
     "conformance_file": {
       "title": "ConformanceFile",
       "type": "object",
@@ -1043,6 +1138,12 @@
           "type": "array",
           "items": {
             "$ref": "#/$defs/conformance_rejection"
+          }
+        },
+        "schema_rejections": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/conformance_schema_rejection"
           }
         }
       },

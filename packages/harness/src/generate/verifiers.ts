@@ -1,7 +1,7 @@
 // Copyright 2026 Janghoon Lee
 // SPDX-License-Identifier: Apache-2.0
 /**
- * The eight declarative verifiers, per spec section 6.1.
+ * The seven declarative verifiers, per spec section 6.1.
  *
  * These must produce identical verdicts to the Python implementation, down to the
  * verdict code. `spec/conformance/` is what proves it; this module is one of the two
@@ -18,7 +18,6 @@ import {
 } from './json-schema-subset';
 import { compileSubsetPattern, RegexSubsetError, validateFlags } from './regex-subset';
 import type {
-  AllOfVerifier,
   ElementParse,
   ExactVerifier,
   FormatConstraintVerifier,
@@ -39,13 +38,7 @@ import {
   stripSpecWhitespace,
   type UnicodeNormalization,
 } from './text';
-import {
-  fail,
-  ok,
-  UnsupportedVerifierError,
-  VerifierConfigError,
-  type Verdict,
-} from './verdict';
+import { fail, ok, VerifierConfigError, type Verdict } from './verdict';
 
 // ------------------------------------------------------------------- numbers
 
@@ -458,77 +451,11 @@ export function verifyFormatConstraint(
   return ok();
 }
 
-// -------------------------------------------------------------------- all_of
-
-export const MAX_ALL_OF_DEPTH = 8;
-
-/** The executable tier. Defined here rather than in the registry so that the eager
- *  all_of walk can refuse it without importing its own consumer. */
-export const EXECUTABLE_VERIFIER_TYPES = ['sympy_equiv', 'python_unittest'] as const;
-
-/**
- * Walk the whole composite and refuse it if any descendant is not declarative.
- *
- * Eager, and that is the entire point. Checking each child as it is reached would let a
- * declarative child that fails early return a verdict before an executable sibling is
- * ever looked at, so the composite would report a result for output that was only
- * partially checked. A verdict derived from part of a contract is not a weaker verdict,
- * it is a wrong one, and the caller has no way to tell.
- */
-export function assertAllOfIsDeclarative(
-  config: AllOfVerifier,
-  depth = 0,
-  path = 'all_of',
-): void {
-  if (depth > MAX_ALL_OF_DEPTH) {
-    throw new VerifierConfigError(`${path} nests deeper than ${MAX_ALL_OF_DEPTH} levels`);
-  }
-  const children = config.verifiers;
-  if (!Array.isArray(children)) {
-    throw new VerifierConfigError(`${path} has no 'verifiers' list`);
-  }
-  children.forEach((child, index) => {
-    const where = `${path}.verifiers[${index}]`;
-    const childType = (child as { type?: unknown } | null)?.type;
-    if (childType === 'all_of') {
-      assertAllOfIsDeclarative(child as AllOfVerifier, depth + 1, where);
-      return;
-    }
-    if ((EXECUTABLE_VERIFIER_TYPES as readonly unknown[]).includes(childType)) {
-      throw new UnsupportedVerifierError(
-        String(childType),
-        `${where} is an executable verifier; all_of children must be declarative so that ` +
-          'the composite means the same thing in every implementation',
-      );
-    }
-    if (typeof childType !== 'string' || !(childType in DECLARATIVE_VERIFIERS)) {
-      throw new UnsupportedVerifierError(
-        String(childType),
-        `${where} is not a verifier type this implementation knows`,
-      );
-    }
-  });
-}
-
-export function verifyAllOf(config: AllOfVerifier, candidate: string): Verdict {
-  assertAllOfIsDeclarative(config);
-  return runAllOf(config, candidate);
-}
-
-/** Evaluate a composite already proved declarative by the walk above. */
-function runAllOf(config: AllOfVerifier, candidate: string): Verdict {
-  for (const child of config.verifiers) {
-    const childType = (child as { type: string }).type;
-    const verdict =
-      childType === 'all_of'
-        ? runAllOf(child as AllOfVerifier, candidate)
-        : (DECLARATIVE_VERIFIERS[childType] as DeclarativeHandler)(child as never, candidate);
-    if (!verdict.passed) return verdict;
-  }
-  return ok();
-}
-
 // ------------------------------------------------------------------ registry
+
+/** The executable tier. Defined here rather than in the registry so that a verifier list
+ *  can refuse it without importing its own consumer. */
+export const EXECUTABLE_VERIFIER_TYPES = ['sympy_equiv', 'python_unittest'] as const;
 
 type DeclarativeHandler = (config: never, candidate: string) => Verdict;
 
@@ -540,7 +467,6 @@ export const DECLARATIVE_VERIFIERS: Record<string, DeclarativeHandler> = {
   set_equality: verifySetEquality as DeclarativeHandler,
   ordered_equality: verifyOrderedEquality as DeclarativeHandler,
   format_constraint: verifyFormatConstraint as DeclarativeHandler,
-  all_of: verifyAllOf as DeclarativeHandler,
 };
 
 export const DECLARATIVE_VERIFIER_TYPES = Object.keys(DECLARATIVE_VERIFIERS);

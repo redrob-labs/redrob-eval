@@ -1,7 +1,7 @@
 # redrob-generate
 
 Parametric generation of verifiable evaluation prompts and their verifiers, and the Python
-reference implementation of the [Redrob Verifiable Task Spec v1](../../spec/verifiable-task-v1.md).
+reference implementation of the [Redrob Verifiable Task Spec v2](../../spec/verifiable-task-v2.md).
 
 An evaluation item here is not a row in a file. It is a template plus a seed, and the seed is
 derived from the generator version, the template id and the instance index rather than chosen.
@@ -79,7 +79,7 @@ The first instance, reformatted for reading (the file itself is one line, canoni
 
 ```json
 {
-  "spec_version": "redrob-verifiable-task/v1",
+  "spec_version": "redrob-verifiable-task/v2",
   "template_id": "math.linear_equation",
   "template_version": "1.0.0",
   "template_hash": "sha256:b7edd219a0af9a7df2d1dfb3c0d44851155deb4909c668c75baab43bf8cfbaf2",
@@ -117,7 +117,7 @@ $ redrob-generate verify --set /tmp/set --outputs outputs.jsonl --json
    "message": "difference 0.010000000000001563 exceeds tolerance 0.0001",
    "detail": {"candidate": 17.99, "expected": 18.0, "difference": 0.010000000000001563, "tolerance": 0.0001},
    "template_id": "math.linear_equation", "verifier_type": "numeric_tolerance"}],
- "set": "/tmp/set", "spec_version": "redrob-verifiable-task/v1"}
+ "set": "/tmp/set", "spec_version": "redrob-verifiable-task/v2"}
 
 $ echo $?
 1
@@ -146,8 +146,10 @@ suite, so either side can improve its diagnostics without breaking agreement.
 ## The two tiers of verifier
 
 **Declarative** — `exact`, `numeric_tolerance`, `json_schema`, `regex`, `set_equality`,
-`ordered_equality`, `format_constraint`, `all_of`. These must produce the same verdict in Python
-and in TypeScript, and `spec/conformance/` is what forces them to.
+`ordered_equality`, `format_constraint`. These must produce the same verdict in Python
+and in TypeScript, and `spec/conformance/` is what forces them to. A verifier field may also hold
+an array of them, meaning all must pass; the verdict then carries a per-element report, which the
+conformance suite compares alongside the overall verdict.
 
 **Executable** — `sympy_equiv`, `python_unittest`. Python only. The TypeScript implementation
 raises an explicit unsupported-verifier error for these; it never skips them. A skipped verifier

@@ -1,5 +1,5 @@
 {
-  "spec_version": "redrob-verifiable-task/v1",
+  "spec_version": "redrob-verifiable-task/v2",
   "id": "format.release_note",
   "version": "1.0.0",
   "family": "format",
@@ -15,20 +15,27 @@
   "derivations": [
     { "name": "version", "expr": "f\"{major}.{minor}.{patch}\"" },
     { "name": "header", "expr": "f\"{component} {version}\"" },
-    { "name": "total_lines", "expr": "bullet_count + 1" },
-    { "name": "banned_word_capitalised", "expr": "title(banned_word)" }
+    { "name": "total_lines", "expr": "bullet_count + 1" }
   ],
-  "verifier": {
-    "type": "format_constraint",
-    "min_length": 80,
-    "max_length": "{{max_chars}}",
-    "min_lines": "{{total_lines}}",
-    "max_lines": "{{total_lines}}",
-    "required_substrings": ["{{header}}"],
-    "forbidden_substrings": ["{{banned_word}}", "{{banned_word_capitalised}}"],
-    "case_sensitive": true,
-    "trim": true,
-    "normalize_line_endings": true
-  },
-  "notes": "Both casings of the banned word are listed rather than setting case_sensitive to false, because the header check wants exact casing and case_sensitive applies to every substring check at once. That asymmetry is a real wart in the format_constraint design and is worth revisiting in spec v2."
+  "verifier": [
+    {
+      "type": "format_constraint",
+      "min_length": 80,
+      "max_length": "{{max_chars}}",
+      "min_lines": "{{total_lines}}",
+      "max_lines": "{{total_lines}}",
+      "required_substrings": ["{{header}}"],
+      "case_sensitive": true,
+      "trim": true,
+      "normalize_line_endings": true
+    },
+    {
+      "type": "format_constraint",
+      "forbidden_substrings": ["{{banned_word}}"],
+      "case_sensitive": false,
+      "trim": true,
+      "normalize_line_endings": true
+    }
+  ],
+  "notes": "Two elements because case_sensitive applies to every substring check in one format_constraint at once: the header must match its exact casing and the banned word must be caught in any casing. Under the combinator this replaces, the template listed the banned word twice, in two casings picked by a derivation, which caught Seamless and seamless and missed SEAMLESS. Splitting the constraint is what the list form is for, and it is also why the two checks are now reported separately."
 }

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AppShell } from '@/components/AppShell';
 import type { CatalogModel } from '@/components/ModelPicker';
+import { takeComparePrompts } from '@/lib/handoff';
 import { PreferenceStage } from './PreferenceStage';
 import { RouteStage } from './RouteStage';
 import { RunStage } from './RunStage';
@@ -76,6 +77,29 @@ export function CompareApp() {
       }
       return next;
     });
+  }, []);
+
+  /**
+   * A set handed over by Generate. Read before the catalog fetch so the prompts are in
+   * place by the time anything else touches setup, and applied only when the reader has
+   * not already typed something of their own.
+   */
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => {
+      const handoff = takeComparePrompts();
+      if (!handoff) return;
+      setSetup((prev) =>
+        prev.customPromptsRaw
+          ? prev
+          : {
+              ...prev,
+              taskSource: 'custom',
+              customPromptsRaw: JSON.stringify(handoff.prompts, null, 2),
+              promptSetLabel: handoff.label,
+            },
+      );
+    });
+    return () => cancelAnimationFrame(frame);
   }, []);
 
   useEffect(() => {

@@ -2,6 +2,8 @@
 
 import { useCallback, useState } from 'react';
 
+import { downloadJson, downloadText } from '@/lib/download';
+
 import { STATUS_TONE, type StudyConfigSummary, type StudyRunResponse } from './types';
 
 function pct(value: number): string {
@@ -70,11 +72,12 @@ export function StudyStage({
                 className={`gen-study-option${config?.path === entry.path ? ' on' : ''}`}
                 onClick={() => setSelected(entry.path)}
               >
-                <span className="gen-template-id">{entry.id}</span>
+                <span className="gen-template-title">{entry.title}</span>
                 <span className="gen-template-meta">
                   {entry.templateCount} templates · {entry.localeTags.join(', ')} ·{' '}
                   {entry.modelIds.length} models · {entry.tokenizer}
                 </span>
+                <code className="gen-template-id">{entry.id}</code>
                 {entry.offline ? (
                   <span className="gen-chip gen-chip-ok">mock only, no spend</span>
                 ) : (
@@ -109,6 +112,49 @@ export function StudyStage({
 
       {run ? (
         <>
+          {/* The artifact is the deliverable — the tables below are a reading of it — so
+              it is offered before them rather than at the bottom of the page. */}
+          <section className="cmp-card gen-export">
+            <div className="gen-export-head">
+              <span className="gen-export-title">
+                Result artifact for <code>{run.result.study_id}</code>
+              </span>
+              <span
+                className={`gen-chip gen-chip-${run.publishable ? 'ok' : 'stub'}`}
+                title={
+                  run.publishable
+                    ? 'Passed the publication gate'
+                    : 'Refused publication — see the reason below'
+                }
+              >
+                {run.publishable ? 'publishable' : 'not publishable'}
+              </span>
+            </div>
+            <div className="gen-export-actions">
+              <button
+                type="button"
+                className="app-run-btn"
+                onClick={() =>
+                  downloadJson(`${run.result.study_id}.result.json`, run.result)
+                }
+              >
+                Download artifact
+              </button>
+              <button
+                type="button"
+                className="app-ghost-btn"
+                onClick={() => downloadText(`${run.result.study_id}.table.txt`, run.table)}
+              >
+                Download table
+              </button>
+            </div>
+            <p className="gen-export-hint">
+              The JSON is the whole run: provenance, every instance, and the aggregates the
+              tables below are drawn from. Nothing is written to the repository by this
+              page, so this download is the only copy.
+            </p>
+          </section>
+
           <section className="cmp-card">
             <div className="pane-label">Provenance</div>
             <p className="gen-desc">

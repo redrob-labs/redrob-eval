@@ -15,6 +15,18 @@ export function assertSafeOptimizeRunId(runId: string): string {
   return runId;
 }
 
+/**
+ * A run id that stays unique when several runs start in the same second.
+ *
+ * The timestamp used to be the whole of it, which is fine while runs are started by one
+ * person clicking one button. Racing several models starts them together, and three runs
+ * that agreed on the second agreed on the id: one directory, one entry in the jobs map,
+ * three jobs writing over each other, and — the part that took a while to see — three
+ * event streams all reporting the same run, so the comparison table showed three
+ * identical rows and read as merely suspicious rather than broken.
+ *
+ * Four random characters, after the dataset so the leading timestamp still sorts.
+ */
 export function makeOptimizeRunId(datasetId: string): string {
   const now = new Date();
   const pad = (n: number) => String(n).padStart(2, '0');
@@ -25,7 +37,8 @@ export function makeOptimizeRunId(datasetId: string): string {
     .replace(/[^a-z0-9-]+/g, '-')
     .replace(/^-+|-+$/g, '')
     .slice(0, 40);
-  return `${date}_${time}_${safe || 'opt'}`;
+  const suffix = Math.random().toString(36).slice(2, 6).padEnd(4, '0');
+  return `${date}_${time}_${safe || 'opt'}-${suffix}`;
 }
 
 export function optimizeRunDir(runId: string): string {

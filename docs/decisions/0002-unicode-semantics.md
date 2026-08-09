@@ -4,7 +4,7 @@ Status: **open**. Two entries below record a residual that cannot be closed from
 repository, and say so.
 Supersedes: the regex and comparison entries of `0001-generate-foundation.md`.
 Superseded by: nothing.
-Applies to: `spec/verifiable-task-v1.md`, `spec/verifiable-task-v1.schema.json`,
+Applies to: `spec/verifiable-task-v2.md`, `spec/verifiable-task-v2.schema.json`,
 `spec/conformance/`, `packages/generate/src/redrob_generate/verify/`,
 `packages/harness/src/generate/`.
 

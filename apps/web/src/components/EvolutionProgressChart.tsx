@@ -201,21 +201,21 @@ export function EvolutionProgressChart({
       <div className="chart-frame chart-frame-glance">
         <ResponsiveContainer width="100%" height={200} minWidth={0}>
           <AreaChart data={rows} margin={{ top: 8, right: 12, bottom: 8, left: 0 }}>
-            <CartesianGrid stroke="rgba(15, 23, 42, 0.06)" vertical={false} />
+            <CartesianGrid stroke="var(--chart-grid)" vertical={false} />
             <XAxis
               dataKey="step"
               type="number"
               domain={[1, Math.max(rows.length, 1)]}
               allowDecimals={false}
-              tick={{ fill: '#94a3b8', fontSize: 11 }}
-              axisLine={{ stroke: '#e2e8f0' }}
+              tick={{ fill: 'var(--chart-axis)', fontSize: 11 }}
+              axisLine={{ stroke: 'var(--line)' }}
               tickLine={false}
             />
             <YAxis
               type="number"
               domain={yDomain}
               width={36}
-              tick={{ fill: '#94a3b8', fontSize: 11 }}
+              tick={{ fill: 'var(--chart-axis)', fontSize: 11 }}
               axisLine={false}
               tickLine={false}
               tickFormatter={(v: number) => `${Math.round(v)}%`}
@@ -223,7 +223,7 @@ export function EvolutionProgressChart({
             {summary.floorPct != null ? (
               <ReferenceLine
                 y={summary.floorPct}
-                stroke="#a16207"
+                stroke="var(--warn)"
                 strokeDasharray="4 4"
                 strokeWidth={1.5}
               />
@@ -256,13 +256,13 @@ export function EvolutionProgressChart({
               type="stepAfter"
               dataKey="bestPct"
               name="Best quality"
-              stroke="#2b52ff"
+              stroke="var(--brand)"
               strokeWidth={3}
-              fill="#2b52ff"
+              fill="var(--brand)"
               fillOpacity={0.1}
               connectNulls
               isAnimationActive={false}
-              dot={{ r: 3, fill: '#2b52ff', stroke: '#fff', strokeWidth: 1 }}
+              dot={{ r: 3, fill: 'var(--brand)', stroke: 'var(--panel)', strokeWidth: 1 }}
               activeDot={{ r: 5 }}
             />
           </AreaChart>

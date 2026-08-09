@@ -148,6 +148,157 @@ export async function probePythonBridge(
   }
 }
 
+export interface EmitRequest {
+  /** Template family directory, or a merged single-file template. */
+  templatePath: string;
+  count: number;
+  /** Output directory. The caller owns it, including cleaning it up. */
+  outDirectory: string;
+  locale?: string;
+  /** Pin the manifest timestamp so two emits of the same inputs match byte for byte. */
+  createdAt?: string;
+}
+
+export type EmitOutcome =
+  | { available: true; instances: unknown[]; manifest: unknown }
+  | BridgeUnavailable;
+
+/**
+ * Run `redrob-generate emit` and read back what it wrote.
+ *
+ * Generation is Python-only by design — this implementation reads and verifies but does
+ * not sample — so there is no TypeScript fallback to degrade to. A caller that cannot
+ * reach the CLI gets `available: false` and should say so rather than showing an empty
+ * result, which would look like a template with no instances.
+ */
+export async function emitWithPython(
+  request: EmitRequest,
+  options: BridgeOptions = {},
+): Promise<EmitOutcome> {
+  const command = options.command ?? DEFAULT_COMMAND;
+  const args = [
+    ...(options.prefixArgs ?? []),
+    'emit',
+    '--template',
+    request.templatePath,
+    '--count',
+    String(request.count),
+    '--out',
+    request.outDirectory,
+    '--quiet',
+  ];
+  if (request.locale) args.push('--locale', request.locale);
+  if (request.createdAt) args.push('--created-at', request.createdAt);
+
+  let result: RunResult;
+  try {
+    result = await run(command, args, options);
+  } catch (error) {
+    return describeSpawnFailure(command, error as NodeJS.ErrnoException);
+  }
+  if (result.code !== 0) {
+    return {
+      available: false,
+      reason: `'${command} emit' exited with ${result.code}.`,
+      detail: result.stderr.trim() || undefined,
+    };
+  }
+
+  const { readFile } = await import('node:fs/promises');
+  const { join } = await import('node:path');
+  try {
+    const [instancesText, manifestText] = await Promise.all([
+      readFile(join(request.outDirectory, 'instances.jsonl'), 'utf8'),
+      readFile(join(request.outDirectory, 'manifest.json'), 'utf8'),
+    ]);
+    const instances = instancesText
+      .split('\n')
+      .filter((line) => line.trim() !== '')
+      .map((line) => JSON.parse(line) as unknown);
+    return { available: true, instances, manifest: JSON.parse(manifestText) as unknown };
+  } catch (error) {
+    return {
+      available: false,
+      reason: `'${command} emit' reported success but wrote nothing readable.`,
+      detail: (error as Error).message,
+    };
+  }
+}
+
+export interface StudyRequest {
+  /** Study config JSON. */
+  configPath: string;
+  outDirectory: string;
+  createdAt?: string;
+  /** Refuse to finish unless the artifact may be published. */
+  publish?: boolean;
+}
+
+export type StudyOutcome =
+  | { available: true; result: unknown; table: string; publishable: boolean; refusal?: string }
+  | BridgeUnavailable;
+
+/**
+ * Run `redrob-generate study` and read back the artifact and the table.
+ *
+ * Exit 3 is the publication refusal, which is a result rather than a bridge failure: the
+ * artifact was written, and the reason it may not be published is the thing worth
+ * showing. Only a missing or unreadable artifact is a failure of the bridge.
+ */
+export async function studyWithPython(
+  request: StudyRequest,
+  options: BridgeOptions = {},
+): Promise<StudyOutcome> {
+  const command = options.command ?? DEFAULT_COMMAND;
+  const args = [
+    ...(options.prefixArgs ?? []),
+    'study',
+    '--config',
+    request.configPath,
+    '--out',
+    request.outDirectory,
+    '--quiet',
+  ];
+  if (request.createdAt) args.push('--created-at', request.createdAt);
+  if (request.publish) args.push('--publish');
+
+  let result: RunResult;
+  try {
+    result = await run(command, args, options);
+  } catch (error) {
+    return describeSpawnFailure(command, error as NodeJS.ErrnoException);
+  }
+  if (result.code !== 0 && result.code !== 3) {
+    return {
+      available: false,
+      reason: `'${command} study' exited with ${result.code}.`,
+      detail: result.stderr.trim() || undefined,
+    };
+  }
+
+  const { readFile } = await import('node:fs/promises');
+  const { join } = await import('node:path');
+  try {
+    const [resultText, tableText] = await Promise.all([
+      readFile(join(request.outDirectory, 'result.json'), 'utf8'),
+      readFile(join(request.outDirectory, 'aggregates.txt'), 'utf8'),
+    ]);
+    return {
+      available: true,
+      result: JSON.parse(resultText) as unknown,
+      table: tableText,
+      publishable: result.code === 0,
+      refusal: result.code === 3 ? result.stderr.trim() : undefined,
+    };
+  } catch (error) {
+    return {
+      available: false,
+      reason: `'${command} study' reported success but wrote nothing readable.`,
+      detail: (error as Error).message,
+    };
+  }
+}
+
 export interface VerifyRequest {
   /** Directory written by `redrob-generate emit`. */
   setDirectory: string;

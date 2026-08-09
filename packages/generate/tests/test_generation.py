@@ -101,7 +101,7 @@ def test_locale_layer_may_not_change_the_task(tmp_path: Path) -> None:
     (directory / "template.json").write_text(
         json.dumps(
             {
-                "spec_version": "redrob-verifiable-task/v1",
+                "spec_version": "redrob-verifiable-task/v2",
                 "id": "t.test",
                 "version": "1.0.0",
                 "parameters": [{"name": "a", "type": "integer", "min": 1, "max": 2}],
@@ -111,7 +111,7 @@ def test_locale_layer_may_not_change_the_task(tmp_path: Path) -> None:
         encoding="utf-8",
     )
     (directory / "locales" / "en.json").write_text(
-        json.dumps({"locale": "en", "prompt": "{a}"}), encoding="utf-8"
+        json.dumps({"locale": "en", "translation_status": "single-reviewer", "prompt": "{a}"}), encoding="utf-8"
     )
     assert load_template(directory)["prompt"] == "{a}"
 
@@ -139,10 +139,11 @@ def test_duplicate_parameter_names_rejected(tmp_path: Path) -> None:
     path.write_text(
         json.dumps(
             {
-                "spec_version": "redrob-verifiable-task/v1",
+                "spec_version": "redrob-verifiable-task/v2",
                 "id": "t.test",
                 "version": "1.0.0",
                 "locale": "en",
+                "translation_status": "single-reviewer",
                 "parameters": [
                     {"name": "a", "type": "integer", "min": 1, "max": 2},
                     {"name": "a", "type": "integer", "min": 1, "max": 2},

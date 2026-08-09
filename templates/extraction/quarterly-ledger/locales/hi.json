@@ -1,0 +1,6 @@
+{
+  "locale": "hi",
+  "translation_status": "untranslated",
+  "description": "Extract one planted row from a synthetic distribution ledger and return it as minified JSON.",
+  "prompt": "You are reading an internal distribution ledger.\n\n  LEDGER — {quarter} {year}\n  branch           volume    returns\n{rows}\n{planted_row}\n\nReport the row for {city} as a single JSON object with exactly these keys: city, net_units, quarter, returns, units, year. \"net_units\" is volume minus returns.\n\nReply with minified JSON only: keys sorted alphabetically, no whitespace between tokens, no code fence, no commentary."
+}

@@ -49,6 +49,11 @@ def build_instance(
         "parameters": parameters,
         "prompt": prompt,
         "verifier": verifier,
+        # Always null. The field is present so that the artifact shape does not change
+        # when a measurement is eventually defined, and null rather than absent so a
+        # reader can distinguish "not measured" from "older artifact". See
+        # docs/decisions/0005-study-runner.md for why no value is computed.
+        "code_mix_ratio": None,
     }
     if derived:
         instance["derived"] = derived
@@ -59,7 +64,7 @@ def build_instance(
         instance["fertility"] = record.to_dict()
 
     validate_document(instance, "instance")
-    validate_document(verifier, "verifier")
+    validate_document(verifier, "verifier_or_list")
     return instance, record
 
 

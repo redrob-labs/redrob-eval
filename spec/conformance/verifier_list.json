@@ -1,0 +1,1109 @@
+{
+  "spec_version": "redrob-verifiable-task/v2",
+  "verifier_type": "verifier_list",
+  "description": "The list-valued verifier field. A verifier field holds one verifier or a list of declarative verifiers, all of which must pass. Every element runs; the first failing element's code leads and expected.elements carries the whole report, which is compared entry for entry.",
+  "cases": [
+    {
+      "id": "verifier_list/empty-list-passes",
+      "description": "The identity element. Nothing was checked, and the report says so by being empty.",
+      "verifier": [],
+      "candidate": "anything",
+      "expected": {
+        "passed": true,
+        "code": "ok",
+        "elements": []
+      }
+    },
+    {
+      "id": "verifier_list/single-element-passing",
+      "verifier": [
+        {
+          "type": "exact",
+          "expected": "42"
+        }
+      ],
+      "candidate": "42",
+      "expected": {
+        "passed": true,
+        "code": "ok",
+        "elements": [
+          {
+            "index": 0,
+            "type": "exact",
+            "passed": true,
+            "code": "ok"
+          }
+        ]
+      }
+    },
+    {
+      "id": "verifier_list/single-element-failing-propagates-code",
+      "verifier": [
+        {
+          "type": "exact",
+          "expected": "42"
+        }
+      ],
+      "candidate": "43",
+      "expected": {
+        "passed": false,
+        "code": "mismatch",
+        "elements": [
+          {
+            "index": 0,
+            "type": "exact",
+            "passed": false,
+            "code": "mismatch"
+          }
+        ]
+      }
+    },
+    {
+      "id": "verifier_list/all-elements-pass",
+      "verifier": [
+        {
+          "type": "format_constraint",
+          "max_lines": 1
+        },
+        {
+          "type": "regex",
+          "pattern": "[0-9]+"
+        },
+        {
+          "type": "numeric_tolerance",
+          "expected": 42
+        }
+      ],
+      "candidate": "42",
+      "expected": {
+        "passed": true,
+        "code": "ok",
+        "elements": [
+          {
+            "index": 0,
+            "type": "format_constraint",
+            "passed": true,
+            "code": "ok"
+          },
+          {
+            "index": 1,
+            "type": "regex",
+            "passed": true,
+            "code": "ok"
+          },
+          {
+            "index": 2,
+            "type": "numeric_tolerance",
+            "passed": true,
+            "code": "ok"
+          }
+        ]
+      }
+    },
+    {
+      "id": "verifier_list/first-failure-decides-the-code",
+      "description": "Both elements fail. The earlier one decides the code; the report carries both, which the combinator this replaces could not do because it stopped at the first.",
+      "verifier": [
+        {
+          "type": "format_constraint",
+          "max_lines": 1
+        },
+        {
+          "type": "numeric_tolerance",
+          "expected": 42
+        }
+      ],
+      "candidate": "42\n43",
+      "expected": {
+        "passed": false,
+        "code": "line_count_out_of_bounds",
+        "elements": [
+          {
+            "index": 0,
+            "type": "format_constraint",
+            "passed": false,
+            "code": "line_count_out_of_bounds"
+          },
+          {
+            "index": 1,
+            "type": "numeric_tolerance",
+            "passed": false,
+            "code": "not_a_number"
+          }
+        ]
+      }
+    },
+    {
+      "id": "verifier_list/reordering-changes-the-code-but-not-the-report",
+      "description": "The same two constraints and the same candidate in the other order. The leading diagnosis changes; the set of element verdicts does not.",
+      "verifier": [
+        {
+          "type": "numeric_tolerance",
+          "expected": 42
+        },
+        {
+          "type": "format_constraint",
+          "max_lines": 1
+        }
+      ],
+      "candidate": "42\n43",
+      "expected": {
+        "passed": false,
+        "code": "not_a_number",
+        "elements": [
+          {
+            "index": 0,
+            "type": "numeric_tolerance",
+            "passed": false,
+            "code": "not_a_number"
+          },
+          {
+            "index": 1,
+            "type": "format_constraint",
+            "passed": false,
+            "code": "line_count_out_of_bounds"
+          }
+        ]
+      }
+    },
+    {
+      "id": "verifier_list/schema-then-exact-both-pass",
+      "description": "The extraction template's shape: the schema says the values are right, exact says the serialisation is right.",
+      "verifier": [
+        {
+          "type": "json_schema",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["city", "units"],
+            "properties": {
+              "city": {
+                "type": "string",
+                "const": "Aveldon"
+              },
+              "units": {
+                "type": "integer",
+                "const": 8143
+              }
+            }
+          }
+        },
+        {
+          "type": "exact",
+          "expected": "{\"city\":\"Aveldon\",\"units\":8143}",
+          "trim": true
+        }
+      ],
+      "candidate": "{\"city\":\"Aveldon\",\"units\":8143}",
+      "expected": {
+        "passed": true,
+        "code": "ok",
+        "elements": [
+          {
+            "index": 0,
+            "type": "json_schema",
+            "passed": true,
+            "code": "ok"
+          },
+          {
+            "index": 1,
+            "type": "exact",
+            "passed": true,
+            "code": "ok"
+          }
+        ]
+      }
+    },
+    {
+      "id": "verifier_list/schema-catches-wrong-value-first",
+      "description": "A wrong extraction leads with the schema violation, which names the field, rather than the string mismatch, which does not.",
+      "verifier": [
+        {
+          "type": "json_schema",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["city", "units"],
+            "properties": {
+              "city": {
+                "type": "string",
+                "const": "Aveldon"
+              },
+              "units": {
+                "type": "integer",
+                "const": 8143
+              }
+            }
+          }
+        },
+        {
+          "type": "exact",
+          "expected": "{\"city\":\"Aveldon\",\"units\":8143}",
+          "trim": true
+        }
+      ],
+      "candidate": "{\"city\":\"Aveldon\",\"units\":8144}",
+      "expected": {
+        "passed": false,
+        "code": "schema_violation",
+        "elements": [
+          {
+            "index": 0,
+            "type": "json_schema",
+            "passed": false,
+            "code": "schema_violation"
+          },
+          {
+            "index": 1,
+            "type": "exact",
+            "passed": false,
+            "code": "mismatch"
+          }
+        ]
+      }
+    },
+    {
+      "id": "verifier_list/exact-catches-wrong-serialisation",
+      "description": "Right values, wrong serialisation. The report distinguishes this from the row above, which a single boolean could not.",
+      "verifier": [
+        {
+          "type": "json_schema",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["city", "units"],
+            "properties": {
+              "city": {
+                "type": "string",
+                "const": "Aveldon"
+              },
+              "units": {
+                "type": "integer",
+                "const": 8143
+              }
+            }
+          }
+        },
+        {
+          "type": "exact",
+          "expected": "{\"city\":\"Aveldon\",\"units\":8143}",
+          "trim": true
+        }
+      ],
+      "candidate": "{ \"units\": 8143, \"city\": \"Aveldon\" }",
+      "expected": {
+        "passed": false,
+        "code": "mismatch",
+        "elements": [
+          {
+            "index": 0,
+            "type": "json_schema",
+            "passed": true,
+            "code": "ok"
+          },
+          {
+            "index": 1,
+            "type": "exact",
+            "passed": false,
+            "code": "mismatch"
+          }
+        ]
+      }
+    },
+    {
+      "id": "verifier_list/invalid-json-surfaces-from-the-first-element",
+      "verifier": [
+        {
+          "type": "json_schema",
+          "schema": {
+            "type": "object"
+          }
+        },
+        {
+          "type": "exact",
+          "expected": "{}"
+        }
+      ],
+      "candidate": "not json at all",
+      "expected": {
+        "passed": false,
+        "code": "invalid_json",
+        "elements": [
+          {
+            "index": 0,
+            "type": "json_schema",
+            "passed": false,
+            "code": "invalid_json"
+          },
+          {
+            "index": 1,
+            "type": "exact",
+            "passed": false,
+            "code": "mismatch"
+          }
+        ]
+      }
+    },
+    {
+      "id": "verifier_list/an-unusable-pattern-after-a-passing-element",
+      "description": "A configuration error in an element is a verdict, and it is the element's code.",
+      "verifier": [
+        {
+          "type": "format_constraint",
+          "min_length": 1
+        },
+        {
+          "type": "regex",
+          "pattern": "(unclosed"
+        }
+      ],
+      "candidate": "anything",
+      "expected": {
+        "passed": false,
+        "code": "invalid_pattern",
+        "elements": [
+          {
+            "index": 0,
+            "type": "format_constraint",
+            "passed": true,
+            "code": "ok"
+          },
+          {
+            "index": 1,
+            "type": "regex",
+            "passed": false,
+            "code": "invalid_pattern"
+          }
+        ]
+      }
+    },
+    {
+      "id": "verifier_list/an-unusable-pattern-behind-a-failing-element-is-still-reported",
+      "description": "The row the combinator this replaces could not express. It stopped at the first failure, so a template with an unusable pattern was indistinguishable from an answer that was merely wrong. Every element runs, so the report names both.",
+      "verifier": [
+        {
+          "type": "exact",
+          "expected": "not the candidate"
+        },
+        {
+          "type": "regex",
+          "pattern": "(unclosed"
+        }
+      ],
+      "candidate": "42",
+      "expected": {
+        "passed": false,
+        "code": "mismatch",
+        "elements": [
+          {
+            "index": 0,
+            "type": "exact",
+            "passed": false,
+            "code": "mismatch"
+          },
+          {
+            "index": 1,
+            "type": "regex",
+            "passed": false,
+            "code": "invalid_pattern"
+          }
+        ]
+      }
+    },
+    {
+      "id": "verifier_list/the-same-two-elements-reordered-report-the-same-verdicts",
+      "description": "Proof that the previous row's second verdict is not an artefact of position.",
+      "verifier": [
+        {
+          "type": "regex",
+          "pattern": "(unclosed"
+        },
+        {
+          "type": "exact",
+          "expected": "not the candidate"
+        }
+      ],
+      "candidate": "42",
+      "expected": {
+        "passed": false,
+        "code": "invalid_pattern",
+        "elements": [
+          {
+            "index": 0,
+            "type": "regex",
+            "passed": false,
+            "code": "invalid_pattern"
+          },
+          {
+            "index": 1,
+            "type": "exact",
+            "passed": false,
+            "code": "mismatch"
+          }
+        ]
+      }
+    },
+    {
+      "id": "verifier_list/set-then-ordered",
+      "description": "Membership first, then order, so a right-members-wrong-order answer is diagnosed as an ordering problem and the report shows membership was satisfied.",
+      "verifier": [
+        {
+          "type": "set_equality",
+          "expected": ["a", "b", "c"],
+          "parse": {
+            "mode": "lines"
+          }
+        },
+        {
+          "type": "ordered_equality",
+          "expected": ["a", "b", "c"],
+          "parse": {
+            "mode": "lines"
+          }
+        }
+      ],
+      "candidate": "c\nb\na",
+      "expected": {
+        "passed": false,
+        "code": "element_mismatch",
+        "elements": [
+          {
+            "index": 0,
+            "type": "set_equality",
+            "passed": true,
+            "code": "ok"
+          },
+          {
+            "index": 1,
+            "type": "ordered_equality",
+            "passed": false,
+            "code": "element_mismatch"
+          }
+        ]
+      }
+    },
+    {
+      "id": "verifier_list/devanagari-elements",
+      "verifier": [
+        {
+          "type": "format_constraint",
+          "min_length": 6,
+          "max_length": 6
+        },
+        {
+          "type": "exact",
+          "expected": "नमस्ते"
+        }
+      ],
+      "candidate": "नमस्ते",
+      "expected": {
+        "passed": true,
+        "code": "ok",
+        "elements": [
+          {
+            "index": 0,
+            "type": "format_constraint",
+            "passed": true,
+            "code": "ok"
+          },
+          {
+            "index": 1,
+            "type": "exact",
+            "passed": true,
+            "code": "ok"
+          }
+        ]
+      }
+    },
+    {
+      "id": "verifier_list/empty-candidate-against-several-elements",
+      "description": "Two failures and a pass. The pass is in the report, which is the point: an empty answer satisfying an exact match on the empty string is information.",
+      "verifier": [
+        {
+          "type": "format_constraint",
+          "min_length": 1
+        },
+        {
+          "type": "numeric_tolerance",
+          "expected": 0
+        },
+        {
+          "type": "exact",
+          "expected": ""
+        }
+      ],
+      "candidate": "",
+      "expected": {
+        "passed": false,
+        "code": "length_out_of_bounds",
+        "elements": [
+          {
+            "index": 0,
+            "type": "format_constraint",
+            "passed": false,
+            "code": "length_out_of_bounds"
+          },
+          {
+            "index": 1,
+            "type": "numeric_tolerance",
+            "passed": false,
+            "code": "not_a_number"
+          },
+          {
+            "index": 2,
+            "type": "exact",
+            "passed": true,
+            "code": "ok"
+          }
+        ]
+      }
+    },
+    {
+      "id": "verifier_list/a-passing-element-does-not-mask-a-later-failure",
+      "description": "A list that passed as soon as any element passed would be an any_of wearing the wrong name, and would silently inflate every score using it.",
+      "verifier": [
+        {
+          "type": "format_constraint",
+          "min_length": 1
+        },
+        {
+          "type": "exact",
+          "expected": "never"
+        }
+      ],
+      "candidate": "something",
+      "expected": {
+        "passed": false,
+        "code": "mismatch",
+        "elements": [
+          {
+            "index": 0,
+            "type": "format_constraint",
+            "passed": true,
+            "code": "ok"
+          },
+          {
+            "index": 1,
+            "type": "exact",
+            "passed": false,
+            "code": "mismatch"
+          }
+        ]
+      }
+    },
+    {
+      "id": "verifier_list/astral-passes-a-length-and-a-pattern",
+      "description": "Non-BMP through a list: one code point to the length check and one atom to the pattern, on both sides.",
+      "verifier": [
+        {
+          "type": "format_constraint",
+          "max_length": 1
+        },
+        {
+          "type": "regex",
+          "pattern": "[^a]"
+        }
+      ],
+      "candidate": "😀",
+      "expected": {
+        "passed": true,
+        "code": "ok",
+        "elements": [
+          {
+            "index": 0,
+            "type": "format_constraint",
+            "passed": true,
+            "code": "ok"
+          },
+          {
+            "index": 1,
+            "type": "regex",
+            "passed": true,
+            "code": "ok"
+          }
+        ]
+      }
+    },
+    {
+      "id": "verifier_list/astral-fails-the-utf16-bound-first",
+      "description": "The same character measured in UTF-16 code units is two, and the pattern is unaffected, so the report separates the unit from the match.",
+      "verifier": [
+        {
+          "type": "format_constraint",
+          "length_unit": "utf16",
+          "max_length": 1
+        },
+        {
+          "type": "regex",
+          "pattern": "[^a]"
+        }
+      ],
+      "candidate": "😀",
+      "expected": {
+        "passed": false,
+        "code": "length_out_of_bounds",
+        "elements": [
+          {
+            "index": 0,
+            "type": "format_constraint",
+            "passed": false,
+            "code": "length_out_of_bounds"
+          },
+          {
+            "index": 1,
+            "type": "regex",
+            "passed": true,
+            "code": "ok"
+          }
+        ]
+      }
+    },
+    {
+      "id": "verifier_list/combining-sequence-normalised-consistently-by-both-elements",
+      "description": "Combining sequence. Both elements default to NFC, so the outcome does not depend on which one runs first.",
+      "verifier": [
+        {
+          "type": "exact",
+          "expected": "café"
+        },
+        {
+          "type": "format_constraint",
+          "max_length": 4
+        }
+      ],
+      "candidate": "café",
+      "expected": {
+        "passed": true,
+        "code": "ok",
+        "elements": [
+          {
+            "index": 0,
+            "type": "exact",
+            "passed": true,
+            "code": "ok"
+          },
+          {
+            "index": 1,
+            "type": "format_constraint",
+            "passed": true,
+            "code": "ok"
+          }
+        ]
+      }
+    },
+    {
+      "id": "verifier_list/zwj-sequence-passes-both-elements",
+      "verifier": [
+        {
+          "type": "format_constraint",
+          "required_substrings": ["‍"]
+        },
+        {
+          "type": "exact",
+          "expected": "👩‍👩‍👧"
+        }
+      ],
+      "candidate": "👩‍👩‍👧",
+      "expected": {
+        "passed": true,
+        "code": "ok",
+        "elements": [
+          {
+            "index": 0,
+            "type": "format_constraint",
+            "passed": true,
+            "code": "ok"
+          },
+          {
+            "index": 1,
+            "type": "exact",
+            "passed": true,
+            "code": "ok"
+          }
+        ]
+      }
+    },
+    {
+      "id": "verifier_list/zwj-sequence-fails-the-second-element-when-unjoined",
+      "description": "Three unjoined emoji are within the length bound and are not the expected sequence, so the report shows a length check that cannot see the difference.",
+      "verifier": [
+        {
+          "type": "format_constraint",
+          "max_length": 5
+        },
+        {
+          "type": "exact",
+          "expected": "👩‍👩‍👧"
+        }
+      ],
+      "candidate": "👩👩👧",
+      "expected": {
+        "passed": false,
+        "code": "mismatch",
+        "elements": [
+          {
+            "index": 0,
+            "type": "format_constraint",
+            "passed": true,
+            "code": "ok"
+          },
+          {
+            "index": 1,
+            "type": "exact",
+            "passed": false,
+            "code": "mismatch"
+          }
+        ]
+      }
+    },
+    {
+      "id": "verifier_list/mixed-script-passes-a-schema-and-a-format-check",
+      "verifier": [
+        {
+          "type": "json_schema",
+          "schema": {
+            "type": "object",
+            "required": ["greeting"],
+            "properties": {
+              "greeting": {
+                "const": "नमस्ते"
+              }
+            }
+          }
+        },
+        {
+          "type": "format_constraint",
+          "forbidden_substrings": [" "]
+        }
+      ],
+      "candidate": "{\"greeting\":\"नमस्ते\"}",
+      "expected": {
+        "passed": true,
+        "code": "ok",
+        "elements": [
+          {
+            "index": 0,
+            "type": "json_schema",
+            "passed": true,
+            "code": "ok"
+          },
+          {
+            "index": 1,
+            "type": "format_constraint",
+            "passed": true,
+            "code": "ok"
+          }
+        ]
+      }
+    },
+    {
+      "id": "verifier_list/single-object-form-passing",
+      "description": "The field also accepts one verifier object. There is no element report, because there are no elements: a one-element list and a bare verifier are different documents and stay distinguishable in the verdict.",
+      "verifier": {
+        "type": "exact",
+        "expected": "42"
+      },
+      "candidate": "42",
+      "expected": {
+        "passed": true,
+        "code": "ok"
+      }
+    },
+    {
+      "id": "verifier_list/single-object-form-failing",
+      "verifier": {
+        "type": "exact",
+        "expected": "42"
+      },
+      "candidate": "43",
+      "expected": {
+        "passed": false,
+        "code": "mismatch"
+      }
+    },
+    {
+      "id": "verifier_list/single-object-form-astral",
+      "description": "The single-object form reaches the same Unicode surface as the list form.",
+      "verifier": {
+        "type": "format_constraint",
+        "length_unit": "utf16",
+        "max_length": 1
+      },
+      "candidate": "😀",
+      "expected": {
+        "passed": false,
+        "code": "length_out_of_bounds"
+      }
+    }
+  ],
+  "rejections": [
+    {
+      "id": "verifier_list/rejects-sympy-equiv-element",
+      "description": "An executable element makes the whole list unusable. The schema refuses this document too; this row is the second line of defence, for a caller that reached dispatch without validating.",
+      "verifier": [
+        {
+          "type": "sympy_equiv",
+          "expected": "x + 1",
+          "symbols": ["x"]
+        }
+      ],
+      "candidate": "x + 1",
+      "raises": "unsupported_verifier",
+      "expected": {
+        "passed": false,
+        "code": "unsupported_verifier"
+      }
+    },
+    {
+      "id": "verifier_list/rejects-python-unittest-element",
+      "description": "The other executable type, refused the same way.",
+      "verifier": [
+        {
+          "type": "python_unittest",
+          "test_source": "import unittest\n"
+        }
+      ],
+      "candidate": "def f(): pass",
+      "raises": "unsupported_verifier",
+      "expected": {
+        "passed": false,
+        "code": "unsupported_verifier"
+      }
+    },
+    {
+      "id": "verifier_list/rejects-executable-after-passing-declarative",
+      "description": "The declarative element would pass; the list must still refuse rather than report ok.",
+      "verifier": [
+        {
+          "type": "exact",
+          "expected": "42"
+        },
+        {
+          "type": "sympy_equiv",
+          "expected": "x + 1",
+          "symbols": ["x"]
+        }
+      ],
+      "candidate": "42",
+      "raises": "unsupported_verifier",
+      "expected": {
+        "passed": false,
+        "code": "unsupported_verifier"
+      }
+    },
+    {
+      "id": "verifier_list/rejects-executable-after-failing-declarative",
+      "description": "The row that needed an eager pre-walk when this was a combinator. It no longer does: there is no short circuit, so the executable element is reached whatever the elements before it decided.",
+      "verifier": [
+        {
+          "type": "exact",
+          "expected": "not the candidate"
+        },
+        {
+          "type": "sympy_equiv",
+          "expected": "x + 1",
+          "symbols": ["x"]
+        }
+      ],
+      "candidate": "42",
+      "raises": "unsupported_verifier",
+      "expected": {
+        "passed": false,
+        "code": "unsupported_verifier"
+      }
+    },
+    {
+      "id": "verifier_list/rejects-executable-before-declarative",
+      "description": "Order does not matter; every element is checked.",
+      "verifier": [
+        {
+          "type": "sympy_equiv",
+          "expected": "x + 1",
+          "symbols": ["x"]
+        },
+        {
+          "type": "exact",
+          "expected": "42"
+        }
+      ],
+      "candidate": "42",
+      "raises": "unsupported_verifier",
+      "expected": {
+        "passed": false,
+        "code": "unsupported_verifier"
+      }
+    },
+    {
+      "id": "verifier_list/rejects-unknown-element-type",
+      "description": "A type no implementation knows is refused, not skipped.",
+      "verifier": [
+        {
+          "type": "telepathy"
+        }
+      ],
+      "candidate": "42",
+      "raises": "unsupported_verifier",
+      "expected": {
+        "passed": false,
+        "code": "unsupported_verifier"
+      }
+    },
+    {
+      "id": "verifier_list/rejects-element-with-no-type-tag",
+      "description": "An element with no type tag cannot be dispatched and must not be ignored.",
+      "verifier": [
+        {
+          "expected": "42"
+        }
+      ],
+      "candidate": "42",
+      "raises": "unsupported_verifier",
+      "expected": {
+        "passed": false,
+        "code": "unsupported_verifier"
+      }
+    },
+    {
+      "id": "verifier_list/rejects-a-nested-list",
+      "description": "Lists do not nest. An element that is itself a list has no type tag and is refused, which is what makes the absence of a depth limit safe rather than merely unstated.",
+      "verifier": [
+        [
+          {
+            "type": "exact",
+            "expected": "42"
+          }
+        ]
+      ],
+      "candidate": "42",
+      "raises": "unsupported_verifier",
+      "expected": {
+        "passed": false,
+        "code": "unsupported_verifier"
+      }
+    }
+  ],
+  "schema_rejections": [
+    {
+      "id": "verifier_list/schema-rejects-a-sympy-equiv-element",
+      "description": "The structural guarantee. A validator that has never heard of this project refuses the document, so the refusal does not depend on reaching a dispatcher that implements it.",
+      "definition": "verifier_or_list",
+      "document": [
+        {
+          "type": "sympy_equiv",
+          "expected": "x + 1",
+          "symbols": ["x"]
+        }
+      ],
+      "valid_counterpart": [
+        {
+          "type": "exact",
+          "expected": "x + 1"
+        }
+      ]
+    },
+    {
+      "id": "verifier_list/schema-rejects-a-python-unittest-element",
+      "definition": "verifier_or_list",
+      "document": [
+        {
+          "type": "python_unittest",
+          "test_source": "import unittest\n"
+        }
+      ],
+      "valid_counterpart": [
+        {
+          "type": "format_constraint",
+          "min_length": 1
+        }
+      ]
+    },
+    {
+      "id": "verifier_list/schema-rejects-an-executable-element-among-declaratives",
+      "description": "A declarative element does not launder an executable sibling.",
+      "definition": "verifier_or_list",
+      "document": [
+        {
+          "type": "exact",
+          "expected": "42"
+        },
+        {
+          "type": "sympy_equiv",
+          "expected": "x + 1",
+          "symbols": ["x"]
+        }
+      ],
+      "valid_counterpart": [
+        {
+          "type": "exact",
+          "expected": "42"
+        },
+        {
+          "type": "numeric_tolerance",
+          "expected": 42
+        }
+      ]
+    },
+    {
+      "id": "verifier_list/schema-rejects-a-nested-list",
+      "description": "Lists are flat by construction, not by a depth limit anyone has to enforce.",
+      "definition": "verifier_or_list",
+      "document": [
+        [
+          {
+            "type": "exact",
+            "expected": "42"
+          }
+        ]
+      ],
+      "valid_counterpart": [
+        {
+          "type": "exact",
+          "expected": "42"
+        }
+      ]
+    },
+    {
+      "id": "verifier_list/schema-rejects-an-executable-element-of-a-template-binding",
+      "description": "The same rule where templates are written, where a string leaf may still be a derivation reference.",
+      "definition": "verifier_binding_or_list",
+      "document": [
+        {
+          "type": "exact",
+          "expected": "{{answer}}"
+        },
+        {
+          "type": "sympy_equiv",
+          "expected": "x + 1",
+          "symbols": ["x"]
+        }
+      ],
+      "valid_counterpart": [
+        {
+          "type": "exact",
+          "expected": "{{answer}}"
+        },
+        {
+          "type": "format_constraint",
+          "max_length": 40
+        }
+      ]
+    },
+    {
+      "id": "verifier_list/schema-keeps-the-executable-asymmetry",
+      "description": "The asymmetry is deliberate and is asserted here so that it cannot be removed by accident: a bare verifier field may name an executable type, and a list may not. The document below is the one that must be refused, and its valid counterpart is the executable verifier on its own.",
+      "definition": "verifier_or_list",
+      "document": [
+        {
+          "type": "sympy_equiv",
+          "expected": "x + 1",
+          "symbols": ["x"]
+        }
+      ],
+      "valid_counterpart": {
+        "type": "sympy_equiv",
+        "expected": "x + 1",
+        "symbols": ["x"]
+      }
+    }
+  ]
+}

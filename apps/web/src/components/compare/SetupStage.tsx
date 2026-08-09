@@ -284,7 +284,7 @@ export function SetupStage(props: {
         </section>
       </div>
 
-      <div className="cmp-actions">
+      <div className="cmp-actions cmp-actions-bar">
         <button
           type="button"
           className="app-run-btn"

@@ -1,10 +1,10 @@
-# Redrob Verifiable Task Spec v1
+# Redrob Verifiable Task Spec v2
 
 > ## ⚠ DRAFT — NOT STABLE, DO NOT CITE THIS BRANCH
 >
 > **This surface may change, including in ways that break existing templates and generated
 > sets, until the accompanying preprint is released.** The version identifier
-> `redrob-verifiable-task/v1` does not yet imply stability; it names the shape of the
+> `redrob-verifiable-task/v2` does not yet imply stability; it names the shape of the
 > document, not a promise about it.
 >
 > **Pin a commit.** Anyone implementing against this specification, generating a set they
@@ -13,18 +13,19 @@
 > checkout and the next, which defeats the recomputability this document exists to provide.
 >
 > Changes already made after the first draft was written, as examples of the scale still
-> possible: the regex subset lost `\w`, `\d`, `\b`, `.` and `$` outright, and `all_of`
-> gained an eager rejection rule that turns previously scored configurations into errors.
-> Both were corrections, and both would have invalidated a published set.
+> possible: the regex subset lost `\w`, `\d`, `\b`, `.` and `$` outright; string comparison
+> gained a required normalisation form; and `all_of` was removed outright in favour of a
+> list-valued verifier field (§11.1). Every one was a correction, and every one would have
+> invalidated a published set.
 >
 > The intended stability point is the preprint. At that point this notice is replaced by a
-> statement of what is frozen and what is not, and breaking changes become `v2`. Until
-> then, the record of what is unresolved and why is
-> [`docs/decisions/0001-generate-foundation.md`](../docs/decisions/0001-generate-foundation.md).
+> statement of what is frozen and what is not. Until then, the record of what is unresolved
+> and why is under
+> [`docs/decisions/`](../docs/decisions/).
 
-Spec version identifier: `redrob-verifiable-task/v1`
+Spec version identifier: `redrob-verifiable-task/v2`
 Status: **draft**, foundation only. No UI, no model execution.
-Machine-checkable half: [`verifiable-task-v1.schema.json`](verifiable-task-v1.schema.json)
+Machine-checkable half: [`verifiable-task-v2.schema.json`](verifiable-task-v2.schema.json)
 Conformance suite: [`conformance/`](conformance/)
 
 ## 0. What this is and why
@@ -48,6 +49,14 @@ Two properties are load bearing:
 TypeScript and Python are both reference implementations of this document. **Neither is
 authoritative over the other.** When they disagree, this document decides; if this document is
 silent, that silence is the bug and it gets fixed here first.
+
+That parity is about conformance, not about publication. **Python is normative for any verdict
+that is going to be published: every verdict record carries the implementation that produced it,
+that implementation's version and the version of the Unicode table it read, and a publishable
+artifact refuses to build from a verdict this project's Python implementation did not produce.**
+The reason is not that TypeScript is less correct — it passes the same corpus — but that the two
+runtimes compile against different versions of the Unicode Character Database, so a normalisation
+or case mapping over a recently assigned code point can differ while both behave correctly.
 
 The split of duties is by capability, not by rank:
 
@@ -81,7 +90,7 @@ prompt body with placeholders, a locale, and a verifier binding.
 
 ```jsonc
 {
-  "spec_version": "redrob-verifiable-task/v1",
+  "spec_version": "redrob-verifiable-task/v2",
   "id": "math.linear_equation",     // stable across every locale variant
   "version": "1.0.0",
   "locale": "en",
@@ -117,16 +126,29 @@ template family is a directory:
 ```
 templates/<family>/<name>/
   template.json     # locale-neutral core: id, version, family, parameters, derivations, verifier
-  locales/en.json   # locale layer: locale, description, prompt, optional notes
+  locales/en.json   # locale layer: locale, translation_status, description, prompt, optional notes
   locales/xx.json   # a sibling file, added later, sharing id and parameter declarations
 ```
 
 Merging is a shallow field-wise overlay of the locale layer onto the core. A locale layer may
-only set `locale`, `description`, `prompt` and `notes`; if it tries to redeclare `parameters`,
-`derivations`, `id`, `version` or `verifier`, loading fails. That restriction is the whole point
-of the split: **translations may change the wording, never the task**. Two locales of the same
-template id sample the same parameters from the same seed and expect the same answer, which is
-what makes their token counts comparable (see §8).
+only set `locale`, `translation_status`, `description`, `prompt` and `notes`; if it tries to
+redeclare `parameters`, `derivations`, `id`, `version` or `verifier`, loading fails. That
+restriction is the whole point of the split: **translations may change the wording, never the
+task**. Two locales of the same template id sample the same parameters from the same seed and
+expect the same answer, which is what makes their token counts comparable (see §8).
+
+Resolving a template id and a locale to a concrete template either succeeds or fails loudly.
+There is no fallback to another locale: a missing `xx.json` is an error naming the locales that
+do exist, because silently serving English under a Korean label would make a per-locale
+measurement meaningless in exactly the way that is hardest to notice afterwards.
+
+`translation_status` is required on every locale layer and is one of `native-reviewed`,
+`single-reviewer` or `untranslated`. It has no default, because every candidate default is a
+false statement about work that either did or did not happen. `untranslated` marks a placeholder
+— in practice the English prompt copied verbatim — which exists so that a pipeline can be
+exercised across locales before any translation is commissioned. Such a template loads, generates
+and scores normally; what it cannot do is be published. A publishable artifact refuses to build
+while any locale it covers is `untranslated`.
 
 A single merged `.json` file that already contains every field is also accepted, for tests and
 for one-off templates.
@@ -136,6 +158,15 @@ for one-off templates.
 An instance is a template plus bound parameter values plus the derived seed plus the expected
 result, computed at generation time. It also carries the content hash of the template it came
 from, so a set cannot be silently re-pointed at an edited template.
+
+It also carries `code_mix_ratio`, which is required and is currently always `null`. The field
+names the proportion of a prompt drawn from the embedded language in a code-mixed locale such as
+`hi-Latn`. No implementation computes it, and none should until the measurement is defined:
+choosing a token unit, a language identifier and a treatment of proper nouns and numerals each
+change the number for the same sentence, so any value produced today would be an artefact of
+those unstated choices. It is present rather than absent so that the document shape does not
+change when the method is settled, and `null` rather than omitted so a reader can tell "not
+measured" from "written by an older tool".
 
 ### 1.4 Manifest
 
@@ -394,8 +425,8 @@ divergence needs the *needle* to be half of a pair, not the haystack.
 
 ### 6.1 Declarative tier
 
-Eight types: seven leaf checks plus one composition. Every implementation must support all
-eight, and must agree on every one.
+Seven types, all of them leaf checks. Every implementation must support all seven, and must agree
+on every one. Composition is not a type; it is a shape of the verifier field, described in §6.2.
 
 #### `exact`
 
@@ -647,39 +678,57 @@ everything, which is a legitimate way to say "any output is structurally accepta
 Codes: `ok`, `length_out_of_bounds`, `line_count_out_of_bounds`,
 `missing_required_substring`, `forbidden_substring_present`.
 
-#### `all_of`
+### 6.2 The verifier field may hold a list
 
-Composition. `verifiers` is an ordered list of declarative verifiers; each is run in turn against
-the same candidate, and the **first failing verdict is returned verbatim**, code and all. An
-empty list passes, which is the identity element and a legitimate way to say "no constraint".
+A verifier field — a template's `verifier`, an instance's `verifier`, a conformance row's
+`verifier` — holds **either one verifier object or an array of declarative verifiers**. An array
+means every element must pass. An empty array passes, which is the identity element and a
+legitimate way to say "no constraint".
 
-**Children must be declarative, and this is checked before anything is evaluated.** An
-implementation must walk the whole composite first, to every depth, and raise the
-unsupported-verifier error if any descendant is an executable type or a type it does not know. It
-must not evaluate the declarative children and return a verdict.
+**Every element runs. There is no short circuit.** The overall `code` is the first failing
+element's, verbatim, so ordering the elements chooses which diagnosis leads; but the verdict also
+carries `detail.elements`, one entry per element in list order:
 
-The eagerness is normative rather than an implementation note. A lazy check that inspects each
-child as it is reached lets a declarative child that fails early return a verdict before an
-executable sibling is ever looked at, so the composite reports a result for output that was only
-partially checked. That result is not a weaker verdict, it is a wrong one, and nothing in it tells
-the caller which part of the contract went unexamined. `all_of` exists to compose checks, and a
-composition that can quietly drop one of its terms is worse than no composition at all.
+```json
+{ "index": 1, "type": "regex", "passed": false, "code": "invalid_pattern" }
+```
 
-The schema enforces the same rule structurally: `verifiers` references `#/$defs/verifier_declarative`,
-not `#/$defs/verifier`, so a template carrying an executable child fails to load rather than
-failing at scoring time.
+Unlike the rest of `detail`, **`detail.elements` is normative** and the conformance suite compares
+it entry for entry. Two implementations that reach the same overall verdict by running different
+elements have diverged, and a per-element report the two disagree about is worse than none.
 
-Nesting is allowed to a depth of 8, counting the outermost composite as depth 0. Depth 9 is a
-configuration error, and it too is detected by the initial walk rather than on arrival.
+Running everything is what makes the report worth having, and it also closes a hole. Under the
+combinator this replaces, `[exact, regex-with-an-unusable-pattern]` returned the `exact` mismatch
+and never looked at the pattern, so a template that could not be scored was indistinguishable
+from an answer that was merely wrong. Now the verdict leads with `mismatch` and its element report
+names `invalid_pattern` on element 1.
+
+**Elements must be declarative, and that is a structural rule rather than a runtime one.** The
+array references `#/$defs/verifier_declarative`, and a template's array references
+`#/$defs/verifier_binding_declarative`, whose type enum omits the executable tier. A document with
+an executable element therefore fails schema validation, in any validator, before a dispatcher is
+reached. Implementations refuse it again at dispatch, because dispatch is reachable without a
+schema check, and the conformance corpus asserts both halves separately.
+
+The asymmetry is deliberate: the single-object form admits an executable verifier and the array
+form does not. A single verifier that a given implementation cannot run is a task that
+implementation cannot score, and it says so. An executable element hidden among declarative ones
+is a way to obtain a verdict from partially checked output, which is the failure this document
+exists to prevent.
+
+**Arrays do not nest.** Elements are objects, so an array cannot contain an array. There is no
+depth limit because there is no depth. An array that contains one is refused structurally and
+again at dispatch.
 
 Order matters and is the point: put the check whose failure is most diagnostic first. A template
-that wants both "the extracted values are right" and "the serialisation is right" should run
-`json_schema` before `exact`, so that a wrong answer reports a schema violation rather than a
-string mismatch.
+that wants both "the extracted values are right" and "the serialisation is right" should write
+`json_schema` before `exact`, so that a wrong answer leads with a schema violation rather than a
+string mismatch — and the element report still distinguishes the two failures from each other.
 
-Codes: `ok`, plus any code a child can produce.
+A one-element array and a bare verifier are different documents and stay distinguishable in the
+verdict: the array reports `elements`, the bare verifier does not.
 
-### 6.2 Executable tier
+### 6.3 Executable tier
 
 Two types, Python only.
 
@@ -778,9 +827,19 @@ merged template document.
 
 ## 10. Conformance
 
-`spec/conformance/` holds one JSON file per declarative verifier type, each a
+`spec/conformance/` holds one JSON file per declarative verifier type, plus
+`verifier_list.json` for the list-valued shape of the verifier field, each a
 `#/$defs/conformance_file`. Every case is `{ id, verifier, candidate, expected }` where
-`expected` is `{ passed, code }`.
+`expected` is `{ passed, code }`, plus `elements` when the verifier is a list — required in that
+case and forbidden otherwise.
+
+A file may also carry two kinds of negative row. `rejections` assert that a configuration is
+refused at dispatch rather than evaluated: strict dispatch raises, lenient dispatch returns a
+failing verdict, and neither may be a pass. `schema_rejections` assert that a document is refused
+by schema validation before any verifier runs, and each carries a near-identical
+`valid_counterpart` the schema must accept, so the row cannot pass because the schema rejects
+everything. The two are different guarantees — the first depends on reaching this project's
+dispatcher, the second holds for any validator — and they are asserted separately.
 
 Both implementations run the same files. The suite deliberately includes empty strings, floating
 point edge cases, NaN and infinities, deeply nested JSON, regex metacharacters, and mixed line
@@ -805,8 +864,43 @@ The spec version identifier changes only on a breaking change to document shapes
 semantics. A new verifier type, a new optional field, or a new verdict code is additive and does
 not change it, but it does require a conformance file before it may be used.
 
+### 11.1 What changed in v2
+
+One breaking change, plus the rename that follows from it.
+
+- **`all_of` is gone.** Composition moved from a verifier type to a shape of the verifier field
+  (§6.2). A `v1` template whose `verifier` was `{"type": "all_of", "verifiers": [...]}` becomes a
+  `v2` template whose `verifier` is that array. Nothing else in the migration changes, and no
+  template in this repository used nesting.
+- **A list verdict now carries a normative per-element report.** `all_of` returned the first
+  failure and said nothing about the rest; a list runs every element and reports each one.
+  Overall `passed` and `code` are unchanged for any configuration `all_of` could express, so the
+  scores of an existing set do not move — what changes is that a second failure is now visible,
+  and that an element whose configuration is unusable is reported instead of being skipped when
+  an earlier element already failed.
+- **Three constructs that existed only to support `all_of` are gone with it**: the nesting depth
+  limit, the eager pre-walk that had to visit every descendant before evaluating anything, and
+  the runtime executable-child rejection as the primary defence. Executable elements are now a
+  schema violation. Each removed construct was a place two implementations could disagree, and
+  the previous pass showed that some such disagreements are invisible to parity testing.
+
+Three additive changes were made after the list-valued verifier field and before `v2` was
+tagged. They are recorded here rather than as a version bump because no `v2` document was
+published in the interim, so nothing exists that they could break.
+
+- **`translation_status` is required on every locale layer** (§1.2), so that a placeholder
+  locale cannot be mistaken for a translated one by anything downstream.
+- **`code_mix_ratio` is required on every instance and is always `null`** (§1.3).
+- **The `locale` pattern admits a script subtag**, so Hinglish is expressible as `hi-Latn`.
+  Hindi in Latin script tokenises quite differently from Hindi in Devanagari, and treating the
+  two as one locale would average the difference away.
+
+`v1` documents are not accepted by a `v2` implementation: the `spec_version` field is a `const`
+in the schema and the reader checks it, so a stale set fails loudly rather than being scored
+under semantics it was not written for.
+
 ## 12. Licence
 
 Apache-2.0, same as the repository. The spec text may be reimplemented freely; a reimplementation
 that passes `spec/conformance/` may describe itself as conforming to Redrob Verifiable Task
-Spec v1.
+Spec v2.

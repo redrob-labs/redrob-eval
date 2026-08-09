@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { MODULES, type ModuleId } from '@/lib/modules';
 import { RedrobLogo } from '@/components/RedrobLogo';
+import { ThemeToggle } from '@/components/ThemeSwitch';
 
 export function ModuleNav({ current }: { current: ModuleId }) {
   return (
@@ -56,6 +57,7 @@ export function AppShell({ module, port = 3939, center, right, children }: Shell
         </div>
         <div className="app-titlebar-right">
           {right}
+          <ThemeToggle />
           <Link
             href="/settings"
             className={`app-settings-link${module === 'settings' ? ' on' : ''}`}

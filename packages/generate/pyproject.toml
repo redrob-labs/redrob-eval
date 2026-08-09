@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "redrob-generate"
 version = "0.1.0"
-description = "Parametric generation of verifiable evaluation prompts and their verifiers (Redrob Verifiable Task Spec v1)."
+description = "Parametric generation of verifiable evaluation prompts and their verifiers (Redrob Verifiable Task Spec v2)."
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "Apache-2.0" }
@@ -27,7 +27,7 @@ redrob-generate = "redrob_generate.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/redrob-labs/redrob-eval"
-Specification = "https://github.com/redrob-labs/redrob-eval/blob/main/spec/verifiable-task-v1.md"
+Specification = "https://github.com/redrob-labs/redrob-eval/blob/main/spec/verifiable-task-v2.md"
 
 [tool.setuptools.packages.find]
 where = ["src"]

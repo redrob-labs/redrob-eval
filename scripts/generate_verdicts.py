@@ -38,10 +38,15 @@ def token_signature(pattern: str) -> str:
         return f"error:{type(exc).__name__}"
 
 
+#: Corpus files to dump: one per declarative verifier, plus the list-valued shape of the
+#: verifier field, which is not a type the registry dispatches on.
+CORPUS_NAMES = frozenset(DECLARATIVE_VERIFIER_TYPES) | {"verifier_list"}
+
+
 def main() -> int:
     verdicts: dict[str, list[object]] = {}
     for path in sorted(DIRECTORY.glob("*.json")):
-        if path.stem not in DECLARATIVE_VERIFIER_TYPES:
+        if path.stem not in CORPUS_NAMES:
             continue
         document = json.loads(path.read_text(encoding="utf-8"))
         # Rejection rows are dumped too, so a configuration that must be refused is
@@ -53,11 +58,28 @@ def main() -> int:
             try:
                 verdict = run_verifier_or_fail(case["verifier"], case["candidate"])
                 verdicts[case["id"]] = [verdict.passed, verdict.code]
+                # The per-element report is normative for a list, so it is compared here
+                # too: an implementation can reach the right overall code by running the
+                # wrong elements, and that difference is invisible in the pair above.
+                elements = verdict.detail.get("elements")
+                if elements is not None:
+                    verdicts[f"elements:{case['id']}"] = [
+                        f"{entry['index']}:{entry['type']}:{entry['passed']}:{entry['code']}"
+                        for entry in elements
+                    ]
             except ValueError:
                 verdicts[case["id"]] = ["raises", "verifier_config"]
-            pattern = case["verifier"].get("pattern")
-            if case["verifier"].get("type") == "regex" and isinstance(pattern, str):
-                verdicts[f"tokens:{case['id']}"] = ["raises", token_signature(pattern)]
+            elements = case["verifier"] if isinstance(case["verifier"], list) else [case["verifier"]]
+            for index, node in enumerate(elements):
+                if not isinstance(node, dict) or node.get("type") != "regex":
+                    continue
+                pattern = node.get("pattern")
+                if isinstance(pattern, str):
+                    suffix = f"[{index}]" if isinstance(case["verifier"], list) else ""
+                    verdicts[f"tokens:{case['id']}{suffix}"] = [
+                        "raises",
+                        token_signature(pattern),
+                    ]
 
     # Separators pinned to match JSON.stringify, and ensure_ascii off for the same reason:
     # JSON.stringify emits an astral character literally and json.dumps would escape it to

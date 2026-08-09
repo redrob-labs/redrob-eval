@@ -22,6 +22,7 @@
     "generate:spec-types": "tsx scripts/generate-spec-types.mts",
     "generate:spec-types:check": "tsx scripts/generate-spec-types.mts --check",
     "probe": "node scripts/probe.mjs",
+    "verify:theme": "tsx scripts/check-theme-contrast.mts",
     "verify:phase1": "tsx scripts/verify-phase1.mts",
     "verify:gepa": "tsx scripts/verify-gepa.mts",
     "verify:phase3": "tsx scripts/verify-phase3.mts",

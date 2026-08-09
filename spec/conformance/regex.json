@@ -1,5 +1,5 @@
 {
-  "spec_version": "redrob-verifiable-task/v1",
+  "spec_version": "redrob-verifiable-task/v2",
   "verifier_type": "regex",
   "description": "Pattern matching over the portable regex subset. The subset has no shorthand classes, no '.', no anchors and no flags, because each of those means something different in Python re and in a JavaScript RegExp. Matching is by code point on both sides: the TypeScript implementation compiles with the u flag, and the astral rows below are what hold it to that.",
   "cases": [

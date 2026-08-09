@@ -2,8 +2,8 @@
 # SPDX-License-Identifier: Apache-2.0
 """redrob-generate: parametric generation of verifiable evaluation tasks.
 
-Reference implementation of the Redrob Verifiable Task Spec v1
-(``spec/verifiable-task-v1.md``). The TypeScript implementation under
+Reference implementation of the Redrob Verifiable Task Spec v2
+(``spec/verifiable-task-v2.md``). The TypeScript implementation under
 ``packages/harness/src/generate/`` is a peer, not a client: neither is authoritative
 over the other, and ``spec/conformance/`` is what keeps them honest.
 """

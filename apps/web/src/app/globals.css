@@ -1,23 +1,226 @@
 @import "tailwindcss";
 
+/* ============================================================
+   Theme tokens
+
+   Two palettes, one set of names. Nothing below this block should name a
+   colour directly: a literal in a rule is a colour that cannot follow the
+   theme, and it will be the one that glows white in a dark room.
+
+   `[data-theme]` is written onto <html> by an inline script before first paint
+   (see `ThemeScript`), always resolved to `light` or `dark` — never `system`.
+   Resolving in the script rather than in CSS is what lets the dark palette be
+   written once here instead of duplicated into a `prefers-color-scheme` block,
+   and the app is React-only, so there is no meaningful no-JS case to keep the
+   duplicate for.
+
+   Tints and borders are mixed from their base colour and the current surface,
+   so they follow both the accent and the theme without a second table to keep
+   in sync. Anything that has to stay dark in both themes -- the titlebar, the
+   terminal -- is named for the surface it sits on rather than the theme.
+   ============================================================ */
+
 :root {
+  color-scheme: light;
+
+  /* Surfaces */
+  --bg: #f3f4f6;
+  --panel: #ffffff;
+  --surface-sunken: #f8fafc;
+  --surface-hover: #f1f5f9;
+
+  /* Lines and text */
+  --line: #e5e7eb;
+  --line-strong: #d1d5db;
   --ink: #111827;
   --muted: #6b7280;
-  --line: #e5e7eb;
-  --panel: #ffffff;
-  --bg: #f3f4f6;
+  --miss: #9ca3af;
+  /* Text on a saturated fill. Not `--panel`: a white button label stays white
+     in dark mode, where the panel does not. */
+  --on-solid: #ffffff;
+
   /* Redrob brand — mark blue #2B52FF */
   --brand: #2b52ff;
   --brand-deep: #1e3acc;
   --brand-ink: #16299b;
   --brand-tint: #eef2ff;
+  /* The fill under a white label, kept separate from `--brand` because the two want
+     opposite things in dark mode: text must lighten to stay readable on a dark panel,
+     while a fill must stay saturated or the white label on top of it disappears. */
+  --brand-solid: #2b52ff;
+  --brand-solid-hover: #1e3acc;
+  --danger-solid: #b91c1c;
+
+  /* Status */
   --ok: #047857;
-  --miss: #9ca3af;
   --danger: #b91c1c;
   --warn: #a16207;
-  --titlebar: #0e1633;
+
+  /* Progress. Teal to orange as a run advances — the only place teal is used, now that
+     the primary button is brand blue. Nothing sits on top of it, so it has no ink token. */
+  --run: #14b8a6;
+  --progress-end: #f97316;
+
+  /* Data series */
+  --feasible: #1d4ed8;
+  --series-seed: #c2410c;
+  --series-neutral: #94a3b8;
+  --chart-axis: #94a3b8;
+  --chart-tick: #64748b;
+  --chart-label: #334155;
+  --chart-faint: #cbd5e1;
+  --chart-grid: rgba(15, 23, 42, 0.08);
+  --accent-deep: #0f766e;
+
+  /* Ghost controls on a light surface */
+  --ghost-line: rgba(15, 23, 42, 0.18);
+  --ghost-line-hover: rgba(15, 23, 42, 0.28);
+
+  /* Overlays */
+  --scrim: rgba(14, 22, 51, 0.5);
+  --shadow-modal: 0 20px 60px rgba(14, 22, 51, 0.25);
+
   --background: var(--bg);
   --foreground: var(--ink);
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  /* Navy rather than neutral grey, so the page reads as the same product as
+     the titlebar instead of a greyscale inversion of it. */
+  --bg: #0a0e1a;
+  --panel: #141a2b;
+  --surface-sunken: #0f1423;
+  --surface-hover: #1e2540;
+
+  --line: #262d45;
+  --line-strong: #39425f;
+  --ink: #e8eaf2;
+  --muted: #99a2bd;
+  --miss: #6b7490;
+  --on-solid: #ffffff;
+
+  /* Lifted: #2b52ff on a dark panel is close to unreadable for body text, and
+     these carry link and label text as well as fills. */
+  --brand: #7d97ff;
+  --brand-deep: #9cb0ff;
+  --brand-ink: #c3cfff;
+  --brand-tint: #1b2547;
+  /* Not lifted with `--brand`: these carry white text, so they stay saturated. Both
+     clear 4.5:1 against white and 3:1 against the panel they sit on. */
+  --brand-solid: #3a5eff;
+  /* Deepens on hover rather than lightening, matching light mode. Lightening is the
+     more usual instinct on a dark theme, but it drops the white label below 4.5:1. */
+  --brand-solid-hover: #2b52ff;
+  --danger-solid: #dc2626;
+
+  --ok: #34d399;
+  --danger: #f87171;
+  --warn: #fbbf24;
+
+  --run: #14b8a6;
+  --progress-end: #fb923c;
+
+  --feasible: #60a5fa;
+  --series-seed: #fb923c;
+  --series-neutral: #7c86a3;
+  --chart-axis: #6b7490;
+  --chart-tick: #8b95b3;
+  --chart-label: #b6bdd4;
+  --chart-faint: #606b90;
+  --chart-grid: rgba(232, 234, 242, 0.08);
+  --accent-deep: #2dd4bf;
+
+  --ghost-line: rgba(232, 234, 242, 0.2);
+  --ghost-line-hover: rgba(232, 234, 242, 0.34);
+
+  --scrim: rgba(3, 6, 15, 0.66);
+  --shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.6);
+}
+
+/* Status tints, spelled out per theme rather than mixed from the base colour.
+   Mixing was tried and is tidier, but a mix of `--warn` into white lands on beige,
+   not on the cream the light theme has always used: the elegant mechanism quietly
+   restyles the existing product. Two explicit rows cost more lines and change nothing
+   that was not asked for.
+
+   The translucent ones stay translucent. They sit over table rows and cards as often
+   as over a plain panel, and flattening them to opaque would lose the surface
+   underneath. */
+:root {
+  --ok-tint: #ecfdf5;
+  --ok-line: #a7f3d0;
+  --warn-tint: #fffbeb;
+  --warn-line: #fde68a;
+  --danger-tint: #fef2f2;
+  --danger-line: #fecaca;
+  --brand-tint-soft: rgba(37, 99, 235, 0.06);
+  --accent-tint: rgba(15, 118, 110, 0.08);
+  --accent-tint-strong: rgba(15, 118, 110, 0.1);
+  --accent-line: rgba(15, 118, 110, 0.45);
+  --router-tint: rgba(194, 65, 12, 0.04);
+  /* Translucent rather than a tint of the panel: both sit on surfaces that are not the
+     panel, so flattening them would paint over what is behind. */
+  --warn-line-soft: rgba(161, 98, 7, 0.25);
+  --ok-tint-soft: rgba(4, 120, 87, 0.1);
+}
+
+[data-theme='dark'] {
+  /* Dark enough to read as a tint of the panel rather than a block of colour, with
+     the hue still identifiable as green, amber or red at a glance. */
+  --ok-tint: #0e2a22;
+  --ok-line: #1f5545;
+  --warn-tint: #2b2312;
+  --warn-line: #5c4a1a;
+  --danger-tint: #2e1618;
+  --danger-line: #6b2b2e;
+  --brand-tint-soft: rgba(125, 151, 255, 0.1);
+  --accent-tint: rgba(45, 212, 191, 0.1);
+  --accent-tint-strong: rgba(45, 212, 191, 0.16);
+  --accent-line: rgba(45, 212, 191, 0.45);
+  --router-tint: rgba(251, 146, 60, 0.07);
+  --warn-line-soft: rgba(251, 191, 36, 0.3);
+  --ok-tint-soft: rgba(52, 211, 153, 0.14);
+}
+
+/* The titlebar is dark in both themes, so its tokens are named for the surface
+   they sit on rather than for the theme, and they do not change. */
+:root {
+  --titlebar: #0e1633;
+  --titlebar-ink: #e5e7eb;
+  --titlebar-ink-strong: #f8fafc;
+  --titlebar-ink-max: #ffffff;
+  --titlebar-muted: #94a3b8;
+  --titlebar-muted-strong: #cbd5e1;
+  --titlebar-hover-ink: #e2e8f0;
+  --titlebar-accent: #6f8bff;
+  --titlebar-accent-hover: #9db1ff;
+  --titlebar-ok: #a5b4fc;
+  --titlebar-bad: #fca5a5;
+  --titlebar-hairline: rgba(255, 255, 255, 0.06);
+  --titlebar-hover: rgba(255, 255, 255, 0.06);
+  --titlebar-divider: rgba(255, 255, 255, 0.12);
+  --titlebar-active: rgba(43, 82, 255, 0.28);
+  --titlebar-btn-line: rgba(255, 255, 255, 0.22);
+  --titlebar-btn-hover: rgba(255, 255, 255, 0.1);
+  --titlebar-btn-hover-line: rgba(255, 255, 255, 0.35);
+
+  --terminal-bg: #0b0f14;
+  --terminal-cursor: #6f8bff;
+  --terminal-scroll: #3a4658;
+}
+
+[data-theme='dark'] {
+  /* In light mode the titlebar is "the dark one" and needs no help separating itself.
+     In dark mode nothing is the dark one, so it separates by hue and by being slightly
+     lighter than the page instead: a darker bar measured 1.02:1 against the page
+     behind it, which is to say it was not visible at all. The hairline is opened up
+     for the same reason -- at 6% on a near-black page there was no edge to see. */
+  --titlebar: #172a5c;
+  --titlebar-hairline: rgba(255, 255, 255, 0.12);
+  /* The bar it sits on is lighter here, so the logo lifts with it. */
+  --titlebar-accent: #8aa2ff;
 }
 
 @theme inline {
@@ -69,8 +272,8 @@ code {
   gap: 1rem;
   padding: 0 1rem;
   background: var(--titlebar);
-  color: #e5e7eb;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  color: var(--titlebar-ink);
+  border-bottom: 1px solid var(--titlebar-hairline);
 }
 
 .app-titlebar-left,
@@ -116,102 +319,124 @@ code {
   font-weight: 650;
   font-size: 0.88rem;
   letter-spacing: -0.02em;
-  color: #f8fafc;
+  color: var(--titlebar-ink-strong);
   text-decoration: none;
 }
 
 .app-logo {
   flex: none;
-  color: #6f8bff;
+  color: var(--titlebar-accent);
 }
 
 .app-name:hover {
-  color: #fff;
+  color: var(--titlebar-ink-max);
 }
 
 .app-name:hover .app-logo {
-  color: #9db1ff;
+  color: var(--titlebar-accent-hover);
 }
 
 .app-sep {
   width: 1px;
   height: 16px;
   flex: none;
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--titlebar-divider);
 }
 
 .app-muted {
   font-size: 0.72rem;
-  color: #94a3b8;
+  color: var(--titlebar-muted);
   white-space: nowrap;
 }
 
 .app-settings-link {
   font-size: 0.78rem;
   font-weight: 500;
-  color: #94a3b8;
+  color: var(--titlebar-muted);
   text-decoration: none;
   padding: 0.25rem 0.45rem;
   border-radius: 6px;
 }
 
 .app-settings-link:hover {
-  color: #e2e8f0;
-  background: rgba(255, 255, 255, 0.06);
+  color: var(--titlebar-hover-ink);
+  background: var(--titlebar-hairline);
 }
 
 .app-settings-link.on {
-  color: #fff;
-  background: rgba(43, 82, 255, 0.28);
+  color: var(--titlebar-ink-max);
+  background: var(--titlebar-active);
 }
 
 .app-progress-track {
   flex: 1;
   height: 4px;
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--titlebar-divider);
   overflow: hidden;
   min-width: 60px;
 }
 
 .app-progress-bar {
   height: 100%;
-  background: linear-gradient(90deg, #14b8a6, #f97316);
+  background: linear-gradient(90deg, var(--run), var(--progress-end));
   transition: width 0.2s ease;
 }
 
 .app-status-text {
   font-size: 0.7rem;
-  color: #cbd5e1;
+  color: var(--titlebar-muted-strong);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 50%;
 }
 
+/* ============================================================
+   Buttons
+
+   Three roles, one geometry: primary (`app-run-btn`), secondary (`app-ghost-btn`)
+   and destructive (`app-stop-btn`). They share height, radius and type so a row of
+   mixed buttons sits on one baseline — the previous set disagreed on all three, and
+   a Run button that is 4px shorter than the Discard next to it reads as a mistake
+   before anyone works out which is the primary action.
+
+   Primary is brand blue rather than the teal it used to be. Teal appears nowhere else
+   in the product except the progress bar, so the one control the eye should land on
+   first was the one colour the design did not otherwise use.
+   ============================================================ */
+
 .app-ghost-btn,
-.app-run-btn {
-  height: 28px;
-  border: 0;
-  padding: 0 0.7rem;
-  font-size: 0.75rem;
+.app-run-btn,
+.app-stop-btn {
+  height: 32px;
+  /* 16 rather than 14: a filled button reads tighter than an outlined one at the same
+     number, because the border of a ghost supplies an edge the eye reads as breathing
+     room and a fill does not. Applied to all three so the row still agrees. */
+  padding: 0 16px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  gap: 6px;
+  white-space: nowrap;
   text-decoration: none;
   box-sizing: border-box;
 }
 
 /* Light surfaces (forms, panes) — high-contrast actionable chrome */
 .app-ghost-btn {
-  background: #fff;
-  color: #0f172a;
-  border: 1px solid rgba(15, 23, 42, 0.18);
+  background: var(--panel);
+  color: var(--ink);
+  border-color: var(--ghost-line);
 }
 
 .app-ghost-btn:hover:not(:disabled) {
-  background: #f1f5f9;
-  border-color: rgba(15, 23, 42, 0.28);
+  background: var(--surface-hover);
+  border-color: var(--ghost-line-hover);
 }
 
 .app-ghost-btn:disabled {
@@ -219,26 +444,37 @@ code {
   cursor: not-allowed;
 }
 
-/* Dark titlebar — keep muted ghost styling */
+/* Compact enough for a 44px bar. Applied to all three roles, or the one primary in the
+   titlebar stands a few pixels taller than the buttons it sits between. */
+.app-titlebar .app-ghost-btn,
+.app-titlebar .app-run-btn,
+.app-titlebar .app-stop-btn {
+  height: 26px;
+  padding: 0 12px;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+/* Dark titlebar — muted ghosts */
 .app-titlebar .app-ghost-btn {
   background: transparent;
-  color: #e2e8f0;
-  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: var(--titlebar-hover-ink);
+  border-color: var(--titlebar-btn-line);
 }
 
 .app-titlebar .app-ghost-btn:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.35);
-  color: #fff;
+  background: var(--titlebar-btn-hover);
+  border-color: var(--titlebar-btn-hover-line);
+  color: var(--titlebar-ink-max);
 }
 
 .app-run-btn {
-  background: #14b8a6;
-  color: #042f2e;
+  background: var(--brand-solid);
+  color: var(--on-solid);
 }
 
 .app-run-btn:hover:not(:disabled) {
-  filter: brightness(1.05);
+  background: var(--brand-solid-hover);
 }
 
 .app-run-btn:disabled {
@@ -247,14 +483,8 @@ code {
 }
 
 .app-stop-btn {
-  height: 28px;
-  border: 0;
-  padding: 0 0.7rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  cursor: pointer;
-  background: #b91c1c;
-  color: #fff;
+  background: var(--danger-solid);
+  color: var(--on-solid);
 }
 
 .app-stop-btn:hover {
@@ -268,15 +498,15 @@ code {
 }
 
 .app-banner.error {
-  background: #fef2f2;
+  background: var(--danger-tint);
   color: var(--danger);
-  border-bottom: 1px solid #fecaca;
+  border-bottom: 1px solid var(--danger-line);
 }
 
 .app-banner.warn {
-  background: #fffbeb;
+  background: var(--warn-tint);
   color: var(--warn);
-  border-bottom: 1px solid #fde68a;
+  border-bottom: 1px solid var(--warn-line);
 }
 
 .app-body {
@@ -324,9 +554,9 @@ code {
 .pane-splitter {
   position: relative;
   cursor: col-resize;
-  background: #e5e7eb;
-  border-left: 1px solid #d1d5db;
-  border-right: 1px solid #d1d5db;
+  background: var(--line);
+  border-left: 1px solid var(--line-strong);
+  border-right: 1px solid var(--line-strong);
   user-select: none;
   touch-action: none;
 }
@@ -339,13 +569,13 @@ code {
   width: 2px;
   height: 28px;
   border-radius: 999px;
-  background: #94a3b8;
+  background: var(--line-strong);
   pointer-events: none;
 }
 
 .pane-splitter:hover,
 .pane-splitter:active {
-  background: #dbeafe;
+  background: var(--brand-tint);
 }
 
 body.is-pane-resizing,
@@ -379,7 +609,7 @@ body.is-pane-resizing * {
   min-width: 0;
   box-sizing: border-box;
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--panel);
   padding: 0.4rem 0.5rem;
   color: var(--ink);
   font-size: 0.8rem;
@@ -408,7 +638,7 @@ body.is-pane-resizing * {
 .or-sort {
   height: 2rem;
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--panel);
   padding: 0 0.5rem;
   color: var(--ink);
   font-size: 0.8rem;
@@ -436,7 +666,7 @@ body.is-pane-resizing * {
 
 .sample-presets button {
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--panel);
   height: 1.6rem;
   padding: 0 0.45rem;
   font-size: 0.72rem;
@@ -446,7 +676,7 @@ body.is-pane-resizing * {
 
 .sample-presets button.on {
   border-color: var(--brand);
-  background: rgba(15, 118, 110, 0.08);
+  background: var(--accent-tint);
   color: var(--brand-deep);
   font-weight: 600;
 }
@@ -481,7 +711,7 @@ body.is-pane-resizing * {
   justify-content: space-between;
   gap: 0.4rem;
   border: 1px solid var(--line);
-  background: #f9fafb;
+  background: var(--surface-sunken);
   padding: 0.3rem 0.45rem;
   font-size: 0.72rem;
   cursor: pointer;
@@ -535,13 +765,13 @@ body.is-pane-resizing * {
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--muted);
-  background: #f9fafb;
+  background: var(--surface-sunken);
   position: sticky;
   top: 0;
 }
 
 .data-table tr[data-kind="router"] td {
-  background: rgba(194, 65, 12, 0.04);
+  background: var(--router-tint);
 }
 
 .data-table td strong {
@@ -641,7 +871,7 @@ body.is-pane-resizing * {
 
 .or-source-chip {
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--panel);
   color: var(--muted);
   font-size: 0.68rem;
   font-weight: 600;
@@ -657,7 +887,7 @@ body.is-pane-resizing * {
 .or-source-chip.on {
   border-color: var(--brand);
   color: var(--brand-deep);
-  background: rgba(37, 99, 235, 0.06);
+  background: var(--brand-tint-soft);
 }
 
 .or-model-groups {
@@ -699,19 +929,19 @@ body.is-pane-resizing * {
   width: 100%;
   text-align: left;
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--panel);
   padding: 0.55rem 0.6rem;
   cursor: pointer;
   color: var(--ink);
 }
 
 .or-model-card:hover:not(:disabled) {
-  background: #f8fafc;
+  background: var(--surface-sunken);
 }
 
 .or-model-card.on {
-  border-color: rgba(15, 118, 110, 0.5);
-  background: rgba(15, 118, 110, 0.06);
+  border-color: var(--accent-line);
+  background: var(--accent-tint);
 }
 
 .or-model-card.browse-only {
@@ -738,7 +968,7 @@ body.is-pane-resizing * {
   align-items: center;
   justify-content: center;
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--panel);
   font-size: 0.68rem;
   font-weight: 700;
   color: var(--brand-deep);
@@ -772,15 +1002,15 @@ body.is-pane-resizing * {
 
 .or-select-mark.checked {
   color: var(--brand-deep);
-  border-color: rgba(15, 118, 110, 0.4);
-  background: rgba(15, 118, 110, 0.1);
+  border-color: var(--accent-line);
+  background: var(--accent-tint-strong);
 }
 
 .or-browse-mark {
   font-size: 0.62rem;
   font-weight: 600;
   color: var(--warn);
-  border: 1px solid rgba(161, 98, 7, 0.25);
+  border: 1px solid var(--warn-line-soft);
   padding: 0.12rem 0.3rem;
 }
 
@@ -858,7 +1088,7 @@ body.is-pane-resizing * {
   appearance: none;
   border: 0;
   background: transparent;
-  color: #94a3b8;
+  color: var(--titlebar-muted);
   font: inherit;
   font-size: 0.78rem;
   font-weight: 500;
@@ -875,14 +1105,14 @@ body.is-pane-resizing * {
 
 .mode-switch button:hover:not(.on),
 .mode-switch a:hover:not(.on) {
-  color: #e2e8f0;
-  background: rgba(255, 255, 255, 0.06);
+  color: var(--titlebar-hover-ink);
+  background: var(--titlebar-hairline);
 }
 
 .mode-switch button.on,
 .mode-switch a.on {
-  background: rgba(43, 82, 255, 0.28);
-  color: #fff;
+  background: var(--titlebar-active);
+  color: var(--titlebar-ink-max);
 }
 
 .run-progress {
@@ -905,7 +1135,7 @@ body.is-pane-resizing * {
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 0.45rem 0.55rem;
-  background: #fff;
+  background: var(--panel);
 }
 
 .run-progress-head {
@@ -924,23 +1154,23 @@ body.is-pane-resizing * {
   margin-top: 0.35rem;
   height: 6px;
   border-radius: 999px;
-  background: #e5e7eb;
+  background: var(--line);
   overflow: hidden;
 }
 
 .run-progress-bar {
   height: 100%;
-  background: #14b8a6;
+  background: var(--run);
   transition: width 0.2s ease;
 }
 
 .run-progress-list li[data-status='error'] .run-progress-bar,
 .run-progress-list li[data-status='stopped'] .run-progress-bar {
-  background: #b91c1c;
+  background: var(--danger);
 }
 
 .run-progress-list li[data-status='pending'] .run-progress-bar {
-  background: #94a3b8;
+  background: var(--series-neutral);
 }
 
 .run-progress-detail {
@@ -954,7 +1184,7 @@ body.is-pane-resizing * {
 
 .getting-started {
   border: 1px solid var(--line);
-  background: #f8fafc;
+  background: var(--surface-sunken);
   padding: 0.65rem 0.7rem;
   display: flex;
   flex-direction: column;
@@ -984,7 +1214,7 @@ body.is-pane-resizing * {
 
 .getting-started-dismiss {
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--panel);
   height: 1.6rem;
   padding: 0 0.45rem;
   font-size: 0.7rem;
@@ -998,9 +1228,9 @@ body.is-pane-resizing * {
   padding: 0.4rem 0.5rem;
   font-size: 0.72rem;
   line-height: 1.4;
-  background: #fffbeb;
+  background: var(--warn-tint);
   color: var(--warn);
-  border: 1px solid #fde68a;
+  border: 1px solid var(--warn-line);
 }
 
 .getting-started-steps {
@@ -1030,12 +1260,12 @@ body.is-pane-resizing * {
   font-size: 0.65rem;
   font-weight: 700;
   color: var(--muted);
-  background: #fff;
+  background: var(--panel);
 }
 
 .getting-started-steps li[data-done='1'] .getting-started-n {
   border-color: var(--ok);
-  background: rgba(4, 120, 87, 0.1);
+  background: var(--ok-tint-soft);
   color: var(--ok);
 }
 
@@ -1069,17 +1299,17 @@ body.is-pane-resizing * {
 }
 
 .getting-started-primary {
-  background: var(--brand);
+  background: var(--brand-solid);
   border-color: var(--brand);
-  color: #fff;
+  color: var(--on-solid);
 }
 
 .getting-started-primary:hover {
-  background: var(--brand-deep);
+  background: var(--brand-solid-hover);
 }
 
 .getting-started-secondary {
-  background: #fff;
+  background: var(--panel);
   color: var(--ink);
 }
 
@@ -1155,20 +1385,20 @@ body.is-pane-resizing * {
   font-weight: 700;
   padding: 0.25rem 0.5rem;
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--panel);
   color: var(--muted);
 }
 
 .evolve-glance-status[data-tone='ok'] {
   color: var(--ok);
-  border-color: #a7f3d0;
-  background: #ecfdf5;
+  border-color: var(--ok-line);
+  background: var(--ok-tint);
 }
 
 .evolve-glance-status[data-tone='warn'] {
   color: var(--warn);
-  border-color: #fde68a;
-  background: #fffbeb;
+  border-color: var(--warn-line);
+  background: var(--warn-tint);
 }
 
 .evolve-glance-stats {
@@ -1179,7 +1409,7 @@ body.is-pane-resizing * {
 
 .evolve-glance-stats > div {
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--panel);
   padding: 0.4rem 0.5rem;
   min-width: 0;
 }
@@ -1225,7 +1455,7 @@ body.is-pane-resizing * {
   min-height: 5.5rem;
   padding: 0.45rem 0.4rem 0.35rem;
   border: 1px solid var(--line);
-  background: #f8fafc;
+  background: var(--surface-sunken);
   overflow-x: auto;
 }
 
@@ -1251,11 +1481,11 @@ body.is-pane-resizing * {
   width: 70%;
   min-height: 4px;
   border-radius: 2px 2px 0 0;
-  background: #94a3b8;
+  background: var(--series-neutral);
 }
 
 .evolve-runway-cell[data-feasible='1'] .evolve-runway-bar {
-  background: #1d4ed8;
+  background: var(--feasible);
 }
 
 .evolve-runway-cell[data-best='1'] .evolve-runway-bar {
@@ -1281,7 +1511,7 @@ body.is-pane-resizing * {
 
 .evolve-view-switch button {
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--panel);
   height: 1.7rem;
   padding: 0 0.55rem;
   font-size: 0.72rem;
@@ -1291,7 +1521,7 @@ body.is-pane-resizing * {
 
 .evolve-view-switch button.on {
   border-color: var(--brand);
-  background: rgba(15, 118, 110, 0.08);
+  background: var(--accent-tint);
   color: var(--brand-deep);
   font-weight: 600;
 }
@@ -1305,7 +1535,7 @@ body.is-pane-resizing * {
 
 .evolve-chart-read {
   border: 1px solid var(--line);
-  background: #f8fafc;
+  background: var(--surface-sunken);
   padding: 0.5rem 0.6rem;
 }
 
@@ -1358,7 +1588,7 @@ body.is-pane-resizing * {
   width: 0.7rem;
   height: 0.7rem;
   border-radius: 999px;
-  background: #94a3b8;
+  background: var(--series-neutral);
   flex: none;
 }
 
@@ -1367,15 +1597,15 @@ body.is-pane-resizing * {
 }
 
 .evolve-swatch[data-tone='seed'] {
-  background: #c2410c;
+  background: var(--series-seed);
 }
 
 .evolve-swatch[data-tone='feasible'] {
-  background: #1d4ed8;
+  background: var(--feasible);
 }
 
 .evolve-swatch[data-tone='infeasible'] {
-  background: #94a3b8;
+  background: var(--series-neutral);
 }
 
 .evolve-swatch[data-tone='line'] {
@@ -1389,13 +1619,13 @@ body.is-pane-resizing * {
   height: 0;
   width: 0.9rem;
   border-radius: 0;
-  border-top: 2px dashed #a16207;
+  border-top: 2px dashed var(--warn);
   background: transparent;
 }
 
 .evolve-chart-tip {
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--panel);
   padding: 0.45rem 0.55rem;
   font-size: 0.72rem;
   color: var(--muted);
@@ -1609,9 +1839,12 @@ body.is-pane-resizing * {
   gap: 6px;
 }
 .deploy-op-btn.is-primary {
-  background: var(--brand);
-  border-color: var(--brand);
-  color: #fff;
+  background: var(--brand-solid);
+  border-color: var(--brand-solid);
+  color: var(--on-solid);
+}
+.deploy-op-btn.is-primary:hover:not(:disabled) {
+  background: var(--brand-solid-hover);
 }
 .deploy-facts {
   margin: 0;
@@ -1652,7 +1885,7 @@ body.is-pane-resizing * {
   border: 1px solid var(--line);
   border-radius: 0;
   font-size: 13px;
-  background: #fff;
+  background: var(--panel);
 }
 .deploy-hf-link {
   font-size: 11px;
@@ -1676,7 +1909,7 @@ body.is-pane-resizing * {
   border-radius: 0;
   font-size: 13px;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  background: #fff;
+  background: var(--panel);
 }
 .deploy-hf-input:focus {
   outline: none;
@@ -1691,15 +1924,20 @@ body.is-pane-resizing * {
 .deploy-op-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
-  padding: 7px 14px;
-  border-radius: 0;
+  height: 32px;
+  padding: 0 14px;
+  border-radius: 8px;
   border: 1px solid var(--brand);
   color: var(--brand-deep);
-  background: color-mix(in srgb, var(--brand) 8%, #fff);
+  background: color-mix(in srgb, var(--brand) 8%, var(--panel));
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
+}
+.deploy-op-btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--brand) 16%, var(--panel));
 }
 .deploy-op-btn:disabled {
   opacity: 0.5;
@@ -1741,7 +1979,7 @@ body.is-pane-resizing * {
 }
 .deploy-terminal-surface {
   height: 320px;
-  background: #0b0f14;
+  background: var(--terminal-bg);
   border-radius: 0;
   overflow: hidden;
   position: relative;
@@ -1762,40 +2000,387 @@ body.is-pane-resizing * {
 .deploy-terminal-surface .xterm-viewport {
   overflow-y: auto;
   scrollbar-width: thin;
-  scrollbar-color: #3a4658 transparent;
+  scrollbar-color: var(--terminal-scroll) transparent;
 }
 .deploy-terminal-surface .xterm-viewport::-webkit-scrollbar {
   width: 10px;
 }
 .deploy-terminal-surface .xterm-viewport::-webkit-scrollbar-thumb {
-  background: #3a4658;
+  background: var(--terminal-scroll);
   border-radius: 0;
 }
 
-/* ---- Settings ---- */
-.settings-main {
+/* ---- Evolve: racing several models ---- */
+
+.arena-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 2px 0 4px;
+}
+
+.arena-add {
+  display: flex;
+  gap: 6px;
+}
+
+.arena-add select {
   flex: 1;
-  width: 100%;
-  max-width: 880px;
-  margin: 0 auto;
-  padding: 24px 20px 48px;
+  min-width: 0;
+}
+
+.arena-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  line-height: 1.6;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--line-strong);
+  background: var(--panel);
+  color: var(--muted);
+  cursor: pointer;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.arena-chip:hover:not(:disabled) {
+  border-color: var(--brand);
+  color: var(--ink);
+}
+
+.arena-chip.on {
+  background: var(--brand-tint);
+  border-color: var(--brand);
+  color: var(--brand-ink);
+  font-weight: 600;
+}
+
+.arena-chip:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.arena {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 8px;
+  margin-bottom: 12px;
 }
+
+.arena-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.arena-row {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel);
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+/* The winner is the one the reader is looking for, so it gets the accent. */
+.arena-row:first-child.is-done {
+  border-color: var(--brand);
+  background: var(--brand-tint-soft);
+}
+
+.arena-row-top {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.arena-rank {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+  min-width: 1ch;
+}
+
+.arena-name {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.arena-name strong {
+  font-size: 12px;
+}
+
+.arena-name code {
+  font-size: 10px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.arena-test {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  line-height: 1.2;
+}
+
+.arena-test strong {
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+
+.arena-test span {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.arena-row-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  font-size: 11px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.arena-dims {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px 4px;
+}
+
+.arena-dims span {
+  font-size: 10px;
+  color: var(--muted);
+  background: var(--surface-sunken);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 1px 7px;
+}
+
+.arena-dims strong {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.arena-head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.arena-sub {
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.arena-error {
+  color: var(--danger);
+}
+
+.arena-status {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--muted);
+}
+
+.arena-status.is-done {
+  color: var(--ok);
+}
+
+.arena-status.is-failed {
+  color: var(--danger);
+}
+
+.arena-status.is-running {
+  color: var(--brand);
+}
+
+.arena-prompt summary {
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--muted);
+  padding: 3px 0;
+}
+
+.arena-prompt pre {
+  margin: 4px 0 0;
+  padding: 8px 10px;
+  background: var(--surface-sunken);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 11px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-x: auto;
+}
+
+/* ---- Evolve: rubric breakdown ---- */
+
+.rubric-breakdown {
+  margin: 0.5rem 0 0.65rem;
+}
+
+.rubric-breakdown .pane-label {
+  margin-bottom: 0.3rem;
+}
+
+/* Direction only. The size of the move is in the number beside it, and colouring by
+   magnitude as well would imply a threshold nobody has established. */
+.delta-up {
+  color: var(--ok);
+  font-variant-numeric: tabular-nums;
+}
+
+.delta-down {
+  color: var(--danger);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- Settings ----
+
+   Two panes, matching Deploy: a list of sections on the left, the chosen one on the
+   right. It was one long scroll of four stacked cards, which meant the GPU host fields
+   were below the fold behind six provider keys nobody was looking for, and the reader
+   had no way to see what the page contained without scrolling all of it.
+   ---- */
+
+.settings-layout {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
+  align-items: start;
+  gap: 0;
+}
+
+.settings-nav {
+  min-height: 0;
+  align-self: stretch;
+  background: var(--panel);
+  border-right: 1px solid var(--line);
+  padding: 20px 16px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.settings-nav-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.settings-nav-item {
+  width: 100%;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.settings-nav-item:hover {
+  background: var(--surface-hover);
+}
+
+.settings-nav-item.on {
+  background: var(--brand-tint);
+  border-color: var(--brand);
+}
+
+.settings-nav-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--ink);
+}
+
+.settings-nav-sub {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.settings-nav-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--brand);
+}
+
+.settings-pane {
+  min-width: 0;
+  padding: 22px 24px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 880px;
+}
+
+.settings-pane-head h2 {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 0 0 4px;
+}
+
+.settings-pane-head p {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+  margin: 0;
+  max-width: 68ch;
+}
+
+@media (max-width: 860px) {
+  .settings-layout {
+    grid-template-columns: 1fr;
+  }
+  .settings-nav {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .settings-nav-list {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}
+
 .settings-h1 {
   font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  font-size: 26px;
+  font-size: 20px;
   font-weight: 800;
   letter-spacing: -0.03em;
   margin: 0 0 6px;
 }
 .settings-lede {
   color: var(--muted);
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1.6;
   margin: 0;
-  max-width: 68ch;
 }
 .settings-note {
   color: var(--muted);
@@ -1820,26 +2405,20 @@ body.is-pane-resizing * {
   font-size: 13px;
   margin: 0;
 }
-.settings-card {
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  padding: 16px;
-}
-.settings-card-head h2 {
-  font-size: 15px;
-  font-weight: 700;
-  margin: 0 0 4px;
-}
-.settings-card-head p {
-  color: var(--muted);
-  font-size: 12px;
-  margin: 0 0 14px;
-}
 .settings-rows {
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+/* The fields get a card of their own so the pane does not read as a form floating on the
+   page background. The nav is already a surface; without this the right side is the only
+   part of the app with controls sitting on bare grey. */
+.settings-pane .settings-rows {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 16px;
 }
 .settings-row {
   display: grid;
@@ -1851,12 +2430,12 @@ body.is-pane-resizing * {
   padding: 10px;
   margin: -10px;
   border-radius: 8px;
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--brand, #2b52ff) 35%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--brand, var(--brand)) 35%, transparent);
 }
 .settings-hint-link {
   margin-top: 4px;
   font-size: 12px;
-  color: var(--brand, #2b52ff);
+  color: var(--brand, var(--brand));
 }
 @media (max-width: 720px) {
   .settings-row {
@@ -1890,7 +2469,7 @@ body.is-pane-resizing * {
   letter-spacing: 0.02em;
   text-transform: uppercase;
   color: var(--muted);
-  background: #f1f5f9;
+  background: var(--surface-hover);
   border-radius: 4px;
   padding: 1px 5px;
 }
@@ -1919,7 +2498,7 @@ body.is-pane-resizing * {
   border-radius: 7px;
   font-size: 13px;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  background: #fff;
+  background: var(--panel);
 }
 .settings-input:focus {
   outline: none;
@@ -1928,30 +2507,16 @@ body.is-pane-resizing * {
 }
 .settings-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
   align-items: center;
-  padding: 12px 0 0;
-}
-.settings-save {
-  padding: 9px 18px;
-  border-radius: 8px;
-  border: 1px solid var(--brand);
-  background: var(--brand);
-  color: #fff;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-}
-.settings-save:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
 }
 
 /* ---- File picker ---- */
 .picker-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(14, 22, 51, 0.5);
+  background: var(--scrim);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1967,7 +2532,7 @@ body.is-pane-resizing * {
   border-radius: 12px;
   border: 1px solid var(--line);
   padding: 14px;
-  box-shadow: 0 20px 60px rgba(14, 22, 51, 0.25);
+  box-shadow: var(--shadow-modal);
 }
 .picker-head {
   display: flex;
@@ -1989,7 +2554,7 @@ body.is-pane-resizing * {
   border-radius: 7px;
   font-size: 13px;
   font-family: inherit;
-  background: #fff;
+  background: var(--panel);
 }
 .picker-search-input:focus {
   outline: none;
@@ -2008,7 +2573,7 @@ body.is-pane-resizing * {
   padding: 3px 9px;
   border-radius: 6px;
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--panel);
   cursor: pointer;
 }
 .picker-crumb:disabled {
@@ -2123,7 +2688,7 @@ body.is-pane-resizing * {
 .cmp-card {
   border: 1px solid var(--line);
   border-radius: 12px;
-  background: #fff;
+  background: var(--panel);
   padding: 0.85rem 0.95rem;
   display: flex;
   flex-direction: column;
@@ -2168,7 +2733,7 @@ body.is-pane-resizing * {
   gap: 0.1rem;
   border: 1px solid var(--line);
   border-radius: 10px;
-  background: #fff;
+  background: var(--panel);
   padding: 0.45rem 0.75rem;
   cursor: pointer;
   min-width: 8rem;
@@ -2214,8 +2779,8 @@ body.is-pane-resizing * {
 }
 
 .cmp-seg button.on {
-  background: var(--brand);
-  color: #fff;
+  background: var(--brand-solid);
+  color: var(--on-solid);
 }
 
 .cmp-prompt-toolbar {
@@ -2269,9 +2834,26 @@ body.is-pane-resizing * {
 
 .cmp-actions {
   display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+/* The Setup stage's primary action, which otherwise floats loose under the two cards
+   with nothing to sit on. Given the same panel as the cards above it, it reads as the
+   end of the form rather than a stray control. */
+.cmp-actions-bar {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px 14px;
+  justify-content: flex-end;
+}
+
+/* Reason first, action last: the button is what the eye is travelling towards. */
+.cmp-actions-bar .cta-disabled-hint {
+  order: -1;
+  margin: 0 auto 0 0;
 }
 
 .cmp-run-head {
@@ -2330,7 +2912,7 @@ body.is-pane-resizing * {
 .cmp-answer {
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #f8fafc;
+  background: var(--surface-sunken);
   padding: 0.45rem 0.55rem;
 }
 
@@ -2382,7 +2964,7 @@ body.is-pane-resizing * {
   overflow-wrap: anywhere;
   font-size: 0.78rem;
   line-height: 1.5;
-  background: #f8fafc;
+  background: var(--surface-sunken);
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 0.55rem 0.65rem;
@@ -2408,7 +2990,7 @@ body.is-pane-resizing * {
   gap: 0.5rem;
   border: 1px solid var(--line);
   border-radius: 10px;
-  background: #fff;
+  background: var(--panel);
   padding: 0.6rem 0.7rem;
   min-width: 0;
 }
@@ -2427,8 +3009,8 @@ body.is-pane-resizing * {
   width: 1.4rem;
   height: 1.4rem;
   border-radius: 999px;
-  background: var(--brand);
-  color: #fff;
+  background: var(--brand-solid);
+  color: var(--on-solid);
   font-size: 0.72rem;
   font-weight: 700;
 }
@@ -2464,13 +3046,13 @@ body.is-pane-resizing * {
 .vote-card-error {
   margin: 0;
   font-size: 0.75rem;
-  color: #b91c1c;
+  color: var(--danger);
 }
 
 .vote-card-pick {
   border: 1px solid var(--brand);
-  background: var(--brand);
-  color: #fff;
+  background: var(--brand-solid);
+  color: var(--on-solid);
   border-radius: 8px;
   padding: 0.4rem 0.75rem;
   font-size: 0.75rem;
@@ -2531,4 +3113,461 @@ body.is-pane-resizing * {
   font-size: 0.7rem;
   color: var(--muted);
   line-height: 1.4;
+}
+
+/* ---- Generate ---- */
+
+.gen-runtime {
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--titlebar-ok);
+  padding: 0 0.4rem;
+}
+
+.gen-runtime.off {
+  color: var(--titlebar-bad);
+}
+
+.gen-notice p {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.gen-notice-detail {
+  color: var(--muted);
+}
+
+.gen-notice-error {
+  border-color: var(--danger-line);
+  background: var(--danger-tint);
+}
+
+.gen-code {
+  align-self: flex-start;
+  font-size: 0.72rem;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0.2rem 0.45rem;
+}
+
+.gen-split {
+  display: grid;
+  grid-template-columns: minmax(260px, 22rem) 1fr;
+  gap: 0.85rem;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .gen-split {
+    grid-template-columns: 1fr;
+  }
+}
+
+.gen-empty,
+.gen-desc {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.gen-template-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.gen-template,
+.gen-study-option {
+  width: 100%;
+  text-align: left;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  padding: 0.5rem 0.6rem;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.gen-template:hover,
+.gen-study-option:hover {
+  border-color: var(--brand);
+}
+
+.gen-template.on,
+.gen-study-option.on {
+  border-color: var(--brand);
+  background: var(--brand-tint);
+}
+
+/* Title first, id last. The id is what you pass to the CLI so it has to stay visible,
+   but it is not what anyone scans a list of three families by. */
+.gen-template-title {
+  font-size: 0.85rem;
+  font-weight: 650;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+
+.gen-template-meta {
+  font-size: 0.68rem;
+  color: var(--muted);
+}
+
+.gen-template-id {
+  font-size: 0.66rem;
+  color: var(--muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.gen-detail-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.gen-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.gen-subtitle {
+  margin: 0.15rem 0 0;
+  font-size: 0.7rem;
+  color: var(--muted);
+}
+
+/* ---- Generate: getting the output out of the page ---- */
+
+.gen-export {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface-sunken);
+  padding: 0.7rem 0.8rem;
+  margin: 0.75rem 0;
+}
+
+.cmp-card.gen-export {
+  background: var(--panel);
+  margin: 0;
+}
+
+.gen-export-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.gen-export-title {
+  font-size: 0.78rem;
+  font-weight: 650;
+}
+
+.gen-export-note {
+  font-size: 0.7rem;
+  color: var(--ok);
+}
+
+.gen-export-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.gen-export-hint {
+  margin: 0;
+  font-size: 0.7rem;
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+.gen-locale-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem;
+}
+
+.gen-chip {
+  font-size: 0.6rem;
+  line-height: 1.6;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  white-space: nowrap;
+  /* These sit inside column flex containers, where the default stretch would draw a chip
+     the full width of the card. */
+  align-self: flex-start;
+}
+
+.gen-chip-ok {
+  background: var(--ok-tint);
+  border-color: var(--ok-line);
+  color: var(--ok);
+}
+
+.gen-chip-warn {
+  background: var(--warn-tint);
+  border-color: var(--warn-line);
+  color: var(--warn);
+}
+
+/* Stubs read as a warning on purpose: an untranslated locale produces a full table of
+   numbers that all describe English, and nothing downstream can tell. */
+.gen-chip-stub {
+  background: var(--danger-tint);
+  border-color: var(--danger-line);
+  color: var(--danger);
+}
+
+.gen-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.gen-locale-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.gen-locale {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel);
+  padding: 0.2rem 0.5rem;
+  font-size: 0.72rem;
+  cursor: pointer;
+}
+
+.gen-locale.on {
+  border-color: var(--brand);
+  background: var(--brand-tint);
+  color: var(--brand-ink);
+}
+
+.gen-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.gen-count input {
+  width: 4rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0.2rem 0.35rem;
+  font-size: 0.75rem;
+}
+
+.gen-warn,
+.gen-warn-inline,
+.gen-error {
+  margin: 0;
+  font-size: 0.74rem;
+  line-height: 1.5;
+}
+
+.gen-warn {
+  color: var(--warn);
+  background: var(--warn-tint);
+  border: 1px solid var(--warn-line);
+  border-radius: 8px;
+  padding: 0.45rem 0.6rem;
+}
+
+.gen-warn-inline {
+  color: var(--warn);
+}
+
+.gen-error {
+  color: var(--danger);
+}
+
+.gen-instances {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.gen-instance {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.gen-instance.on {
+  border-color: var(--brand);
+}
+
+.gen-instance-head {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  background: var(--bg);
+  border: 0;
+  padding: 0.35rem 0.6rem;
+  cursor: pointer;
+  font-size: 0.72rem;
+}
+
+.gen-instance-n {
+  font-weight: 600;
+}
+
+.gen-seed {
+  font-size: 0.65rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.gen-instance-body {
+  padding: 0.5rem 0.6rem 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.gen-prompt,
+.gen-json {
+  margin: 0;
+  font-size: 0.7rem;
+  line-height: 1.5;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0.45rem 0.55rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 18rem;
+  overflow: auto;
+}
+
+.gen-study {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.gen-study-picker {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+  gap: 0.4rem;
+}
+
+.gen-provenance {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.74rem;
+}
+
+.gen-provenance li {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+/* ---- Theme switch ---- */
+
+.app-theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--titlebar-muted);
+  cursor: pointer;
+  flex: none;
+}
+
+.app-theme-toggle:hover {
+  color: var(--titlebar-hover-ink);
+  background: var(--titlebar-hover);
+}
+
+/* The titlebar is dark in both themes, but `color-scheme` follows the page, so in light
+   mode the browser draws its default ring dark-on-dark and there is nothing to see.
+   Named tokens instead, since this control has to be reachable by keyboard. */
+.app-theme-toggle:focus-visible {
+  outline: 2px solid var(--titlebar-accent);
+  outline-offset: 2px;
+  color: var(--titlebar-ink-max);
+}
+
+.theme-switch {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.theme-switch-options {
+  display: inline-flex;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+}
+
+.theme-switch-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--ink);
+  padding: 0.3rem 0.6rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.theme-switch-option:hover:not(.on) {
+  background: var(--surface-hover);
+}
+
+.theme-switch-option:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+.theme-switch-option.on {
+  border-color: var(--brand);
+  background: var(--brand-tint);
+  color: var(--brand-ink);
+  font-weight: 600;
+}
+
+.theme-switch-note {
+  margin: 0;
+  font-size: 0.7rem;
+  color: var(--muted);
 }

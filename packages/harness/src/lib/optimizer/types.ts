@@ -82,6 +82,13 @@ export interface EvalBatch {
   abstentionRate?: number;
   /** Tokens/word by language hint (measured when possible) */
   fertilityByLanguage?: Record<string, FertilitySummary>;
+  /**
+   * Mean score per rubric dimension across the batch, in [0,1].
+   *
+   * Only for `llm_judge` runs whose rubric names dimensions. This is what turns "the
+   * prompt scores 0.54" into "accuracy is fine, calibration is what is dragging".
+   */
+  dimensions?: Record<string, number>;
   /** Per-example outcomes */
   outcomes: Array<{
     exampleId: string;
@@ -95,6 +102,8 @@ export interface EvalBatch {
     demosFitted?: number;
     framesFitted?: number;
     abstained?: boolean;
+    /** Per-dimension scores from the judge, in [0,1]. */
+    dimensions?: Record<string, number>;
   }>;
   /** Free-form traces for reflection */
   traces?: string[];

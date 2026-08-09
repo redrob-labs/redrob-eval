@@ -1,5 +1,5 @@
 {
-  "spec_version": "redrob-verifiable-task/v1",
+  "spec_version": "redrob-verifiable-task/v2",
   "description": "Frozen canonical JSON vectors. Both implementations serialise value and must produce canonical byte for byte, and the same SHA-256 over its UTF-8 encoding. Most of these exist because Python's repr and ECMAScript's Number::toString present the same digits differently.",
   "cases": [
     {

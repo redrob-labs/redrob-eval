@@ -1,5 +1,5 @@
 {
-  "spec_version": "redrob-verifiable-task/v1",
+  "spec_version": "redrob-verifiable-task/v2",
   "verifier_type": "set_equality",
   "description": "Unordered comparison. Parsing, deduplication policy and the element comparators, each of which has an obvious wrong implementation that passes the easy cases.",
   "cases": [

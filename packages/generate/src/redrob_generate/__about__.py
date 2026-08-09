@@ -7,7 +7,7 @@ generated set. That coupling is deliberate: it is what lets a third party recomp
 the seeds of a published set from nothing but the version string and the template id.
 """
 
-SPEC_VERSION = "redrob-verifiable-task/v1"
+SPEC_VERSION = "redrob-verifiable-task/v2"
 GENERATOR_NAME = "redrob-generate"
 GENERATOR_VERSION = "0.1.0"
 TOOL_NAME = "redrob-eval"

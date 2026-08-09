@@ -1,5 +1,5 @@
 {
-  "spec_version": "redrob-verifiable-task/v1",
+  "spec_version": "redrob-verifiable-task/v2",
   "verifier_type": "format_constraint",
   "description": "Shape checks only. Length is in code points, line counting has a specified answer for the trailing-newline case, and the order in which checks run determines which code is reported.",
   "cases": [

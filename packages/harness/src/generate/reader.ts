@@ -18,7 +18,7 @@ import type { Instance, Manifest, Template } from './spec-types.generated';
 
 export const INSTANCES_FILENAME = 'instances.jsonl';
 export const MANIFEST_FILENAME = 'manifest.json';
-export const SPEC_VERSION = 'redrob-verifiable-task/v1';
+export const SPEC_VERSION = 'redrob-verifiable-task/v2';
 
 export class GeneratedSetError extends Error {
   constructor(message: string) {
@@ -77,7 +77,13 @@ export async function readGeneratedSet(directory: string): Promise<GeneratedSet>
 }
 
 /** The only fields a locale layer may set, per spec §1.2. */
-export const LOCALE_ONLY_FIELDS = ['locale', 'description', 'prompt', 'notes'] as const;
+export const LOCALE_ONLY_FIELDS = [
+  'locale',
+  'translation_status',
+  'description',
+  'prompt',
+  'notes',
+] as const;
 
 /**
  * Overlay a locale layer onto the locale-neutral core.

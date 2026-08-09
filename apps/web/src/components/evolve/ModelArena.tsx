@@ -6,25 +6,24 @@ function pct(v: number | null | undefined): string {
   return v == null ? '—' : `${(v * 100).toFixed(1)}%`;
 }
 
-function signed(v: number | null): string {
-  if (v == null) return '—';
-  return `${v >= 0 ? '+' : ''}${(v * 100).toFixed(1)}`;
-}
-
 /**
  * Which model to ship the evolved prompt on.
  *
- * Ranked by held-out test rather than by improvement: improvement ranks by how bad the
+ * Rows rather than a table: with a baseline, an evolved score, a delta, a test score,
+ * tokens and one column per rubric dimension, a table needs a dozen columns and the
+ * results pane is a third of the window. Everything below is legible at that width and
+ * does not get wider when the pane does.
+ *
+ * Ranked by held-out test rather than by improvement — improvement ranks by how bad the
  * model started, and the model that gains most is routinely not the one to ship. The
- * evolved prompt sits under each row because the answer is a pair — this model, with
- * this prompt — and showing the model alone invites someone to take the name and leave
- * the reason behind.
+ * evolved prompt sits under each row because the answer is a pair, this model with this
+ * prompt, and showing the model alone invites someone to take the name and leave the
+ * reason behind.
  */
 export function ModelArena({ entries }: { entries: ArenaEntry[] }) {
   if (entries.length === 0) return null;
 
   const ranked = rankEntries(entries);
-  const dimensionNames = [...new Set(ranked.flatMap((e) => Object.keys(e.dimensions ?? {})))];
   const finished = ranked.filter((e) => e.status === 'done').length;
 
   return (
@@ -37,82 +36,66 @@ export function ModelArena({ entries }: { entries: ArenaEntry[] }) {
         </span>
       </div>
 
-      <div className="table-scroll">
-        <table className="data-table text-xs">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Model</th>
-              <th>Baseline</th>
-              <th>Evolved</th>
-              <th>Δ pts</th>
-              <th>Test</th>
-              <th>Tokens</th>
-              {dimensionNames.map((d) => (
-                <th key={d} title={`${d}, out of 10, for the evolved prompt`}>
-                  {d.slice(0, 9)}
-                </th>
-              ))}
-              <th>Progress</th>
-            </tr>
-          </thead>
-          <tbody>
-            {ranked.map((e, i) => {
-              const d = delta(e);
-              return (
-                <tr key={e.modelId}>
-                  <td>{e.status === 'done' ? i + 1 : '·'}</td>
-                  <td>
-                    <strong>{e.label}</strong>
-                    <div className="arena-sub">
-                      <code>{e.modelId}</code>
-                      {e.error ? <span className="arena-error"> · {e.error}</span> : null}
-                    </div>
-                  </td>
-                  <td>{pct(e.baselineQuality)}</td>
-                  <td>{pct(e.evolvedQuality)}</td>
-                  <td
-                    className={d == null || d === 0 ? undefined : d > 0 ? 'delta-up' : 'delta-down'}
-                  >
-                    {signed(d)}
-                  </td>
-                  <td>{pct(e.testQuality)}</td>
-                  <td>
-                    {e.evolvedTokens ?? '—'}
-                    {e.baselineTokens != null && e.evolvedTokens != null ? (
-                      <span className="arena-sub">
-                        {' '}
-                        ({e.evolvedTokens - e.baselineTokens >= 0 ? '+' : ''}
-                        {e.evolvedTokens - e.baselineTokens})
-                      </span>
-                    ) : null}
-                  </td>
-                  {dimensionNames.map((name) => (
-                    <td key={name}>
-                      {e.dimensions?.[name] == null ? '—' : (e.dimensions[name] * 10).toFixed(1)}
-                    </td>
-                  ))}
-                  <td>
-                    <span className={`arena-status is-${e.status}`}>{e.status}</span>
-                    {e.status === 'running' ? ` ${e.rollouts}/${e.maxRollouts}` : ''}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+      <ol className="arena-list">
+        {ranked.map((e, i) => {
+          const d = delta(e);
+          const dims = Object.entries(e.dimensions ?? {});
+          return (
+            <li key={e.modelId} className={`arena-row is-${e.status}`}>
+              <div className="arena-row-top">
+                <span className="arena-rank">{e.status === 'done' ? i + 1 : '·'}</span>
+                <span className="arena-name">
+                  <strong>{e.label}</strong>
+                  <code>{e.modelId}</code>
+                </span>
+                <span className="arena-test">
+                  <strong>{pct(e.testQuality)}</strong>
+                  <span>test</span>
+                </span>
+              </div>
 
-      {ranked
-        .filter((e) => e.instruction)
-        .map((e) => (
-          <details key={e.modelId} className="arena-prompt">
-            <summary>
-              Evolved prompt for <strong>{e.label}</strong>
-            </summary>
-            <pre>{e.instruction}</pre>
-          </details>
-        ))}
+              <div className="arena-row-stats">
+                {/* Labelled `val`, because the big number beside it is test and two
+                    unexplained percentages that disagree read as a bug rather than as
+                    the difference between the split fitted to and the one held out. */}
+                <span title="Validation: the split this run was fitted against">
+                  val {pct(e.baselineQuality)} → {pct(e.evolvedQuality)}
+                </span>
+                {d != null ? (
+                  <span className={d > 0 ? 'delta-up' : d < 0 ? 'delta-down' : undefined}>
+                    {d >= 0 ? '+' : ''}
+                    {(d * 100).toFixed(1)} pts
+                  </span>
+                ) : null}
+                {e.evolvedTokens != null ? <span>{e.evolvedTokens} tokens</span> : null}
+                <span className={`arena-status is-${e.status}`}>
+                  {e.status}
+                  {e.status === 'running' ? ` ${e.rollouts}/${e.maxRollouts}` : ''}
+                </span>
+              </div>
+
+              {e.error ? <div className="arena-error">{e.error}</div> : null}
+
+              {dims.length > 0 ? (
+                <div className="arena-dims">
+                  {dims.map(([name, value]) => (
+                    <span key={name} title={`${name}, out of 10`}>
+                      {name} <strong>{(value * 10).toFixed(1)}</strong>
+                    </span>
+                  ))}
+                </div>
+              ) : null}
+
+              {e.instruction ? (
+                <details className="arena-prompt">
+                  <summary>The prompt it won with</summary>
+                  <pre>{e.instruction}</pre>
+                </details>
+              ) : null}
+            </li>
+          );
+        })}
+      </ol>
     </section>
   );
 }

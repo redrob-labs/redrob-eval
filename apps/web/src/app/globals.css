@@ -2010,6 +2010,28 @@ body.is-pane-resizing * {
   border-radius: 0;
 }
 
+/* ---- Evolve: rubric breakdown ---- */
+
+.rubric-breakdown {
+  margin: 0.5rem 0 0.65rem;
+}
+
+.rubric-breakdown .pane-label {
+  margin-bottom: 0.3rem;
+}
+
+/* Direction only. The size of the move is in the number beside it, and colouring by
+   magnitude as well would imply a threshold nobody has established. */
+.delta-up {
+  color: var(--ok);
+  font-variant-numeric: tabular-nums;
+}
+
+.delta-down {
+  color: var(--danger);
+  font-variant-numeric: tabular-nums;
+}
+
 /* ---- Settings ----
 
    Two panes, matching Deploy: a list of sections on the left, the chosen one on the

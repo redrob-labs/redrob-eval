@@ -62,6 +62,70 @@ function isAbortError(e: unknown): boolean {
     : e instanceof Error && e.name === 'AbortError';
 }
 
+/**
+ * Where the rubric moved, dimension by dimension.
+ *
+ * A single quality number says the prompt got better without saying what got better, and
+ * a rubric naming five criteria was written by someone who wanted to know which. The
+ * judge scores each out of ten, so that is how they are shown; the overall figure above
+ * is the rubric's own combination of them.
+ *
+ * Renders nothing when the rubric named no dimensions, which is every catalog run.
+ */
+function RubricBreakdown({
+  baseline,
+  evolved,
+}: {
+  baseline?: Record<string, number>;
+  evolved?: Record<string, number>;
+}) {
+  const names = [...new Set([...Object.keys(baseline ?? {}), ...Object.keys(evolved ?? {})])];
+  if (names.length === 0) return null;
+
+  const out = (v: number | undefined) => (v == null ? '—' : (v * 10).toFixed(1));
+
+  return (
+    <div className="rubric-breakdown">
+      <div className="pane-label">By rubric dimension (out of 10)</div>
+      <table className="data-table text-xs">
+        <thead>
+          <tr>
+            <th>Dimension</th>
+            <th>Baseline</th>
+            <th>Evolved</th>
+            <th>Δ</th>
+          </tr>
+        </thead>
+        <tbody>
+          {names.map((name) => {
+            const before = baseline?.[name];
+            const after = evolved?.[name];
+            const delta = before != null && after != null ? (after - before) * 10 : null;
+            return (
+              <tr key={name}>
+                <td>{name}</td>
+                <td>{out(before)}</td>
+                <td>{out(after)}</td>
+                <td
+                  className={
+                    delta == null || Math.abs(delta) < 0.05
+                      ? undefined
+                      : delta > 0
+                        ? 'delta-up'
+                        : 'delta-down'
+                  }
+                >
+                  {delta == null ? '—' : `${delta >= 0 ? '+' : ''}${delta.toFixed(1)}`}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 export function EvalApp() {
   const [status, setStatus] = useState<StatusResponse | null>(null);
   const [datasets, setDatasets] = useState<DatasetInfo[]>([]);
@@ -1082,6 +1146,10 @@ export function EvalApp() {
                       ? ` (Δ ${evolveReport.qualityDeltaVal >= 0 ? '+' : ''}${evolveReport.qualityDeltaVal.toFixed(3)})`
                       : ''}
                   </p>
+                  <RubricBreakdown
+                    baseline={evolveReport.baseline.val?.dimensions}
+                    evolved={evolveReport.evolved.val?.dimensions}
+                  />
                   <p className="field-hint">
                     Val tokens {evolveReport.baseline.val?.totalTokens ?? '—'} →{' '}
                     {evolveReport.evolved.val?.totalTokens ?? '—'}

@@ -267,6 +267,7 @@ export async function evaluateCandidate(params: {
 
     let score = 0;
     let feedback: string;
+    let dimensions: Record<string, number> | undefined;
     if (error) {
       feedback = `Provider error: ${error}`;
       score = 0;
@@ -283,6 +284,7 @@ export async function evaluateCandidate(params: {
       });
       score = judged.score;
       feedback = judged.feedback;
+      dimensions = judged.dimensions;
     } else if (metric === 'abstention_rate') {
       const scored = scorePair(metric, ex.gold, prediction);
       score = scored.score;
@@ -322,12 +324,20 @@ export async function evaluateCandidate(params: {
       demosFitted: fitted.demosFitted,
       framesFitted: exampleFramesFitted,
       abstained,
+      dimensions,
     });
 
     traces.push(
       [
         `example=${ex.id}`,
         `score=${score}`,
+        // Named per dimension so reflection can aim at the weak one instead of guessing
+        // which part of the rubric the single number is complaining about.
+        dimensions
+          ? `dimensions=${Object.entries(dimensions)
+              .map(([k, v]) => `${k} ${(v * 10).toFixed(1)}/10`)
+              .join(', ')}`
+          : '',
         `feedback=${feedback}`,
         `demos_fitted=${fitted.demosFitted}/${demosRequested}`,
         framePolicy
@@ -365,6 +375,22 @@ export async function evaluateCandidate(params: {
   const sortedLat = [...latencies].sort((a, b) => a - b);
   const abstentionRate = outcomes.length > 0 ? abstainedCount / outcomes.length : 0;
 
+  // Mean per dimension over the examples that carry one. Averaged over those rather than
+  // over the whole batch: a sample the judge never scored is missing, not zero, and
+  // counting it as zero would make a provider error look like a rubric failure.
+  const dimensionTotals = new Map<string, { sum: number; n: number }>();
+  for (const outcome of outcomes) {
+    for (const [name, value] of Object.entries(outcome.dimensions ?? {})) {
+      const cur = dimensionTotals.get(name) ?? { sum: 0, n: 0 };
+      cur.sum += value;
+      cur.n += 1;
+      dimensionTotals.set(name, cur);
+    }
+  }
+  const dimensionMeans: Record<string, number> = {};
+  for (const [name, { sum, n: count }] of dimensionTotals) dimensionMeans[name] = sum / count;
+  const batchDimensions = Object.keys(dimensionMeans).length ? dimensionMeans : undefined;
+
   const fertilityByLanguage: Record<string, FertilitySummary> = {};
   for (const [lang, agg] of Object.entries(fertilityAgg)) {
     fertilityByLanguage[lang] = {
@@ -391,6 +417,7 @@ export async function evaluateCandidate(params: {
     framesFitted: framePolicy ? framesFitted : undefined,
     abstentionRate,
     fertilityByLanguage,
+    dimensions: batchDimensions,
     outcomes,
     traces,
   };

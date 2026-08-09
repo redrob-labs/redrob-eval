@@ -32,6 +32,38 @@ function parseJsonObject(text: string): Record<string, unknown> | null {
   }
 }
 
+/**
+ * Recover the instruction from a reply that set out to be JSON and was cut off.
+ *
+ * The reflector is asked for `{ lesson, instruction, ... }`, and a good instruction is
+ * long, so the reply is the one most likely to hit the cap — mid-string, leaving no
+ * closing brace for `parseJsonObject` to find. The instruction is nearly always complete
+ * enough to use by then; what is missing is the punctuation after it.
+ *
+ * The capture stops at the first unescaped quote, which is the closing one when the reply
+ * survived and the end of the text when it did not. Re-parsing it as a JSON string is
+ * what turns `\n` back into newlines, and also what rejects a cut that landed mid-escape.
+ */
+function salvageInstruction(text: string): string | null {
+  const match = text.match(/"instruction"\s*:\s*"((?:[^"\\]|\\.)*)/);
+  const body = match?.[1];
+  if (!body || body.trim().length < 40) return null;
+  try {
+    const unescaped = JSON.parse(`"${body}"`) as unknown;
+    return typeof unescaped === 'string' && unescaped.trim() ? unescaped.trim() : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Did the reflector at least try to answer in JSON? */
+function looksLikeJson(text: string): boolean {
+  return /^\s*(?:```|\{)/.test(text);
+}
+
+/** Exposed for the salvage tests; not part of the module's surface. */
+export const __testables = { salvageInstruction, looksLikeJson };
+
 function parseScriptPolicy(v: unknown): ScriptPolicy | null {
   if (typeof v !== 'string') return null;
   return (SCRIPT_POLICIES as string[]).includes(v) ? (v as ScriptPolicy) : null;
@@ -135,7 +167,9 @@ export async function reflectAndMutate(params: {
       params.reflectModel.providerId,
       params.reflectModel.modelId,
       meta,
-      { maxTokens: 900, temperature: 0.4 },
+      // A lesson plus a full replacement instruction does not fit in 900, and the reply
+      // that overflows is the one carrying the improvement.
+      { maxTokens: 1800, temperature: 0.4 },
     );
     const parsed = parseJsonObject(result.text);
     if (parsed) {
@@ -164,9 +198,22 @@ export async function reflectAndMutate(params: {
       }
       const fp = parseFramePolicy(parsed.framePolicy);
       if (fp) framePolicy = fp;
-    } else if (result.text.trim().length > 20) {
-      instruction = result.text.trim().slice(0, 2000);
-      lesson = 'Reflector returned non-JSON; used text as instruction.';
+    } else {
+      // The old fallback pasted the raw reply in as the instruction. When the reply was a
+      // JSON object cut off mid-string — the common case, since the cap lands inside the
+      // longest field — that shipped a ```json fence and a "lesson" key into the prompt
+      // used by every later rollout, and into the evolved prompt the reader copies out.
+      // Seen live: quality still rose, on an instruction wrapped in JSON syntax.
+      const salvaged = salvageInstruction(result.text);
+      if (salvaged) {
+        instruction = salvaged.slice(0, 2000);
+        lesson = 'Reflector reply was cut off; recovered the instruction from the partial JSON.';
+      } else if (!looksLikeJson(result.text) && result.text.trim().length > 20) {
+        instruction = result.text.trim().slice(0, 2000);
+        lesson = 'Reflector answered in prose rather than JSON; used it as the instruction.';
+      } else {
+        lesson = 'Reflector reply was unusable; kept the parent instruction.';
+      }
     }
   } catch {
     lesson = 'Reflector call failed; applied light demo/model/script mutation only.';

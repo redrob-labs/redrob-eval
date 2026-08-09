@@ -26,8 +26,12 @@ export interface CatalogLocale {
 
 export interface CatalogTemplate {
   id: string;
+  /** `id` rendered for a person. See `humanizeId`. */
+  title: string;
   version: string;
   family: string;
+  /** `family` with a capital, for headings. */
+  familyLabel: string;
   /** Path relative to the repository root, which is what the CLI wants. */
   path: string;
   description?: string;
@@ -35,6 +39,26 @@ export interface CatalogTemplate {
   verifierFamily: string;
   parameterCount: number;
   locales: CatalogLocale[];
+}
+
+/**
+ * A machine id rendered for a person: `math.linear_equation` reads "Linear equation",
+ * `language-cost-mock` reads "Language cost mock".
+ *
+ * Derived rather than authored. The spec has no title field, and adding one would put a
+ * second name on every template that is free to drift from the id the CLI is called
+ * with. The id itself stays on screen next to the title, because it is what you type.
+ *
+ * Sentence case, not title case: these are descriptions of a task, not proper nouns, and
+ * "Quarterly Ledger Extraction" reads like a product. The leading segment of a dotted id
+ * is dropped because it is the family, which is shown separately.
+ */
+export function humanizeId(id: string): string {
+  const local = id.includes('.') ? id.slice(id.lastIndexOf('.') + 1) : id;
+  const words = local.split(/[._\-\s]+/).filter(Boolean);
+  if (words.length === 0) return id;
+  const [first, ...rest] = words;
+  return [first!.charAt(0).toUpperCase() + first!.slice(1), ...rest].join(' ');
 }
 
 export class CatalogError extends Error {
@@ -117,10 +141,17 @@ async function readFamily(
     });
   }
 
+  const id = String(core.id ?? '(missing id)');
+  const family = String(
+    core.family ?? relative(join(root, TEMPLATES_DIRNAME), dirname(coreDirectory)),
+  );
+
   return {
-    id: String(core.id ?? '(missing id)'),
+    id,
+    title: humanizeId(id),
     version: String(core.version ?? '0.0.0'),
-    family: String(core.family ?? relative(join(root, TEMPLATES_DIRNAME), dirname(coreDirectory))),
+    family,
+    familyLabel: humanizeId(family),
     path: relative(root, coreDirectory),
     description: typeof core.description === 'string' ? core.description : undefined,
     verifierFamily: verifierFamilyOf(core.verifier),
@@ -156,6 +187,8 @@ export interface StudyConfigSummary {
   /** Path relative to the repository root. */
   path: string;
   id: string;
+  /** `id` rendered for a person. See `humanizeId`. */
+  title: string;
   description?: string;
   templateCount: number;
   localeTags: string[];
@@ -181,9 +214,11 @@ export async function readStudyConfigs(root?: string): Promise<StudyConfigSummar
       const models = Array.isArray(document.models) ? document.models : [];
       const locales = Array.isArray(document.locales) ? document.locales : [];
       const tokenizer = (document.fertility_tokenizer ?? {}) as Record<string, unknown>;
+      const id = String(document.id ?? file);
       configs.push({
         path: join(directory, file),
-        id: String(document.id ?? file),
+        id,
+        title: humanizeId(id),
         description: typeof document.description === 'string' ? document.description : undefined,
         templateCount: Array.isArray(document.templates) ? document.templates.length : 0,
         localeTags: locales.map((locale) => String((locale as { tag?: unknown }).tag ?? '?')),

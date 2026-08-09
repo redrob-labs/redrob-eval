@@ -70,7 +70,7 @@ Nothing else is required for a clean checkout - evaluation runs offline against 
 | **Compare** | `/` or `/compare` | Run any model from any source live on a catalog dataset or your own prompts, on text or image; rank by measured quality, latency, TTFT and throughput; settle unscored tasks with a blind preference tournament; turn those votes into a routing policy |
 | **Evolve** | `/evolve` | GEPA search over instruction / demos / model / `script_policy` / `frame_policy` under a quality floor; catalog datasets or custom goal+rubric (LLM judge or checklist QWK); export baseline-vs-evolved report |
 | **Deploy** | `/deploy` | Serve self-hosted S+L on your GPU host over SSH - measure, start, health, benchmark, resumable terminal |
-| **Generate** | `/generate` | Browse parametric task templates and their locales, sample instances from content-derived seeds, and run a cross-locale study to a validated results artifact |
+| **Generate** | `/generate` | Browse parametric task templates and their locales, sample instances from content-derived seeds, and run a cross-locale study to a validated results artifact; export either, or hand the prompts straight to Compare |
 | **Settings** | `/settings` | Provider keys and GPU host config, written to the gitignored root `.env`; also the light / dark / system theme |
 
 Typical loop: **Compare** to pick a model → **Evolve** under a quality floor → **Deploy** what you chose, then compare the served endpoint against the frontier again.

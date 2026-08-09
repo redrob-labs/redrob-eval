@@ -56,9 +56,9 @@
   --danger: #b91c1c;
   --warn: #a16207;
 
-  /* Actions */
+  /* Progress. Teal to orange as a run advances — the only place teal is used, now that
+     the primary button is brand blue. Nothing sits on top of it, so it has no ink token. */
   --run: #14b8a6;
-  --run-ink: #042f2e;
   --progress-end: #f97316;
 
   /* Data series */
@@ -120,7 +120,6 @@
   --warn: #fbbf24;
 
   --run: #14b8a6;
-  --run-ink: #04231f;
   --progress-end: #fb923c;
 
   --feasible: #60a5fa;

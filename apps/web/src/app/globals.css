@@ -2010,6 +2010,120 @@ body.is-pane-resizing * {
   border-radius: 0;
 }
 
+/* ---- Evolve: racing several models ---- */
+
+.arena-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 2px 0 4px;
+}
+
+.arena-add {
+  display: flex;
+  gap: 6px;
+}
+
+.arena-add select {
+  flex: 1;
+  min-width: 0;
+}
+
+.arena-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  line-height: 1.6;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--line-strong);
+  background: var(--panel);
+  color: var(--muted);
+  cursor: pointer;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.arena-chip:hover:not(:disabled) {
+  border-color: var(--brand);
+  color: var(--ink);
+}
+
+.arena-chip.on {
+  background: var(--brand-tint);
+  border-color: var(--brand);
+  color: var(--brand-ink);
+  font-weight: 600;
+}
+
+.arena-chip:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.arena {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.arena-head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.arena-sub {
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.arena-error {
+  color: var(--danger);
+}
+
+.arena-status {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--muted);
+}
+
+.arena-status.is-done {
+  color: var(--ok);
+}
+
+.arena-status.is-failed {
+  color: var(--danger);
+}
+
+.arena-status.is-running {
+  color: var(--brand);
+}
+
+.arena-prompt summary {
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--muted);
+  padding: 3px 0;
+}
+
+.arena-prompt pre {
+  margin: 4px 0 0;
+  padding: 8px 10px;
+  background: var(--surface-sunken);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 11px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-x: auto;
+}
+
 /* ---- Evolve: rubric breakdown ---- */
 
 .rubric-breakdown {

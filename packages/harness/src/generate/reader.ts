@@ -77,7 +77,13 @@ export async function readGeneratedSet(directory: string): Promise<GeneratedSet>
 }
 
 /** The only fields a locale layer may set, per spec §1.2. */
-export const LOCALE_ONLY_FIELDS = ['locale', 'description', 'prompt', 'notes'] as const;
+export const LOCALE_ONLY_FIELDS = [
+  'locale',
+  'translation_status',
+  'description',
+  'prompt',
+  'notes',
+] as const;
 
 /**
  * Overlay a locale layer onto the locale-neutral core.

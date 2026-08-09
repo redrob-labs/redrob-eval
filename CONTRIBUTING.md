@@ -61,6 +61,9 @@ Short-lived branches, all named for what they do:
 | `release/` | `develop` | `main` **and** `develop` | version bump, changelog, final checks |
 | `hotfix/` | `main` | `main` **and** `develop` | a production defect that cannot wait |
 
+`feat/` is accepted as a short form of `feature/`. Both appear in the history; neither is worth a
+rename.
+
 The two branches that merge to `main` also merge back to `develop`. Skipping the merge back is
 how a fix reaches production and then disappears in the next release, so it is worth doing at the
 time rather than remembering later.

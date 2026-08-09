@@ -70,6 +70,28 @@ def test_declarative_verification_opens_no_sockets(no_network: None) -> None:
     assert checked > 100, "the suite got smaller, which would weaken this proof"
 
 
+def test_a_whole_study_against_the_mock_opens_no_sockets(no_network: None) -> None:
+    """The claim that makes the mock provider worth having.
+
+    A study against the mock generates, invokes, scores, aggregates and validates, and
+    the point of the mock is that none of that reaches a provider. If it did, the tests
+    would be spending money and the reproducibility guarantee would be resting on a
+    remote service behaving the same way twice.
+    """
+    from redrob_generate.study.config import load_study_config
+    from redrob_generate.study.result import build_result
+    from redrob_generate.study.runner import run_study
+    from redrob_generate.study.tokenizers import resolve_tokenizer
+
+    config = load_study_config(
+        find_spec_dir().parent / "packages" / "generate" / "examples" / "language-cost-mock.study.json"
+    )
+    tokenizer = resolve_tokenizer(config.tokenizer["name"], config.tokenizer["version"])
+    scored, locales = run_study(config, tokenizer)
+    result = build_result(config, scored, locales, created_at="2026-01-01T00:00:00Z")
+    assert result["instances"], "a study that produced nothing would pass this vacuously"
+
+
 def test_json_schema_validation_does_not_fetch_remote_schemas(no_network: None) -> None:
     """The obvious way a JSON Schema validator reaches the network is a remote $ref.
 

@@ -28,7 +28,15 @@ CORE_FILENAME = "template.json"
 LOCALES_DIRNAME = "locales"
 
 # A locale layer may set these and only these. Everything else is the task, not the wording.
-LOCALE_OVERRIDABLE_FIELDS = frozenset({"locale", "description", "prompt", "notes"})
+LOCALE_OVERRIDABLE_FIELDS = frozenset(
+    {"locale", "translation_status", "description", "prompt", "notes"}
+)
+
+#: A locale layer must declare each of these. ``translation_status`` is required rather
+#: than defaulted because every available default is a lie: defaulting to reviewed would
+#: launder a placeholder into a publishable one, and defaulting to untranslated would
+#: quietly downgrade a real translation whose author forgot the field.
+LOCALE_REQUIRED_FIELDS = ("locale", "translation_status", "prompt")
 
 
 def find_spec_dir() -> Path:
@@ -116,10 +124,9 @@ def merge_locale_layer(core: dict[str, Any], layer: dict[str, Any], origin: str)
             f"{sorted(LOCALE_OVERRIDABLE_FIELDS)}, because a translation must change the "
             "wording and never the task"
         )
-    if "locale" not in layer:
-        raise TemplateLoadError(f"{origin} does not declare a locale")
-    if "prompt" not in layer:
-        raise TemplateLoadError(f"{origin} does not declare a prompt")
+    for required in LOCALE_REQUIRED_FIELDS:
+        if required not in layer:
+            raise TemplateLoadError(f"{origin} does not declare {required}")
     merged = dict(core)
     merged.update(layer)
     return merged

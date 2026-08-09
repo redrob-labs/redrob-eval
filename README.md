@@ -57,7 +57,9 @@ yarn export:samples
 yarn dev
 ```
 
-Open [http://localhost:3939](http://localhost:3939), which lands on Compare. The other pages are `/evolve`, `/deploy` and `/settings`. Restart `yarn dev` after editing `.env`.
+Open [http://localhost:3939](http://localhost:3939), which lands on Compare. The other pages are `/evolve`, `/deploy`, `/generate` and `/settings`. Restart `yarn dev` after editing `.env`.
+
+The workbench follows your operating system's light or dark setting, and changes with it. To pin one instead, use the icon at the right of the title bar or the Appearance card in Settings; the choice is stored in the browser, not in `.env`. `yarn verify:theme` prints the contrast of every colour pairing in both palettes, and `yarn test` fails if dark falls below what light manages.
 
 Nothing else is required for a clean checkout - evaluation runs offline against vendored datasets; only provider API calls leave the machine. CI runs every `yarn verify:*` plus `yarn export:samples` and `yarn build` on each push.
 
@@ -68,31 +70,33 @@ Nothing else is required for a clean checkout - evaluation runs offline against 
 | **Compare** | `/` or `/compare` | Run any model from any source live on a catalog dataset or your own prompts, on text or image; rank by measured quality, latency, TTFT and throughput; settle unscored tasks with a blind preference tournament; turn those votes into a routing policy |
 | **Evolve** | `/evolve` | GEPA search over instruction / demos / model / `script_policy` / `frame_policy` under a quality floor; catalog datasets or custom goal+rubric (LLM judge or checklist QWK); export baseline-vs-evolved report |
 | **Deploy** | `/deploy` | Serve self-hosted S+L on your GPU host over SSH - measure, start, health, benchmark, resumable terminal |
-| **Settings** | `/settings` | Provider keys and GPU host config, written to the gitignored root `.env` |
+| **Generate** | `/generate` | Browse parametric task templates and their locales, sample instances from content-derived seeds, and run a cross-locale study to a validated results artifact |
+| **Settings** | `/settings` | Provider keys and GPU host config, written to the gitignored root `.env`; also the light / dark / system theme |
 
 Typical loop: **Compare** to pick a model → **Evolve** under a quality floor → **Deploy** what you chose, then compare the served endpoint against the frontier again.
 
-### Generate (under development, no UI yet)
+### Generate
 
-A fourth module is being built: **Generate**, parametric generation of verifiable evaluation
-prompts together with their verifiers. An item is a template plus a seed rather than a row in a
-file, and the seed is *derived* from the generator version, the template id and the instance index
-rather than chosen. That buys two things a static set cannot have. The items cannot have leaked
-into pretraining, because they did not exist until someone ran the generator. And cherry-picking
-becomes structurally impossible rather than discouraged, because any third party can recompute the
-same seeds from published values and check them, which a conventional seed such as `42` does not
-allow. Scoring is done by deterministic verifiers, not by a judge model.
+**Generate** is parametric generation of verifiable evaluation prompts together with their
+verifiers. An item is a template plus a seed rather than a row in a file, and the seed is *derived*
+from the generator version, the template id and the instance index rather than chosen. That buys
+two things a static set cannot have. The items cannot have leaked into pretraining, because they
+did not exist until someone ran the generator. And cherry-picking becomes structurally impossible
+rather than discouraged, because any third party can recompute the same seeds from published values
+and check them, which a conventional seed such as `42` does not allow. Scoring is done by
+deterministic verifiers, not by a judge model.
 
-What exists today is the foundation, not a feature: the [Redrob Verifiable Task Spec
-v2](spec/verifiable-task-v2.md), a Python generator, verifiers implemented natively in both
-languages, and a cross-language conformance suite that fails CI if the two ever disagree. There is
-no page, no route and no navigation entry.
+Underneath the page are the [Redrob Verifiable Task Spec v2](spec/verifiable-task-v2.md), a Python
+generator, verifiers implemented natively in both languages, and a cross-language conformance suite
+that fails CI if the two ever disagree.
 
 **Python stays optional.** `yarn install && yarn dev` is unchanged and still works on a machine
 with no interpreter installed; CI has a job that builds with Python removed from `PATH` to keep it
 that way. The TypeScript side reads and audits generated sets and runs every declarative verifier
 natively, and it reaches for Python only through an explicit subprocess call that reports absence
-with an actionable message instead of failing.
+with an actionable message instead of failing. `/generate` behaves the same way: without the CLI it
+still lists the template catalog, which is read from disk, and says plainly that sampling needs an
+interpreter rather than failing one button at a time.
 
 ```bash
 pip install -e packages/generate                     # optional, only to generate
@@ -101,10 +105,12 @@ redrob-generate verify --set /tmp/set --outputs answers.jsonl --json
 yarn test                                            # the TypeScript half of the conformance suite
 ```
 
-See [`packages/generate/README.md`](packages/generate/README.md) for a worked example and
-[`templates/README.md`](templates/README.md) for the template layout. Templates are English-only
-for now; the locale structure exists, but a translation needs native-speaker review before it can
-be used, and none has had one.
+See [`packages/generate/README.md`](packages/generate/README.md) for a worked example,
+[`packages/generate/STUDY.md`](packages/generate/STUDY.md) for running a study, and
+[`templates/README.md`](templates/README.md) for the template layout. Templates are English-only in
+substance: `hi`, `hi-Latn` and `ko` locale files exist so the pipeline can be exercised end to end,
+but they hold the English prompt verbatim and are marked `untranslated`. A real translation needs
+native-speaker review, none has had one, and a publishable artifact refuses to build over them.
 
 ### Compare's four stages
 
@@ -159,8 +165,12 @@ On **Evolve**, pick a catalog dataset or **Custom goal** (goal + rubric + input-
   numbered and never rewritten in place. Start with
   [0001 Generate module foundation](docs/decisions/0001-generate-foundation.md), then
   [0002 Unicode semantics](docs/decisions/0002-unicode-semantics.md),
-  [0003 List-valued verifier field](docs/decisions/0003-list-valued-verifier-field.md) and
-  [0004 Branching model](docs/decisions/0004-branching-model.md).
+  [0003 List-valued verifier field](docs/decisions/0003-list-valued-verifier-field.md),
+  [0004 Branching model](docs/decisions/0004-branching-model.md) and
+  [0005 Study runner](docs/decisions/0005-study-runner.md).
+- [Running a study](packages/generate/STUDY.md) - the config format for
+  `redrob-generate study`, a worked example against the mock provider, and why the stub locales
+  cannot be published
 - [Sample exports](exports/samples/README.md) - regenerable report + Pareto
 
 ## Environment

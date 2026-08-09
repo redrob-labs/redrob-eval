@@ -450,6 +450,190 @@ expect_failure \
   break_valid_counterpart
 
 # ---------------------------------------------------------------------------------------
+# 11. A stub locale is the English text byte for byte.
+#
+# Broken by respacing one line of a Korean stub. This is the control that matters most for
+# the study, because the damage is invisible: the run still completes, the table still
+# fills in, and the token delta it now reports looks exactly like a finding about Korean.
+
+drift_a_stub_locale() {
+  break_file templates/math/linear-equation/locales/ko.json <<'PY'
+import json, sys
+from pathlib import Path
+path = Path(sys.argv[1])
+document = json.loads(path.read_text(encoding="utf-8"))
+document["prompt"] = document["prompt"].replace("Solve the", "Solve  the", 1)
+path.write_text(json.dumps(document, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+PY
+  [ $? -eq 0 ] || return 0
+  python3 -m pytest packages/generate/tests/test_study.py -q -k verbatim 2>&1
+}
+
+expect_failure \
+  "a stub locale is the English prompt byte for byte, so its token counts are not a finding" \
+  "added one space to the Korean stub of linear-equation" \
+  drift_a_stub_locale
+
+# ---------------------------------------------------------------------------------------
+# 12. Publication refuses an untranslated locale.
+
+allow_untranslated_publication() {
+  break_file packages/generate/src/redrob_generate/study/publish.py <<'PY'
+import sys
+from pathlib import Path
+path = Path(sys.argv[1])
+text = path.read_text()
+marker = 'PUBLISHABLE_STATUSES = ("native-reviewed", "single-reviewer")'
+assert marker in text, "anchor drifted"
+path.write_text(text.replace(
+    marker,
+    'PUBLISHABLE_STATUSES = ("native-reviewed", "single-reviewer", "untranslated")',
+))
+PY
+  [ $? -eq 0 ] || return 0
+  python3 -m pytest packages/generate/tests/test_study.py -q -k untranslated 2>&1
+}
+
+expect_failure \
+  "a publishable artifact refuses a locale whose prompt is placeholder text" \
+  "added untranslated to the publishable statuses" \
+  allow_untranslated_publication
+
+# ---------------------------------------------------------------------------------------
+# 13. Publication refuses a verdict this project's Python implementation did not produce.
+
+allow_foreign_verdicts() {
+  break_file packages/generate/src/redrob_generate/provenance.py <<'PY'
+import sys
+from pathlib import Path
+path = Path(sys.argv[1])
+text = path.read_text()
+marker = '    return provenance.get("authoritative") is True'
+assert marker in text, "anchor drifted"
+path.write_text(text.replace(marker, "    return True"))
+PY
+  [ $? -eq 0 ] || return 0
+  python3 -m pytest packages/generate/tests/test_study.py -q -k "typescript_produced or no_provenance_at_all" 2>&1
+}
+
+expect_failure \
+  "a publishable artifact refuses a verdict produced by the display implementation" \
+  "made every provenance block count as authoritative" \
+  allow_foreign_verdicts
+
+# ---------------------------------------------------------------------------------------
+# 14. Every verdict record carries the provenance of the implementation that produced it.
+#
+# Broken by dropping the field. The artifact schema requires it, so this also checks that
+# the schema is load-bearing rather than decorative.
+
+drop_verdict_provenance() {
+  break_file packages/generate/src/redrob_generate/study/result.py <<'PY'
+import sys
+from pathlib import Path
+path = Path(sys.argv[1])
+text = path.read_text()
+marker = '            "verdict_provenance": dict(provenance),\n'
+assert marker in text, "anchor drifted"
+path.write_text(text.replace(marker, ""))
+PY
+  [ $? -eq 0 ] || return 0
+  python3 -m pytest packages/generate/tests/test_study.py -q -k "own_verdict_provenance" 2>&1
+}
+
+expect_failure \
+  "every verdict record names the implementation, version and Unicode table behind it" \
+  "removed verdict_provenance from the instance rows" \
+  drop_verdict_provenance
+
+# ---------------------------------------------------------------------------------------
+# 15. A paired delta compares the same items on both sides.
+#
+# Broken by pairing an unmatched item with itself instead of dropping it. Every count still
+# looks plausible -- n_pairs even goes up -- and the delta is now computed over two
+# different sets of items, which is the failure the pairing exists to prevent.
+
+pair_unmatched_items_with_themselves() {
+  break_file packages/generate/src/redrob_generate/study/result.py <<'PY'
+import sys
+from pathlib import Path
+path = Path(sys.argv[1])
+text = path.read_text()
+marker = "            if partner is None:\n                dropped += 1\n                continue\n"
+assert marker in text, "anchor drifted"
+path.write_text(text.replace(
+    marker,
+    "            if partner is None:\n                dropped += 1\n                partner = row\n",
+))
+PY
+  [ $? -eq 0 ] || return 0
+  python3 -m pytest packages/generate/tests/test_study.py -q -k "unpaired" 2>&1
+}
+
+expect_failure \
+  "a paired delta drops an unmatched item rather than filling it in" \
+  "paired every unmatched item with itself" \
+  pair_unmatched_items_with_themselves
+
+# ---------------------------------------------------------------------------------------
+# 16. Two study runs with the same config produce byte-identical output.
+#
+# Broken by making the mock provider's choice random. Nothing errors; the artifact is still
+# valid and the table still renders. Only the rerun comparison notices.
+
+make_the_mock_nondeterministic() {
+  break_file packages/generate/src/redrob_generate/study/models.py <<'PY'
+import sys
+from pathlib import Path
+path = Path(sys.argv[1])
+text = path.read_text()
+marker = "        return digest[0] % 2 == 0"
+assert marker in text, "anchor drifted"
+path.write_text(text.replace(
+    marker,
+    "        import random\n\n        return random.random() < 0.5",
+))
+PY
+  [ $? -eq 0 ] || return 0
+  python3 -m pytest packages/generate/tests/test_study.py -q -k "reruns_identically or is_deterministic" 2>&1
+}
+
+expect_failure \
+  "two study runs with the same config produce byte-identical output" \
+  "made the mock provider answer at random" \
+  make_the_mock_nondeterministic
+
+# ---------------------------------------------------------------------------------------
+# 18. A locale nobody reviewed is never presented as reviewed.
+#
+# Broken by defaulting the catalog's translation status to native-reviewed when a layer
+# does not declare one. This is the failure mode worth a control because it is silent and
+# it is upward: the page shows a green chip, the reader believes a number is about Korean,
+# and nothing in the run errors. Absence of a claim has to read as absence of review.
+
+default_a_locale_to_reviewed() {
+  break_file packages/harness/src/generate/catalog.ts <<'PY'
+import sys
+from pathlib import Path
+path = Path(sys.argv[1])
+text = path.read_text()
+marker = "(layer.translation_status as TranslationStatus) ?? 'untranslated',"
+assert marker in text, "anchor drifted"
+path.write_text(text.replace(
+    marker,
+    "(layer.translation_status as TranslationStatus) ?? 'native-reviewed',",
+))
+PY
+  [ $? -eq 0 ] || return 0
+  node --import tsx --test scripts/test/generate-catalog.test.mts 2>&1
+}
+
+expect_failure \
+  "a locale layer that declares no review status is treated as unreviewed" \
+  "defaulted the catalog's translation status to native-reviewed" \
+  default_a_locale_to_reviewed
+
+# ---------------------------------------------------------------------------------------
 
 echo
 if [ "$FAILURES" -eq 0 ]; then

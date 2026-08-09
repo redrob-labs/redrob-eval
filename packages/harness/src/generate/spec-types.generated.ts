@@ -14,9 +14,14 @@
 export type SpecVersion = "redrob-verifiable-task/v2";
 
 /**
- * BCP 47 language tag, restricted to a language subtag with an optional region subtag.
+ * BCP 47 language tag, restricted to a language subtag with an optional script subtag and an optional region subtag. The script subtag is what makes Hinglish expressible as hi-Latn: Hindi written in Latin script is a different tokenisation problem from Hindi in Devanagari, so it has to be a different locale rather than a different template.
  */
 export type Locale = string;
+
+/**
+ * How much human review a locale's prompt text has had. This is metadata about the text rather than about the task, so it belongs to the locale layer. untranslated means the prompt is a placeholder -- in practice the English text copied verbatim -- which is enough to exercise a pipeline end to end and never enough to publish a result from. A publishable artifact refuses to build while any locale it covers is untranslated.
+ */
+export type TranslationStatus = "native-reviewed" | "single-reviewer" | "untranslated";
 
 /**
  * Major.minor.patch version string.
@@ -299,6 +304,7 @@ export type Template = {
   "id": TemplateId;
   "version": Semver;
   "locale": Locale;
+  "translation_status": TranslationStatus;
   /** Coarse grouping used for reporting, for example math or extraction. */
   "family"?: string;
   "description"?: string;
@@ -342,6 +348,8 @@ export type Instance = {
   "prompt": string;
   "verifier": VerifierOrList;
   "fertility"?: Fertility;
+  /** Proportion of an instance's prompt drawn from the embedded language in a code-mixed locale such as hi-Latn. Always null at present. The field exists so that the artifact shape does not change when a measurement is defined, and it is null rather than absent so that a reader can tell 'not measured' from 'this reader is looking at an older artifact'. Defining the measurement is a human decision -- it requires choosing a token unit, a language identifier and a treatment of proper nouns and numerals, and each choice produces a different number for the same sentence -- so no value is invented here. */
+  "code_mix_ratio": number | null;
 };
 
 export type ManifestTemplateEntry = {
@@ -451,6 +459,12 @@ export type ConformanceFile = {
   "rejections"?: ConformanceRejection[];
   "schema_rejections"?: ConformanceSchemaRejection[];
 };
+
+export const TRANSLATION_STATUSS = [
+  "native-reviewed",
+  "single-reviewer",
+  "untranslated",
+] as const satisfies readonly TranslationStatus[];
 
 export const VERDICT_CODES = [
   "ok",

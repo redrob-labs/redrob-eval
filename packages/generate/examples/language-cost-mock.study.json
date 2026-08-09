@@ -1,0 +1,46 @@
+{
+  "study_version": "redrob-study/v1",
+  "id": "language-cost-mock",
+  "description": "Worked example: the language-cost design run entirely against the mock provider. Every locale except English renders placeholder text, so this config exercises the pipeline and cannot produce a publishable artifact -- running it with --publish is expected to fail, and that is the point of shipping it.",
+  "seed_policy": {
+    "method": "content-derived",
+    "generator_version": "0.1.0"
+  },
+  "fertility_tokenizer": {
+    "name": "builtin/utf8-bytes",
+    "version": "1"
+  },
+  "templates": [
+    { "path": "../../../templates/math/linear-equation", "count": 8 },
+    { "path": "../../../templates/extraction/quarterly-ledger", "count": 4 }
+  ],
+  "locales": [
+    { "tag": "en", "fertility_level": "low", "resource_level": "high" },
+    { "tag": "ko", "fertility_level": "high", "resource_level": "high" },
+    { "tag": "hi", "fertility_level": "high", "resource_level": "low" },
+    { "tag": "hi-Latn", "fertility_level": "low", "resource_level": "low" }
+  ],
+  "models": [
+    {
+      "id": "mock/always-right",
+      "provider": "mock",
+      "mock_strategy": "expected",
+      "quantization": null,
+      "serving_engine": null,
+      "hardware": null
+    },
+    {
+      "id": "mock/sometimes-right",
+      "provider": "mock",
+      "mock_strategy": "alternating",
+      "quantization": null,
+      "serving_engine": null,
+      "hardware": null
+    }
+  ],
+  "comparisons": [
+    { "id": "english-vs-korean", "left": "en", "right": "ko" },
+    { "id": "korean-vs-hindi", "left": "ko", "right": "hi" },
+    { "id": "hindi-vs-hinglish", "left": "hi", "right": "hi-Latn" }
+  ]
+}

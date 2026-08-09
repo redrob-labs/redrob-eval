@@ -1,0 +1,6 @@
+{
+  "locale": "ko",
+  "translation_status": "untranslated",
+  "description": "Solve a one-variable linear equation and report x to four decimal places.",
+  "prompt": "Solve the following equation for x.\n\n    {a}x {b_term} = {c} {shift_term}\n\nReply with the value of x as a decimal number and nothing else. Round to four decimal places."
+}

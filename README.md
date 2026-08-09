@@ -59,6 +59,8 @@ yarn dev
 
 Open [http://localhost:3939](http://localhost:3939), which lands on Compare. The other pages are `/evolve`, `/deploy`, `/generate` and `/settings`. Restart `yarn dev` after editing `.env`.
 
+The workbench follows your operating system's light or dark setting, and changes with it. To pin one instead, use the icon at the right of the title bar or the Appearance card in Settings; the choice is stored in the browser, not in `.env`. `yarn verify:theme` prints the contrast of every colour pairing in both palettes, and `yarn test` fails if dark falls below what light manages.
+
 Nothing else is required for a clean checkout - evaluation runs offline against vendored datasets; only provider API calls leave the machine. CI runs every `yarn verify:*` plus `yarn export:samples` and `yarn build` on each push.
 
 ## What it does
@@ -69,7 +71,7 @@ Nothing else is required for a clean checkout - evaluation runs offline against 
 | **Evolve** | `/evolve` | GEPA search over instruction / demos / model / `script_policy` / `frame_policy` under a quality floor; catalog datasets or custom goal+rubric (LLM judge or checklist QWK); export baseline-vs-evolved report |
 | **Deploy** | `/deploy` | Serve self-hosted S+L on your GPU host over SSH - measure, start, health, benchmark, resumable terminal |
 | **Generate** | `/generate` | Browse parametric task templates and their locales, sample instances from content-derived seeds, and run a cross-locale study to a validated results artifact |
-| **Settings** | `/settings` | Provider keys and GPU host config, written to the gitignored root `.env` |
+| **Settings** | `/settings` | Provider keys and GPU host config, written to the gitignored root `.env`; also the light / dark / system theme |
 
 Typical loop: **Compare** to pick a model → **Evolve** under a quality floor → **Deploy** what you chose, then compare the served endpoint against the frontier again.
 

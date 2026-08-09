@@ -409,7 +409,10 @@ code {
 .app-run-btn,
 .app-stop-btn {
   height: 32px;
-  padding: 0 14px;
+  /* 16 rather than 14: a filled button reads tighter than an outlined one at the same
+     number, because the border of a ghost supplies an edge the eye reads as breathing
+     room and a fill does not. Applied to all three so the row still agrees. */
+  padding: 0 16px;
   border: 1px solid transparent;
   border-radius: 8px;
   font-size: 13px;

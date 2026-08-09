@@ -56,9 +56,9 @@
   --danger: #b91c1c;
   --warn: #a16207;
 
-  /* Actions */
+  /* Progress. Teal to orange as a run advances — the only place teal is used, now that
+     the primary button is brand blue. Nothing sits on top of it, so it has no ink token. */
   --run: #14b8a6;
-  --run-ink: #042f2e;
   --progress-end: #f97316;
 
   /* Data series */
@@ -120,7 +120,6 @@
   --warn: #fbbf24;
 
   --run: #14b8a6;
-  --run-ink: #04231f;
   --progress-end: #fb923c;
 
   --feasible: #60a5fa;
@@ -392,16 +391,38 @@ code {
   max-width: 50%;
 }
 
+/* ============================================================
+   Buttons
+
+   Three roles, one geometry: primary (`app-run-btn`), secondary (`app-ghost-btn`)
+   and destructive (`app-stop-btn`). They share height, radius and type so a row of
+   mixed buttons sits on one baseline — the previous set disagreed on all three, and
+   a Run button that is 4px shorter than the Discard next to it reads as a mistake
+   before anyone works out which is the primary action.
+
+   Primary is brand blue rather than the teal it used to be. Teal appears nowhere else
+   in the product except the progress bar, so the one control the eye should land on
+   first was the one colour the design did not otherwise use.
+   ============================================================ */
+
 .app-ghost-btn,
-.app-run-btn {
-  height: 28px;
-  border: 0;
-  padding: 0 0.7rem;
-  font-size: 0.75rem;
+.app-run-btn,
+.app-stop-btn {
+  height: 32px;
+  /* 16 rather than 14: a filled button reads tighter than an outlined one at the same
+     number, because the border of a ghost supplies an edge the eye reads as breathing
+     room and a fill does not. Applied to all three so the row still agrees. */
+  padding: 0 16px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  gap: 6px;
+  white-space: nowrap;
   text-decoration: none;
   box-sizing: border-box;
 }
@@ -410,7 +431,7 @@ code {
 .app-ghost-btn {
   background: var(--panel);
   color: var(--ink);
-  border: 1px solid var(--ghost-line);
+  border-color: var(--ghost-line);
 }
 
 .app-ghost-btn:hover:not(:disabled) {
@@ -423,11 +444,22 @@ code {
   cursor: not-allowed;
 }
 
-/* Dark titlebar — keep muted ghost styling */
+/* Compact enough for a 44px bar. Applied to all three roles, or the one primary in the
+   titlebar stands a few pixels taller than the buttons it sits between. */
+.app-titlebar .app-ghost-btn,
+.app-titlebar .app-run-btn,
+.app-titlebar .app-stop-btn {
+  height: 26px;
+  padding: 0 12px;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+/* Dark titlebar — muted ghosts */
 .app-titlebar .app-ghost-btn {
   background: transparent;
   color: var(--titlebar-hover-ink);
-  border: 1px solid var(--titlebar-btn-line);
+  border-color: var(--titlebar-btn-line);
 }
 
 .app-titlebar .app-ghost-btn:hover:not(:disabled) {
@@ -437,12 +469,12 @@ code {
 }
 
 .app-run-btn {
-  background: var(--run);
-  color: var(--run-ink);
+  background: var(--brand-solid);
+  color: var(--on-solid);
 }
 
 .app-run-btn:hover:not(:disabled) {
-  filter: brightness(1.05);
+  background: var(--brand-solid-hover);
 }
 
 .app-run-btn:disabled {
@@ -451,12 +483,6 @@ code {
 }
 
 .app-stop-btn {
-  height: 28px;
-  border: 0;
-  padding: 0 0.7rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  cursor: pointer;
   background: var(--danger-solid);
   color: var(--on-solid);
 }
@@ -1814,8 +1840,11 @@ body.is-pane-resizing * {
 }
 .deploy-op-btn.is-primary {
   background: var(--brand-solid);
-  border-color: var(--brand);
+  border-color: var(--brand-solid);
   color: var(--on-solid);
+}
+.deploy-op-btn.is-primary:hover:not(:disabled) {
+  background: var(--brand-solid-hover);
 }
 .deploy-facts {
   margin: 0;
@@ -1895,15 +1924,20 @@ body.is-pane-resizing * {
 .deploy-op-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
-  padding: 7px 14px;
-  border-radius: 0;
+  height: 32px;
+  padding: 0 14px;
+  border-radius: 8px;
   border: 1px solid var(--brand);
   color: var(--brand-deep);
   background: color-mix(in srgb, var(--brand) 8%, var(--panel));
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
+}
+.deploy-op-btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--brand) 16%, var(--panel));
 }
 .deploy-op-btn:disabled {
   opacity: 0.5;
@@ -1976,30 +2010,377 @@ body.is-pane-resizing * {
   border-radius: 0;
 }
 
-/* ---- Settings ---- */
-.settings-main {
+/* ---- Evolve: racing several models ---- */
+
+.arena-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 2px 0 4px;
+}
+
+.arena-add {
+  display: flex;
+  gap: 6px;
+}
+
+.arena-add select {
   flex: 1;
-  width: 100%;
-  max-width: 880px;
-  margin: 0 auto;
-  padding: 24px 20px 48px;
+  min-width: 0;
+}
+
+.arena-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  line-height: 1.6;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--line-strong);
+  background: var(--panel);
+  color: var(--muted);
+  cursor: pointer;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.arena-chip:hover:not(:disabled) {
+  border-color: var(--brand);
+  color: var(--ink);
+}
+
+.arena-chip.on {
+  background: var(--brand-tint);
+  border-color: var(--brand);
+  color: var(--brand-ink);
+  font-weight: 600;
+}
+
+.arena-chip:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.arena {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 8px;
+  margin-bottom: 12px;
 }
+
+.arena-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.arena-row {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel);
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+/* The winner is the one the reader is looking for, so it gets the accent. */
+.arena-row:first-child.is-done {
+  border-color: var(--brand);
+  background: var(--brand-tint-soft);
+}
+
+.arena-row-top {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.arena-rank {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+  min-width: 1ch;
+}
+
+.arena-name {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.arena-name strong {
+  font-size: 12px;
+}
+
+.arena-name code {
+  font-size: 10px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.arena-test {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  line-height: 1.2;
+}
+
+.arena-test strong {
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+
+.arena-test span {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.arena-row-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  font-size: 11px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.arena-dims {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px 4px;
+}
+
+.arena-dims span {
+  font-size: 10px;
+  color: var(--muted);
+  background: var(--surface-sunken);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 1px 7px;
+}
+
+.arena-dims strong {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.arena-head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.arena-sub {
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.arena-error {
+  color: var(--danger);
+}
+
+.arena-status {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--muted);
+}
+
+.arena-status.is-done {
+  color: var(--ok);
+}
+
+.arena-status.is-failed {
+  color: var(--danger);
+}
+
+.arena-status.is-running {
+  color: var(--brand);
+}
+
+.arena-prompt summary {
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--muted);
+  padding: 3px 0;
+}
+
+.arena-prompt pre {
+  margin: 4px 0 0;
+  padding: 8px 10px;
+  background: var(--surface-sunken);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 11px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-x: auto;
+}
+
+/* ---- Evolve: rubric breakdown ---- */
+
+.rubric-breakdown {
+  margin: 0.5rem 0 0.65rem;
+}
+
+.rubric-breakdown .pane-label {
+  margin-bottom: 0.3rem;
+}
+
+/* Direction only. The size of the move is in the number beside it, and colouring by
+   magnitude as well would imply a threshold nobody has established. */
+.delta-up {
+  color: var(--ok);
+  font-variant-numeric: tabular-nums;
+}
+
+.delta-down {
+  color: var(--danger);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- Settings ----
+
+   Two panes, matching Deploy: a list of sections on the left, the chosen one on the
+   right. It was one long scroll of four stacked cards, which meant the GPU host fields
+   were below the fold behind six provider keys nobody was looking for, and the reader
+   had no way to see what the page contained without scrolling all of it.
+   ---- */
+
+.settings-layout {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
+  align-items: start;
+  gap: 0;
+}
+
+.settings-nav {
+  min-height: 0;
+  align-self: stretch;
+  background: var(--panel);
+  border-right: 1px solid var(--line);
+  padding: 20px 16px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.settings-nav-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.settings-nav-item {
+  width: 100%;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.settings-nav-item:hover {
+  background: var(--surface-hover);
+}
+
+.settings-nav-item.on {
+  background: var(--brand-tint);
+  border-color: var(--brand);
+}
+
+.settings-nav-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--ink);
+}
+
+.settings-nav-sub {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.settings-nav-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--brand);
+}
+
+.settings-pane {
+  min-width: 0;
+  padding: 22px 24px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 880px;
+}
+
+.settings-pane-head h2 {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 0 0 4px;
+}
+
+.settings-pane-head p {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+  margin: 0;
+  max-width: 68ch;
+}
+
+@media (max-width: 860px) {
+  .settings-layout {
+    grid-template-columns: 1fr;
+  }
+  .settings-nav {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .settings-nav-list {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}
+
 .settings-h1 {
   font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  font-size: 26px;
+  font-size: 20px;
   font-weight: 800;
   letter-spacing: -0.03em;
   margin: 0 0 6px;
 }
 .settings-lede {
   color: var(--muted);
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1.6;
   margin: 0;
-  max-width: 68ch;
 }
 .settings-note {
   color: var(--muted);
@@ -2024,26 +2405,20 @@ body.is-pane-resizing * {
   font-size: 13px;
   margin: 0;
 }
-.settings-card {
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  padding: 16px;
-}
-.settings-card-head h2 {
-  font-size: 15px;
-  font-weight: 700;
-  margin: 0 0 4px;
-}
-.settings-card-head p {
-  color: var(--muted);
-  font-size: 12px;
-  margin: 0 0 14px;
-}
 .settings-rows {
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+/* The fields get a card of their own so the pane does not read as a form floating on the
+   page background. The nav is already a surface; without this the right side is the only
+   part of the app with controls sitting on bare grey. */
+.settings-pane .settings-rows {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 16px;
 }
 .settings-row {
   display: grid;
@@ -2132,23 +2507,9 @@ body.is-pane-resizing * {
 }
 .settings-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
   align-items: center;
-  padding: 12px 0 0;
-}
-.settings-save {
-  padding: 9px 18px;
-  border-radius: 8px;
-  border: 1px solid var(--brand);
-  background: var(--brand-solid);
-  color: var(--on-solid);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-}
-.settings-save:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
 }
 
 /* ---- File picker ---- */
@@ -2473,9 +2834,26 @@ body.is-pane-resizing * {
 
 .cmp-actions {
   display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+/* The Setup stage's primary action, which otherwise floats loose under the two cards
+   with nothing to sit on. Given the same panel as the cards above it, it reads as the
+   end of the form rather than a stray control. */
+.cmp-actions-bar {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px 14px;
+  justify-content: flex-end;
+}
+
+/* Reason first, action last: the button is what the eye is travelling towards. */
+.cmp-actions-bar .cta-disabled-hint {
+  order: -1;
+  margin: 0 auto 0 0;
 }
 
 .cmp-run-head {
@@ -2829,14 +3207,91 @@ body.is-pane-resizing * {
   background: var(--brand-tint);
 }
 
-.gen-template-id {
-  font-size: 0.78rem;
-  font-weight: 600;
+/* Title first, id last. The id is what you pass to the CLI so it has to stay visible,
+   but it is not what anyone scans a list of three families by. */
+.gen-template-title {
+  font-size: 0.85rem;
+  font-weight: 650;
   color: var(--ink);
+  letter-spacing: -0.01em;
 }
 
 .gen-template-meta {
   font-size: 0.68rem;
+  color: var(--muted);
+}
+
+.gen-template-id {
+  font-size: 0.66rem;
+  color: var(--muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.gen-detail-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.gen-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.gen-subtitle {
+  margin: 0.15rem 0 0;
+  font-size: 0.7rem;
+  color: var(--muted);
+}
+
+/* ---- Generate: getting the output out of the page ---- */
+
+.gen-export {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface-sunken);
+  padding: 0.7rem 0.8rem;
+  margin: 0.75rem 0;
+}
+
+.cmp-card.gen-export {
+  background: var(--panel);
+  margin: 0;
+}
+
+.gen-export-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.gen-export-title {
+  font-size: 0.78rem;
+  font-weight: 650;
+}
+
+.gen-export-note {
+  font-size: 0.7rem;
+  color: var(--ok);
+}
+
+.gen-export-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.gen-export-hint {
+  margin: 0;
+  font-size: 0.7rem;
+  line-height: 1.55;
   color: var(--muted);
 }
 

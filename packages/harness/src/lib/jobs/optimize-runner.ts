@@ -97,6 +97,13 @@ export async function startOptimizeJob(
   const seedModel = await resolveEvalModel(req.seedModelId);
   if (!seedModel) throw new Error(`Unknown seed model: ${req.seedModelId}`);
 
+  const seedGene: ModelGene = {
+    catalogId: seedModel.id,
+    modelId: seedModel.modelId,
+    providerId: seedModel.providerId,
+    relativeCostWeight: seedModel.relativeCostWeight,
+  };
+
   const catalogIds = req.modelCatalogIds?.length
     ? req.modelCatalogIds
     : [req.seedModelId];
@@ -113,12 +120,7 @@ export async function startOptimizeJob(
     }
   }
   if (modelCatalog.length === 0) {
-    modelCatalog.push({
-      catalogId: seedModel.id,
-      modelId: seedModel.modelId,
-      providerId: seedModel.providerId,
-      relativeCostWeight: seedModel.relativeCostWeight,
-    });
+    modelCatalog.push(seedGene);
   }
 
   const isCustom = Boolean(req.customGoal);
@@ -188,7 +190,12 @@ export async function startOptimizeJob(
   const seed = seedCandidate({
     instruction: defaultInstruction,
     demos: isCustom ? [] : demoPool.slice(0, 2),
-    model: modelCatalog[0]!,
+    // The model the run was started on, not the first entry of the pool it may mutate
+    // within. Those are different whenever the page's model picker holds a selection,
+    // and the run then optimises a model nobody chose while the manifest — which records
+    // `seedModelId` — says otherwise. Caught with a live key: Seed was Llama 3.1 8B and
+    // every rollout went to openai/gpt-4o, at fifty times the price.
+    model: seedGene,
     scriptPolicies: defaultScriptBundle('passthrough'),
     framePolicy:
       task === 'checklist'

@@ -199,6 +199,13 @@ before showing you a prompt that is going to be in English.
 **Study** runs a shipped config and renders the aggregate tables, along with the provenance block
 — both runtimes and the Unicode version each reads — and the publication verdict.
 
+Both stages hand their output onward. Templates offers the sampled set as a download, the prompts
+on the clipboard, the `emit` command that reproduces the same sampling on disk, and a hand-off that
+opens Compare with the prompts loaded as a custom set — unscored, because a verifier is not a
+reference string, so quality there comes from the preference tournament rather than a metric. Study
+offers the result artifact and the rendered table. Neither writes into the repository, so those
+downloads are the only copy; `redrob-generate study --out` is the way to keep one on disk.
+
 Three things the page does deliberately:
 
 - **It always asks the publication gate.** The CLI writes the artifact before checking it, so

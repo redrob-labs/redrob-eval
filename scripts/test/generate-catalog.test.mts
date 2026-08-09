@@ -16,6 +16,7 @@ import test from 'node:test';
 
 import {
   findRepoRoot,
+  humanizeId,
   readStudyConfigs,
   readTemplateCatalog,
   verifierFamilyOf,
@@ -87,6 +88,20 @@ test('the template catalog', async (t) => {
     }
   });
 
+  await t.test('carries a readable title alongside the id', async () => {
+    // The id is what the CLI is called with and stays on screen; the title is what the
+    // list is scanned by. Both, because either alone loses something.
+    const templates = await readTemplateCatalog(REPO_ROOT);
+    assert.deepEqual(
+      templates.map((entry) => [entry.id, entry.title, entry.familyLabel]),
+      [
+        ['extraction.quarterly_ledger', 'Quarterly ledger', 'Extraction'],
+        ['format.release_note', 'Release note', 'Format'],
+        ['math.linear_equation', 'Linear equation', 'Math'],
+      ],
+    );
+  });
+
   await t.test('names every element when the verifier field holds a list', () => {
     assert.equal(verifierFamilyOf({ type: 'exact' }), 'exact');
     assert.equal(
@@ -155,6 +170,26 @@ test('the study config catalog', async (t) => {
     } finally {
       await rm(root, { recursive: true, force: true });
     }
+  });
+});
+
+test('rendering a machine id for a person', async (t) => {
+  await t.test('drops the family, splits the separators, and sentence-cases', () => {
+    assert.equal(humanizeId('math.linear_equation'), 'Linear equation');
+    assert.equal(humanizeId('extraction.quarterly_ledger'), 'Quarterly ledger');
+    assert.equal(humanizeId('language-cost-mock'), 'Language cost mock');
+    assert.equal(humanizeId('math'), 'Math');
+  });
+
+  await t.test('leaves the rest of the words alone', () => {
+    // Sentence case, not title case: only the first word is touched, so an id that
+    // already contains a capitalised tag keeps it.
+    assert.equal(humanizeId('locale.hi_Latn_stub'), 'Hi Latn stub');
+  });
+
+  await t.test('returns the id unchanged when there is nothing to humanize', () => {
+    assert.equal(humanizeId(''), '');
+    assert.equal(humanizeId('...'), '...');
   });
 });
 

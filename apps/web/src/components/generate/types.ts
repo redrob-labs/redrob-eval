@@ -22,8 +22,10 @@ export interface CatalogLocale {
 
 export interface CatalogTemplate {
   id: string;
+  title: string;
   version: string;
   family: string;
+  familyLabel: string;
   path: string;
   description?: string;
   verifierFamily: string;
@@ -34,6 +36,7 @@ export interface CatalogTemplate {
 export interface StudyConfigSummary {
   path: string;
   id: string;
+  title: string;
   description?: string;
   templateCount: number;
   localeTags: string[];

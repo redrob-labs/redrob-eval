@@ -17,6 +17,13 @@ import type {
   OptimizeReport,
 } from '@redrob/harness';
 import { pct } from '@/lib/utils';
+import { ModelArena } from '@/components/evolve/ModelArena';
+import {
+  applyEvent,
+  newEntry,
+  streamRun,
+  type ArenaEntry,
+} from '@/components/evolve/model-arena';
 
 type StatusResponse = {
   port: number;
@@ -54,12 +61,79 @@ type RunProgressRow = {
 const SAMPLE_PRESETS = [5, 20, 50, 100, 200] as const;
 const GUIDE_KEY = 'redrob.guideDismissed';
 
+/** Challengers per race. Each one is another full search, on the caller's bill. */
+const ARENA_MAX = 4;
+
 type DragPane = 'config' | 'models';
 
 function isAbortError(e: unknown): boolean {
   return e instanceof DOMException
     ? e.name === 'AbortError'
     : e instanceof Error && e.name === 'AbortError';
+}
+
+/**
+ * Where the rubric moved, dimension by dimension.
+ *
+ * A single quality number says the prompt got better without saying what got better, and
+ * a rubric naming five criteria was written by someone who wanted to know which. The
+ * judge scores each out of ten, so that is how they are shown; the overall figure above
+ * is the rubric's own combination of them.
+ *
+ * Renders nothing when the rubric named no dimensions, which is every catalog run.
+ */
+function RubricBreakdown({
+  baseline,
+  evolved,
+}: {
+  baseline?: Record<string, number>;
+  evolved?: Record<string, number>;
+}) {
+  const names = [...new Set([...Object.keys(baseline ?? {}), ...Object.keys(evolved ?? {})])];
+  if (names.length === 0) return null;
+
+  const out = (v: number | undefined) => (v == null ? '—' : (v * 10).toFixed(1));
+
+  return (
+    <div className="rubric-breakdown">
+      <div className="pane-label">By rubric dimension (out of 10)</div>
+      <table className="data-table text-xs">
+        <thead>
+          <tr>
+            <th>Dimension</th>
+            <th>Baseline</th>
+            <th>Evolved</th>
+            <th>Δ</th>
+          </tr>
+        </thead>
+        <tbody>
+          {names.map((name) => {
+            const before = baseline?.[name];
+            const after = evolved?.[name];
+            const delta = before != null && after != null ? (after - before) * 10 : null;
+            return (
+              <tr key={name}>
+                <td>{name}</td>
+                <td>{out(before)}</td>
+                <td>{out(after)}</td>
+                <td
+                  className={
+                    delta == null || Math.abs(delta) < 0.05
+                      ? undefined
+                      : delta > 0
+                        ? 'delta-up'
+                        : 'delta-down'
+                  }
+                >
+                  {delta == null ? '—' : `${delta >= 0 ? '+' : ''}${delta.toFixed(1)}`}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
 }
 
 export function EvalApp() {
@@ -95,6 +169,12 @@ export function EvalApp() {
   const [bestCandidate, setBestCandidate] = useState<Candidate | null>(null);
   const [evolveLesson, setEvolveLesson] = useState<string | null>(null);
   const [evolveTestQuality, setEvolveTestQuality] = useState<number | null>(null);
+  /**
+   * Extra seed models to race alongside the chosen one. Empty means the ordinary
+   * single-model run, which is still what most sessions want.
+   */
+  const [arenaModelIds, setArenaModelIds] = useState<string[]>([]);
+  const [arena, setArena] = useState<ArenaEntry[]>([]);
   const [evolveReport, setEvolveReport] = useState<OptimizeReport | null>(null);
   const [maxPromptTokens, setMaxPromptTokens] = useState(2048);
   const [seed] = useState(42);
@@ -348,6 +428,72 @@ export function EvalApp() {
   }, []);
 
 
+  const labelForModel = useCallback(
+    (id: string) => routerOptions.find((m) => m.id === id)?.label ?? id,
+    [routerOptions],
+  );
+
+  /** Fold one run's events into its arena row. */
+  const follow = useCallback(async (modelId: string, runId: string, signal: AbortSignal) => {
+    setArena((prev) =>
+      prev.map((e) => (e.modelId === modelId ? { ...e, runId, status: 'running' } : e)),
+    );
+    try {
+      await streamRun(runId, signal, (event) => {
+        setArena((prev) => prev.map((e) => (e.modelId === modelId ? applyEvent(e, event) : e)));
+      });
+    } catch (err) {
+      if (isAbortError(err)) {
+        setArena((prev) =>
+          prev.map((e) => (e.modelId === modelId ? { ...e, status: 'stopped' } : e)),
+        );
+        return;
+      }
+      const message = err instanceof Error ? err.message : 'stream failed';
+      setArena((prev) =>
+        prev.map((e) => (e.modelId === modelId ? { ...e, status: 'failed', error: message } : e)),
+      );
+    }
+  }, []);
+
+  /**
+   * Start the same search on each challenger.
+   *
+   * Failures are recorded on the row rather than thrown: one model being unreachable is
+   * a fact about that model, and should not take the rest of the comparison with it.
+   */
+  const raceModels = useCallback(
+    async (modelIds: string[], baseBody: Record<string, unknown>, signal: AbortSignal) => {
+      await Promise.all(
+        modelIds.map(async (modelId) => {
+          try {
+            const res = await fetch('/api/optimize', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              signal,
+              body: JSON.stringify({ ...baseBody, seedModelId: modelId }),
+            });
+            const json = (await res.json().catch(() => ({}))) as {
+              runId?: string;
+              error?: string;
+            };
+            if (!res.ok || !json.runId) throw new Error(json.error || `HTTP ${res.status}`);
+            await follow(modelId, json.runId, signal);
+          } catch (err) {
+            if (isAbortError(err)) return;
+            const message = err instanceof Error ? err.message : 'could not start';
+            setArena((prev) =>
+              prev.map((e) =>
+                e.modelId === modelId ? { ...e, status: 'failed', error: message } : e,
+              ),
+            );
+          }
+        }),
+      );
+    },
+    [follow],
+  );
+
   const consumeOptimizeEvents = useCallback(async (runId: string, signal: AbortSignal) => {
     const res = await fetch(`/api/optimize/runs/${encodeURIComponent(runId)}/events`, {
       method: 'GET',
@@ -547,6 +693,25 @@ export function EvalApp() {
       }
       activeOptRunRef.current = startBody.runId;
       sessionStorage.setItem(OPT_RUN_KEY, startBody.runId);
+
+      // The race, if one was asked for: the same search on each of the other models,
+      // started now so they run against the same rubric at the same time rather than
+      // being compared across sessions. The chosen model keeps the detailed panel.
+      const racers = arenaModelIds.filter((id) => id && id !== routerSmallId);
+      if (racers.length > 0) {
+        setArena([
+          {
+            ...newEntry(routerSmallId, labelForModel(routerSmallId), maxRollouts),
+            runId: startBody.runId,
+          },
+          ...racers.map((id) => newEntry(id, labelForModel(id), maxRollouts)),
+        ]);
+        void raceModels(racers, body, ac.signal);
+        void follow(routerSmallId, startBody.runId, ac.signal);
+      } else {
+        setArena([]);
+      }
+
       await consumeOptimizeEvents(startBody.runId, ac.signal);
     } catch (e) {
       if (isAbortError(e)) {
@@ -853,6 +1018,61 @@ export function EvalApp() {
                 </label>
               </div>
 
+              {/* Which model to ship the evolved prompt on is a different question from
+                  whether the prompt improved, and the model that improves most is
+                  routinely not the answer: it improves most because it started worst. */}
+              <div className="field">
+                <span>Also evolve, for comparison</span>
+                {arenaModelIds.length > 0 ? (
+                  <div className="arena-picker">
+                    {arenaModelIds.map((id) => (
+                      <button
+                        key={id}
+                        type="button"
+                        className="arena-chip on"
+                        disabled={running}
+                        title={`Remove ${labelForModel(id)}`}
+                        onClick={() => setArenaModelIds((prev) => prev.filter((x) => x !== id))}
+                      >
+                        <span>{labelForModel(id)}</span>
+                        <span aria-hidden>×</span>
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+                {/* A select rather than a wall of chips: the callable catalog runs to
+                    hundreds, and any fixed slice of it is a list that does not contain
+                    the model you wanted. */}
+                <div className="arena-add">
+                  <select
+                    value=""
+                    disabled={running || arenaModelIds.length >= ARENA_MAX}
+                    onChange={(e) => {
+                      const id = e.target.value;
+                      if (id) setArenaModelIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
+                    }}
+                  >
+                    <option value="">
+                      {arenaModelIds.length >= ARENA_MAX
+                        ? `At most ${ARENA_MAX} challengers`
+                        : 'Add a model to race…'}
+                    </option>
+                    {routerOptions
+                      .filter((m) => m.id !== routerSmallId && !arenaModelIds.includes(m.id))
+                      .map((m) => (
+                        <option key={m.id} value={m.id}>
+                          {m.label}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+                <span className="field-hint">
+                  {arenaModelIds.length === 0
+                    ? 'Off. Add models to run the same search on each and rank them by held-out test.'
+                    : `${arenaModelIds.length + 1} models, one goal, one rubric, one budget — and ${arenaModelIds.length + 1}× the calls.`}
+                </span>
+              </div>
+
               <label className="field">
                 <span>
                   Prompt budget <strong>{maxPromptTokens}</strong> tokens
@@ -1067,6 +1287,8 @@ export function EvalApp() {
                   </pre>
                 </div>
               ) : null}
+              <ModelArena entries={arena} />
+
               {evolveReport ? (
                 <div className="selected-summary">
                   <div className="pane-label">Baseline vs evolved</div>
@@ -1082,6 +1304,10 @@ export function EvalApp() {
                       ? ` (Δ ${evolveReport.qualityDeltaVal >= 0 ? '+' : ''}${evolveReport.qualityDeltaVal.toFixed(3)})`
                       : ''}
                   </p>
+                  <RubricBreakdown
+                    baseline={evolveReport.baseline.val?.dimensions}
+                    evolved={evolveReport.evolved.val?.dimensions}
+                  />
                   <p className="field-hint">
                     Val tokens {evolveReport.baseline.val?.totalTokens ?? '—'} →{' '}
                     {evolveReport.evolved.val?.totalTokens ?? '—'}

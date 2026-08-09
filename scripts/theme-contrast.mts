@@ -137,7 +137,6 @@ export const PAIRS: Pair[] = [
   ['--on-solid', '--brand-solid', 'text'],
   ['--on-solid', '--brand-solid-hover', 'text'],
   ['--on-solid', '--danger-solid', 'text'],
-  ['--run-ink', '--run', 'text'],
   ['--ink', '--warn-tint', 'text'],
   ['--ink', '--danger-tint', 'text'],
   ['--ink', '--ok-tint', 'text'],

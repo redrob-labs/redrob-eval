@@ -41,6 +41,15 @@ function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+/**
+ * Ceiling on the raised budget when a reasoning model has been cut off mid-thought.
+ * High enough for the reasoning models on offer, finite because the caller is paying.
+ */
+const MAX_REASONING_BUDGET = 16_384;
+
+/** Room for an answer once the thinking is paid for. */
+const REASONING_HEADROOM = 1024;
+
 export function createOpenAICompatAdapter(
   providerId: OpenAICompatProvider,
 ): ProviderAdapter {
@@ -117,8 +126,16 @@ export function createOpenAICompatAdapter(
 
       const maxAttempts = 3;
       let lastError: unknown;
+      /** One escalation only, so a model that never answers cannot bill us in a loop. */
+      let raisedForReasoning = false;
 
-      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      // The reasoning escalation below is a re-ask, not a failed attempt, so it is granted
+      // an extra turn rather than eating one of the retries meant for 429s and 5xxs.
+      for (
+        let attempt = 1;
+        attempt <= maxAttempts + (raisedForReasoning ? 1 : 0);
+        attempt++
+      ) {
         try {
           const res = await fetch(`${baseUrl.replace(/\/$/, '')}/chat/completions`, {
             method: 'POST',
@@ -158,12 +175,47 @@ export function createOpenAICompatAdapter(
           }
 
           const text = json.choices?.[0]?.message?.content?.trim() ?? '';
-          if (!text) {
-            throw new ProviderError('Empty model response', providerId);
-          }
-
+          const finishReason = json.choices?.[0]?.finish_reason ?? undefined;
           const reasoningTokens = json.usage?.completion_tokens_details?.reasoning_tokens;
           const completionTotal = json.usage?.completion_tokens;
+
+          // A reasoning model can spend the caller's whole budget thinking, and return
+          // either nothing at all or an answer that stops mid-sentence. Neither is a wrong
+          // answer, and neither may be scored as one: the cap was ours, and the thinking
+          // it went on is not something the caller asked for or can see. Raise it and ask
+          // again rather than reporting a model that never got to finish speaking.
+          //
+          // Gated on reasoning tokens rather than on truncation alone. A verbose ordinary
+          // model hitting the cap is the cap doing its job; a reasoning model hitting it
+          // is the cap being spent on something other than the answer.
+          if (
+            finishReason === 'length' &&
+            (reasoningTokens ?? 0) > 0 &&
+            !raisedForReasoning &&
+            typeof body.max_tokens === 'number'
+          ) {
+            raisedForReasoning = true;
+            body.max_tokens = Math.min(
+              MAX_REASONING_BUDGET,
+              Math.max(body.max_tokens * 4, (reasoningTokens ?? 0) + REASONING_HEADROOM),
+            );
+            continue;
+          }
+
+          if (!text) {
+            // Terminal, not retried. These calls go out at temperature 0, so asking the
+            // same question again returns the same nothing — and after the escalation
+            // above it would do so at four times the token budget, on the caller's bill.
+            lastError = new ProviderError(
+              finishReason === 'length'
+                ? `Model returned no answer: the reply was cut off at ${completionTotal ?? '?'} ` +
+                  `tokens${(reasoningTokens ?? 0) > 0 ? `, ${reasoningTokens} of them reasoning` : ''}`
+                : 'Empty model response',
+              providerId,
+            );
+            break;
+          }
+
           let outputTokens = completionTotal;
           if (
             reasoningTokens != null &&
@@ -182,7 +234,7 @@ export function createOpenAICompatAdapter(
             outputTokens,
             cachedInputTokens: json.usage?.prompt_tokens_details?.cached_tokens,
             reasoningTokens: reasoningTokens ?? undefined,
-            finishReason: json.choices?.[0]?.finish_reason ?? undefined,
+            finishReason,
           } satisfies CallModelResult;
         } catch (error) {
           lastError = error;

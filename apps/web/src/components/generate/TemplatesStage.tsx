@@ -1,6 +1,10 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+
+import { copyText, downloadJson } from '@/lib/download';
+import { stashComparePrompts } from '@/lib/handoff';
 
 import {
   STATUS_TONE,
@@ -45,12 +49,15 @@ export function TemplatesStage({
   templates: CatalogTemplate[];
   pythonAvailable: boolean;
 }) {
+  const router = useRouter();
   const [chosenPath, setChosenPath] = useState<string | null>(null);
   const [chosenLocale, setChosenLocale] = useState<string | null>(null);
   const [count, setCount] = useState(3);
   const [expanded, setExpanded] = useState<number | null>(0);
   /** Bumped by the Generate button, which is the only way to re-sample the same inputs. */
   const [nonce, setNonce] = useState(0);
+  /** Transient feedback for the export row: copying gives nothing else to look at. */
+  const [note, setNote] = useState<string | null>(null);
 
   // Falling back to the first entry rather than rendering an empty panel: the page is
   // reached to look at templates, and there is no reason to make that take a click.
@@ -105,6 +112,12 @@ export function TemplatesStage({
 
   const localeStatus = template?.locales.find((l) => l.tag === locale)?.translationStatus;
 
+  // The same sampling, written to disk instead of held in the page. Offered verbatim
+  // because the seeds are content-derived: the CLI reproduces exactly what is on screen.
+  const cliCommand = template
+    ? `redrob-generate emit --template ${template.path} --locale ${locale} --count ${count} --out out/`
+    : '';
+
   return (
     <div className="gen-split">
       <section className="cmp-card gen-list">
@@ -120,10 +133,12 @@ export function TemplatesStage({
                   className={`gen-template${template?.path === entry.path ? ' on' : ''}`}
                   onClick={() => setChosenPath(entry.path)}
                 >
-                  <span className="gen-template-id">{entry.id}</span>
+                  <span className="gen-template-title">{entry.title}</span>
                   <span className="gen-template-meta">
-                    {entry.verifierFamily} · {entry.parameterCount} parameters
+                    {entry.familyLabel} · {entry.verifierFamily} · {entry.parameterCount}{' '}
+                    parameters
                   </span>
+                  <code className="gen-template-id">{entry.id}</code>
                   <span className="gen-locale-row">
                     {entry.locales.map((l) => (
                       <LocaleChip key={l.tag} locale={l} />
@@ -141,7 +156,14 @@ export function TemplatesStage({
           <p className="gen-empty">Nothing to show until a template family is on disk.</p>
         ) : (
           <>
-            <div className="pane-label">{template.id}</div>
+            <div className="gen-detail-head">
+              <div>
+                <h2 className="gen-title">{template.title}</h2>
+                <p className="gen-subtitle">
+                  {template.familyLabel} · <code>{template.id}</code> · v{template.version}
+                </p>
+              </div>
+            </div>
             {template.description ? <p className="gen-desc">{template.description}</p> : null}
 
             <div className="gen-controls">
@@ -192,6 +214,87 @@ export function TemplatesStage({
               <p className="gen-empty">
                 Sampling needs the Python CLI. The locales above are read from disk.
               </p>
+            ) : null}
+
+            {instances && instances.length > 0 ? (
+              <div className="gen-export">
+                <div className="gen-export-head">
+                  <span className="gen-export-title">
+                    {instances.length} instance{instances.length === 1 ? '' : 's'} sampled
+                  </span>
+                  {note ? <span className="gen-export-note">{note}</span> : null}
+                </div>
+                <div className="gen-export-actions">
+                  <button
+                    type="button"
+                    className="app-run-btn"
+                    onClick={() => {
+                      const ok = stashComparePrompts({
+                        label: `${template.title} (${locale})`,
+                        prompts: instances.map((instance) => ({
+                          id: `${template.id}#${instance.instance_index}`,
+                          input: instance.prompt,
+                        })),
+                      });
+                      if (ok) router.push('/compare');
+                      else setNote('this browser blocked session storage — download instead');
+                    }}
+                  >
+                    Compare models on these →
+                  </button>
+                  <button
+                    type="button"
+                    className="app-ghost-btn"
+                    onClick={() =>
+                      downloadJson(`${template.id}.${locale}.json`, {
+                        template_id: template.id,
+                        template_path: template.path,
+                        template_version: template.version,
+                        locale,
+                        count: instances.length,
+                        instances,
+                      })
+                    }
+                  >
+                    Download set
+                  </button>
+                  <button
+                    type="button"
+                    className="app-ghost-btn"
+                    onClick={() => {
+                      void copyText(
+                        JSON.stringify(
+                          instances.map((instance) => ({
+                            id: `${template.id}#${instance.instance_index}`,
+                            input: instance.prompt,
+                          })),
+                          null,
+                          2,
+                        ),
+                      ).then((ok) => setNote(ok ? 'prompts copied' : 'could not reach the clipboard'));
+                    }}
+                  >
+                    Copy prompts
+                  </button>
+                  <button
+                    type="button"
+                    className="app-ghost-btn"
+                    onClick={() => {
+                      void copyText(cliCommand).then((ok) =>
+                        setNote(ok ? 'command copied' : 'could not reach the clipboard'),
+                      );
+                    }}
+                    title={cliCommand}
+                  >
+                    Copy CLI command
+                  </button>
+                </div>
+                <p className="gen-export-hint">
+                  Sending these to Compare runs them as custom prompts. There are no
+                  reference answers on that path, so rank the answers with the preference
+                  tournament — the verifier stays here, with the set.
+                </p>
+              </div>
             ) : null}
 
             {instances ? (

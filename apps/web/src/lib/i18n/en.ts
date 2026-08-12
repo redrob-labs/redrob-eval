@@ -373,6 +373,7 @@ export const en = {
   'deploy.notice.opInstall': 'Install queued on the host (shared once for all slots).',
   'deploy.notice.opSlot':
     '{op} queued for slot {slot} (:{port}, served as {served}). Watch the shell.',
+  'deploy.notice.opFleet': '{op} queued for slots {slots}. Watch the shell.',
   'deploy.error.cancelFailed': 'Could not stop the step',
   'deploy.staleOp':
     '{step} stopped before it finished, most likely because its shell was closed. Nothing is running on the host now, so you can start it again.',
@@ -401,6 +402,14 @@ export const en = {
   'deploy.slots.title': 'Slots',
   'deploy.slots.hint':
     'Install once per host. Then Measure / Start each slot. Add slots while free VRAM allows (ceiling {max}). Sharing one card trades context and VRAM; Undeploy removes that slot only.',
+  'deploy.slots.measureAll': 'Measure every slot ({count})',
+  'deploy.slots.measureAllHint':
+    'Measure and serve every slot below from one run, using the model each card is set to.',
+  'deploy.slots.measureAllWhy':
+    'Weights for every slot download at once, then each slot is sized one at a time: a slot is measured against the VRAM actually free, so two probes loading together would each read memory the other is about to take. A slot that fails is reported and the rest still run.',
+  'deploy.slots.healthAll': 'Check every serving slot ({count})',
+  'deploy.slots.healthAllHint':
+    'Readiness and a short completion on every running slot, all at once. These are independent HTTP calls, so they do run in parallel.',
   'deploy.slot.heading': 'Slot {slot}',
   'deploy.slot.add': 'Add slot',
   'deploy.slot.addHint': 'Allocate the next free slot index (limited by free VRAM at Measure)',

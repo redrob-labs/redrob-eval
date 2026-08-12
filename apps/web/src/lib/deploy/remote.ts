@@ -153,8 +153,13 @@ exec ${INSTALL_ROOT}/venv/bin/vllm serve "\${MODEL_HF}" \\
 
 /**
  * Install/provision (root). Writes shared user/venv/secrets once, migrates the
- * legacy single-slot measured.env into slots/0, and seeds slot-0 unit+wrapper.
- * Does NOT start services (measured.env required first).
+ * legacy single-slot measured.env into slots/0, and lays down the unit and
+ * serve wrapper for every slot.
+ *
+ * Every slot, not only the one being set up: units and wrappers are generated
+ * files with nothing model-specific in them, and provisioning them all here is
+ * what makes adding a slot later a measurement rather than another install.
+ * Nothing starts — a unit without that slot's measured.env refuses to.
  */
 export function installScript(): string {
   const enc = (s: string) => Buffer.from(s, 'utf8').toString('base64');
@@ -174,7 +179,6 @@ id -u redrob-vllm >/dev/null 2>&1 || useradd --system --home ${INSTALL_ROOT} --s
 mkdir -p ${INSTALL_ROOT}/bin ${INSTALL_ROOT}/hf-cache /etc/redrob-vllm ${SLOTS_ROOT} /var/log/redrob-vllm
 chown -R redrob-vllm:redrob-vllm ${INSTALL_ROOT} /var/log/redrob-vllm
 chmod 0755 /etc/redrob-vllm ${SLOTS_ROOT} /var/log/redrob-vllm
-install -o redrob-vllm -g redrob-vllm -m 0644 /dev/null ${slot0.logFile}
 
 # secrets.env from injected env (never echoed). The tight umask stays inside the
 # subshell: leaking it into the venv below makes the venv 0700, and then the
@@ -224,11 +228,16 @@ fi
 if [[ -f ${slot0.measuredEnv} ]]; then chmod 0644 ${slot0.measuredEnv}; fi
 if [[ -f ${LEGACY_MEASURED_ENV} ]]; then chmod 0644 ${LEGACY_MEASURED_ENV}; fi
 
-echo '${enc(unitFile(slot0))}' | base64 -d > /etc/systemd/system/${slot0.unit}
-echo '${enc(serveWrapper(slot0))}' | base64 -d > ${slot0.serveScript}
-chmod 0644 /etc/systemd/system/${slot0.unit}
-chmod 0755 ${slot0.serveScript}
-chown root:redrob-vllm ${slot0.serveScript}
+${Array.from({ length: MAX_DEPLOY_SLOTS }, (_, i) => slotFor(i))
+  .map(
+    (s) => `echo '${enc(unitFile(s))}' | base64 -d > /etc/systemd/system/${s.unit}
+echo '${enc(serveWrapper(s))}' | base64 -d > ${s.serveScript}
+chmod 0644 /etc/systemd/system/${s.unit}
+chmod 0755 ${s.serveScript}
+chown root:redrob-vllm ${s.serveScript}
+install -o redrob-vllm -g redrob-vllm -m 0644 /dev/null ${s.logFile} 2>/dev/null || true`,
+  )
+  .join('\n')}
 
 if [[ ! -x ${INSTALL_ROOT}/venv/bin/vllm ]]; then
   echo "Installing vLLM into ${INSTALL_ROOT}/venv (first time)..."
@@ -537,6 +546,51 @@ echo "==> warmup + liveness"
 if complete ${s.port} '${servedName}'; then echo "LIVE=1"; else echo "LIVE=0"; fi
 echo "HEALTH_OK"
 echo "SLOT=${s.index}"
+`;
+}
+
+/**
+ * Health for several slots at once.
+ *
+ * These are independent HTTP calls to ports that are already serving, so they
+ * genuinely can run at the same time — unlike Measure, where each slot has to
+ * have the card to itself to be sized. Output is buffered per slot and printed
+ * in slot order, because interleaved curl output from four ports is unreadable.
+ */
+export function healthAllScript(
+  targets: Array<{ slot: DeploySlot; servedName: string }>,
+  readyTimeoutSec = 600,
+): string {
+  if (targets.length === 0) {
+    return `set +e\necho "No slot is serving, so there is nothing to check."\necho "HEALTH_OK"\n`;
+  }
+  const enc = (text: string) => Buffer.from(text, 'utf8').toString('base64');
+  const launch = targets
+    .map(
+      ({ slot, servedName }) => `echo '${enc(healthScript(servedName, readyTimeoutSec, slot))}' \\
+  | base64 -d > "\${OUT_DIR}/slot-${slot.index}.sh"
+bash "\${OUT_DIR}/slot-${slot.index}.sh" > "\${OUT_DIR}/slot-${slot.index}.log" 2>&1 &
+PIDS+=($!)`,
+    )
+    .join('\n');
+  const report = targets
+    .map(
+      ({ slot }) => `echo "---- slot ${slot.index} (:${slot.port}) ----"
+cat "\${OUT_DIR}/slot-${slot.index}.log"`,
+    )
+    .join('\n');
+
+  return `set +e
+KEY="\${VLLM_API_KEY}"
+export VLLM_API_KEY="\${KEY}"
+OUT_DIR="$(mktemp -d /tmp/redrob-health-XXXXXX)"
+trap 'rm -rf "\${OUT_DIR}"' EXIT
+PIDS=()
+echo "==> checking ${targets.length} slot(s) at once"
+${launch}
+for pid in \${PIDS[@]+"\${PIDS[@]}"}; do wait "\${pid}"; done
+${report}
+echo "HEALTH_ALL_OK"
 `;
 }
 

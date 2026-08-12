@@ -29,6 +29,103 @@ function asSlot(slot?: DeploySlot | number): DeploySlot {
   return slotFor(typeof slot === 'number' ? slot : 0);
 }
 
+/** One slot's share of a whole-host Measure. */
+export interface MeasureAllStep {
+  slot: DeploySlot;
+  model: string;
+  /** The measure (and serve) script for this slot, run as its own bash process. */
+  body: string;
+}
+
+/**
+ * Measure every slot from one action.
+ *
+ * The sizing itself stays one slot at a time, and that is not a shortcut: a
+ * slot is sized from the VRAM actually free at that moment, so two probes
+ * loading at once would each read memory the other is about to take. The
+ * script already retries when another slot claims the card mid-load, and
+ * running the probes concurrently would make that the normal case rather than
+ * a rare one.
+ *
+ * What can overlap is the download, which is where the wall time goes: weights
+ * come off the Hub over the network, not the GPU. Every repo is fetched
+ * concurrently up front, so the second slot is usually measuring cached weights
+ * by the time the first one is done.
+ *
+ * A slot that fails is reported and the next one still runs. One model that
+ * does not fit is not a reason to leave the rest unmeasured.
+ */
+export function measureAllScript(steps: MeasureAllStep[]): string {
+  if (steps.length === 0) {
+    return `set -uo pipefail\necho "No slot has a model to measure."\nexit 1\n`;
+  }
+  const enc = (text: string) => Buffer.from(text, 'utf8').toString('base64');
+  const repos = [...new Set(steps.map((s) => s.model))];
+
+  const prefetch = repos
+    .map(
+      (repo) => `prefetch '${repo}' &
+PREFETCH_PIDS+=($!)`,
+    )
+    .join('\n');
+
+  const run = steps
+    .map(
+      (step) => `echo '${enc(step.body)}' | base64 -d > "\${WORK_DIR}/slot-${step.slot.index}.sh"
+echo ""
+echo "======================================================================"
+echo "==> slot ${step.slot.index}: ${step.model}"
+echo "======================================================================"
+if bash "\${WORK_DIR}/slot-${step.slot.index}.sh"; then
+  OK+=("${step.slot.index}")
+else
+  FAILED+=("${step.slot.index}")
+  echo "ERROR: slot ${step.slot.index} (${step.model}) did not measure - continuing with the next slot" >&2
+fi`,
+    )
+    .join('\n');
+
+  return `set -uo pipefail
+export HF_TOKEN="\${HF_TOKEN:-}"
+export HUGGING_FACE_HUB_TOKEN="\${HF_TOKEN:-}"
+export HF_HOME="${INSTALL_ROOT}/hf-cache"
+WORK_DIR="$(mktemp -d /tmp/redrob-measure-all-XXXXXX)"
+chmod 755 "\${WORK_DIR}"
+trap 'rm -rf "\${WORK_DIR}"' EXIT
+OK=()
+FAILED=()
+
+# Weights only, and never fatal: vLLM fetches whatever is missing when it loads,
+# so a prefetch that fails costs time and nothing else.
+prefetch() {
+  local repo="$1"
+  ${INSTALL_ROOT}/venv/bin/python - "\${repo}" >"\${WORK_DIR}/prefetch.log" 2>&1 <<'PY' || echo "  ! prefetch failed for \${repo} (vLLM will download it during the load)"
+import sys
+from huggingface_hub import snapshot_download
+snapshot_download(sys.argv[1], allow_patterns=["*.json", "*.safetensors", "*.model", "*.txt"])
+PY
+  echo "  · weights ready: \${repo}"
+}
+
+echo "==> measuring ${steps.length} slot(s): ${steps.map((s) => `${s.slot.index}=${s.model}`).join(', ')}"
+echo "==> fetching ${repos.length} model(s) in parallel first; sizing then runs one slot at a time so each reads the card alone"
+PREFETCH_PIDS=()
+${prefetch}
+for pid in \${PREFETCH_PIDS[@]+"\${PREFETCH_PIDS[@]}"}; do wait "\${pid}"; done
+
+${run}
+
+echo ""
+echo "==> measured: \${OK[*]:-none}"
+if (( \${#FAILED[@]} > 0 )); then
+  echo "==> failed: \${FAILED[*]}" >&2
+  echo "MEASURE_ALL_PARTIAL"
+  exit 1
+fi
+echo "MEASURE_ALL_OK"
+`;
+}
+
 export function measureScript(p: MeasureParams): string {
   const headroom = p.headroomFrac ?? 0.12;
   const readyTimeout = p.readyTimeoutSec ?? 900;

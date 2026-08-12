@@ -369,6 +369,7 @@ export const ko: Record<MessageKey, string> = {
   'deploy.notice.opInstall': '호스트에 Install을 넣었습니다 (슬롯 공통, 한 번).',
   'deploy.notice.opSlot':
     '슬롯 {slot}에 {op}을(를) 넣었습니다 (:{port}, served {served}). 셸을 확인하세요.',
+  'deploy.notice.opFleet': '슬롯 {slots}에 {op}을(를) 넣었습니다. 셸을 확인하세요.',
   'deploy.error.cancelFailed': '단계를 중지하지 못했습니다',
   'deploy.staleOp':
     '{step}이(가) 끝나기 전에 중단됐습니다. 셸이 닫힌 경우가 대부분입니다. 지금 호스트에서 실행 중인 작업은 없으니 다시 시작하면 됩니다.',
@@ -396,6 +397,14 @@ export const ko: Record<MessageKey, string> = {
   'deploy.slots.title': '슬롯',
   'deploy.slots.hint':
     'Install은 호스트당 한 번입니다. 슬롯마다 Measure / Start를 하세요. 남은 VRAM이 허락하는 한 슬롯을 더 추가할 수 있어요(상한 {max}). 한 장을 나눠 쓰면 컨텍스트와 VRAM을 희생합니다. Undeploy는 그 슬롯만 지웁니다.',
+  'deploy.slots.measureAll': '모든 슬롯 측정 ({count})',
+  'deploy.slots.measureAllHint':
+    '아래 모든 슬롯을 한 번에 측정하고 바로 서빙합니다. 슬롯마다 지정한 모델을 그대로 씁니다.',
+  'deploy.slots.measureAllWhy':
+    '모든 슬롯의 가중치를 먼저 병렬로 내려받고, 크기 측정은 슬롯마다 하나씩 진행합니다. 측정은 그 순간 실제로 비어 있는 VRAM을 기준으로 하므로, 두 프로브가 동시에 올라오면 서로가 곧 가져갈 메모리를 읽게 됩니다. 실패한 슬롯은 그대로 보고하고 나머지는 계속 진행합니다.',
+  'deploy.slots.healthAll': '서빙 중인 슬롯 점검 ({count})',
+  'deploy.slots.healthAllHint':
+    '실행 중인 모든 슬롯의 준비 상태와 짧은 응답을 한꺼번에 확인합니다. 서로 독립적인 HTTP 호출이라 실제로 병렬로 돕니다.',
   'deploy.slot.heading': '슬롯 {slot}',
   'deploy.slot.add': '슬롯 추가',
   'deploy.slot.addHint': '다음 빈 슬롯 번호를 할당합니다 (Measure 때 남은 VRAM이 실제 한계)',

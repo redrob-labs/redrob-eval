@@ -637,8 +637,17 @@ export function CompareApp() {
     [tournament],
   );
 
-  const castGroupVote = useCallback(
-    async (promptId: string, matchId: string, winnerModelId: string | null) => {
+  /**
+   * Every way of settling a group ballot posts to the same endpoint; what is in
+   * the body is what the voter actually said, and the harness turns each into
+   * the pairwise votes it justifies.
+   */
+  const postGroupBallot = useCallback(
+    async (
+      promptId: string,
+      matchId: string,
+      decision: Record<string, unknown>,
+    ) => {
       if (!tournament) return;
       setTournamentError(null);
       try {
@@ -647,7 +656,7 @@ export function CompareApp() {
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ promptId, matchId, winnerModelId }),
+            body: JSON.stringify({ promptId, matchId, ...decision }),
           },
         );
         const json = (await res.json()) as TournamentState & { error?: string };
@@ -655,6 +664,50 @@ export function CompareApp() {
         setTournament(json);
       } catch (e) {
         setTournamentError(e instanceof Error ? e.message : "Vote failed");
+      }
+    },
+    [tournament],
+  );
+
+  const castGroupVote = useCallback(
+    (promptId: string, matchId: string, winnerModelId: string | null) =>
+      postGroupBallot(promptId, matchId, { winnerModelId }),
+    [postGroupBallot],
+  );
+
+  const eliminateFromBallot = useCallback(
+    (promptId: string, matchId: string, modelId: string) =>
+      postGroupBallot(promptId, matchId, { eliminateModelId: modelId }),
+    [postGroupBallot],
+  );
+
+  const rankBallot = useCallback(
+    (promptId: string, matchId: string, ranking: string[]) =>
+      postGroupBallot(promptId, matchId, { ranking }),
+    [postGroupBallot],
+  );
+
+  /** Clear one prompt so it can be voted again; the rest of the run is untouched. */
+  const revotePrompt = useCallback(
+    async (promptId: string) => {
+      if (!tournament) return;
+      setTournamentError(null);
+      try {
+        const res = await fetch(
+          `/api/compare/tournament/${encodeURIComponent(tournament.meta.runId)}/undo`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ promptId }),
+          },
+        );
+        const json = (await res.json()) as TournamentState & { error?: string };
+        if (!res.ok) throw new Error(json.error || `HTTP ${res.status}`);
+        setTournament(json);
+      } catch (e) {
+        setTournamentError(
+          e instanceof Error ? e.message : "Could not clear that prompt",
+        );
       }
     },
     [tournament],
@@ -793,6 +846,9 @@ export function CompareApp() {
             }
             onVote={castVote}
             onGroupVote={castGroupVote}
+            onEliminate={eliminateFromBallot}
+            onRank={rankBallot}
+            onRevote={revotePrompt}
             onJudge={setup.modality === "image" ? judgeMatch : undefined}
             hint={isTool ? t("compare.tool.pref.condition") : undefined}
             onOptimizeRoute={() => setStage("route")}

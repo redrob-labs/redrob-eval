@@ -334,19 +334,26 @@ export { containsCurrency } from './lib/reporting/no-currency';
 
 // Blind World Cup preference tournament
 export {
+  activeContenders,
   advance,
   advanceGroup,
   aggregateTournament,
   appendVote,
   appendVotes,
+  appendVoteUndo,
   assertSafeTournamentRunId,
   bracketIsSettled,
   championOf,
   createBracket,
+  eliminateFromGroup,
+  foldVoteLog,
   groupIsPending,
+  isVoteUndo,
   listTournaments,
   makeTournamentRunId,
   nextPendingMatch,
+  rankBracket,
+  rankGroup,
   readTournament,
   resolvedMatches,
   totalMatches,
@@ -364,6 +371,8 @@ export type {
   TournamentMeta,
   TournamentRun,
   Vote,
+  VoteLogEntry,
+  VoteUndo,
   VoteWinner,
 } from './lib/tournament';
 

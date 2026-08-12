@@ -1,7 +1,15 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { evalRoot } from '../paths';
-import type { Bracket, TournamentMeta, TournamentRun, Vote } from './types';
+import type {
+  Bracket,
+  TournamentMeta,
+  TournamentRun,
+  Vote,
+  VoteLogEntry,
+  VoteUndo,
+} from './types';
+import { isVoteUndo } from './types';
 
 /**
  * Tournaments live under `eval/tournaments/{runId}/`, matching the layout the
@@ -76,6 +84,38 @@ export async function appendVotes(runId: string, votes: Vote[]): Promise<void> {
   await fs.appendFile(path.join(dir, 'votes.jsonl'), lines, 'utf8');
 }
 
+/**
+ * Retract one prompt's votes so it can be voted again.
+ *
+ * Appended like any other line rather than rewritten over the retracted rows:
+ * the log stays a record of what happened, including the change of mind.
+ */
+export async function appendVoteUndo(
+  runId: string,
+  promptId: string,
+): Promise<VoteUndo> {
+  const undo: VoteUndo = { kind: 'undo', promptId, undoneAt: new Date().toISOString() };
+  const dir = runDir(runId);
+  await fs.mkdir(dir, { recursive: true });
+  await fs.appendFile(path.join(dir, 'votes.jsonl'), `${JSON.stringify(undo)}\n`, 'utf8');
+  return undo;
+}
+
+/** Apply the retractions in a raw log, leaving the votes that still count. */
+export function foldVoteLog(entries: VoteLogEntry[]): Vote[] {
+  const votes: Vote[] = [];
+  for (const entry of entries) {
+    if (isVoteUndo(entry)) {
+      for (let i = votes.length - 1; i >= 0; i -= 1) {
+        if (votes[i]!.promptId === entry.promptId) votes.splice(i, 1);
+      }
+      continue;
+    }
+    votes.push(entry);
+  }
+  return votes;
+}
+
 export async function readTournament(runId: string): Promise<TournamentRun> {
   const dir = runDir(runId);
   const metaRaw = await fs.readFile(path.join(dir, 'meta.json'), 'utf8');
@@ -84,10 +124,12 @@ export async function readTournament(runId: string): Promise<TournamentRun> {
   let votes: Vote[] = [];
   try {
     const votesRaw = await fs.readFile(path.join(dir, 'votes.jsonl'), 'utf8');
-    votes = votesRaw
-      .split('\n')
-      .filter((l) => l.trim())
-      .map((l) => JSON.parse(l) as Vote);
+    votes = foldVoteLog(
+      votesRaw
+        .split('\n')
+        .filter((l) => l.trim())
+        .map((l) => JSON.parse(l) as VoteLogEntry),
+    );
   } catch {
     // no votes yet
   }

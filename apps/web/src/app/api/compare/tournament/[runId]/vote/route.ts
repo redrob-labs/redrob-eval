@@ -5,8 +5,12 @@ import {
   aggregateTournament,
   appendVotes,
   bracketIsSettled,
+  eliminateFromGroup,
+  rankGroup,
   readTournament,
   writeTournamentMeta,
+  type Bracket,
+  type Vote,
   type VoteWinner,
 } from '@redrob/harness';
 
@@ -22,7 +26,28 @@ type VoteBody = {
   winner?: VoteWinner;
   /** Group ballot: the id that won, or null for a tie across the whole ballot. */
   winnerModelId?: string | null;
+  /** Group ballot: knock this one out and leave the rest standing. */
+  eliminateModelId?: string;
+  /** Group ballot: every answer placed, best first. */
+  ranking?: string[];
 };
+
+/**
+ * A group ballot can be settled three ways, and each says something different
+ * about the field, so they are recorded as different sets of votes.
+ */
+function recordGroupDecision(
+  bracket: Bracket,
+  body: VoteBody,
+): Vote[] {
+  if (Array.isArray(body.ranking)) {
+    return rankGroup(bracket, body.matchId, body.ranking).votes;
+  }
+  if (typeof body.eliminateModelId === 'string') {
+    return eliminateFromGroup(bracket, body.matchId, body.eliminateModelId).votes;
+  }
+  return advanceGroup(bracket, body.matchId, body.winnerModelId ?? null).votes;
+}
 
 /**
  * POST /api/compare/tournament/[runId]/vote — record one blind vote and
@@ -37,10 +62,11 @@ export async function POST(request: Request, context: Ctx) {
   } catch {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
-  const isGroupBallot = 'winnerModelId' in body;
+  const isGroupBallot =
+    'winnerModelId' in body || 'eliminateModelId' in body || 'ranking' in body;
   if (!body.promptId || !body.matchId || (!body.winner && !isGroupBallot)) {
     return NextResponse.json(
-      { error: 'Provide promptId, matchId and a winner' },
+      { error: 'Provide promptId, matchId and a winner, an elimination or a ranking' },
       { status: 400 },
     );
   }
@@ -58,7 +84,7 @@ export async function POST(request: Request, context: Ctx) {
     // A group ballot is one human decision that stands for several pairings, so
     // it comes back as several votes.
     const newVotes = bracket.group
-      ? advanceGroup(bracket, body.matchId, body.winnerModelId ?? null).votes
+      ? recordGroupDecision(bracket, body)
       : [advance(bracket, body.matchId, body.winner!).vote];
     await appendVotes(runId, newVotes);
 

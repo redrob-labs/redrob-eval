@@ -5,9 +5,9 @@
 [![CI](https://github.com/redrob-labs/redrob-eval/actions/workflows/ci.yml/badge.svg)](https://github.com/redrob-labs/redrob-eval/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 
-Open-source **LLM evaluation workbench** (Next.js App Router, Apache 2.0): compare any model from any source on your own task, settle quality by blind human preference, evolve configurations under a quality floor, and serve self-hosted models on your GPU.
+Open-source **LLM evaluation workbench** (Next.js App Router, Apache 2.0): generate verifiable evaluation prompts from parametric templates, compare any model from any source on your own task, settle quality by blind human preference, evolve configurations under a quality floor, and serve self-hosted models on your GPU.
 
-The product is three modules plus settings: **Compare · Evolve · Deploy**. Compare is the front door - frontier APIs, OpenRouter, and your own vLLM endpoints all sit in the same list, on text or image, with audio slotting in as one more modality. Costs, where they appear at all, are **% of a baseline**, never absolute currency. Provider keys stay server-side.
+The product is four modules plus settings: **Compare · Evolve · Deploy · Generate**. Compare is the front door - frontier APIs, OpenRouter, and your own vLLM endpoints all sit in the same list, on text or image, with audio slotting in as one more modality. Generate makes the items the other three run on. Costs, where they appear at all, are **% of a baseline**, never absolute currency. Provider keys stay server-side.
 
 ## Findings
 
@@ -67,13 +67,13 @@ Nothing else is required for a clean checkout - evaluation runs offline against 
 
 | Module | Path | Purpose |
 |------|------|---------|
-| **Compare** | `/` or `/compare` | Run any model from any source live on a catalog dataset or your own prompts, on text or image; rank by measured quality, latency, TTFT and throughput; settle unscored tasks with a blind preference tournament; turn those votes into a routing policy |
+| **Compare** | `/` or `/compare` | Run any model from any source live on a catalog dataset or your own prompts, on text or image; rank by measured quality, latency, TTFT and throughput; settle unscored tasks with a blind preference tournament; turn those votes into a routing policy. Task **Tool routing** evaluates the picked models with one shared JSON contract on six-, eighteen-, and fifty-tool scenarios across selectable languages (fertility optional). |
 | **Evolve** | `/evolve` | GEPA search over instruction / demos / model / `script_policy` / `frame_policy` under a quality floor; catalog datasets or custom goal+rubric (LLM judge or checklist QWK); export baseline-vs-evolved report |
 | **Deploy** | `/deploy` | Serve self-hosted S+L on your GPU host over SSH - measure, start, health, benchmark, resumable terminal |
 | **Generate** | `/generate` | Browse parametric task templates and their locales, sample instances from content-derived seeds, and run a cross-locale study to a validated results artifact; export either, or hand the prompts straight to Compare |
 | **Settings** | `/settings` | Provider keys and GPU host config, written to the gitignored root `.env`; also the light / dark / system theme |
 
-Typical loop: **Compare** to pick a model → **Evolve** under a quality floor → **Deploy** what you chose, then compare the served endpoint against the frontier again.
+Typical loop: **Generate** a verifiable prompt set (or pick a catalog dataset) → **Compare** to pick a model → **Evolve** under a quality floor → **Deploy** what you chose, then compare the served endpoint against the frontier again. For tool-routing SLMs: **Deploy** (install / measure / serve) → **Compare** with modality Tool routing.
 
 ### Generate
 
@@ -99,7 +99,14 @@ still lists the template catalog, which is read from disk, and says plainly that
 interpreter rather than failing one button at a time.
 
 ```bash
-pip install -e packages/generate                     # optional, only to generate
+# optional: only needed to sample instances or run a study
+python -m venv .venv-generate
+.venv-generate/Scripts/python -m pip install -e packages/generate   # Windows
+# .venv-generate/bin/pip install -e packages/generate               # macOS / Linux
+
+# point the workbench at the venv CLI (repo-root .env; not on PATH by default)
+# REDROB_GENERATE_CMD=/absolute/path/to/.venv-generate/.../redrob-generate
+
 redrob-generate emit --template templates/math/linear-equation --count 20 --out /tmp/set
 redrob-generate verify --set /tmp/set --outputs answers.jsonl --json
 yarn test                                            # the TypeScript half of the conformance suite
@@ -114,7 +121,7 @@ native-speaker review, none has had one, and a publishable artifact refuses to b
 
 ### Compare's four stages
 
-1. **Setup** - pick a modality, pick models across every source (curated, OpenRouter, direct frontier, self-hosted vLLM), then a catalog dataset, an image prompt suite, or your own prompts pasted or uploaded as JSONL.
+1. **Setup** - pick a modality (text, image, or tool routing), pick models across every source (curated, OpenRouter, direct frontier, self-hosted vLLM), then a catalog dataset, an image prompt suite, or your own prompts pasted or uploaded as JSONL. Tool routing uses the SLM registry, served model id, and stub fixtures instead.
 2. **Run** - streams live over SSE. Quality is scored only when the task has reference answers; latency, TTFT and throughput are always measured on this run. No cost column, because published pricing is never real time.
 3. **Preference** - one single-elimination bracket per prompt. Two answers at a time with model names hidden, winner advances, champion takes the prompt. Non-power-of-two fields pad with byes; a model that errored on a prompt loses by walkover. For image, "let the judge decide" hands a match to a vision model and you can still vote the rest. Votes append to `eval/tournaments/{runId}/votes.jsonl`.
 4. **Optimize route** - name a fast model and a fallback. Every prompt the fast one won or tied becomes a `small` label, the rest escalate. These land in the same `RoutingExample` corpus the metric-derived collector fills, so `/api/routing/export` and the training path are unchanged - the supervision is just human now instead of metric.
@@ -185,19 +192,21 @@ On **Evolve**, pick a catalog dataset or **Custom goal** (goal + rubric + input-
 | `FIREWORKS_API_KEY` | Fireworks |
 | `HF_TOKEN` | Hugging Face (dataset fetcher; required for GPU deploy downloads) |
 | `VLLM_API_KEY` | Self-hosted vLLM bearer (auto-issued by `/deploy` if unset) |
-| `VLLM_S_BASE_URL` / `VLLM_L_BASE_URL` | OpenAI-compatible endpoints for axis S / L (defaults: loopback ports via tunnel) |
+| `VLLM_PORT` | Port exposed by Deploy (default: vLLM convention `8000`) |
+| `VLLM_BASE_URL` | OpenAI-compatible endpoint for the deployed model (default: `http://localhost:8000/v1`; set to the GPU host for a remote deploy) |
+| `REDROB_GENERATE_CMD` | Optional absolute path to the `redrob-generate` executable (e.g. inside `.venv-generate`); when unset the workbench looks for it on `PATH` |
 
-Set every key at `/settings` in the app, or via the environment. GPU deploy details (`GPU_HOST`, `GPU_USER`, `GPU_SSH_KEY`, …) never leave the gitignored root `.env` — see [`deploy/README.md`](deploy/README.md). Do not put hostnames, usernames, key paths, or API keys in the repo.
+Set every key at `/settings` in the app, or via the environment. GPU deploy details (`GPU_HOST`, `GPU_USER`, `GPU_SSH_KEY`, …) never leave the gitignored root `.env`. See [`deploy/README.md`](deploy/README.md). Do not put hostnames, usernames, key paths, or API keys in the repo.
 
 ### Self-hosted relative cost
 
 Self-hosted models have no API $/token. Relative cost uses measured throughput:
 
-`relativeCostWeight(m) = 100 * (tok_per_sec_L / tok_per_sec_m)`
+`relativeCostWeight(m) = 100 * (tok_per_sec_large / tok_per_sec_m)`
 
-Large-alone = 100 (GPU-time per token). Run **Benchmark** on `/deploy` after both models are serving; it records `MEASURED_TOK_PER_SEC_*` on the GPU host and the app picks them up. FP8 vs bf16 must appear in result caveats — never mix precisions in one table without that note.
+A large model alone = 100 (GPU-time per token). Run **Benchmark** on `/deploy` once the model is serving; it records `MEASURED_TOK_PER_SEC` on the GPU host and the app attributes it to that model and no other. One model is served at a time, so comparing candidates means deploying each in turn. FP8 vs bf16 must appear in result caveats, so never mix precisions in one table without that note.
 
-Indic L-candidate A/B (Gemma 4 31B vs Qwen3.6 27B): compare on **IN22-Gen** and **IndicGLUE** slices (`in22-gen-hi-en`, `indic-glue-iitp-mr-hi`).
+Indic large-candidate A/B (Gemma 4 31B vs Qwen3.6 27B): compare on the **IN22-Gen** slice (`in22-gen-hi-en`).
 
 Keep `.env` at the **repo root**. Next loads it via `apps/web/next.config.ts`.
 
@@ -231,7 +240,7 @@ Keep `.env` at the **repo root**. Next loads it via `apps/web/next.config.ts`.
 - `POST /api/preference/runs` - K×M preference generation, no UI needed
 - `GET|POST /api/score` - metric fixtures and one-off scoring
 
-Also: `/api/models`, `/api/datasets`, `/api/image/suites`, `/api/status`, `/api/probe`, …
+Also: `/api/models`, `/api/datasets`, `/api/image/suites`, `/api/generate/*`, `/api/status`, `/api/probe`, …
 
 ## CLI
 

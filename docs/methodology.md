@@ -91,9 +91,9 @@ Convention: `datasets/video-local/<id>.json` (gitignored except README + schema 
 
 Each manifest (`schemaVersion: 1`) lists:
 
-- `examples[].framePaths` — pre-extracted **frame images** (never persist raw video here)
-- `examples[].label` — human ordinal / checklist JSON for QWK / κ / composite metrics
-- optional `anchors[]` — 2–3 fixed few-shot frame-sets (beginner/intermediate/skilled)
+- `examples[].framePaths` - pre-extracted **frame images** (never persist raw video here)
+- `examples[].label` - human ordinal / checklist JSON for QWK / κ / composite metrics
+- optional `anchors[]` - 2-3 fixed few-shot frame-sets (beginner/intermediate/skilled)
 
 Loaders: `loadVideoLocalManifest` → `videoLocalToLoadedDataset` in `@redrob/harness`.
 During eval, only the frames selected by `frame_policy` are read into memory for that

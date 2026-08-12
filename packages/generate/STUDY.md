@@ -73,16 +73,16 @@ Validated against `spec/study-v1.schema.json` before anything runs.
 | `harness` | Shells out to the harness's `callModel`, the same path Compare uses | yes |
 
 A `harness` model's `id` is the canonical `provider/model` id that Compare resolves, for example
-`openai/gpt-4o-mini` or `vllm/redrob-s`. There is no second model client here: the bridge at
-`scripts/study-model-call.mts` is about sixty lines and every decision it could make — resolving
-the id, picking the adapter, retrying, reading keys — is `resolveModel` and `callModel` making it.
+`openai/gpt-4o-mini` or `vllm/redrob`. There is no second model client here: the bridge at
+`scripts/study-model-call.mts` is about sixty lines and every decision it could make (resolving
+the id, picking the adapter, retrying, reading keys) is `resolveModel` and `callModel` making it.
 
 `quantization`, `serving_engine` and `hardware` are optional and recorded verbatim where known.
 `null` means unknown; it does not mean "none", so an unquantised model should say `bf16`.
 
 ### The mock provider
 
-`mock_strategy` is required — there is no default, because every default is a silent assumption
+`mock_strategy` is required. There is no default, because every default is a silent assumption
 about how good the imaginary model is.
 
 | Strategy | Behaviour |
@@ -94,7 +94,7 @@ about how good the imaginary model is.
 The mock inverts only the verifiers whose config literally contains the answer: `exact`,
 `numeric_tolerance`, `set_equality`, `ordered_equality`, and lists containing one of those.
 `regex`, `json_schema` and `format_constraint` describe a *set* of acceptable answers rather than
-naming one, and constructing a member is a search problem the mock does not attempt — against
+naming one, and constructing a member is a search problem the mock does not attempt, so against
 those it answers wrongly, visibly, in the artifact. `templates/format/release-note` is entirely
 `format_constraint`, so a mock study over it scores zero by construction.
 
@@ -173,8 +173,8 @@ asserts the stubs are byte-identical for that reason.
 
 Two files land in `--out`:
 
-- `result.json` — the artifact, validated against `spec/study-v1.schema.json`
-- `aggregates.txt` — the table above
+- `result.json` - the artifact, validated against `spec/study-v1.schema.json`
+- `aggregates.txt` - the table above
 
 Reruns are byte-identical apart from `created_at`; pass `--created-at` to pin that too.
 
@@ -197,11 +197,11 @@ produced it, and the verifier that will score it. Selecting a locale marked `unt
 before showing you a prompt that is going to be in English.
 
 **Study** runs a shipped config and renders the aggregate tables, along with the provenance block
-— both runtimes and the Unicode version each reads — and the publication verdict.
+(both runtimes and the Unicode version each reads) and the publication verdict.
 
 Both stages hand their output onward. Templates offers the sampled set as a download, the prompts
 on the clipboard, the `emit` command that reproduces the same sampling on disk, and a hand-off that
-opens Compare with the prompts loaded as a custom set — unscored, because a verifier is not a
+opens Compare with the prompts loaded as a custom set, unscored, because a verifier is not a
 reference string, so quality there comes from the preference tournament rather than a metric. Study
 offers the result artifact and the rendered table. Neither writes into the repository, so those
 downloads are the only copy; `redrob-generate study --out` is the way to keep one on disk.
@@ -215,8 +215,8 @@ Three things the page does deliberately:
 - **It will not spend money.** A config declaring a `harness` model is refused by the route, not
   merely hidden in the UI. Real model calls stay on the command line, where the spend is a decision
   someone typed.
-- **It says when it cannot help.** Sampling is Python-only — this repository's TypeScript
-  implementation reads and verifies but does not generate — so without the CLI on `PATH` the page
+- **It says when it cannot help.** Sampling is Python-only. This repository's TypeScript
+  implementation reads and verifies but does not generate, so without the CLI on `PATH` the page
   says exactly that and still lists the catalog, which is read from disk.
 
 ---
@@ -225,18 +225,18 @@ Three things the page does deliberately:
 
 Numbers only. There is no field for a conclusion and no code that writes one.
 
-- **`provenance`** — generator and spec versions, seed policy, tokenizer, both runtimes with the
+- **`provenance`** - generator and spec versions, seed policy, tokenizer, both runtimes with the
   Unicode version each actually reads, every model with its quantization / serving engine /
   hardware where known, and the timestamp.
-- **`locales`** — the 2×2 labels plus the `translation_status` found on disk, so a reader sees
+- **`locales`** - the 2×2 labels plus the `translation_status` found on disk, so a reader sees
   which locales were placeholders without opening the templates.
-- **`instances`** — one row per (model, locale, template, index): seed, verdict, per-element
+- **`instances`** - one row per (model, locale, template, index): seed, verdict, per-element
   verdicts where the verifier field held a list, prompt token count, `code_mix_ratio`, and the
   provenance of that verdict.
-- **`aggregates.accuracy`** — pass rate per model per locale per verifier family.
-- **`aggregates.tokens`** — mean prompt tokens per locale, counting each prompt once however many
+- **`aggregates.accuracy`** - pass rate per model per locale per verifier family.
+- **`aggregates.tokens`** - mean prompt tokens per locale, counting each prompt once however many
   models saw it.
-- **`aggregates.paired_deltas`** — one row per declared comparison.
+- **`aggregates.paired_deltas`** - one row per declared comparison.
 
 ### Why paired
 
@@ -255,7 +255,7 @@ is not. Two refusals:
    placeholder.
 2. **Any verdict was not produced by `redrob-generate`.** Python is normative; the TypeScript
    implementation marks its own verdicts non-authoritative in the record. Not because it is less
-   correct — it passes the same conformance corpus — but because the two runtimes compile against
+   correct (it passes the same conformance corpus) but because the two runtimes compile against
    different Unicode tables, which the header above shows directly: 15.0.0 against 16.0.
 
 Both are checked against the written artifact rather than trusted from the run that produced it,

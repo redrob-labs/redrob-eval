@@ -22,16 +22,24 @@ export {
   SELF_HOSTED_CANDIDATES,
   SELF_HOSTED_DEFAULTS,
   SELF_HOSTED_EXCLUSIONS,
+  SELF_HOSTED_ENDPOINT_ID,
+  SERVED_MODEL_NAME,
   VLLM_ENV,
+  baseUrlForServedName,
   buildSelfHostedCaveat,
   relativeCostFromThroughput,
   resolveSelfHostedCostWeight,
+  selfHostedSlotId,
+  selfHostedSlotRow,
+  slotServedName,
+  vllmSlotEndpoints,
+  type VllmSlotEndpoint,
   type ModelRef,
   type ProviderId,
-  type SelfHostedAxis,
   type SelfHostedLicense,
   type SelfHostedMeta,
   type SelfHostedPrecision,
+  type SelfHostedTier,
 } from './config/models';
 export {
   applyMeasuredThroughput,
@@ -88,8 +96,10 @@ export {
   callModel,
   getProvider,
   listProviders,
+  probeVllmEndpoint,
   ProviderError,
 } from './lib/providers';
+export type { VllmProbeResult, VllmServedModel } from './lib/providers/vllm';
 export type {
   CallModelParams,
   CallModelResult,
@@ -119,6 +129,14 @@ export {
   type OrModality,
   type OpenRouterCatalogEntry,
 } from './lib/catalog/openrouter';
+export {
+  getLiveSelfHostedModel,
+  getLiveSelfHostedSlots,
+  resetLiveSelfHostedCache,
+  syncSelfHostedRef,
+  type LiveSelfHostedModel,
+  type LiveSelfHostedSlot,
+} from './lib/catalog/self-hosted-live';
 // Router
 export { routeSample, classifyComplexity, type RouteDecision } from './lib/router';
 
@@ -317,11 +335,15 @@ export { containsCurrency } from './lib/reporting/no-currency';
 // Blind World Cup preference tournament
 export {
   advance,
+  advanceGroup,
   aggregateTournament,
   appendVote,
+  appendVotes,
   assertSafeTournamentRunId,
+  bracketIsSettled,
   championOf,
   createBracket,
+  groupIsPending,
   listTournaments,
   makeTournamentRunId,
   nextPendingMatch,
@@ -330,10 +352,12 @@ export {
   totalMatches,
   writeTournament,
   writeTournamentMeta,
+  GROUP_VOTE_MAX,
 } from './lib/tournament';
 export type {
   Bracket,
   Competitor,
+  GroupMatch,
   Match,
   ModelStanding,
   TournamentAggregate,
@@ -421,3 +445,42 @@ export {
   writeOptimizeMeta,
   type OptimizeRunMeta,
 } from './lib/jobs/optimize-fs';
+
+// Fixed-toolset SLM routing harness (separate from small/large routing-data)
+export {
+  FERTILITY_BASELINE_ID,
+  TOOL_ROUTING_MODELS,
+  TOOL_ROUTING_DEFAULT_LANGUAGES,
+  TOOL_ROUTING_LANGUAGES,
+  TOOL_ROUTING_CONDITIONS,
+  TOOL_ROUTING_COMPARE_CONDITIONS,
+  TOOLSETS,
+  getToolRoutingModel,
+  listDefaultToolRoutingModels,
+  listToolRoutingModels,
+  THINKING_OFF_EXTRA_BODY,
+  buildToolRoutingPrompt,
+  toolRoutingBallotText,
+  parseToolRoutingPrediction,
+  stripReasoning,
+  argsExactEqual,
+  scoreToolRoutingExample,
+  aggregateSlice,
+  buildConditionDeltas,
+  buildToolRoutingReport,
+  measureToolRoutingFertility,
+  normalizeToolRoutingLanguages,
+  formatFertilityMarkdown,
+  runToolRoutingHarness,
+  loadStubFertilityCorpus,
+  loadStubToolRoutingTasks,
+  loadStubToolsets,
+  type ToolRoutingModel,
+  type ToolRoutingTask,
+  type ToolRoutingReport,
+  type ToolRoutingCondition,
+  type ToolRoutingLanguage,
+  type ToolRoutingExampleRecord,
+  type ToolsetId,
+  type FertilityCell,
+} from './lib/tool-routing';

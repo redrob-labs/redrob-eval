@@ -1,6 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useT } from '@/components/LocaleProvider';
+import type { MessageKey } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
 export type ModelSource = 'selfhosted' | 'frontier' | 'openrouter';
@@ -23,11 +25,17 @@ export type CatalogModel = {
   source: ModelSource;
   callable: boolean;
   selfHosted?: {
-    axis: 'S' | 'L';
     precision: string;
     license: string;
     hfRepoId: string;
     maxModelLen: number;
+    /** Read back from the endpoint, so the row names the weights actually served. */
+    live?: {
+      reachable: boolean;
+      synced: boolean;
+      baseUrl: string;
+      error: string | null;
+    };
   } | null;
 };
 
@@ -42,10 +50,10 @@ type ModelsResponse = {
 
 const SOURCE_ORDER: ModelSource[] = ['selfhosted', 'frontier', 'openrouter'];
 
-const SOURCE_LABELS: Record<ModelSource, string> = {
-  selfhosted: 'Self-hosted (vLLM)',
-  frontier: 'Frontier APIs',
-  openrouter: 'OpenRouter',
+const SOURCE_LABEL_KEYS: Record<ModelSource, MessageKey> = {
+  selfhosted: 'models.source.selfhosted',
+  frontier: 'models.source.frontier',
+  openrouter: 'models.source.openrouter',
 };
 
 function formatDate(created?: number | null): string {
@@ -84,6 +92,7 @@ export function ModelPicker(props: {
     selectMode = 'text',
     hideHeader = false,
   } = props;
+  const t = useT();
   const [q, setQ] = useState('');
   const [debouncedQ, setDebouncedQ] = useState('');
   const [sort, setSort] = useState<'newest' | 'name'>('newest');
@@ -95,8 +104,7 @@ export function ModelPicker(props: {
   const [orReady, setOrReady] = useState(false);
 
   const modality = selectMode === 'image' ? 'image' : 'text';
-  const catalogLabel =
-    selectMode === 'image' ? 'Image generators' : 'Text chat models';
+  const catalogLabel = t(selectMode === 'image' ? 'models.imageLabel' : 'models.textLabel');
 
   const isSelectable = (m: CatalogModel) => {
     if (!m.callable) return false;
@@ -107,8 +115,8 @@ export function ModelPicker(props: {
   };
 
   useEffect(() => {
-    const t = setTimeout(() => setDebouncedQ(q.trim()), 220);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setDebouncedQ(q.trim()), 220);
+    return () => clearTimeout(timer);
   }, [q]);
 
   const buildParams = useCallback(
@@ -145,13 +153,13 @@ export function ModelPicker(props: {
         if (json.openrouterError) setError(json.openrouterError);
       } catch (e) {
         if (!isCancelled?.()) {
-          setError(e instanceof Error ? e.message : 'Failed to load models');
+          setError(e instanceof Error ? e.message : t('models.failedToLoad'));
         }
       } finally {
         if (!isCancelled?.()) setLoading(false);
       }
     },
-    [buildParams, onKnown],
+    [buildParams, onKnown, t],
   );
 
   useEffect(() => {
@@ -172,7 +180,7 @@ export function ModelPicker(props: {
     if (selectedIds.includes(m.id)) {
       onChange(selectedIds.filter((id) => id !== m.id));
     } else {
-      onChange([...selectedIds, m.id]);
+      onChange([...new Set([...selectedIds, m.id])]);
     }
   };
 
@@ -200,7 +208,7 @@ export function ModelPicker(props: {
       <div className="or-search-wrap">
         <input
           type="search"
-          placeholder="Search models…"
+          placeholder={t('common.searchModels')}
           value={q}
           onChange={(e) => setQ(e.target.value)}
           className="or-search"
@@ -210,23 +218,23 @@ export function ModelPicker(props: {
         value={sort}
         onChange={(e) => setSort(e.target.value as typeof sort)}
         className="or-sort"
-        aria-label="Sort"
+        aria-label={t('models.sortAria')}
       >
-        <option value="newest">Newest</option>
-        <option value="name">Name</option>
+        <option value="newest">{t('models.sortNewest')}</option>
+        <option value="name">{t('models.sortName')}</option>
       </select>
       {hideHeader ? (
         <>
           <span className="or-models-embed-status">
-            {loading ? 'Loading…' : `${total}`}
-            {!orReady ? ' · no key' : ''}
+            {loading ? t('common.loading') : `${total}`}
+            {!orReady ? ` ${t('models.noKeySuffix')}` : ''}
           </span>
           <button
             type="button"
             className="app-ghost-btn"
             onClick={() => void load(true)}
           >
-            Sync
+            {t('models.sync')}
           </button>
         </>
       ) : null}
@@ -240,10 +248,10 @@ export function ModelPicker(props: {
           <div>
             <h3 className="or-models-title">{catalogLabel}</h3>
             <p className="or-models-sub">
-              Self-hosted · frontier · OpenRouter
-              {!orReady ? ' · OpenRouter key missing' : ''}
+              {t('models.sourceSummary')}
+              {!orReady ? ` ${t('models.noOpenrouterKey')}` : ''}
               {' · '}
-              {loading ? 'loading…' : `${total}`}
+              {loading ? t('models.loading') : `${total}`}
             </p>
           </div>
           <button
@@ -251,7 +259,7 @@ export function ModelPicker(props: {
             className="app-ghost-btn"
             onClick={() => void load(true)}
           >
-            Sync
+            {t('models.sync')}
           </button>
         </div>
       ) : null}
@@ -264,7 +272,7 @@ export function ModelPicker(props: {
           className={cn('or-source-chip', sourceFilter === 'all' && 'on')}
           onClick={() => setSourceFilter('all')}
         >
-          All
+          {t('models.source.all')}
         </button>
         {SOURCE_ORDER.map((s) => (
           <button
@@ -273,7 +281,7 @@ export function ModelPicker(props: {
             className={cn('or-source-chip', sourceFilter === s && 'on')}
             onClick={() => setSourceFilter(s)}
           >
-            {SOURCE_LABELS[s]} ({counts[s]})
+            {t(SOURCE_LABEL_KEYS[s])} ({counts[s]})
           </button>
         ))}
       </div>
@@ -284,7 +292,7 @@ export function ModelPicker(props: {
         {groups.map((group) => (
           <section key={group.source} className="or-model-group">
             <h4 className="or-model-group-title">
-              {SOURCE_LABELS[group.source]}
+              {t(SOURCE_LABEL_KEYS[group.source])}
               <span className="or-model-group-count">{group.models.length}</span>
             </h4>
             <ul className="or-model-list">
@@ -308,15 +316,19 @@ export function ModelPicker(props: {
                     title={
                       !m.callable
                         ? m.source === 'selfhosted'
-                          ? 'vLLM endpoint not configured — set it up on Deploy'
-                          : 'Provider key missing'
+                          ? m.selfHosted?.live && !m.selfHosted.live.reachable
+                            ? t('models.title.vllmUnreachable', {
+                                baseUrl: m.selfHosted.live.baseUrl,
+                              })
+                            : t('models.title.vllmNotConfigured')
+                          : t('models.title.providerKeyMissing')
                         : !selectable
                           ? selectMode === 'image'
-                            ? 'Not an image generator'
-                            : 'Not usable for text eval'
+                            ? t('models.title.notImageGenerator')
+                            : t('models.title.notTextEval')
                           : on
-                            ? 'Remove from comparison'
-                            : 'Add to comparison'
+                            ? t('models.title.removeFromComparison')
+                            : t('models.title.addToComparison')
                     }
                   >
                     <div className="or-model-card-top">
@@ -330,26 +342,36 @@ export function ModelPicker(props: {
                       <div className="or-model-card-right">
                         {m.callable ? (
                           <span className={cn('or-select-mark', on && 'checked')}>
-                            {on ? 'Selected' : 'Select'}
+                            {on ? t('models.selected') : t('models.select')}
                           </span>
                         ) : (
                           <span className="or-browse-mark">
-                            {m.source === 'selfhosted' ? 'Not deployed' : 'No key'}
+                            {m.source === 'selfhosted'
+                              ? m.selfHosted?.live && !m.selfHosted.live.reachable
+                                ? t('models.endpointDown')
+                                : t('models.notDeployed')
+                              : t('models.noKey')}
                           </span>
                         )}
                       </div>
                     </div>
                     {m.description ? <p className="or-model-desc">{m.description}</p> : null}
                     <div className="or-model-meta-row">
-                      <span>by {m.author || m.providerId}</span>
+                      <span>{t('common.by', { name: m.author || m.providerId })}</span>
                       {formatDate(m.created) ? <span>{formatDate(m.created)}</span> : null}
                       {m.contextLength ? (
-                        <span>{Math.round(m.contextLength / 1000)}K context</span>
+                        <span>{t('models.contextK', { k: Math.round(m.contextLength / 1000) })}</span>
                       ) : null}
                       {m.selfHosted ? (
                         <span>
-                          axis {m.selfHosted.axis} · {m.selfHosted.precision}
+                          {t('models.hfPrecision', {
+                            hf: m.selfHosted.hfRepoId,
+                            precision: m.selfHosted.precision,
+                          })}
                         </span>
+                      ) : null}
+                      {m.selfHosted?.live?.synced ? (
+                        <span className="or-live-mark">{t('models.servingNow')}</span>
                       ) : null}
                       {m.tier ? <span>{m.tier}</span> : null}
                     </div>
@@ -363,7 +385,7 @@ export function ModelPicker(props: {
       </div>
 
       {!loading && groups.length === 0 ? (
-        <p className="or-models-sub">No models match this filter.</p>
+        <p className="or-models-sub">{t('models.noMatch')}</p>
       ) : null}
     </div>
   );

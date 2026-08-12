@@ -81,6 +81,14 @@ export const METRIC_FIXTURES: MetricFixture[] = [
     note: 'Wrong label → 0',
   },
   {
+    id: 'acc-mcq-letter',
+    metric: 'accuracy',
+    gold: 'B',
+    prediction: 'The answer is B',
+    expectScore: 1,
+    note: 'Extract MCQ letter from verbose prediction',
+  },
+  {
     id: 'gsm8k-hash',
     metric: 'gsm8k_exact',
     gold: 'She makes 9 * 2 = $<<9*2=18>>18 every day.\n#### 18',

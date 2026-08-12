@@ -10,7 +10,7 @@ import { EVAL_MODELS, type ModelRef, type ProviderId } from '../../config/models
  *   openrouter/openai/gpt-4o
  *   openai/gpt-4o-mini
  *   anthropic/claude-haiku-4-5-20251001
- *   vllm/redrob-s
+ *   vllm/redrob
  *
  * Historic ids (`or-gpt-4o`, `or/openai/gpt-4o`, `vllm-gemma4-e4b`) still
  * resolve — see `normalizeModelId`. Nothing outside this module should parse

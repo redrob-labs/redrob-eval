@@ -229,7 +229,23 @@ export const TMUX_SESSION = 'redrob';
  */
 const ATTACH_COMMAND = [
   'if command -v tmux >/dev/null 2>&1; then',
-  `  exec tmux new-session -A -s ${TMUX_SESSION}`,
+  // Without this tmux takes the alternate screen, where there is no scrollback:
+  // the browser terminal shows only the current page and dragging up finds
+  // nothing. Turning it off lets the output land in the client's own buffer, so
+  // scrolling and selecting text work the way they do everywhere else. Mouse
+  // mode would also give back scrolling, but it takes the drag away from the
+  // browser, and then nothing can be copied.
+  // A server option since tmux 3.0 and a session option before that, so try
+  // both rather than guess at the version on the host.
+  "  tmux set-option -sa terminal-overrides ',*:smcup@:rmcup@' >/dev/null 2>&1 ||",
+  "    tmux set-option -ga terminal-overrides ',*:smcup@:rmcup@' >/dev/null 2>&1 || true",
+  `  if ! tmux has-session -t ${TMUX_SESSION} 2>/dev/null; then`,
+  // history-limit only reaches panes created after it is set, so it goes first.
+  '    tmux set-option -g history-limit 50000 >/dev/null 2>&1 || true',
+  `    tmux new-session -d -s ${TMUX_SESSION}`,
+  '  fi',
+  `  tmux set-option -t ${TMUX_SESSION} mouse off >/dev/null 2>&1 || true`,
+  `  exec tmux attach-session -t ${TMUX_SESSION}`,
   'else',
   `  echo '[redrob] tmux not installed - ops will NOT survive a disconnect. Run Install to add it.'`,
   '  exec bash -l',

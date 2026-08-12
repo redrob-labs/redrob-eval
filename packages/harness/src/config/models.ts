@@ -8,14 +8,19 @@ import {
   SELF_HOSTED_CANDIDATES,
   SELF_HOSTED_DEFAULTS,
   SELF_HOSTED_EXCLUSIONS,
+  SERVED_MODEL_NAME,
   VLLM_ENV,
+  baseUrlForServedName,
   buildSelfHostedCaveat,
   relativeCostFromThroughput,
   resolveSelfHostedCostWeight,
-  type SelfHostedAxis,
+  slotServedName,
+  vllmSlotEndpoints,
   type SelfHostedLicense,
   type SelfHostedMeta,
   type SelfHostedPrecision,
+  type SelfHostedTier,
+  type VllmSlotEndpoint,
 } from './self-hosted';
 
 export type ProviderId =
@@ -57,29 +62,80 @@ export const PROVIDER_LABELS: Record<ProviderId, string> = {
   vllm: 'Self-hosted (vLLM)',
 };
 
-function selfHostedRef(
-  key: keyof typeof SELF_HOSTED_CANDIDATES,
-  precision: SelfHostedMeta['precision'],
-  fallbackWeight: number,
-): ModelRef {
-  const c = SELF_HOSTED_CANDIDATES[key];
+/**
+ * The one self-hosted row: the endpoint itself, not a particular model.
+ *
+ * There is a single vLLM endpoint and Deploy puts one model behind it, so a row
+ * per candidate would be several ids for one thing that can only answer as one.
+ * `applyMeasuredThroughput` rewrites the label and metadata from what the host
+ * reports it is serving, and the id stays put so saved runs keep resolving.
+ */
+export const SELF_HOSTED_ENDPOINT_ID = 'vllm-endpoint';
+
+function selfHostedEndpointRow(): ModelRef {
+  const c = SELF_HOSTED_CANDIDATES[SELF_HOSTED_DEFAULTS.model];
   const meta: SelfHostedMeta = {
-    axis: c.axis,
     hfRepoId: c.hfRepoId,
     license: c.license,
-    precision,
+    precision: 'pending',
     maxModelLen: SELF_HOSTED_DEFAULTS.maxModelLen,
-    servedModelName: c.servedModelName,
+    servedModelName: SERVED_MODEL_NAME,
     measuredTokPerSec: null,
     measuredAt: null,
   };
   return {
-    id: c.id,
-    label: c.label,
+    id: SELF_HOSTED_ENDPOINT_ID,
+    label: `Self-hosted: ${c.label.replace(' (self-hosted)', '')}`,
     providerId: 'vllm',
-    modelId: c.servedModelName,
-    relativeCostWeight: fallbackWeight,
-    tier: c.axis === 'S' ? 'small' : 'large',
+    modelId: SERVED_MODEL_NAME,
+    relativeCostWeight: 100,
+    tier: c.tier,
+    selfHosted: meta,
+  };
+}
+
+/** Catalog id for one deploy slot's endpoint, e.g. `vllm-endpoint-s1`. */
+export function selfHostedSlotId(slot: number): string {
+  return `${SELF_HOSTED_ENDPOINT_ID}-s${slot}`;
+}
+
+/**
+ * Catalog row for one deploy slot, named from what that slot answered with.
+ *
+ * The single row above cannot represent two slots, so a second deployed model
+ * was invisible in the picker. These rows are built per request from the live
+ * probe rather than declared, because which slots exist is a fact about the host.
+ */
+export function selfHostedSlotRow(live: {
+  slot: number;
+  servedModelName: string;
+  hfRepoId: string;
+  maxModelLen: number | null;
+}): ModelRef {
+  const candidate = Object.values(SELF_HOSTED_CANDIDATES).find(
+    (c) => c.hfRepoId === live.hfRepoId,
+  );
+  const shortLabel = candidate
+    ? candidate.label.replace(/\s*\(self-hosted\)$/, '')
+    : live.hfRepoId;
+  const meta: SelfHostedMeta = {
+    hfRepoId: live.hfRepoId,
+    license: candidate?.license ?? 'apache-2.0',
+    precision: 'pending',
+    maxModelLen: live.maxModelLen ?? SELF_HOSTED_DEFAULTS.maxModelLen,
+    servedModelName: live.servedModelName,
+    measuredTokPerSec: null,
+    measuredAt: null,
+  };
+  return {
+    id: selfHostedSlotId(live.slot),
+    label: `Self-hosted: ${shortLabel}`,
+    providerId: 'vllm',
+    // The served alias is the model id vLLM answers to, and it is what makes the
+    // canonical id differ between slots.
+    modelId: live.servedModelName,
+    relativeCostWeight: 100,
+    tier: candidate?.tier,
     selfHosted: meta,
   };
 }
@@ -142,15 +198,7 @@ export const EVAL_MODELS: ModelRef[] = [
     relativeCostWeight: 18,
     tier: 'small',
   },
-  // Self-hosted defaults: axis S = Gemma 4 E4B, axis L = Gemma 4 31B
-  selfHostedRef('gemma4-e4b', 'pending', 25),
-  selfHostedRef('gemma4-31b', 'pending', 100),
-  // Axis L swap for Indic A/B (IN22-Gen / IndicGLUE slice)
-  selfHostedRef('qwen36-27b', 'pending', 100),
-  // Additional L candidates (swap on /deploy; served name stays redrob-l)
-  selfHostedRef('gemma4-26b-a4b', 'pending', 100),
-  selfHostedRef('qwen36-35b-a3b', 'pending', 100),
-  selfHostedRef('gpt-oss-120b', 'pending', 100),
+  selfHostedEndpointRow(),
 ];
 
 export function getModelById(id: string): ModelRef | undefined {
@@ -164,7 +212,9 @@ export function listSelfHostedModels(): ModelRef[] {
 
 /**
  * Effective relative cost weight.
- * Self-hosted: recompute from measured tok/s when both S and L throughputs exist.
+ * Self-hosted: recompute from measured tok/s against a large baseline. A large
+ * model is its own baseline, and with nothing to compare against the catalog
+ * fallback stands rather than a ratio invented from one number.
  */
 export function resolveModelCostWeight(
   model: ModelRef,
@@ -173,18 +223,12 @@ export function resolveModelCostWeight(
   if (!model.selfHosted) {
     return { weight: model.relativeCostWeight, costSource: 'catalog' };
   }
-  const largeTok =
-    largeBaseline?.selfHosted?.measuredTokPerSec ??
-    EVAL_MODELS.find((m) => m.id === SELF_HOSTED_CANDIDATES['gemma4-31b'].id)?.selfHosted
-      ?.measuredTokPerSec ??
-    null;
   const resolved = resolveSelfHostedCostWeight({
-    axis: model.selfHosted.axis,
     measuredTokPerSec: model.selfHosted.measuredTokPerSec,
     largeMeasuredTokPerSec:
-      model.selfHosted.axis === 'L'
+      model.tier === 'large'
         ? model.selfHosted.measuredTokPerSec
-        : largeTok,
+        : (largeBaseline?.selfHosted?.measuredTokPerSec ?? null),
     fallbackWeight: model.relativeCostWeight,
   });
   return {
@@ -207,11 +251,16 @@ export {
   SELF_HOSTED_CANDIDATES,
   SELF_HOSTED_DEFAULTS,
   SELF_HOSTED_EXCLUSIONS,
+  SERVED_MODEL_NAME,
   VLLM_ENV,
+  baseUrlForServedName,
   buildSelfHostedCaveat,
   relativeCostFromThroughput,
   resolveSelfHostedCostWeight,
-  type SelfHostedAxis,
+  slotServedName,
+  vllmSlotEndpoints,
+  type VllmSlotEndpoint,
+  type SelfHostedTier,
   type SelfHostedLicense,
   type SelfHostedMeta,
   type SelfHostedPrecision,

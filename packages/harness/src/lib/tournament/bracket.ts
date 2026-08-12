@@ -1,13 +1,19 @@
-import type { Bracket, Competitor, Match, Vote, VoteWinner } from './types';
+import type { Bracket, Competitor, GroupMatch, Match, Vote, VoteWinner } from './types';
 
 /**
- * Single-elimination bracket, one per prompt.
+ * One bracket per prompt.
  *
- * The field is padded to a power of two with byes so every round is a clean
- * halving. Byes are placed at the end of the seeding order, which means the
- * models listed first get them — seed your strongest candidates first if that
- * matters to you.
+ * A small field is decided by a single group vote with every answer on screen,
+ * because padding three models to four hands one of them the prompt without a
+ * human ever reading its answer.
+ *
+ * Above that the field is padded to a power of two with byes so every round is
+ * a clean halving. Byes land at the end of the seeding order, so the models
+ * listed first get them: seed your strongest candidates first if that matters.
  */
+
+/** Largest field still readable side by side, and so decided in one vote. */
+export const GROUP_VOTE_MAX = 4;
 
 function nextPowerOfTwo(n: number): number {
   let p = 1;
@@ -50,19 +56,49 @@ export function createBracket(params: {
   const competitors = params.competitors;
 
   if (competitors.length === 0) {
-    return { promptId, promptText, competitors, rounds: [], championModelId: null };
+    return {
+      promptId,
+      promptText,
+      competitors,
+      group: null,
+      rounds: [],
+      championModelId: null,
+    };
   }
   if (competitors.length === 1) {
     return {
       promptId,
       promptText,
       competitors,
+      group: null,
       rounds: [],
       championModelId: competitors[0]!.modelId,
     };
   }
 
   const seeded = seededOrder(competitors, promptId);
+
+  if (seeded.length <= GROUP_VOTE_MAX) {
+    // A model that errored has nothing to read, so it is not on the ballot.
+    const contenders = seeded.filter((c) => !c.error).map((c) => c.modelId);
+    const sole = contenders.length === 1 ? contenders[0]! : null;
+    const group: GroupMatch = {
+      matchId: `${promptId}:group`,
+      contenders,
+      winnerModelId: sole,
+      tie: false,
+    };
+    return {
+      promptId,
+      promptText,
+      competitors,
+      group,
+      rounds: [],
+      // Nothing left to vote on once everyone but one has errored.
+      championModelId: contenders.length === 0 ? null : sole,
+    };
+  }
+
   const size = nextPowerOfTwo(seeded.length);
   const slots: Array<string | null> = seeded.map((c) => c.modelId);
   while (slots.length < size) slots.push(null);
@@ -109,6 +145,7 @@ export function createBracket(params: {
     promptId,
     promptText,
     competitors,
+    group: null,
     rounds,
     championModelId: null,
   };
@@ -183,6 +220,75 @@ export function nextPendingMatch(bracket: Bracket): Match | null {
   return null;
 }
 
+/** True when the group vote is still waiting on a human. */
+export function groupIsPending(bracket: Bracket): boolean {
+  const group = bracket.group;
+  return Boolean(group && !group.winnerModelId && !group.tie && group.contenders.length > 1);
+}
+
+/**
+ * Record a group vote: one winner out of everything on screen, or a tie.
+ *
+ * The human said "this answer beats these", and nothing about how the ones they
+ * passed over rank against each other, so the winner is logged as beating each
+ * of them and no vote is invented for the pairs nobody compared.
+ */
+export function advanceGroup(
+  bracket: Bracket,
+  matchId: string,
+  winnerModelId: string | null,
+): { bracket: Bracket; votes: Vote[] } {
+  const group = bracket.group;
+  if (!group) throw new Error(`${bracket.promptId} is not decided by a group vote`);
+  if (group.matchId !== matchId) throw new Error(`Unknown match: ${matchId}`);
+  if (group.winnerModelId || group.tie) {
+    throw new Error(`Match ${matchId} is already resolved`);
+  }
+  if (winnerModelId && !group.contenders.includes(winnerModelId)) {
+    throw new Error(`${winnerModelId} is not on this ballot`);
+  }
+
+  const votedAt = new Date().toISOString();
+  const votes: Vote[] = [];
+
+  if (winnerModelId) {
+    group.winnerModelId = winnerModelId;
+    for (const loser of group.contenders) {
+      if (loser === winnerModelId) continue;
+      votes.push({
+        promptId: bracket.promptId,
+        matchId: group.matchId,
+        round: 0,
+        aModelId: winnerModelId,
+        bModelId: loser,
+        winner: 'a',
+        winnerModelId,
+        votedAt,
+      });
+    }
+  } else {
+    // Too close to call applies to the whole ballot, so every pair is a tie.
+    group.tie = true;
+    for (let i = 0; i < group.contenders.length; i += 1) {
+      for (let j = i + 1; j < group.contenders.length; j += 1) {
+        votes.push({
+          promptId: bracket.promptId,
+          matchId: group.matchId,
+          round: 0,
+          aModelId: group.contenders[i]!,
+          bModelId: group.contenders[j]!,
+          winner: 'tie',
+          winnerModelId: null,
+          votedAt,
+        });
+      }
+    }
+  }
+
+  bracket.championModelId = championOf(bracket);
+  return { bracket, votes };
+}
+
 /**
  * Record a vote and advance the bracket. Ties advance side A so the bracket
  * can finish, but the vote log keeps the tie so routing labels can honour it.
@@ -217,15 +323,29 @@ export function advance(
 }
 
 export function championOf(bracket: Bracket): string | null {
+  // A declared tie resolves the prompt without crowning anyone, so the routing
+  // labels downstream see "no preference" rather than an arbitrary winner.
+  if (bracket.group) return bracket.group.winnerModelId;
   if (!bracket.rounds.length) return bracket.competitors[0]?.modelId ?? null;
   const final = bracket.rounds[bracket.rounds.length - 1]![0];
   return final?.winnerModelId ?? null;
 }
 
+/** True once nothing in this bracket is waiting on a vote. */
+export function bracketIsSettled(bracket: Bracket): boolean {
+  if (bracket.group) return !groupIsPending(bracket);
+  return nextPendingMatch(bracket) == null;
+}
+
 export function totalMatches(bracket: Bracket): number {
+  if (bracket.group) return bracket.group.contenders.length > 1 ? 1 : 0;
   return bracket.rounds.flat().filter((m) => !m.bye).length;
 }
 
 export function resolvedMatches(bracket: Bracket): number {
+  if (bracket.group) {
+    if (bracket.group.contenders.length <= 1) return 0;
+    return bracket.group.winnerModelId || bracket.group.tie ? 1 : 0;
+  }
   return bracket.rounds.flat().filter((m) => !m.bye && m.winnerModelId).length;
 }

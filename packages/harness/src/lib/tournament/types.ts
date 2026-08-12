@@ -36,10 +36,27 @@ export interface Match {
   bye: boolean;
 }
 
+/**
+ * A single vote over every answer at once, used when the field is small enough
+ * to read side by side. A bracket of three would otherwise pad to four and walk
+ * one model into the next round unopposed, which decides a prompt without
+ * anyone having looked at that answer.
+ */
+export interface GroupMatch {
+  matchId: string;
+  /** Every answer on screen, in the bracket's seeded order. */
+  contenders: string[];
+  winnerModelId: string | null;
+  /** The voter called it, rather than the match being undecided. */
+  tie: boolean;
+}
+
 export interface Bracket {
   promptId: string;
   promptText: string;
   competitors: Competitor[];
+  /** Set instead of `rounds` for a small field. Exactly one of the two is used. */
+  group: GroupMatch | null;
   rounds: Match[][];
   championModelId: string | null;
 }

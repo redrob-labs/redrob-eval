@@ -177,7 +177,7 @@ export function EvolutionParetoChart({
         <strong>How to read</strong>
         <p>
           Each dot is one config GEPA tried. <em>Up</em> = higher quality, <em>left</em> = fewer
-          tokens (cheaper). The line is the feasible frontier — only points on or above the
+          tokens (cheaper). The line is the feasible frontier, so only points on or above the
           quality floor count.
         </p>
       </div>
@@ -259,7 +259,7 @@ export function EvolutionParetoChart({
                     </div>
                     {!p.feasible ? (
                       <div className="evolve-chart-tip-warn">
-                        Below quality floor — ignored when picking a winner.
+                        Below quality floor, ignored when picking a winner.
                       </div>
                     ) : null}
                   </div>

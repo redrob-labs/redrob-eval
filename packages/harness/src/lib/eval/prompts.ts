@@ -32,7 +32,7 @@ export function buildEvalPrompt(
     case 'translation':
       parts.push(
         'Translate the following Hindi text into English.',
-        'Reply with only the translation — no quotes, no commentary.',
+        'Reply with only the translation, no quotes, no commentary.',
         '',
         input,
       );
@@ -64,7 +64,7 @@ export function buildEvalPrompt(
         'Score this skill demonstration from the provided frames.',
         'Return ONLY JSON with per-item binary judgments, e.g. {"items":[0,1,0,...]}',
         'or ABSTAIN if lighting/angle/focus make the clip unscorable.',
-        'Do not give a holistic 1–10 score or causal explanation.',
+        'Do not give a holistic 1-10 score or causal explanation.',
         '',
         input,
       );

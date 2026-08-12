@@ -19,7 +19,7 @@ export async function GET() {
         error:
           e instanceof Error
             ? e.message
-            : 'Sample report missing — run yarn export:samples',
+            : 'Sample report missing, run yarn export:samples',
       },
       { status: 404 },
     );

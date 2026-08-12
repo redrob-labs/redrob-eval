@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useT } from '@/components/LocaleProvider';
 import type { RoutePolicyResult, TournamentState } from './types';
 
 function pct(v: number): string {
@@ -23,6 +24,7 @@ export function RouteStage(props: {
   onBack: () => void;
 }) {
   const { state, onDerive, onBack } = props;
+  const t = useT();
   const [smallId, setSmallId] = useState('');
   const [largeId, setLargeId] = useState('');
   const [busy, setBusy] = useState(false);
@@ -60,25 +62,22 @@ export function RouteStage(props: {
         const next = await onDerive(smallId, largeId, save);
         if (next) setPolicy(next);
       } catch (e) {
-        setError(e instanceof Error ? e.message : 'Could not derive a policy');
+        setError(e instanceof Error ? e.message : t('compare.route.couldNotDerive'));
       } finally {
         setBusy(false);
       }
     },
-    [smallId, largeId, busy, onDerive],
+    [smallId, largeId, busy, onDerive, t],
   );
 
   if (!state) {
     return (
       <section className="cmp-card">
-        <div className="pane-label">Optimize route</div>
-        <p className="field-hint">
-          Finish a preference tournament first — the routing labels come from its
-          per-prompt winners.
-        </p>
+        <div className="pane-label">{t('compare.route.title')}</div>
+        <p className="field-hint">{t('compare.route.finishFirst')}</p>
         <div className="cmp-actions">
           <button type="button" className="app-ghost-btn" onClick={onBack}>
-            Back to preference
+            {t('compare.route.backToPreference')}
           </button>
         </div>
       </section>
@@ -90,18 +89,14 @@ export function RouteStage(props: {
   return (
     <div className="cmp-route">
       <section className="cmp-card">
-        <div className="pane-label">Optimize route</div>
-        <p className="field-hint">
-          Pick the model you would rather serve and the one you fall back to. Every
-          prompt the fast model won or tied becomes a <code>small</code> label; the rest
-          escalate.
-        </p>
+        <div className="pane-label">{t('compare.route.title')}</div>
+        <p className="field-hint">{t('compare.route.explainer')}</p>
 
         <div className="cmp-route-picks">
           <label className="field">
-            <span>Fast model</span>
+            <span>{t('compare.route.fastModel')}</span>
             <select value={smallId} onChange={(e) => setSmallId(e.target.value)}>
-              <option value="">Select…</option>
+              <option value="">{t('compare.route.selectPlaceholder')}</option>
               {models.map((m) => (
                 <option key={m.id} value={m.id}>
                   {m.label}
@@ -110,9 +105,9 @@ export function RouteStage(props: {
             </select>
           </label>
           <label className="field">
-            <span>Fallback</span>
+            <span>{t('compare.route.fallback')}</span>
             <select value={largeId} onChange={(e) => setLargeId(e.target.value)}>
-              <option value="">Select…</option>
+              <option value="">{t('compare.route.selectPlaceholder')}</option>
               {models.map((m) => (
                 <option key={m.id} value={m.id}>
                   {m.label}
@@ -131,19 +126,19 @@ export function RouteStage(props: {
             disabled={busy || !smallId || !largeId || smallId === largeId}
             onClick={() => void derive(false)}
           >
-            {busy ? 'Working…' : 'Preview policy'}
+            {busy ? t('common.working') : t('compare.route.previewPolicy')}
           </button>
           <button
             type="button"
             className="app-ghost-btn"
             disabled={busy || !policy}
-            title="Append these labels to the routing corpus"
+            title={t('compare.route.saveToCorpusTitle')}
             onClick={() => void derive(true)}
           >
-            Save to routing corpus
+            {t('compare.route.saveToCorpus')}
           </button>
           <button type="button" className="app-ghost-btn" onClick={onBack}>
-            Back to preference
+            {t('compare.route.backToPreference')}
           </button>
         </div>
       </section>
@@ -152,13 +147,13 @@ export function RouteStage(props: {
         <section className="cmp-card">
           <div className="cmp-run-head">
             <div>
-              <div className="pane-label">Policy</div>
+              <div className="pane-label">{t('compare.route.policy')}</div>
               <p className="field-hint">
                 {policy?.saved
-                  ? `Saved as ${policy.routingRunId}. Export it from /api/routing/export.`
-                  : 'Preview only — nothing written yet.'}
+                  ? t('compare.route.savedAs', { runId: policy.routingRunId })
+                  : t('compare.route.previewOnly')}
                 {policy?.skipped
-                  ? ` ${policy.skipped} prompt${policy.skipped === 1 ? '' : 's'} skipped because one of the models did not compete.`
+                  ? ` ${t('compare.route.skippedNote', { count: policy.skipped })}`
                   : ''}
               </p>
             </div>
@@ -166,28 +161,31 @@ export function RouteStage(props: {
 
           <dl className="cmp-route-stats">
             <div>
-              <dt>Save rate</dt>
+              <dt>{t('compare.route.saveRate')}</dt>
               <dd>{pct(summary.saveRate)}</dd>
-              <span>prompts the fast model can carry</span>
+              <span>{t('compare.route.saveRateHint')}</span>
             </div>
             <div>
-              <dt>Labeled</dt>
+              <dt>{t('compare.route.labeled')}</dt>
               <dd>
-                {summary.meta.labelSmall} small / {summary.meta.labelLarge} large
+                {t('compare.route.labeledSummary', {
+                  small: summary.meta.labelSmall,
+                  large: summary.meta.labelLarge,
+                })}
               </dd>
-              <span>{summary.meta.sampleCount} prompts</span>
+              <span>{t('compare.route.labeledCount', { count: summary.meta.sampleCount })}</span>
             </div>
             <div>
-              <dt>Heuristic agreement</dt>
+              <dt>{t('compare.route.heuristicAgreement')}</dt>
               <dd>{pct(summary.heuristicAgreeWithOracle)}</dd>
-              <span>how often the length/complexity rule matches the votes</span>
+              <span>{t('compare.route.heuristicHint')}</span>
             </div>
             <div>
-              <dt>Won alone</dt>
+              <dt>{t('compare.route.wonAlone')}</dt>
               <dd>
                 {pct(summary.smallAloneQuality)} / {pct(summary.largeAloneQuality)}
               </dd>
-              <span>fast vs fallback, ignoring routing</span>
+              <span>{t('compare.route.wonAloneHint')}</span>
             </div>
           </dl>
         </section>
@@ -195,14 +193,14 @@ export function RouteStage(props: {
 
       {policy?.examples.length ? (
         <section className="cmp-card">
-          <div className="pane-label">Labels</div>
+          <div className="pane-label">{t('compare.route.labels')}</div>
           <div className="table-scroll">
             <table className="data-table text-xs">
               <thead>
                 <tr>
-                  <th>Prompt</th>
-                  <th>Route</th>
-                  <th>Why</th>
+                  <th>{t('compare.route.table.prompt')}</th>
+                  <th>{t('compare.route.table.route')}</th>
+                  <th>{t('compare.route.table.why')}</th>
                 </tr>
               </thead>
               <tbody>

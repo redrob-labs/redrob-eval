@@ -86,25 +86,6 @@ export const EVAL_DATASETS: DatasetRef[] = [
     notes: 'Indic↔English translation; scored with chrF. Vendored under datasets/ (CC-BY-4.0).',
   },
   {
-    id: 'indic-glue-iitp-mr-hi',
-    label: 'IndicGLUE IITP-MR (Hindi sentiment)',
-    task: 'classification',
-    metric: 'accuracy',
-    hf: {
-      dataset: 'ai4bharat/indic_glue',
-      config: 'iitp-mr.hi',
-      split: 'test',
-    },
-    fields: {
-      input: 'text',
-      gold: 'label',
-    },
-    maxSamples: 200,
-    seed: 42,
-    notes:
-      'Movie-review sentiment. Not committed (CC-BY-NC / external terms). Run yarn datasets:fetch --id=indic-glue-iitp-mr-hi → datasets/local/.',
-  },
-  {
     id: 'accuracy-fixture',
     label: 'Synthetic Hindi sentiment (fixture)',
     task: 'classification',
@@ -139,6 +120,25 @@ export const EVAL_DATASETS: DatasetRef[] = [
     maxSamples: 200,
     seed: 42,
     notes: 'Grade-school math; exact match on extracted numeric answer. Vendored under datasets/ (MIT).',
+  },
+  {
+    id: 'mmlu-pooled',
+    label: 'MMLU (pooled)',
+    task: 'custom',
+    metric: 'accuracy',
+    hf: {
+      dataset: 'cais/mmlu',
+      config: 'all',
+      split: 'test',
+    },
+    fields: {
+      input: 'question',
+      gold: 'answer',
+    },
+    maxSamples: 200,
+    seed: 42,
+    poolSize: 600,
+    notes: 'MIT; multiple-choice letter answers (A-D). Vendored under datasets/.',
   },
 ];
 

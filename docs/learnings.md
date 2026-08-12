@@ -6,7 +6,7 @@ Append dated notes as we collect data and train routers. Keep entries short and 
 
 ## 2026-07-30 - Video / checklist skill scoring
 
-- **Process, not outcome.** Rubric items are observable binary checks; lint flags “why did”, “predict”, “rate 1–10”.
+- **Process, not outcome.** Rubric items are observable binary checks; lint flags “why did”, “predict”, “rate 1-10”.
 - **Metric = human agreement (QWK)**; abstentions excluded from κ, tracked as `abstention_rate`.
 - **`frame_policy`** is a GEPA gene (`uniform` / `motion_energy` / `event_detect` × n_frames × tokens_per_frame) with `frames_requested` / `frames_fitted` mirroring demos.
 - **No video in the repo.** `datasets/video-local/` manifests point at outside frame-sets; eval holds sampled frames in memory only.

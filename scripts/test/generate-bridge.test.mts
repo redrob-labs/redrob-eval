@@ -34,6 +34,12 @@ test('probing an absent command reports unavailable instead of throwing', async 
   );
 });
 
+test('an absent command carries a code, so the UI can say it in any language', async () => {
+  const outcome = await probePythonBridge({ command: ABSENT });
+  assert.ok(outcome.available === false && outcome.reasonCode === 'not-found');
+  assert.ok(outcome.available === false && outcome.command === ABSENT);
+});
+
 test('verifying with an absent command reports unavailable instead of throwing', async () => {
   const outcome = await verifyWithPython(
     { setDirectory: 'spec/conformance/example-set', outputsPath: '/dev/null' },

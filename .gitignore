@@ -43,6 +43,13 @@ yarn-error.log*
 .env.*
 !.env.example
 
+# vLLM endpoint registry (may hold per-host keys)
+.redrob/
+
+# Local Cursor / agent skill installs (not part of the product)
+.agents/
+skills-lock.json
+
 # deploy secrets + measured GPU util (never commit)
 deploy/.env
 deploy/measured.env

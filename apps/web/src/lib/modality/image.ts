@@ -158,6 +158,7 @@ async function* runImage(
             sampleIndex: i,
             sampleId: prompt.id,
             latencyMs: img.latencyMs,
+            prediction: artifactUrl(runId, saved.relativePath),
           };
         } catch (error) {
           if (error instanceof Error && error.name === 'AbortError') throw error;

@@ -1,22 +1,37 @@
 /**
- * Compare is one flow with four stages. Preference and route optimization are
- * opt-in: a run that stops after `run` is still a valid ranking.
+ * Compare is one flow with three stages. Setup and the run share a stage: the
+ * run streams into a pane beside the pickers, so starting a comparison never
+ * hides the settings it came from. Preference and route optimization are
+ * opt-in: a run that stops after the ranking is still a valid result.
  */
-export type CompareStage = 'setup' | 'run' | 'preference' | 'route';
+export type CompareStage = 'setup' | 'preference' | 'route';
 
-export const STAGE_ORDER: CompareStage[] = ['setup', 'run', 'preference', 'route'];
+/**
+ * Every task takes all four.
+ *
+ * Tool routing looked like an exception, because its grader already says
+ * whether a call matched the expected tool and arguments. That is a different
+ * question from which answer should carry the request, and only the second one
+ * produces a routing label, so the votes still happen.
+ */
+export const STAGE_ORDER: CompareStage[] = ['setup', 'preference', 'route'];
 
 export const STAGE_LABELS: Record<CompareStage, string> = {
-  setup: 'Setup',
-  run: 'Run',
+  setup: 'Setup and run',
   preference: 'Preference',
   route: 'Optimize route',
 };
 
-/** Text today, image now, audio later — every modality flows through Compare. */
+/** Text and image use the live eval + preference path. Audio later. */
 export type Modality = 'text' | 'image';
 
-export type TaskSource = 'dataset' | 'custom';
+/**
+ * What the models are asked to do. Tool routing is a fixed-toolset harness with
+ * its own fixtures and its own scoring, so it is a task the text models are put
+ * through rather than a separate modality with its own model list.
+ */
+export type TaskSource = 'dataset' | 'custom' | 'tool';
+export type ToolRoutingLanguage = 'en' | 'hi' | 'hi-Latn' | 'ko';
 
 export interface DatasetInfo {
   id: string;
@@ -45,6 +60,10 @@ export interface CompareSetup {
   /** JSONL or JSON array of `{ id?, input, gold? }` */
   customPromptsRaw: string;
   promptSetLabel: string;
+  /** Registered vLLM host id to call for self-hosted models. */
+  vllmHostId: string;
+  /** Tool-routing fixture languages. Hindi + romanized Hindi by default. */
+  toolLanguageIds: ToolRoutingLanguage[];
 }
 
 /** Modalities with no reference answer always resolve through preference. */
@@ -75,6 +94,8 @@ export interface EvalTargetSummary {
   tokensPerSec?: number | null;
   precision?: string | null;
   maxModelLen?: number | null;
+  /** Row built from live progress events, not a finished target summary. */
+  partial?: boolean;
 }
 
 export interface EvalRunMeta {
@@ -115,6 +136,7 @@ export type EvalStreamEvent =
       sampleId: string;
       score?: number;
       latencyMs?: number;
+      prediction?: string;
       error?: string;
     }
   | { type: 'target_done'; target: EvalTargetSummary }
@@ -141,10 +163,24 @@ export interface Match {
   bye: boolean;
 }
 
+/**
+ * A small field is decided by one vote over every answer at once. A bracket of
+ * three would otherwise pad to four and walk one model through unopposed, which
+ * settles a prompt without anyone having read that answer.
+ */
+export interface GroupMatch {
+  matchId: string;
+  contenders: string[];
+  winnerModelId: string | null;
+  tie: boolean;
+}
+
 export interface Bracket {
   promptId: string;
   promptText: string;
   competitors: Competitor[];
+  /** Set instead of `rounds` for a small field. Exactly one of the two is used. */
+  group: GroupMatch | null;
   rounds: Match[][];
   championModelId: string | null;
 }

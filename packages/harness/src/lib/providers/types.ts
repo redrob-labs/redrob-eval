@@ -27,6 +27,19 @@ export interface CallModelParams {
   images?: VisionImagePart[];
   /** Provider vision token / resolution controls (e.g. min_pixels / max_pixels). */
   vision?: VisionTokenControls;
+  /**
+   * Opaque fields merged into the OpenAI-compatible request body.
+   * Used for vLLM guided decoding (`guided_grammar`, …) and similar server extensions.
+   * Providers that do not understand a key must ignore it or error at the server;
+   * this client does not filter.
+   */
+  extraBody?: Record<string, unknown>;
+  /**
+   * Explicit endpoint for self-hosted providers, overriding the axis-derived
+   * env var. Resolved server-side from a host id: never accept a URL straight
+   * from a client, or the server becomes a proxy for arbitrary addresses.
+   */
+  endpoint?: { baseUrl: string; apiKey?: string | null };
 }
 
 export interface CallModelResult {

@@ -1,5 +1,7 @@
 'use client';
 
+import { useT } from '@/components/LocaleProvider';
+
 type Step = {
   n: number;
   title: string;
@@ -19,31 +21,34 @@ type Props = {
   sampleLoading?: boolean;
 };
 
-function evolveSteps(params: { canRun: boolean; hasSeed: boolean }): Step[] {
+function evolveSteps(
+  params: { canRun: boolean; hasSeed: boolean },
+  t: ReturnType<typeof useT>,
+): Step[] {
   const { canRun, hasSeed } = params;
   return [
     {
       n: 1,
-      title: 'Provider key',
-      detail: 'Set OPENROUTER_API_KEY in repo-root .env, restart yarn dev, then Refresh.',
+      title: t('evolve.guide.step1.title'),
+      detail: t('evolve.guide.step1.detail'),
       done: canRun,
     },
     {
       n: 2,
-      title: 'Starter settings',
-      detail: 'Apply cheap defaults: 5 samples, 6 rollouts, catalog dataset.',
+      title: t('evolve.guide.step2.title'),
+      detail: t('evolve.guide.step2.detail'),
       done: hasSeed,
     },
     {
       n: 3,
-      title: 'Seed model',
-      detail: 'Confirm Seed in Config (auto-picked from callable models).',
+      title: t('evolve.guide.step3.title'),
+      detail: t('evolve.guide.step3.detail'),
       done: hasSeed,
     },
     {
       n: 4,
-      title: 'Run GEPA',
-      detail: 'Click Run GEPA in the title bar. Frontier streams into Results.',
+      title: t('evolve.guide.step4.title'),
+      detail: t('evolve.guide.step4.detail'),
     },
   ];
 }
@@ -61,27 +66,26 @@ export function GettingStartedPanel(props: Props) {
     sampleLoading,
   } = props;
 
-  const steps = evolveSteps({ canRun, hasSeed });
+  const t = useT();
+  const steps = evolveSteps({ canRun, hasSeed }, t);
+  const footerParts = t('evolve.guide.footer').split('{link}');
 
   return (
-    <div className="getting-started" role="region" aria-label="Getting started">
+    <div className="getting-started" role="region" aria-label={t('evolve.gettingStarted.aria')}>
       <div className="getting-started-head">
         <div>
-          <strong>Evolve guide</strong>
+          <strong>{t('evolve.guide.title')}</strong>
           <span className="getting-started-sub">
-            {configuredCount}/{providerTotal} keys · steps for this module
+            {t('evolve.guide.stepsSub', { configured: configuredCount, total: providerTotal })}
           </span>
         </div>
         <button type="button" className="getting-started-dismiss" onClick={onDismiss}>
-          Dismiss
+          {t('evolve.guide.dismiss')}
         </button>
       </div>
 
       {!canRun ? (
-        <p className="getting-started-alert">
-          Add a provider key to repo-root <code>.env</code> (recommended:{' '}
-          <code>OPENROUTER_API_KEY</code>), restart <code>yarn dev</code>, then Refresh.
-        </p>
+        <p className="getting-started-alert">{t('evolve.guide.noKeyAlert')}</p>
       ) : runBlockedReason ? (
         <p className="getting-started-alert">{runBlockedReason}</p>
       ) : null}
@@ -100,7 +104,7 @@ export function GettingStartedPanel(props: Props) {
 
       <div className="getting-started-actions">
         <button type="button" className="getting-started-primary" onClick={onApplyStarter}>
-          Apply starter settings
+          {t('evolve.guide.applyStarter')}
         </button>
         <button
           type="button"
@@ -108,20 +112,20 @@ export function GettingStartedPanel(props: Props) {
           disabled={sampleLoading}
           onClick={onLoadSampleReport}
         >
-          {sampleLoading ? 'Loading…' : 'Preview sample report'}
+          {sampleLoading ? t('evolve.guide.loadingSample') : t('evolve.guide.previewSample')}
         </button>
       </div>
 
       <p className="getting-started-foot">
-        Offline sample needs no keys. Live runs call your provider. Methodology:{' '}
+        {footerParts[0]}
         <a
           href="https://github.com/redrob-labs/redrob-eval/blob/main/docs/methodology.md"
           target="_blank"
           rel="noreferrer"
         >
-          docs/methodology.md
+          {t('evolve.guide.methodologyLink')}
         </a>
-        .
+        {footerParts[1]}
       </p>
     </div>
   );

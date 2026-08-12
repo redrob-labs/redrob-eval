@@ -49,9 +49,12 @@ export async function countTokens(
     );
     const tokens = Array.isArray(encoded) ? encoded.length : 0;
     return { tokens: Math.max(0, tokens), tokenizerId, measured: true };
-  } catch {
-    // Fallback: never invent currency — only a coarse count with measured=false via estimate
-    throw new Error(`Failed to load tokenizer for ${tokenizerId}`);
+  } catch (error) {
+    // Never invent a token count. Callers decide whether to estimate, and the
+    // cause matters: offline, gated repo and missing tokenizer.json look alike
+    // to a caller that only sees a boolean.
+    const cause = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to load tokenizer for ${tokenizerId}: ${cause}`);
   }
 }
 
@@ -69,11 +72,16 @@ export interface FertilityResult {
   fertility: number;
   tokenizerId: string;
   measured: boolean;
+  /** Why the real tokenizer was not used. Set only when measured is false. */
+  fallbackReason?: string;
 }
 
 /**
  * Measure tokenizer fertility (tokens/word) for a text sample.
  * Always prefer the actual tokenizer of the target model.
+ *
+ * On failure this returns a character heuristic with `measured: false`. That
+ * number is not a measurement: check the flag before reporting it.
  */
 export async function measureFertility(params: {
   modelId: string;
@@ -94,8 +102,8 @@ export async function measureFertility(params: {
       tokenizerId,
       measured,
     };
-  } catch {
-    // Character heuristic only as last resort — flagged measured:false
+  } catch (error) {
+    // Character heuristic only as last resort, flagged measured:false
     const tokens = Math.max(1, Math.ceil(params.text.length / 4));
     return {
       languageHint: params.languageHint ?? 'unknown',
@@ -104,6 +112,7 @@ export async function measureFertility(params: {
       fertility: words > 0 ? tokens / words : 0,
       tokenizerId: resolveTokenizerId(params.modelId),
       measured: false,
+      fallbackReason: error instanceof Error ? error.message : String(error),
     };
   }
 }

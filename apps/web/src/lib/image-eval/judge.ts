@@ -119,7 +119,7 @@ export async function judgePreference(params: {
         null,
         2,
       ),
-      'Scores are integers 1–10.',
+      'Scores are integers 1-10.',
     ].join('\n'),
   });
 

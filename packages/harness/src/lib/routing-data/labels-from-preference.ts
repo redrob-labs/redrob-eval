@@ -156,7 +156,7 @@ export function labelsFromPreference(
       }),
       label,
       labelReason,
-      // Not a score threshold here — preference is binary.
+      // Not a score threshold here: preference is binary.
       smallOkThreshold: 1,
       features: extractRoutingFeatures({
         input: bracket.promptText,

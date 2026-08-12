@@ -54,7 +54,7 @@ async function main(): Promise<void> {
   console.log('');
 
   console.log('=== Vendored offline load ===');
-  const ids = ['gsm8k-main', 'in22-gen-hi-en', 'accuracy-fixture'] as const;
+  const ids = ['gsm8k-main', 'mmlu-pooled', 'in22-gen-hi-en', 'accuracy-fixture'] as const;
   for (const id of ids) {
     const loaded = await loadDataset(id, { maxSamples: 3 });
     assert(loaded.samples.length > 0, `${id}: expected samples`);

@@ -18,6 +18,22 @@ import type { VerdictCode } from './verdict';
 export const DEFAULT_COMMAND = 'redrob-generate';
 export const DEFAULT_TIMEOUT_MS = 120_000;
 
+/**
+ * Points the bridge at a specific executable, for the common case of an editable install
+ * inside a virtualenv that is not on the server process's PATH.
+ */
+export const COMMAND_ENV_VAR = 'REDROB_GENERATE_CMD';
+
+/**
+ * Read at call time rather than at module load, because the repo-root `.env` is loaded by
+ * the web app's config after this module is first imported.
+ */
+function resolveCommand(explicit?: string): string {
+  if (explicit) return explicit;
+  const fromEnv = process.env[COMMAND_ENV_VAR]?.trim();
+  return fromEnv || DEFAULT_COMMAND;
+}
+
 export interface BridgeOptions {
   /** Executable to run. Override to point at a virtualenv. */
   command?: string;
@@ -48,9 +64,23 @@ export interface BridgePayload {
   results: BridgeItemResult[];
 }
 
+/**
+ * Machine-readable cause behind `reason`.
+ *
+ * `reason` is written for a log, in English. A UI that shows it to a reader needs to say
+ * the same thing in the reader's language, which it can only do from a stable code.
+ */
+export type BridgeUnavailableCode =
+  | 'not-found'
+  | 'not-executable'
+  | 'timed-out'
+  | 'spawn-failed'
+  | 'version-failed';
+
 export interface BridgeUnavailable {
   available: false;
   reason: string;
+  reasonCode?: BridgeUnavailableCode;
   detail?: string;
 }
 
@@ -110,41 +140,56 @@ function describeSpawnFailure(command: string, error: NodeJS.ErrnoException): Br
   if (error.code === 'ENOENT') {
     return {
       available: false,
+      reasonCode: 'not-found',
       reason:
         `'${command}' was not found on PATH. Generation is optional: install it with ` +
         '`pip install -e packages/generate`, or pass a command that points at your virtualenv.',
     };
   }
   if (error.code === 'EACCES') {
-    return { available: false, reason: `'${command}' is not executable.`, detail: error.message };
+    return {
+      available: false,
+      reasonCode: 'not-executable',
+      reason: `'${command}' is not executable.`,
+      detail: error.message,
+    };
   }
   if (error.code === 'ETIMEDOUT') {
-    return { available: false, reason: error.message };
+    return { available: false, reasonCode: 'timed-out', reason: error.message };
   }
   return {
     available: false,
+    reasonCode: 'spawn-failed',
     reason: `'${command}' could not be started.`,
     detail: error.message,
   };
 }
 
 /** Check whether the bridge is usable, without running a verification. */
-export async function probePythonBridge(
-  options: BridgeOptions = {},
-): Promise<{ available: true; version: string } | { available: false; reason: string }> {
-  const command = options.command ?? DEFAULT_COMMAND;
+export async function probePythonBridge(options: BridgeOptions = {}): Promise<
+  | { available: true; version: string }
+  | { available: false; reason: string; reasonCode: BridgeUnavailableCode; command: string }
+> {
+  const command = resolveCommand(options.command);
   try {
     const result = await run(command, [...(options.prefixArgs ?? []), '--version'], options);
     if (result.code !== 0) {
       return {
         available: false,
+        reasonCode: 'version-failed',
+        command,
         reason: `'${command} --version' exited with ${result.code}: ${result.stderr.trim()}`,
       };
     }
     return { available: true, version: result.stdout.trim() };
   } catch (error) {
     const outcome = describeSpawnFailure(command, error as NodeJS.ErrnoException);
-    return { available: false, reason: outcome.reason };
+    return {
+      available: false,
+      reason: outcome.reason,
+      reasonCode: outcome.reasonCode ?? 'spawn-failed',
+      command,
+    };
   }
 }
 
@@ -175,7 +220,7 @@ export async function emitWithPython(
   request: EmitRequest,
   options: BridgeOptions = {},
 ): Promise<EmitOutcome> {
-  const command = options.command ?? DEFAULT_COMMAND;
+  const command = resolveCommand(options.command);
   const args = [
     ...(options.prefixArgs ?? []),
     'emit',
@@ -249,7 +294,7 @@ export async function studyWithPython(
   request: StudyRequest,
   options: BridgeOptions = {},
 ): Promise<StudyOutcome> {
-  const command = options.command ?? DEFAULT_COMMAND;
+  const command = resolveCommand(options.command);
   const args = [
     ...(options.prefixArgs ?? []),
     'study',
@@ -319,7 +364,7 @@ export async function verifyWithPython(
   request: VerifyRequest,
   options: BridgeOptions = {},
 ): Promise<BridgeOutcome> {
-  const command = options.command ?? DEFAULT_COMMAND;
+  const command = resolveCommand(options.command);
   const args = [
     ...(options.prefixArgs ?? []),
     'verify',

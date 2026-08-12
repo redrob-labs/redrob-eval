@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import {
+  activeContenders,
   advance,
   advanceGroup,
   aggregateTournament,
@@ -35,7 +36,9 @@ async function judgeGroup(
   judgeMatch: JudgeMatch,
   judgeModelId?: string,
 ): Promise<{ winnerModelId: string | null; rationale: string }> {
-  const contenders = bracket.group?.contenders ?? [];
+  // Only what is still standing: handing the judge answers the voter already
+  // knocked out would let it crown one of them.
+  const contenders = bracket.group ? activeContenders(bracket.group) : [];
   const answerFor = (id: string) => bracket.competitors.find((c) => c.modelId === id);
 
   const wins = new Map(contenders.map((id) => [id, 0]));

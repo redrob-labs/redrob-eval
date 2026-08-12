@@ -352,10 +352,14 @@ export function rankBracket(bracket: Bracket): string[] {
 
   const group = bracket.group;
   if (group) {
+    // Without a ranking all that is established is the winner, then whoever was
+    // still standing when it was named, then the knocked-out in reverse order:
+    // the last one out placed highest of them.
+    const survivors = activeContenders(group).filter((id) => id !== group.winnerModelId);
     const placed = group.ranking?.length
       ? [...group.ranking]
       : group.winnerModelId
-        ? [group.winnerModelId, ...group.contenders.filter((id) => id !== group.winnerModelId)]
+        ? [group.winnerModelId, ...survivors, ...[...(group.eliminated ?? [])].reverse()]
         : [];
     if (!placed.length) return [];
     const rest = seedOrder.filter((id) => !placed.includes(id));
@@ -391,13 +395,12 @@ export function advanceGroup(
   matchId: string,
   winnerModelId: string | null,
 ): { bracket: Bracket; votes: Vote[] } {
-  const group = bracket.group;
-  if (!group) throw new Error(`${bracket.promptId} is not decided by a group vote`);
-  if (group.matchId !== matchId) throw new Error(`Unknown match: ${matchId}`);
-  if (group.winnerModelId || group.tie) {
-    throw new Error(`Match ${matchId} is already resolved`);
-  }
-  if (winnerModelId && !group.contenders.includes(winnerModelId)) {
+  const group = assertGroupOpen(bracket, matchId);
+  // Only what is still standing can win, and only that is judged against it: an
+  // answer already knocked out has been beaten, and beating it again is not a
+  // fact about the winner.
+  const active = activeContenders(group);
+  if (winnerModelId && !active.includes(winnerModelId)) {
     throw new Error(`${winnerModelId} is not on this ballot`);
   }
 
@@ -406,7 +409,7 @@ export function advanceGroup(
 
   if (winnerModelId) {
     group.winnerModelId = winnerModelId;
-    for (const loser of group.contenders) {
+    for (const loser of active) {
       if (loser === winnerModelId) continue;
       votes.push({
         promptId: bracket.promptId,
@@ -420,16 +423,17 @@ export function advanceGroup(
       });
     }
   } else {
-    // Too close to call applies to the whole ballot, so every pair is a tie.
+    // Too close to call applies to what is still on screen, so every remaining
+    // pair is a tie. Anything already knocked out stays knocked out.
     group.tie = true;
-    for (let i = 0; i < group.contenders.length; i += 1) {
-      for (let j = i + 1; j < group.contenders.length; j += 1) {
+    for (let i = 0; i < active.length; i += 1) {
+      for (let j = i + 1; j < active.length; j += 1) {
         votes.push({
           promptId: bracket.promptId,
           matchId: group.matchId,
           round: 0,
-          aModelId: group.contenders[i]!,
-          bModelId: group.contenders[j]!,
+          aModelId: active[i]!,
+          bModelId: active[j]!,
           winner: 'tie',
           winnerModelId: null,
           votedAt,

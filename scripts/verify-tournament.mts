@@ -136,6 +136,46 @@ for (const n of [2, 3, 4]) {
   );
 }
 
+// A ballot half decided by elimination can still be finished by naming a winner
+{
+  const b = createBracket({ promptId: 'gmixed', promptText: 'q', competitors: field(4) });
+  const matchId = b.group!.matchId;
+  eliminateFromGroup(b, matchId, 'm2');
+  assert.throws(
+    () => advanceGroup(b, matchId, 'm2'),
+    /not on this ballot/,
+    'an answer already out cannot then win',
+  );
+
+  const { votes } = advanceGroup(b, matchId, 'm1');
+  assert.equal(votes.length, 2, 'only the two still standing were judged against the winner');
+  assert.equal(
+    votes.some((v) => v.bModelId === 'm2'),
+    false,
+    'beating an answer already knocked out is not a new fact',
+  );
+  const agg = aggregateTournament({ brackets: [b], votes });
+  assert.deepEqual(
+    agg.rankingByPrompt.gmixed?.[3],
+    'm2',
+    'the one knocked out places last, below the answers still standing',
+  );
+}
+
+// A tie called after an elimination ties what is left, not what is out
+{
+  const b = createBracket({ promptId: 'gtiepart', promptText: 'q', competitors: field(4) });
+  const matchId = b.group!.matchId;
+  eliminateFromGroup(b, matchId, 'm3');
+  const { votes } = advanceGroup(b, matchId, null);
+  assert.equal(votes.length, 3, 'three survivors make three tied pairs');
+  assert.equal(
+    votes.some((v) => v.aModelId === 'm3' || v.bModelId === 'm3'),
+    false,
+    'the answer knocked out did not tie with anyone',
+  );
+}
+
 // A ranking is a claim about every pair, so every pair is recorded
 {
   const b = createBracket({ promptId: 'grank', promptText: 'q', competitors: field(4) });

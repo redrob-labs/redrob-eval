@@ -25,6 +25,7 @@ jobs:
       - run: yarn verify:tournament
       - run: yarn verify:selfhosted
       - run: yarn verify:tool-routing
+      - run: yarn verify:multi-turn
       - run: yarn verify:preference-gen
       - run: yarn test
       - run: yarn export:samples

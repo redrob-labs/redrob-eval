@@ -166,7 +166,10 @@ On **Evolve**, pick a catalog dataset or **Custom goal** (goal + rubric + input-
   takes releases, `develop` is what you branch from and target
 - [Security](SECURITY.md)
 - [Methodology](docs/methodology.md) - routing labels, features, export
-- [Preference](docs/preference.md) - blind brackets, and how votes become routing labels
+- [Preference](docs/preference.md) - blind brackets, ranking and elimination, and how votes become
+  routing labels
+- [Multi-turn](docs/multi-turn.md) - scripted conversations for text and tools, scored by
+  capability and by how deep into the conversation a model gets
 - [Learnings](docs/learnings.md) - living design log
 - [Decision records](docs/decisions/) - why a design is the way it is, one file per decision,
   numbered and never rewritten in place. Start with

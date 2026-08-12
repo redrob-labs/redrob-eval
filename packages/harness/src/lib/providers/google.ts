@@ -21,19 +21,28 @@ export const googleAdapter: ProviderAdapter = {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
     const contents: { role: string; parts: { text: string }[] }[] = [];
-    if (params.systemPrompt?.trim()) {
-      // Gemini: fold system into first user turn for broad compatibility
+    const history = params.history ?? [];
+    const system = params.systemPrompt?.trim();
+    for (const [index, turn] of history.entries()) {
       contents.push({
-        role: 'user',
+        // Gemini calls the assistant "model", and folds system into the first
+        // user turn for broad compatibility.
+        role: turn.role === 'assistant' ? 'model' : 'user',
         parts: [
           {
-            text: `${params.systemPrompt.trim()}\n\n${params.prompt}`,
+            text:
+              system && index === 0 && turn.role === 'user'
+                ? `${system}\n\n${turn.content}`
+                : turn.content,
           },
         ],
       });
-    } else {
-      contents.push({ role: 'user', parts: [{ text: params.prompt }] });
     }
+    const systemGoesHere = system && contents.length === 0;
+    contents.push({
+      role: 'user',
+      parts: [{ text: systemGoesHere ? `${system}\n\n${params.prompt}` : params.prompt }],
+    });
 
     const maxAttempts = 3;
     let lastError: unknown;

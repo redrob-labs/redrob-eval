@@ -493,3 +493,33 @@ export {
   type ToolsetId,
   type FertilityCell,
 } from './lib/tool-routing';
+
+// Multi-turn: the same models, asked to hold a conversation together
+export {
+  buildMultiTurnReport,
+  buildSystemPrompt as buildMultiTurnSystemPrompt,
+  calledTool,
+  formatToolResult,
+  loadMultiTurnScenarios,
+  multiTurnScenariosFor,
+  runCheck,
+  runChecks,
+  runMultiTurnHarness,
+  runScenario,
+  MULTI_TURN_MAX_TOKENS,
+} from './lib/multi-turn';
+export type {
+  CapabilitySlice,
+  DepthSlice,
+  LoadedScenario,
+  MultiTurnCaller,
+  MultiTurnCapability,
+  MultiTurnLanguage,
+  MultiTurnReport,
+  MultiTurnScenario,
+  ScenarioRecord,
+  ScriptedTurn,
+  TurnCheck,
+  TurnCheckResult,
+  TurnRecord,
+} from './lib/multi-turn';

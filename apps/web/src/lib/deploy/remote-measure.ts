@@ -96,15 +96,23 @@ OK=()
 FAILED=()
 
 # Weights only, and never fatal: vLLM fetches whatever is missing when it loads,
-# so a prefetch that fails costs time and nothing else.
+# so a prefetch that fails costs time and nothing else. Each job logs to its own
+# file, since they all run at once.
 prefetch() {
   local repo="$1"
-  ${INSTALL_ROOT}/venv/bin/python - "\${repo}" >"\${WORK_DIR}/prefetch.log" 2>&1 <<'PY' || echo "  ! prefetch failed for \${repo} (vLLM will download it during the load)"
+  local log="\${WORK_DIR}/prefetch-$(echo "\${repo}" | tr -c 'A-Za-z0-9' '-').log"
+  if ${INSTALL_ROOT}/venv/bin/python - "\${repo}" >"\${log}" 2>&1 <<'PY'
 import sys
 from huggingface_hub import snapshot_download
 snapshot_download(sys.argv[1], allow_patterns=["*.json", "*.safetensors", "*.model", "*.txt"])
 PY
-  echo "  · weights ready: \${repo}"
+  then
+    echo "  · weights ready: \${repo}"
+  else
+    # One line per repo: these jobs all print at once, and a two-line message
+    # from three of them interleaves into something nobody can read.
+    echo "  ! prefetch failed for \${repo} ($(tail -n1 "\${log}" 2>/dev/null)) - vLLM will download it during the load"
+  fi
 }
 
 echo "==> measuring ${steps.length} slot(s): ${steps.map((s) => `${s.slot.index}=${s.model}`).join(', ')}"

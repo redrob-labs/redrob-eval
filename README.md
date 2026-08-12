@@ -170,6 +170,8 @@ On **Evolve**, pick a catalog dataset or **Custom goal** (goal + rubric + input-
   routing labels
 - [Multi-turn](docs/multi-turn.md) - scripted conversations for text and tools, scored by
   capability and by how deep into the conversation a model gets
+- [Tool routing](docs/tool-routing.md) - the sub-10B tool-calling dataset: 324 tasks balanced
+  across four languages, the verbatim ground-truth integrity gate, and the model registry
 - [Learnings](docs/learnings.md) - living design log
 - [Decision records](docs/decisions/) - why a design is the way it is, one file per decision,
   numbered and never rewritten in place. Start with

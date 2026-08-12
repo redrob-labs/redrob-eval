@@ -188,6 +188,55 @@ export const TOOL_ROUTING_MODELS: ToolRoutingModel[] = [
     usable: 'eval_only',
     notes: 'Non-commercial - eval_only; never in the default run set.',
   },
+  // Qwen2.5 instruct: the sub-10B sizes Alibaba ships under Apache-2.0. The 3B
+  // and 72B are under a research licence and are deliberately left out - only
+  // the commercially usable sizes belong in the default run set.
+  {
+    id: 'qwen25-0.5b',
+    hfRepoId: 'Qwen/Qwen2.5-0.5B-Instruct',
+    label: 'Qwen2.5 0.5B Instruct',
+    license: 'apache-2.0',
+    usable: true,
+  },
+  {
+    id: 'qwen25-1.5b',
+    hfRepoId: 'Qwen/Qwen2.5-1.5B-Instruct',
+    label: 'Qwen2.5 1.5B Instruct',
+    license: 'apache-2.0',
+    usable: true,
+  },
+  {
+    id: 'qwen25-7b',
+    hfRepoId: 'Qwen/Qwen2.5-7B-Instruct',
+    label: 'Qwen2.5 7B Instruct',
+    license: 'apache-2.0',
+    usable: true,
+  },
+  {
+    id: 'smollm2-1.7b',
+    hfRepoId: 'HuggingFaceTB/SmolLM2-1.7B-Instruct',
+    label: 'SmolLM2 1.7B Instruct',
+    license: 'apache-2.0',
+    usable: true,
+  },
+  // xLAM function-calling specialists: the point of comparison for a paper on
+  // small-model tool calling. Non-commercial, so eval_only.
+  {
+    id: 'xlam-1b-fc',
+    hfRepoId: 'Salesforce/xLAM-1b-fc-r',
+    label: 'xLAM 1B FC',
+    license: 'cc-by-nc-4.0',
+    usable: 'eval_only',
+    notes: 'Function-calling specialist. Non-commercial - eval_only.',
+  },
+  {
+    id: 'xlam-7b-fc',
+    hfRepoId: 'Salesforce/xLAM-7b-fc-r',
+    label: 'xLAM 7B FC',
+    license: 'cc-by-nc-4.0',
+    usable: 'eval_only',
+    notes: 'Function-calling specialist. Non-commercial - eval_only.',
+  },
 ];
 
 export function listDefaultToolRoutingModels(): ToolRoutingModel[] {

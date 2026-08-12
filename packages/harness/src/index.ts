@@ -481,6 +481,8 @@ export {
   normalizeToolRoutingLanguages,
   formatFertilityMarkdown,
   runToolRoutingHarness,
+  validateToolRoutingTasks,
+  verbatimArgNames,
   loadStubFertilityCorpus,
   loadStubToolRoutingTasks,
   loadStubToolsets,
@@ -492,6 +494,7 @@ export {
   type ToolRoutingExampleRecord,
   type ToolsetId,
   type FertilityCell,
+  type TaskProblem,
 } from './lib/tool-routing';
 
 // Multi-turn: the same models, asked to hold a conversation together

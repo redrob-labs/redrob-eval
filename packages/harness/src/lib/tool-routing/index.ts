@@ -59,3 +59,8 @@ export {
   loadStubToolsets,
   stubTasksForLanguage,
 } from './fixtures';
+export {
+  validateToolRoutingTasks,
+  verbatimArgNames,
+  type TaskProblem,
+} from './validate';

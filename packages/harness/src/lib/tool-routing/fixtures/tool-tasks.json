@@ -1022,7 +1022,7 @@
     "expected": {
       "kind": "call",
       "tool": "find_restaurant",
-      "arguments": { "cuisine": "Korean", "location": "Gangnam Station" }
+      "arguments": { "cuisine": "Korean", "location": "강남역" }
     }
   },
   {
@@ -1053,5 +1053,3005 @@
     "toolset": "full",
     "user": "집주인이 드디어 계좌 정보를 보냈고 탑승 전에 처리하고 싶어요. KR-8821-0044 계좌로 KRW 월세 보내 주세요.",
     "expected": { "kind": "absence", "action": "DEFER" }
+  },
+  {
+    "id": "en-core-weather-busan",
+    "language": "en",
+    "toolset": "core",
+    "user": "My parents are driving to Busan tomorrow and keep asking if they need the umbrella. What is the forecast there?",
+    "expected": {
+      "kind": "call",
+      "tool": "get_weather",
+      "arguments": {
+        "city": "Busan",
+        "day": "tomorrow"
+      }
+    }
+  },
+  {
+    "id": "hi-core-weather-busan",
+    "language": "hi",
+    "toolset": "core",
+    "user": "मेरे parents कल Busan drive कर रहे हैं और बार-बार पूछ रहे हैं कि umbrella चाहिए या नहीं। वहाँ कल का forecast क्या है?",
+    "expected": {
+      "kind": "call",
+      "tool": "get_weather",
+      "arguments": {
+        "city": "Busan",
+        "day": "tomorrow"
+      }
+    }
+  },
+  {
+    "id": "hi-Latn-core-weather-busan",
+    "language": "hi-Latn",
+    "toolset": "core",
+    "user": "Mere parents kal Busan drive kar rahe hain aur baar-baar pooch rahe hain ki umbrella chahiye ya nahi. Wahan kal ka forecast kya hai?",
+    "expected": {
+      "kind": "call",
+      "tool": "get_weather",
+      "arguments": {
+        "city": "Busan",
+        "day": "tomorrow"
+      }
+    }
+  },
+  {
+    "id": "ko-core-weather-busan",
+    "language": "ko",
+    "toolset": "core",
+    "user": "부모님이 내일 Busan에 운전해서 가시는데 우산 챙겨야 하냐고 계속 물으세요. 거기 내일 날씨 예보 어때요?",
+    "expected": {
+      "kind": "call",
+      "tool": "get_weather",
+      "arguments": {
+        "city": "Busan",
+        "day": "tomorrow"
+      }
+    }
+  },
+  {
+    "id": "en-core-email-report",
+    "language": "en",
+    "toolset": "core",
+    "user": "I promised the lead this before lunch and I keep forgetting. Send an email to lead@corp.co with the subject \"Q3 report\" and the body \"Numbers attached.\"",
+    "expected": {
+      "kind": "call",
+      "tool": "send_email",
+      "arguments": {
+        "to": "lead@corp.co",
+        "subject": "Q3 report",
+        "body": "Numbers attached."
+      }
+    }
+  },
+  {
+    "id": "hi-core-email-report",
+    "language": "hi",
+    "toolset": "core",
+    "user": "मैंने lead को lunch से पहले यह भेजने का वादा किया था और भूलता जा रहा हूँ। lead@corp.co को subject \"Q3 report\" और body \"Numbers attached.\" के साथ email भेजिए।",
+    "expected": {
+      "kind": "call",
+      "tool": "send_email",
+      "arguments": {
+        "to": "lead@corp.co",
+        "subject": "Q3 report",
+        "body": "Numbers attached."
+      }
+    }
+  },
+  {
+    "id": "hi-Latn-core-email-report",
+    "language": "hi-Latn",
+    "toolset": "core",
+    "user": "Maine lead ko lunch se pehle yeh bhejne ka vaada kiya tha aur bhoolta ja raha hoon. lead@corp.co ko subject \"Q3 report\" aur body \"Numbers attached.\" ke saath email bhejiye.",
+    "expected": {
+      "kind": "call",
+      "tool": "send_email",
+      "arguments": {
+        "to": "lead@corp.co",
+        "subject": "Q3 report",
+        "body": "Numbers attached."
+      }
+    }
+  },
+  {
+    "id": "ko-core-email-report",
+    "language": "ko",
+    "toolset": "core",
+    "user": "점심 전에 리드한테 보내기로 했는데 자꾸 까먹어요. lead@corp.co로 제목 \"Q3 report\", 본문 \"Numbers attached.\"인 이메일 보내 주세요.",
+    "expected": {
+      "kind": "call",
+      "tool": "send_email",
+      "arguments": {
+        "to": "lead@corp.co",
+        "subject": "Q3 report",
+        "body": "Numbers attached."
+      }
+    }
+  },
+  {
+    "id": "en-core-calendar-1on1",
+    "language": "en",
+    "toolset": "core",
+    "user": "We finally found a slot that works for both of us. Put \"1:1 with Sora\" on my calendar for 2026-09-03 at 09:00.",
+    "expected": {
+      "kind": "call",
+      "tool": "create_calendar_event",
+      "arguments": {
+        "title": "1:1 with Sora",
+        "date": "2026-09-03",
+        "time": "09:00"
+      }
+    }
+  },
+  {
+    "id": "hi-core-calendar-1on1",
+    "language": "hi",
+    "toolset": "core",
+    "user": "आख़िरकार दोनों के लिए एक slot मिल गया। मेरे calendar में 2026-09-03 को 09:00 पर \"1:1 with Sora\" डाल दीजिए।",
+    "expected": {
+      "kind": "call",
+      "tool": "create_calendar_event",
+      "arguments": {
+        "title": "1:1 with Sora",
+        "date": "2026-09-03",
+        "time": "09:00"
+      }
+    }
+  },
+  {
+    "id": "hi-Latn-core-calendar-1on1",
+    "language": "hi-Latn",
+    "toolset": "core",
+    "user": "Aakhirkar dono ke liye ek slot mil gaya. Mere calendar mein 2026-09-03 ko 09:00 par \"1:1 with Sora\" daal dijiye.",
+    "expected": {
+      "kind": "call",
+      "tool": "create_calendar_event",
+      "arguments": {
+        "title": "1:1 with Sora",
+        "date": "2026-09-03",
+        "time": "09:00"
+      }
+    }
+  },
+  {
+    "id": "ko-core-calendar-1on1",
+    "language": "ko",
+    "toolset": "core",
+    "user": "드디어 둘 다 되는 시간을 찾았어요. 제 캘린더에 2026-09-03 09:00로 \"1:1 with Sora\" 넣어 주세요.",
+    "expected": {
+      "kind": "call",
+      "tool": "create_calendar_event",
+      "arguments": {
+        "title": "1:1 with Sora",
+        "date": "2026-09-03",
+        "time": "09:00"
+      }
+    }
+  },
+  {
+    "id": "en-core-order-status",
+    "language": "en",
+    "toolset": "core",
+    "user": "The tracking page has said 'preparing' for four days and nobody answers the chat. My order id is C-77812. What is going on with it?",
+    "expected": {
+      "kind": "call",
+      "tool": "lookup_order",
+      "arguments": {
+        "order_id": "C-77812"
+      }
+    }
+  },
+  {
+    "id": "hi-core-order-status",
+    "language": "hi",
+    "toolset": "core",
+    "user": "tracking page चार दिन से 'preparing' दिखा रहा है और chat पर कोई जवाब नहीं देता। मेरा order id C-77812 है। इसका क्या हाल है?",
+    "expected": {
+      "kind": "call",
+      "tool": "lookup_order",
+      "arguments": {
+        "order_id": "C-77812"
+      }
+    }
+  },
+  {
+    "id": "hi-Latn-core-order-status",
+    "language": "hi-Latn",
+    "toolset": "core",
+    "user": "Tracking page chaar din se 'preparing' dikha raha hai aur chat par koi jawab nahi deta. Mera order id C-77812 hai. Iska kya haal hai?",
+    "expected": {
+      "kind": "call",
+      "tool": "lookup_order",
+      "arguments": {
+        "order_id": "C-77812"
+      }
+    }
+  },
+  {
+    "id": "ko-core-order-status",
+    "language": "ko",
+    "toolset": "core",
+    "user": "주문 추적 페이지가 나흘째 '준비 중'이고 채팅엔 아무도 답을 안 해요. 제 주문 번호는 C-77812예요. 지금 어떤 상태예요?",
+    "expected": {
+      "kind": "call",
+      "tool": "lookup_order",
+      "arguments": {
+        "order_id": "C-77812"
+      }
+    }
+  },
+  {
+    "id": "en-core-currency-eur-jpy",
+    "language": "en",
+    "toolset": "core",
+    "user": "A hotel in Kyoto quoted me in yen and I budget in euros, so I have no idea if it is reasonable. Convert 1200 EUR to JPY.",
+    "expected": {
+      "kind": "call",
+      "tool": "convert_currency",
+      "arguments": {
+        "amount": 1200,
+        "from_currency": "EUR",
+        "to_currency": "JPY"
+      }
+    }
+  },
+  {
+    "id": "hi-core-currency-eur-jpy",
+    "language": "hi",
+    "toolset": "core",
+    "user": "Kyoto के एक hotel ने yen में quote दिया और मैं euros में budget करता हूँ, तो पता ही नहीं चल रहा ठीक है या नहीं। 1200 EUR को JPY में बदलिए।",
+    "expected": {
+      "kind": "call",
+      "tool": "convert_currency",
+      "arguments": {
+        "amount": 1200,
+        "from_currency": "EUR",
+        "to_currency": "JPY"
+      }
+    }
+  },
+  {
+    "id": "hi-Latn-core-currency-eur-jpy",
+    "language": "hi-Latn",
+    "toolset": "core",
+    "user": "Kyoto ke ek hotel ne yen mein quote diya aur main euros mein budget karta hoon, to pata hi nahi chal raha theek hai ya nahi. 1200 EUR ko JPY mein badliye.",
+    "expected": {
+      "kind": "call",
+      "tool": "convert_currency",
+      "arguments": {
+        "amount": 1200,
+        "from_currency": "EUR",
+        "to_currency": "JPY"
+      }
+    }
+  },
+  {
+    "id": "ko-core-currency-eur-jpy",
+    "language": "ko",
+    "toolset": "core",
+    "user": "교토 호텔이 엔화로 견적을 줬는데 저는 유로로 예산을 잡아서 적당한지 감이 안 와요. 1200 EUR를 JPY로 변환해 주세요.",
+    "expected": {
+      "kind": "call",
+      "tool": "convert_currency",
+      "arguments": {
+        "amount": 1200,
+        "from_currency": "EUR",
+        "to_currency": "JPY"
+      }
+    }
+  },
+  {
+    "id": "en-core-translate-exit",
+    "language": "en",
+    "toolset": "core",
+    "user": "I land in Seoul at midnight and the signs move fast. Translate \"Where is the exit?\" into Korean for me.",
+    "expected": {
+      "kind": "call",
+      "tool": "translate_text",
+      "arguments": {
+        "text": "Where is the exit?",
+        "target_language": "ko"
+      }
+    }
+  },
+  {
+    "id": "hi-core-translate-exit",
+    "language": "hi",
+    "toolset": "core",
+    "user": "मैं आधी रात को Seoul पहुँचता हूँ और signs तेज़ी से बदलते हैं। \"Where is the exit?\" को Korean में translate कीजिए।",
+    "expected": {
+      "kind": "call",
+      "tool": "translate_text",
+      "arguments": {
+        "text": "Where is the exit?",
+        "target_language": "ko"
+      }
+    }
+  },
+  {
+    "id": "hi-Latn-core-translate-exit",
+    "language": "hi-Latn",
+    "toolset": "core",
+    "user": "Main aadhi raat ko Seoul pahunchta hoon aur signs tezi se badalte hain. \"Where is the exit?\" ko Korean mein translate kijiye.",
+    "expected": {
+      "kind": "call",
+      "tool": "translate_text",
+      "arguments": {
+        "text": "Where is the exit?",
+        "target_language": "ko"
+      }
+    }
+  },
+  {
+    "id": "ko-core-translate-exit",
+    "language": "ko",
+    "toolset": "core",
+    "user": "자정에 서울에 도착하는데 표지판이 휙휙 지나가요. \"Where is the exit?\"를 한국어로 번역해 주세요.",
+    "expected": {
+      "kind": "call",
+      "tool": "translate_text",
+      "arguments": {
+        "text": "Where is the exit?",
+        "target_language": "ko"
+      }
+    }
+  },
+  {
+    "id": "en-wide-airquality-delhi",
+    "language": "en",
+    "toolset": "wide",
+    "user": "My daughter has asthma and the sky looks brown again. What is the air quality in Delhi today?",
+    "expected": {
+      "kind": "call",
+      "tool": "get_air_quality",
+      "arguments": {
+        "city": "Delhi",
+        "day": "today"
+      }
+    }
+  },
+  {
+    "id": "hi-wide-airquality-delhi",
+    "language": "hi",
+    "toolset": "wide",
+    "user": "मेरी बेटी को asthma है और आसमान फिर भूरा दिख रहा है। आज Delhi की air quality कैसी है?",
+    "expected": {
+      "kind": "call",
+      "tool": "get_air_quality",
+      "arguments": {
+        "city": "Delhi",
+        "day": "today"
+      }
+    }
+  },
+  {
+    "id": "hi-Latn-wide-airquality-delhi",
+    "language": "hi-Latn",
+    "toolset": "wide",
+    "user": "Meri beti ko asthma hai aur aasman phir bhoora dikh raha hai. Aaj Delhi ki air quality kaisi hai?",
+    "expected": {
+      "kind": "call",
+      "tool": "get_air_quality",
+      "arguments": {
+        "city": "Delhi",
+        "day": "today"
+      }
+    }
+  },
+  {
+    "id": "ko-wide-airquality-delhi",
+    "language": "ko",
+    "toolset": "wide",
+    "user": "딸이 천식이 있는데 하늘이 또 누렇게 보여요. 오늘 Delhi 대기질 어때요?",
+    "expected": {
+      "kind": "call",
+      "tool": "get_air_quality",
+      "arguments": {
+        "city": "Delhi",
+        "day": "today"
+      }
+    }
+  },
+  {
+    "id": "en-wide-timezone-singapore",
+    "language": "en",
+    "toolset": "wide",
+    "user": "I keep scheduling calls at rude hours for the other side. What time is it right now in Singapore?",
+    "expected": {
+      "kind": "call",
+      "tool": "get_time_zone",
+      "arguments": {
+        "city": "Singapore"
+      }
+    }
+  },
+  {
+    "id": "hi-wide-timezone-singapore",
+    "language": "hi",
+    "toolset": "wide",
+    "user": "मैं दूसरी तरफ़ वालों के लिए बार-बार अजीब समय पर call रख देता हूँ। अभी Singapore में क्या समय है?",
+    "expected": {
+      "kind": "call",
+      "tool": "get_time_zone",
+      "arguments": {
+        "city": "Singapore"
+      }
+    }
+  },
+  {
+    "id": "hi-Latn-wide-timezone-singapore",
+    "language": "hi-Latn",
+    "toolset": "wide",
+    "user": "Main doosri taraf walon ke liye baar-baar ajeeb samay par call rakh deta hoon. Abhi Singapore mein kya samay hai?",
+    "expected": {
+      "kind": "call",
+      "tool": "get_time_zone",
+      "arguments": {
+        "city": "Singapore"
+      }
+    }
+  },
+  {
+    "id": "ko-wide-timezone-singapore",
+    "language": "ko",
+    "toolset": "wide",
+    "user": "상대편한테 자꾸 이상한 시간에 통화를 잡아요. 지금 Singapore는 몇 시예요?",
+    "expected": {
+      "kind": "call",
+      "tool": "get_time_zone",
+      "arguments": {
+        "city": "Singapore"
+      }
+    }
+  },
+  {
+    "id": "en-wide-reminder-passport",
+    "language": "en",
+    "toolset": "wide",
+    "user": "This does not belong on the shared calendar, it is just for me. On 2026-09-10 at 08:00 remind me privately to \"renew passport\".",
+    "expected": {
+      "kind": "call",
+      "tool": "create_reminder",
+      "arguments": {
+        "text": "renew passport",
+        "date": "2026-09-10",
+        "time": "08:00"
+      }
+    }
+  },
+  {
+    "id": "hi-wide-reminder-passport",
+    "language": "hi",
+    "toolset": "wide",
+    "user": "यह shared calendar पर नहीं होना चाहिए, बस मेरे लिए है। 2026-09-10 को 08:00 पर मुझे private reminder दीजिए: \"renew passport\"।",
+    "expected": {
+      "kind": "call",
+      "tool": "create_reminder",
+      "arguments": {
+        "text": "renew passport",
+        "date": "2026-09-10",
+        "time": "08:00"
+      }
+    }
+  },
+  {
+    "id": "hi-Latn-wide-reminder-passport",
+    "language": "hi-Latn",
+    "toolset": "wide",
+    "user": "Yeh shared calendar par nahi hona chahiye, bas mere liye hai. 2026-09-10 ko 08:00 par mujhe private reminder dijiye: \"renew passport\".",
+    "expected": {
+      "kind": "call",
+      "tool": "create_reminder",
+      "arguments": {
+        "text": "renew passport",
+        "date": "2026-09-10",
+        "time": "08:00"
+      }
+    }
+  },
+  {
+    "id": "ko-wide-reminder-passport",
+    "language": "ko",
+    "toolset": "wide",
+    "user": "이건 공유 캘린더에 올릴 건 아니고 저만 보면 돼요. 2026-09-10 08:00에 \"renew passport\"라고 개인 알림 만들어 주세요.",
+    "expected": {
+      "kind": "call",
+      "tool": "create_reminder",
+      "arguments": {
+        "text": "renew passport",
+        "date": "2026-09-10",
+        "time": "08:00"
+      }
+    }
+  },
+  {
+    "id": "en-wide-cancel-order",
+    "language": "en",
+    "toolset": "wide",
+    "user": "I ordered the wrong size and it has not shipped yet, so kill it before it does. The order id is D-90011. Cancel it.",
+    "expected": {
+      "kind": "call",
+      "tool": "cancel_order",
+      "arguments": {
+        "order_id": "D-90011"
+      }
+    }
+  },
+  {
+    "id": "hi-wide-cancel-order",
+    "language": "hi",
+    "toolset": "wide",
+    "user": "मैंने ग़लत size order कर दिया और अभी ship नहीं हुआ, तो होने से पहले रोक दीजिए। order id D-90011 है। इसे cancel कीजिए।",
+    "expected": {
+      "kind": "call",
+      "tool": "cancel_order",
+      "arguments": {
+        "order_id": "D-90011"
+      }
+    }
+  },
+  {
+    "id": "hi-Latn-wide-cancel-order",
+    "language": "hi-Latn",
+    "toolset": "wide",
+    "user": "Maine galat size order kar diya aur abhi ship nahi hua, to hone se pehle rok dijiye. Order id D-90011 hai. Ise cancel kijiye.",
+    "expected": {
+      "kind": "call",
+      "tool": "cancel_order",
+      "arguments": {
+        "order_id": "D-90011"
+      }
+    }
+  },
+  {
+    "id": "ko-wide-cancel-order",
+    "language": "ko",
+    "toolset": "wide",
+    "user": "사이즈를 잘못 주문했는데 아직 발송 전이라 나가기 전에 막아야 해요. 주문 번호는 D-90011이에요. 취소해 주세요.",
+    "expected": {
+      "kind": "call",
+      "tool": "cancel_order",
+      "arguments": {
+        "order_id": "D-90011"
+      }
+    }
+  },
+  {
+    "id": "en-wide-stock-nvda",
+    "language": "en",
+    "toolset": "wide",
+    "user": "My brother will not stop bragging about his portfolio and I want to check one thing. What is the latest share price for NVDA?",
+    "expected": {
+      "kind": "call",
+      "tool": "get_stock_price",
+      "arguments": {
+        "ticker": "NVDA"
+      }
+    }
+  },
+  {
+    "id": "hi-wide-stock-nvda",
+    "language": "hi",
+    "toolset": "wide",
+    "user": "मेरा भाई अपने portfolio की डींगें मारना बंद नहीं करता और मुझे एक चीज़ check करनी है। NVDA का latest share price क्या है?",
+    "expected": {
+      "kind": "call",
+      "tool": "get_stock_price",
+      "arguments": {
+        "ticker": "NVDA"
+      }
+    }
+  },
+  {
+    "id": "hi-Latn-wide-stock-nvda",
+    "language": "hi-Latn",
+    "toolset": "wide",
+    "user": "Mera bhai apne portfolio ki deengein maarna band nahi karta aur mujhe ek cheez check karni hai. NVDA ka latest share price kya hai?",
+    "expected": {
+      "kind": "call",
+      "tool": "get_stock_price",
+      "arguments": {
+        "ticker": "NVDA"
+      }
+    }
+  },
+  {
+    "id": "ko-wide-stock-nvda",
+    "language": "ko",
+    "toolset": "wide",
+    "user": "형이 자기 포트폴리오 자랑을 안 멈춰서 한 가지만 확인하고 싶어요. NVDA 최신 주가가 얼마예요?",
+    "expected": {
+      "kind": "call",
+      "tool": "get_stock_price",
+      "arguments": {
+        "ticker": "NVDA"
+      }
+    }
+  },
+  {
+    "id": "en-wide-units-mi-km",
+    "language": "en",
+    "toolset": "wide",
+    "user": "The race is advertised in miles but my running app is metric and I like round numbers. Convert 10 mi to km.",
+    "expected": {
+      "kind": "call",
+      "tool": "convert_units",
+      "arguments": {
+        "amount": 10,
+        "from_unit": "mi",
+        "to_unit": "km"
+      }
+    }
+  },
+  {
+    "id": "hi-wide-units-mi-km",
+    "language": "hi",
+    "toolset": "wide",
+    "user": "race miles में बताई गई है पर मेरा running app metric है और मुझे round numbers पसंद हैं। 10 mi को km में बदलिए।",
+    "expected": {
+      "kind": "call",
+      "tool": "convert_units",
+      "arguments": {
+        "amount": 10,
+        "from_unit": "mi",
+        "to_unit": "km"
+      }
+    }
+  },
+  {
+    "id": "hi-Latn-wide-units-mi-km",
+    "language": "hi-Latn",
+    "toolset": "wide",
+    "user": "Race miles mein batayi gayi hai par mera running app metric hai aur mujhe round numbers pasand hain. 10 mi ko km mein badliye.",
+    "expected": {
+      "kind": "call",
+      "tool": "convert_units",
+      "arguments": {
+        "amount": 10,
+        "from_unit": "mi",
+        "to_unit": "km"
+      }
+    }
+  },
+  {
+    "id": "ko-wide-units-mi-km",
+    "language": "ko",
+    "toolset": "wide",
+    "user": "대회는 마일로 홍보하는데 제 러닝 앱은 미터법이고 저는 딱 떨어지는 숫자를 좋아해요. 10 mi를 km로 변환해 주세요.",
+    "expected": {
+      "kind": "call",
+      "tool": "convert_units",
+      "arguments": {
+        "amount": 10,
+        "from_unit": "mi",
+        "to_unit": "km"
+      }
+    }
+  },
+  {
+    "id": "en-wide-summarize-thread",
+    "language": "en",
+    "toolset": "wide",
+    "user": "My manager forwarded a wall of text and wants the gist before the 3pm call. Summarise this in 50 words: \"The vendor missed the deadline twice and is now asking for a third extension.\"",
+    "expected": {
+      "kind": "call",
+      "tool": "summarize_text",
+      "arguments": {
+        "text": "The vendor missed the deadline twice and is now asking for a third extension.",
+        "max_words": 50
+      }
+    }
+  },
+  {
+    "id": "hi-wide-summarize-thread",
+    "language": "hi",
+    "toolset": "wide",
+    "user": "मेरे manager ने text की दीवार forward की है और 3pm call से पहले gist चाहते हैं। इसे 50 words में summarise कीजिए: \"The vendor missed the deadline twice and is now asking for a third extension.\"",
+    "expected": {
+      "kind": "call",
+      "tool": "summarize_text",
+      "arguments": {
+        "text": "The vendor missed the deadline twice and is now asking for a third extension.",
+        "max_words": 50
+      }
+    }
+  },
+  {
+    "id": "hi-Latn-wide-summarize-thread",
+    "language": "hi-Latn",
+    "toolset": "wide",
+    "user": "Mere manager ne text ki deewar forward ki hai aur 3pm call se pehle gist chahte hain. Ise 50 words mein summarise kijiye: \"The vendor missed the deadline twice and is now asking for a third extension.\"",
+    "expected": {
+      "kind": "call",
+      "tool": "summarize_text",
+      "arguments": {
+        "text": "The vendor missed the deadline twice and is now asking for a third extension.",
+        "max_words": 50
+      }
+    }
+  },
+  {
+    "id": "ko-wide-summarize-thread",
+    "language": "ko",
+    "toolset": "wide",
+    "user": "매니저가 장문을 포워드했는데 3시 통화 전에 요점만 알고 싶대요. 이걸 50 words로 요약해 주세요: \"The vendor missed the deadline twice and is now asking for a third extension.\"",
+    "expected": {
+      "kind": "call",
+      "tool": "summarize_text",
+      "arguments": {
+        "text": "The vendor missed the deadline twice and is now asking for a third extension.",
+        "max_words": 50
+      }
+    }
+  },
+  {
+    "id": "en-wide-search-docs-nda",
+    "language": "en",
+    "toolset": "wide",
+    "user": "Legal swears I filed it somewhere and I have looked everywhere obvious. Search my documents for \"signed NDA 2025\".",
+    "expected": {
+      "kind": "call",
+      "tool": "search_documents",
+      "arguments": {
+        "query": "signed NDA 2025"
+      }
+    }
+  },
+  {
+    "id": "hi-wide-search-docs-nda",
+    "language": "hi",
+    "toolset": "wide",
+    "user": "Legal कहता है मैंने कहीं file किया था और मैंने हर obvious जगह देख ली। मेरे documents में \"signed NDA 2025\" search कीजिए।",
+    "expected": {
+      "kind": "call",
+      "tool": "search_documents",
+      "arguments": {
+        "query": "signed NDA 2025"
+      }
+    }
+  },
+  {
+    "id": "hi-Latn-wide-search-docs-nda",
+    "language": "hi-Latn",
+    "toolset": "wide",
+    "user": "Legal kehta hai maine kahin file kiya tha aur maine har obvious jagah dekh li. Mere documents mein \"signed NDA 2025\" search kijiye.",
+    "expected": {
+      "kind": "call",
+      "tool": "search_documents",
+      "arguments": {
+        "query": "signed NDA 2025"
+      }
+    }
+  },
+  {
+    "id": "ko-wide-search-docs-nda",
+    "language": "ko",
+    "toolset": "wide",
+    "user": "법무팀은 제가 어딘가에 저장했다는데 뻔한 곳은 다 봤어요. 제 문서에서 \"signed NDA 2025\"를 검색해 주세요.",
+    "expected": {
+      "kind": "call",
+      "tool": "search_documents",
+      "arguments": {
+        "query": "signed NDA 2025"
+      }
+    }
+  },
+  {
+    "id": "en-wide-book-flight",
+    "language": "en",
+    "toolset": "wide",
+    "user": "The conference moved and I need to be there the night before. Book a flight from Seoul to Tokyo on 2026-10-02.",
+    "expected": {
+      "kind": "call",
+      "tool": "book_flight",
+      "arguments": {
+        "from_city": "Seoul",
+        "to_city": "Tokyo",
+        "date": "2026-10-02"
+      }
+    }
+  },
+  {
+    "id": "hi-wide-book-flight",
+    "language": "hi",
+    "toolset": "wide",
+    "user": "conference आगे खिसक गई और मुझे एक रात पहले वहाँ होना है। 2026-10-02 को Seoul से Tokyo की flight book कीजिए।",
+    "expected": {
+      "kind": "call",
+      "tool": "book_flight",
+      "arguments": {
+        "from_city": "Seoul",
+        "to_city": "Tokyo",
+        "date": "2026-10-02"
+      }
+    }
+  },
+  {
+    "id": "hi-Latn-wide-book-flight",
+    "language": "hi-Latn",
+    "toolset": "wide",
+    "user": "Conference aage khisak gayi aur mujhe ek raat pehle wahan hona hai. 2026-10-02 ko Seoul se Tokyo ki flight book kijiye.",
+    "expected": {
+      "kind": "call",
+      "tool": "book_flight",
+      "arguments": {
+        "from_city": "Seoul",
+        "to_city": "Tokyo",
+        "date": "2026-10-02"
+      }
+    }
+  },
+  {
+    "id": "ko-wide-book-flight",
+    "language": "ko",
+    "toolset": "wide",
+    "user": "학회 일정이 밀려서 하루 전날 밤엔 도착해 있어야 해요. 2026-10-02에 Seoul에서 Tokyo 가는 항공편 예약해 주세요.",
+    "expected": {
+      "kind": "call",
+      "tool": "book_flight",
+      "arguments": {
+        "from_city": "Seoul",
+        "to_city": "Tokyo",
+        "date": "2026-10-02"
+      }
+    }
+  },
+  {
+    "id": "en-wide-book-hotel",
+    "language": "en",
+    "toolset": "wide",
+    "user": "Same trip, and I would rather not sleep at the airport. Book a hotel in Osaka checking in 2026-10-02 for 3 nights.",
+    "expected": {
+      "kind": "call",
+      "tool": "book_hotel",
+      "arguments": {
+        "city": "Osaka",
+        "check_in": "2026-10-02",
+        "nights": 3
+      }
+    }
+  },
+  {
+    "id": "hi-wide-book-hotel",
+    "language": "hi",
+    "toolset": "wide",
+    "user": "उसी trip की बात है, और मैं airport पर सोना नहीं चाहता। Osaka में 2026-10-02 check-in के साथ 3 nights का hotel book कीजिए।",
+    "expected": {
+      "kind": "call",
+      "tool": "book_hotel",
+      "arguments": {
+        "city": "Osaka",
+        "check_in": "2026-10-02",
+        "nights": 3
+      }
+    }
+  },
+  {
+    "id": "hi-Latn-wide-book-hotel",
+    "language": "hi-Latn",
+    "toolset": "wide",
+    "user": "Usi trip ki baat hai, aur main airport par sona nahi chahta. Osaka mein 2026-10-02 check-in ke saath 3 nights ka hotel book kijiye.",
+    "expected": {
+      "kind": "call",
+      "tool": "book_hotel",
+      "arguments": {
+        "city": "Osaka",
+        "check_in": "2026-10-02",
+        "nights": 3
+      }
+    }
+  },
+  {
+    "id": "ko-wide-book-hotel",
+    "language": "ko",
+    "toolset": "wide",
+    "user": "같은 여행인데 공항에서 자고 싶진 않아요. Osaka에 2026-10-02 체크인으로 3 nights 호텔 예약해 주세요.",
+    "expected": {
+      "kind": "call",
+      "tool": "book_hotel",
+      "arguments": {
+        "city": "Osaka",
+        "check_in": "2026-10-02",
+        "nights": 3
+      }
+    }
+  },
+  {
+    "id": "en-wide-track-shipment",
+    "language": "en",
+    "toolset": "wide",
+    "user": "The app keeps sending me to the order page but I want the carrier's own view. The tracking number on the slip is 1Z58V9A20388119999. Where is the parcel?",
+    "expected": {
+      "kind": "call",
+      "tool": "track_shipment",
+      "arguments": {
+        "tracking_number": "1Z58V9A20388119999"
+      }
+    }
+  },
+  {
+    "id": "hi-wide-track-shipment",
+    "language": "hi",
+    "toolset": "wide",
+    "user": "app मुझे बार-बार order page पर भेजता है पर मुझे carrier का अपना view चाहिए। slip पर tracking number 1Z58V9A20388119999 है। parcel कहाँ है?",
+    "expected": {
+      "kind": "call",
+      "tool": "track_shipment",
+      "arguments": {
+        "tracking_number": "1Z58V9A20388119999"
+      }
+    }
+  },
+  {
+    "id": "hi-Latn-wide-track-shipment",
+    "language": "hi-Latn",
+    "toolset": "wide",
+    "user": "App mujhe baar-baar order page par bhejta hai par mujhe carrier ka apna view chahiye. Slip par tracking number 1Z58V9A20388119999 hai. Parcel kahan hai?",
+    "expected": {
+      "kind": "call",
+      "tool": "track_shipment",
+      "arguments": {
+        "tracking_number": "1Z58V9A20388119999"
+      }
+    }
+  },
+  {
+    "id": "ko-wide-track-shipment",
+    "language": "ko",
+    "toolset": "wide",
+    "user": "앱은 자꾸 주문 페이지로 보내는데 저는 택배사 자체 조회가 필요해요. 송장에 적힌 운송장 번호는 1Z58V9A20388119999예요. 소포 어디 있어요?",
+    "expected": {
+      "kind": "call",
+      "tool": "track_shipment",
+      "arguments": {
+        "tracking_number": "1Z58V9A20388119999"
+      }
+    }
+  },
+  {
+    "id": "en-full-track-package-ref",
+    "language": "en",
+    "toolset": "full",
+    "user": "This is not the shop's order number and not a UPS-style code, it is the postal reference the seller emailed: RR123456785DE. Track that package.",
+    "expected": {
+      "kind": "call",
+      "tool": "track_package",
+      "arguments": {
+        "reference_number": "RR123456785DE"
+      }
+    }
+  },
+  {
+    "id": "hi-full-track-package-ref",
+    "language": "hi",
+    "toolset": "full",
+    "user": "यह shop का order number नहीं है और न ही UPS जैसा code, यह postal reference है जो seller ने email किया: RR123456785DE। उस package को track कीजिए।",
+    "expected": {
+      "kind": "call",
+      "tool": "track_package",
+      "arguments": {
+        "reference_number": "RR123456785DE"
+      }
+    }
+  },
+  {
+    "id": "hi-Latn-full-track-package-ref",
+    "language": "hi-Latn",
+    "toolset": "full",
+    "user": "Yeh shop ka order number nahi hai aur na hi UPS jaisa code, yeh postal reference hai jo seller ne email kiya: RR123456785DE. Us package ko track kijiye.",
+    "expected": {
+      "kind": "call",
+      "tool": "track_package",
+      "arguments": {
+        "reference_number": "RR123456785DE"
+      }
+    }
+  },
+  {
+    "id": "ko-full-track-package-ref",
+    "language": "ko",
+    "toolset": "full",
+    "user": "이건 쇼핑몰 주문번호도 아니고 UPS식 코드도 아니고, 판매자가 이메일로 준 우편 참조번호예요: RR123456785DE. 그 소포 추적해 주세요.",
+    "expected": {
+      "kind": "call",
+      "tool": "track_package",
+      "arguments": {
+        "reference_number": "RR123456785DE"
+      }
+    }
+  },
+  {
+    "id": "en-full-delivery-status-order",
+    "language": "en",
+    "toolset": "full",
+    "user": "I do not have a carrier number, only what the shop gave me. Using the order id E-11234, check the delivery status.",
+    "expected": {
+      "kind": "call",
+      "tool": "lookup_delivery_status",
+      "arguments": {
+        "order_id": "E-11234"
+      }
+    }
+  },
+  {
+    "id": "hi-full-delivery-status-order",
+    "language": "hi",
+    "toolset": "full",
+    "user": "मेरे पास carrier number नहीं है, बस वही है जो shop ने दिया। order id E-11234 से delivery status check कीजिए।",
+    "expected": {
+      "kind": "call",
+      "tool": "lookup_delivery_status",
+      "arguments": {
+        "order_id": "E-11234"
+      }
+    }
+  },
+  {
+    "id": "hi-Latn-full-delivery-status-order",
+    "language": "hi-Latn",
+    "toolset": "full",
+    "user": "Mere paas carrier number nahi hai, bas wahi hai jo shop ne diya. Order id E-11234 se delivery status check kijiye.",
+    "expected": {
+      "kind": "call",
+      "tool": "lookup_delivery_status",
+      "arguments": {
+        "order_id": "E-11234"
+      }
+    }
+  },
+  {
+    "id": "ko-full-delivery-status-order",
+    "language": "ko",
+    "toolset": "full",
+    "user": "택배사 번호는 없고 쇼핑몰이 준 것만 있어요. 주문 번호 E-11234로 배송 상태를 확인해 주세요.",
+    "expected": {
+      "kind": "call",
+      "tool": "lookup_delivery_status",
+      "arguments": {
+        "order_id": "E-11234"
+      }
+    }
+  },
+  {
+    "id": "en-full-directions-transit",
+    "language": "en",
+    "toolset": "full",
+    "user": "I land with two heavy bags and no car, so I need the actual steps, not just a time. Give me transit directions from Incheon Airport to COEX.",
+    "expected": {
+      "kind": "call",
+      "tool": "get_directions",
+      "arguments": {
+        "origin": "Incheon Airport",
+        "destination": "COEX",
+        "mode": "transit"
+      }
+    }
+  },
+  {
+    "id": "hi-full-directions-transit",
+    "language": "hi",
+    "toolset": "full",
+    "user": "मैं दो भारी bags के साथ बिना car के उतरता हूँ, तो मुझे सिर्फ़ time नहीं, असली steps चाहिए। Incheon Airport से COEX तक transit directions दीजिए।",
+    "expected": {
+      "kind": "call",
+      "tool": "get_directions",
+      "arguments": {
+        "origin": "Incheon Airport",
+        "destination": "COEX",
+        "mode": "transit"
+      }
+    }
+  },
+  {
+    "id": "hi-Latn-full-directions-transit",
+    "language": "hi-Latn",
+    "toolset": "full",
+    "user": "Main do bhaari bags ke saath bina car ke utarta hoon, to mujhe sirf time nahi, asli steps chahiye. Incheon Airport se COEX tak transit directions dijiye.",
+    "expected": {
+      "kind": "call",
+      "tool": "get_directions",
+      "arguments": {
+        "origin": "Incheon Airport",
+        "destination": "COEX",
+        "mode": "transit"
+      }
+    }
+  },
+  {
+    "id": "ko-full-directions-transit",
+    "language": "ko",
+    "toolset": "full",
+    "user": "무거운 가방 두 개에 차도 없이 도착해서, 시간만 말고 실제 경로 단계가 필요해요. Incheon Airport에서 COEX까지 대중교통 길찾기 해 주세요.",
+    "expected": {
+      "kind": "call",
+      "tool": "get_directions",
+      "arguments": {
+        "origin": "Incheon Airport",
+        "destination": "COEX",
+        "mode": "transit"
+      }
+    }
+  },
+  {
+    "id": "en-full-estimate-travel",
+    "language": "en",
+    "toolset": "full",
+    "user": "I do not need turn-by-turn, I just have to tell my friend when I will show up. Roughly how long is the drive from Gangnam to Hongdae?",
+    "expected": {
+      "kind": "call",
+      "tool": "estimate_travel_time",
+      "arguments": {
+        "origin": "Gangnam",
+        "destination": "Hongdae",
+        "mode": "driving"
+      }
+    }
+  },
+  {
+    "id": "hi-full-estimate-travel",
+    "language": "hi",
+    "toolset": "full",
+    "user": "मुझे turn-by-turn नहीं चाहिए, बस दोस्त को बताना है कब पहुँचूँगा। Gangnam से Hongdae तक driving में लगभग कितना time लगेगा?",
+    "expected": {
+      "kind": "call",
+      "tool": "estimate_travel_time",
+      "arguments": {
+        "origin": "Gangnam",
+        "destination": "Hongdae",
+        "mode": "driving"
+      }
+    }
+  },
+  {
+    "id": "hi-Latn-full-estimate-travel",
+    "language": "hi-Latn",
+    "toolset": "full",
+    "user": "Mujhe turn-by-turn nahi chahiye, bas dost ko batana hai kab pahunchunga. Gangnam se Hongdae tak driving mein lagbhag kitna time lagega?",
+    "expected": {
+      "kind": "call",
+      "tool": "estimate_travel_time",
+      "arguments": {
+        "origin": "Gangnam",
+        "destination": "Hongdae",
+        "mode": "driving"
+      }
+    }
+  },
+  {
+    "id": "ko-full-estimate-travel",
+    "language": "ko",
+    "toolset": "full",
+    "user": "턴바이턴은 필요 없고 친구한테 언제 도착하는지만 말하면 돼요. Gangnam에서 Hongdae까지 운전하면 대략 얼마나 걸려요?",
+    "expected": {
+      "kind": "call",
+      "tool": "estimate_travel_time",
+      "arguments": {
+        "origin": "Gangnam",
+        "destination": "Hongdae",
+        "mode": "driving"
+      }
+    }
+  },
+  {
+    "id": "en-full-nearby-pharmacy",
+    "language": "en",
+    "toolset": "full",
+    "user": "My cough is getting worse and I do not know this neighbourhood at all. Find a pharmacy within 2 km of Myeongdong.",
+    "expected": {
+      "kind": "call",
+      "tool": "find_nearby_places",
+      "arguments": {
+        "category": "pharmacy",
+        "location": "Myeongdong",
+        "radius_km": 2
+      }
+    }
+  },
+  {
+    "id": "hi-full-nearby-pharmacy",
+    "language": "hi",
+    "toolset": "full",
+    "user": "मेरी खाँसी बढ़ रही है और यह इलाक़ा मैं बिल्कुल नहीं जानता। Myeongdong के 2 km के अंदर pharmacy ढूँढिए।",
+    "expected": {
+      "kind": "call",
+      "tool": "find_nearby_places",
+      "arguments": {
+        "category": "pharmacy",
+        "location": "Myeongdong",
+        "radius_km": 2
+      }
+    }
+  },
+  {
+    "id": "hi-Latn-full-nearby-pharmacy",
+    "language": "hi-Latn",
+    "toolset": "full",
+    "user": "Meri khaansi badh rahi hai aur yeh ilaaka main bilkul nahi jaanta. Myeongdong ke 2 km ke andar pharmacy dhoondhiye.",
+    "expected": {
+      "kind": "call",
+      "tool": "find_nearby_places",
+      "arguments": {
+        "category": "pharmacy",
+        "location": "Myeongdong",
+        "radius_km": 2
+      }
+    }
+  },
+  {
+    "id": "ko-full-nearby-pharmacy",
+    "language": "ko",
+    "toolset": "full",
+    "user": "기침이 심해지는데 이 동네를 전혀 몰라요. Myeongdong 반경 2 km 안에서 약국 찾아 주세요.",
+    "expected": {
+      "kind": "call",
+      "tool": "find_nearby_places",
+      "arguments": {
+        "category": "pharmacy",
+        "location": "Myeongdong",
+        "radius_km": 2
+      }
+    }
+  },
+  {
+    "id": "en-full-place-details",
+    "language": "en",
+    "toolset": "full",
+    "user": "The map app already gave me the saved pin, I just need its hours and phone. Look up the details for place id plc_88213.",
+    "expected": {
+      "kind": "call",
+      "tool": "get_place_details",
+      "arguments": {
+        "place_id": "plc_88213"
+      }
+    }
+  },
+  {
+    "id": "hi-full-place-details",
+    "language": "hi",
+    "toolset": "full",
+    "user": "map app ने saved pin पहले ही दे दिया, मुझे बस उसके hours और phone चाहिए। place id plc_88213 की details देखिए।",
+    "expected": {
+      "kind": "call",
+      "tool": "get_place_details",
+      "arguments": {
+        "place_id": "plc_88213"
+      }
+    }
+  },
+  {
+    "id": "hi-Latn-full-place-details",
+    "language": "hi-Latn",
+    "toolset": "full",
+    "user": "Map app ne saved pin pehle hi de diya, mujhe bas uske hours aur phone chahiye. Place id plc_88213 ki details dekhiye.",
+    "expected": {
+      "kind": "call",
+      "tool": "get_place_details",
+      "arguments": {
+        "place_id": "plc_88213"
+      }
+    }
+  },
+  {
+    "id": "ko-full-place-details",
+    "language": "ko",
+    "toolset": "full",
+    "user": "지도 앱이 저장된 핀은 이미 줬고, 영업시간과 전화번호만 필요해요. 장소 아이디 plc_88213의 상세 정보를 조회해 주세요.",
+    "expected": {
+      "kind": "call",
+      "tool": "get_place_details",
+      "arguments": {
+        "place_id": "plc_88213"
+      }
+    }
+  },
+  {
+    "id": "en-full-check-payment",
+    "language": "en",
+    "toolset": "full",
+    "user": "I already sent the money last night, I am not sending it again, I just want to know if it landed. Check payment id pay_7741x.",
+    "expected": {
+      "kind": "call",
+      "tool": "check_payment_status",
+      "arguments": {
+        "payment_id": "pay_7741x"
+      }
+    }
+  },
+  {
+    "id": "hi-full-check-payment",
+    "language": "hi",
+    "toolset": "full",
+    "user": "मैंने कल रात पैसे भेज दिए थे, दोबारा नहीं भेज रहा, बस जानना है पहुँचे या नहीं। payment id pay_7741x check कीजिए।",
+    "expected": {
+      "kind": "call",
+      "tool": "check_payment_status",
+      "arguments": {
+        "payment_id": "pay_7741x"
+      }
+    }
+  },
+  {
+    "id": "hi-Latn-full-check-payment",
+    "language": "hi-Latn",
+    "toolset": "full",
+    "user": "Maine kal raat paise bhej diye the, dobara nahi bhej raha, bas jaanna hai pahunche ya nahi. Payment id pay_7741x check kijiye.",
+    "expected": {
+      "kind": "call",
+      "tool": "check_payment_status",
+      "arguments": {
+        "payment_id": "pay_7741x"
+      }
+    }
+  },
+  {
+    "id": "ko-full-check-payment",
+    "language": "ko",
+    "toolset": "full",
+    "user": "어젯밤에 이미 돈을 보냈고 다시 보내는 게 아니라 도착했는지만 알고 싶어요. 결제 아이디 pay_7741x를 확인해 주세요.",
+    "expected": {
+      "kind": "call",
+      "tool": "check_payment_status",
+      "arguments": {
+        "payment_id": "pay_7741x"
+      }
+    }
+  },
+  {
+    "id": "en-full-send-payment",
+    "language": "en",
+    "toolset": "full",
+    "user": "I owe him for last night's dinner and he keeps 'jokingly' reminding me. Send 45000 KRW to @minjun.",
+    "expected": {
+      "kind": "call",
+      "tool": "send_payment",
+      "arguments": {
+        "recipient": "@minjun",
+        "amount": 45000,
+        "currency": "KRW"
+      }
+    }
+  },
+  {
+    "id": "hi-full-send-payment",
+    "language": "hi",
+    "toolset": "full",
+    "user": "मुझे कल रात के dinner के पैसे उसे देने हैं और वह 'मज़ाक में' याद दिलाता रहता है। @minjun को 45000 KRW भेजिए।",
+    "expected": {
+      "kind": "call",
+      "tool": "send_payment",
+      "arguments": {
+        "recipient": "@minjun",
+        "amount": 45000,
+        "currency": "KRW"
+      }
+    }
+  },
+  {
+    "id": "hi-Latn-full-send-payment",
+    "language": "hi-Latn",
+    "toolset": "full",
+    "user": "Mujhe kal raat ke dinner ke paise use dene hain aur wah 'mazaak mein' yaad dilata rehta hai. @minjun ko 45000 KRW bhejiye.",
+    "expected": {
+      "kind": "call",
+      "tool": "send_payment",
+      "arguments": {
+        "recipient": "@minjun",
+        "amount": 45000,
+        "currency": "KRW"
+      }
+    }
+  },
+  {
+    "id": "ko-full-send-payment",
+    "language": "ko",
+    "toolset": "full",
+    "user": "어젯밤 저녁값을 갚아야 하는데 걔가 '농담처럼' 계속 상기시켜요. @minjun에게 45000 KRW 보내 주세요.",
+    "expected": {
+      "kind": "call",
+      "tool": "send_payment",
+      "arguments": {
+        "recipient": "@minjun",
+        "amount": 45000,
+        "currency": "KRW"
+      }
+    }
+  },
+  {
+    "id": "en-full-lookup-contact",
+    "language": "en",
+    "toolset": "full",
+    "user": "I need to call him but the number is buried somewhere in my phone. Find the contact for Arjun Mehta.",
+    "expected": {
+      "kind": "call",
+      "tool": "lookup_contact",
+      "arguments": {
+        "name": "Arjun Mehta"
+      }
+    }
+  },
+  {
+    "id": "hi-full-lookup-contact",
+    "language": "hi",
+    "toolset": "full",
+    "user": "मुझे उसे call करना है पर number मेरे phone में कहीं दबा हुआ है। Arjun Mehta का contact ढूँढिए।",
+    "expected": {
+      "kind": "call",
+      "tool": "lookup_contact",
+      "arguments": {
+        "name": "Arjun Mehta"
+      }
+    }
+  },
+  {
+    "id": "hi-Latn-full-lookup-contact",
+    "language": "hi-Latn",
+    "toolset": "full",
+    "user": "Mujhe use call karna hai par number mere phone mein kahin daba hua hai. Arjun Mehta ka contact dhoondhiye.",
+    "expected": {
+      "kind": "call",
+      "tool": "lookup_contact",
+      "arguments": {
+        "name": "Arjun Mehta"
+      }
+    }
+  },
+  {
+    "id": "ko-full-lookup-contact",
+    "language": "ko",
+    "toolset": "full",
+    "user": "그에게 전화해야 하는데 번호가 폰 어딘가에 묻혀 있어요. Arjun Mehta 연락처를 찾아 주세요.",
+    "expected": {
+      "kind": "call",
+      "tool": "lookup_contact",
+      "arguments": {
+        "name": "Arjun Mehta"
+      }
+    }
+  },
+  {
+    "id": "en-full-add-contact",
+    "language": "en",
+    "toolset": "full",
+    "user": "I met her at the meetup and do not want to lose the card. Save a contact: Priya Nair, phone 010-9988-1122, email priya@studio.in.",
+    "expected": {
+      "kind": "call",
+      "tool": "add_contact",
+      "arguments": {
+        "name": "Priya Nair",
+        "phone": "010-9988-1122",
+        "email": "priya@studio.in"
+      }
+    }
+  },
+  {
+    "id": "hi-full-add-contact",
+    "language": "hi",
+    "toolset": "full",
+    "user": "मैं उससे meetup में मिला और card खोना नहीं चाहता। एक contact save कीजिए: Priya Nair, phone 010-9988-1122, email priya@studio.in।",
+    "expected": {
+      "kind": "call",
+      "tool": "add_contact",
+      "arguments": {
+        "name": "Priya Nair",
+        "phone": "010-9988-1122",
+        "email": "priya@studio.in"
+      }
+    }
+  },
+  {
+    "id": "hi-Latn-full-add-contact",
+    "language": "hi-Latn",
+    "toolset": "full",
+    "user": "Main usse meetup mein mila aur card khona nahi chahta. Ek contact save kijiye: Priya Nair, phone 010-9988-1122, email priya@studio.in.",
+    "expected": {
+      "kind": "call",
+      "tool": "add_contact",
+      "arguments": {
+        "name": "Priya Nair",
+        "phone": "010-9988-1122",
+        "email": "priya@studio.in"
+      }
+    }
+  },
+  {
+    "id": "ko-full-add-contact",
+    "language": "ko",
+    "toolset": "full",
+    "user": "밋업에서 만났는데 명함을 잃어버리기 싫어요. 연락처 저장해 주세요: Priya Nair, 전화 010-9988-1122, 이메일 priya@studio.in.",
+    "expected": {
+      "kind": "call",
+      "tool": "add_contact",
+      "arguments": {
+        "name": "Priya Nair",
+        "phone": "010-9988-1122",
+        "email": "priya@studio.in"
+      }
+    }
+  },
+  {
+    "id": "en-full-create-note",
+    "language": "en",
+    "toolset": "full",
+    "user": "I will forget this by tomorrow's standup if I do not write it down now. Make a note titled \"Standup blockers\" with the body \"CI is flaky on arm64\".",
+    "expected": {
+      "kind": "call",
+      "tool": "create_note",
+      "arguments": {
+        "title": "Standup blockers",
+        "body": "CI is flaky on arm64"
+      }
+    }
+  },
+  {
+    "id": "hi-full-create-note",
+    "language": "hi",
+    "toolset": "full",
+    "user": "अगर अभी नहीं लिखा तो कल के standup तक भूल जाऊँगा। \"Standup blockers\" title और body \"CI is flaky on arm64\" के साथ एक note बनाइए।",
+    "expected": {
+      "kind": "call",
+      "tool": "create_note",
+      "arguments": {
+        "title": "Standup blockers",
+        "body": "CI is flaky on arm64"
+      }
+    }
+  },
+  {
+    "id": "hi-Latn-full-create-note",
+    "language": "hi-Latn",
+    "toolset": "full",
+    "user": "Agar abhi nahi likha to kal ke standup tak bhool jaunga. \"Standup blockers\" title aur body \"CI is flaky on arm64\" ke saath ek note banaiye.",
+    "expected": {
+      "kind": "call",
+      "tool": "create_note",
+      "arguments": {
+        "title": "Standup blockers",
+        "body": "CI is flaky on arm64"
+      }
+    }
+  },
+  {
+    "id": "ko-full-create-note",
+    "language": "ko",
+    "toolset": "full",
+    "user": "지금 안 적으면 내일 스탠드업 전에 까먹어요. 제목 \"Standup blockers\", 본문 \"CI is flaky on arm64\"인 노트를 만들어 주세요.",
+    "expected": {
+      "kind": "call",
+      "tool": "create_note",
+      "arguments": {
+        "title": "Standup blockers",
+        "body": "CI is flaky on arm64"
+      }
+    }
+  },
+  {
+    "id": "en-full-search-notes",
+    "language": "en",
+    "toolset": "full",
+    "user": "I know I wrote it down somewhere and I am not making a new one. Search my notes for \"wifi password\".",
+    "expected": {
+      "kind": "call",
+      "tool": "search_notes",
+      "arguments": {
+        "query": "wifi password"
+      }
+    }
+  },
+  {
+    "id": "hi-full-search-notes",
+    "language": "hi",
+    "toolset": "full",
+    "user": "मुझे पता है मैंने कहीं लिखा था और मैं नया नहीं बना रहा। मेरे notes में \"wifi password\" search कीजिए।",
+    "expected": {
+      "kind": "call",
+      "tool": "search_notes",
+      "arguments": {
+        "query": "wifi password"
+      }
+    }
+  },
+  {
+    "id": "hi-Latn-full-search-notes",
+    "language": "hi-Latn",
+    "toolset": "full",
+    "user": "Mujhe pata hai maine kahin likha tha aur main naya nahi bana raha. Mere notes mein \"wifi password\" search kijiye.",
+    "expected": {
+      "kind": "call",
+      "tool": "search_notes",
+      "arguments": {
+        "query": "wifi password"
+      }
+    }
+  },
+  {
+    "id": "ko-full-search-notes",
+    "language": "ko",
+    "toolset": "full",
+    "user": "어딘가에 적어둔 걸 아는데 새로 만드는 게 아니에요. 제 노트에서 \"wifi password\"를 검색해 주세요.",
+    "expected": {
+      "kind": "call",
+      "tool": "search_notes",
+      "arguments": {
+        "query": "wifi password"
+      }
+    }
+  },
+  {
+    "id": "en-full-play-music",
+    "language": "en",
+    "toolset": "full",
+    "user": "The room has gone quiet and I want the mood back. Play \"Ditto\" by NewJeans.",
+    "expected": {
+      "kind": "call",
+      "tool": "play_music",
+      "arguments": {
+        "track": "Ditto",
+        "artist": "NewJeans"
+      }
+    }
+  },
+  {
+    "id": "hi-full-play-music",
+    "language": "hi",
+    "toolset": "full",
+    "user": "कमरा शांत हो गया है और मुझे mood वापस चाहिए। NewJeans का \"Ditto\" चलाइए।",
+    "expected": {
+      "kind": "call",
+      "tool": "play_music",
+      "arguments": {
+        "track": "Ditto",
+        "artist": "NewJeans"
+      }
+    }
+  },
+  {
+    "id": "hi-Latn-full-play-music",
+    "language": "hi-Latn",
+    "toolset": "full",
+    "user": "Kamra shaant ho gaya hai aur mujhe mood wapas chahiye. NewJeans ka \"Ditto\" chalaiye.",
+    "expected": {
+      "kind": "call",
+      "tool": "play_music",
+      "arguments": {
+        "track": "Ditto",
+        "artist": "NewJeans"
+      }
+    }
+  },
+  {
+    "id": "ko-full-play-music",
+    "language": "ko",
+    "toolset": "full",
+    "user": "방이 조용해졌는데 분위기를 되살리고 싶어요. NewJeans의 \"Ditto\" 틀어 주세요.",
+    "expected": {
+      "kind": "call",
+      "tool": "play_music",
+      "arguments": {
+        "track": "Ditto",
+        "artist": "NewJeans"
+      }
+    }
+  },
+  {
+    "id": "en-full-search-products",
+    "language": "en",
+    "toolset": "full",
+    "user": "My new laptop only has two ports and it is driving me up the wall. Search the store for \"usb-c hub\".",
+    "expected": {
+      "kind": "call",
+      "tool": "search_products",
+      "arguments": {
+        "query": "usb-c hub"
+      }
+    }
+  },
+  {
+    "id": "hi-full-search-products",
+    "language": "hi",
+    "toolset": "full",
+    "user": "मेरे नए laptop में सिर्फ़ दो ports हैं और यह पागल कर रहा है। store में \"usb-c hub\" search कीजिए।",
+    "expected": {
+      "kind": "call",
+      "tool": "search_products",
+      "arguments": {
+        "query": "usb-c hub"
+      }
+    }
+  },
+  {
+    "id": "hi-Latn-full-search-products",
+    "language": "hi-Latn",
+    "toolset": "full",
+    "user": "Mere naye laptop mein sirf do ports hain aur yeh paagal kar raha hai. Store mein \"usb-c hub\" search kijiye.",
+    "expected": {
+      "kind": "call",
+      "tool": "search_products",
+      "arguments": {
+        "query": "usb-c hub"
+      }
+    }
+  },
+  {
+    "id": "ko-full-search-products",
+    "language": "ko",
+    "toolset": "full",
+    "user": "새 노트북에 포트가 두 개뿐이라 미치겠어요. 스토어에서 \"usb-c hub\"를 검색해 주세요.",
+    "expected": {
+      "kind": "call",
+      "tool": "search_products",
+      "arguments": {
+        "query": "usb-c hub"
+      }
+    }
+  },
+  {
+    "id": "en-full-add-to-cart",
+    "language": "en",
+    "toolset": "full",
+    "user": "I already picked the exact one from the search results, no need to look again. Add product SKU-55021 to my cart, quantity 2.",
+    "expected": {
+      "kind": "call",
+      "tool": "add_to_cart",
+      "arguments": {
+        "product_id": "SKU-55021",
+        "quantity": 2
+      }
+    }
+  },
+  {
+    "id": "hi-full-add-to-cart",
+    "language": "hi",
+    "toolset": "full",
+    "user": "मैंने search results से exact one पहले ही चुन लिया, दोबारा देखने की ज़रूरत नहीं। product SKU-55021 को cart में डालिए, quantity 2।",
+    "expected": {
+      "kind": "call",
+      "tool": "add_to_cart",
+      "arguments": {
+        "product_id": "SKU-55021",
+        "quantity": 2
+      }
+    }
+  },
+  {
+    "id": "hi-Latn-full-add-to-cart",
+    "language": "hi-Latn",
+    "toolset": "full",
+    "user": "Maine search results se exact one pehle hi chun liya, dobara dekhne ki zaroorat nahi. Product SKU-55021 ko cart mein daaliye, quantity 2.",
+    "expected": {
+      "kind": "call",
+      "tool": "add_to_cart",
+      "arguments": {
+        "product_id": "SKU-55021",
+        "quantity": 2
+      }
+    }
+  },
+  {
+    "id": "ko-full-add-to-cart",
+    "language": "ko",
+    "toolset": "full",
+    "user": "검색 결과에서 정확히 그걸 이미 골랐으니 다시 볼 필요 없어요. 상품 SKU-55021을 장바구니에 담아 주세요, 수량 2.",
+    "expected": {
+      "kind": "call",
+      "tool": "add_to_cart",
+      "arguments": {
+        "product_id": "SKU-55021",
+        "quantity": 2
+      }
+    }
+  },
+  {
+    "id": "en-full-news-headlines",
+    "language": "en",
+    "toolset": "full",
+    "user": "I have five minutes before the meeting and want the big stuff, not a search. Get me the top technology headlines for KR.",
+    "expected": {
+      "kind": "call",
+      "tool": "get_news_headlines",
+      "arguments": {
+        "topic": "technology",
+        "country": "KR"
+      }
+    }
+  },
+  {
+    "id": "hi-full-news-headlines",
+    "language": "hi",
+    "toolset": "full",
+    "user": "meeting से पहले पाँच मिनट हैं और मुझे बड़ी ख़बरें चाहिए, search नहीं। KR के लिए top technology headlines लाइए।",
+    "expected": {
+      "kind": "call",
+      "tool": "get_news_headlines",
+      "arguments": {
+        "topic": "technology",
+        "country": "KR"
+      }
+    }
+  },
+  {
+    "id": "hi-Latn-full-news-headlines",
+    "language": "hi-Latn",
+    "toolset": "full",
+    "user": "Meeting se pehle paanch minute hain aur mujhe badi khabrein chahiye, search nahi. KR ke liye top technology headlines laiye.",
+    "expected": {
+      "kind": "call",
+      "tool": "get_news_headlines",
+      "arguments": {
+        "topic": "technology",
+        "country": "KR"
+      }
+    }
+  },
+  {
+    "id": "ko-full-news-headlines",
+    "language": "ko",
+    "toolset": "full",
+    "user": "회의 전에 5분 있는데 검색 말고 큰 뉴스만 보고 싶어요. KR의 top technology 헤드라인 가져와 주세요.",
+    "expected": {
+      "kind": "call",
+      "tool": "get_news_headlines",
+      "arguments": {
+        "topic": "technology",
+        "country": "KR"
+      }
+    }
+  },
+  {
+    "id": "en-full-git-branch",
+    "language": "en",
+    "toolset": "full",
+    "user": "We agreed to keep this off main until review. In the redrob-eval repo, create a branch called feature/tool-eval.",
+    "expected": {
+      "kind": "call",
+      "tool": "create_git_branch",
+      "arguments": {
+        "repo": "redrob-eval",
+        "branch": "feature/tool-eval"
+      }
+    }
+  },
+  {
+    "id": "hi-full-git-branch",
+    "language": "hi",
+    "toolset": "full",
+    "user": "हमने तय किया कि review तक इसे main से बाहर रखेंगे। redrob-eval repo में feature/tool-eval नाम की branch बनाइए।",
+    "expected": {
+      "kind": "call",
+      "tool": "create_git_branch",
+      "arguments": {
+        "repo": "redrob-eval",
+        "branch": "feature/tool-eval"
+      }
+    }
+  },
+  {
+    "id": "hi-Latn-full-git-branch",
+    "language": "hi-Latn",
+    "toolset": "full",
+    "user": "Humne tay kiya ki review tak ise main se bahar rakhenge. redrob-eval repo mein feature/tool-eval naam ki branch banaiye.",
+    "expected": {
+      "kind": "call",
+      "tool": "create_git_branch",
+      "arguments": {
+        "repo": "redrob-eval",
+        "branch": "feature/tool-eval"
+      }
+    }
+  },
+  {
+    "id": "ko-full-git-branch",
+    "language": "ko",
+    "toolset": "full",
+    "user": "리뷰 전까지는 main에서 떼어놓기로 했어요. redrob-eval 저장소에 feature/tool-eval 브랜치를 만들어 주세요.",
+    "expected": {
+      "kind": "call",
+      "tool": "create_git_branch",
+      "arguments": {
+        "repo": "redrob-eval",
+        "branch": "feature/tool-eval"
+      }
+    }
+  },
+  {
+    "id": "en-full-list-branches",
+    "language": "en",
+    "toolset": "full",
+    "user": "Before I branch off anything I want to see what is already there. List the branches in the redrob-eval repo.",
+    "expected": {
+      "kind": "call",
+      "tool": "list_git_branches",
+      "arguments": {
+        "repo": "redrob-eval"
+      }
+    }
+  },
+  {
+    "id": "hi-full-list-branches",
+    "language": "hi",
+    "toolset": "full",
+    "user": "कुछ भी branch करने से पहले मैं देखना चाहता हूँ पहले से क्या है। redrob-eval repo की branches list कीजिए।",
+    "expected": {
+      "kind": "call",
+      "tool": "list_git_branches",
+      "arguments": {
+        "repo": "redrob-eval"
+      }
+    }
+  },
+  {
+    "id": "hi-Latn-full-list-branches",
+    "language": "hi-Latn",
+    "toolset": "full",
+    "user": "Kuch bhi branch karne se pehle main dekhna chahta hoon pehle se kya hai. redrob-eval repo ki branches list kijiye.",
+    "expected": {
+      "kind": "call",
+      "tool": "list_git_branches",
+      "arguments": {
+        "repo": "redrob-eval"
+      }
+    }
+  },
+  {
+    "id": "ko-full-list-branches",
+    "language": "ko",
+    "toolset": "full",
+    "user": "뭘 브랜치하기 전에 이미 뭐가 있는지 보고 싶어요. redrob-eval 저장소의 브랜치 목록을 보여 주세요.",
+    "expected": {
+      "kind": "call",
+      "tool": "list_git_branches",
+      "arguments": {
+        "repo": "redrob-eval"
+      }
+    }
+  },
+  {
+    "id": "en-full-read-file",
+    "language": "en",
+    "toolset": "full",
+    "user": "The reviewer referenced a specific file and I want to read it before replying, not list the folder. Read src/config/models.ts.",
+    "expected": {
+      "kind": "call",
+      "tool": "read_file",
+      "arguments": {
+        "path": "src/config/models.ts"
+      }
+    }
+  },
+  {
+    "id": "hi-full-read-file",
+    "language": "hi",
+    "toolset": "full",
+    "user": "reviewer ने एक specific file का ज़िक्र किया और मैं reply से पहले उसे पढ़ना चाहता हूँ, folder list नहीं। src/config/models.ts पढ़िए।",
+    "expected": {
+      "kind": "call",
+      "tool": "read_file",
+      "arguments": {
+        "path": "src/config/models.ts"
+      }
+    }
+  },
+  {
+    "id": "hi-Latn-full-read-file",
+    "language": "hi-Latn",
+    "toolset": "full",
+    "user": "Reviewer ne ek specific file ka zikr kiya aur main reply se pehle use padhna chahta hoon, folder list nahi. src/config/models.ts padhiye.",
+    "expected": {
+      "kind": "call",
+      "tool": "read_file",
+      "arguments": {
+        "path": "src/config/models.ts"
+      }
+    }
+  },
+  {
+    "id": "ko-full-read-file",
+    "language": "ko",
+    "toolset": "full",
+    "user": "리뷰어가 특정 파일을 언급해서 답하기 전에 폴더 목록 말고 그 파일을 읽고 싶어요. src/config/models.ts를 읽어 주세요.",
+    "expected": {
+      "kind": "call",
+      "tool": "read_file",
+      "arguments": {
+        "path": "src/config/models.ts"
+      }
+    }
+  },
+  {
+    "id": "en-full-health-log",
+    "language": "en",
+    "toolset": "full",
+    "user": "The clinic wants me tracking this daily and I keep forgetting to enter it. Log my weight: 72 kg.",
+    "expected": {
+      "kind": "call",
+      "tool": "log_health_metric",
+      "arguments": {
+        "metric": "weight",
+        "value": 72,
+        "unit": "kg"
+      }
+    }
+  },
+  {
+    "id": "hi-full-health-log",
+    "language": "hi",
+    "toolset": "full",
+    "user": "clinic चाहता है मैं इसे रोज़ track करूँ और मैं enter करना भूल जाता हूँ। मेरा weight log कीजिए: 72 kg।",
+    "expected": {
+      "kind": "call",
+      "tool": "log_health_metric",
+      "arguments": {
+        "metric": "weight",
+        "value": 72,
+        "unit": "kg"
+      }
+    }
+  },
+  {
+    "id": "hi-Latn-full-health-log",
+    "language": "hi-Latn",
+    "toolset": "full",
+    "user": "Clinic chahta hai main ise roz track karoon aur main enter karna bhool jaata hoon. Mera weight log kijiye: 72 kg.",
+    "expected": {
+      "kind": "call",
+      "tool": "log_health_metric",
+      "arguments": {
+        "metric": "weight",
+        "value": 72,
+        "unit": "kg"
+      }
+    }
+  },
+  {
+    "id": "ko-full-health-log",
+    "language": "ko",
+    "toolset": "full",
+    "user": "병원에서 매일 기록하라는데 입력을 자꾸 까먹어요. 제 체중 기록해 주세요: 72 kg.",
+    "expected": {
+      "kind": "call",
+      "tool": "log_health_metric",
+      "arguments": {
+        "metric": "weight",
+        "value": 72,
+        "unit": "kg"
+      }
+    }
+  },
+  {
+    "id": "en-full-health-summary",
+    "language": "en",
+    "toolset": "full",
+    "user": "I do not want to add a reading, I want to see the trend before my check-up. Summarise my weight over the last month.",
+    "expected": {
+      "kind": "call",
+      "tool": "get_health_summary",
+      "arguments": {
+        "metric": "weight",
+        "period": "month"
+      }
+    }
+  },
+  {
+    "id": "hi-full-health-summary",
+    "language": "hi",
+    "toolset": "full",
+    "user": "मुझे नया reading नहीं जोड़ना, check-up से पहले trend देखना है। पिछले month का मेरा weight summarise कीजिए।",
+    "expected": {
+      "kind": "call",
+      "tool": "get_health_summary",
+      "arguments": {
+        "metric": "weight",
+        "period": "month"
+      }
+    }
+  },
+  {
+    "id": "hi-Latn-full-health-summary",
+    "language": "hi-Latn",
+    "toolset": "full",
+    "user": "Mujhe naya reading nahi jodna, check-up se pehle trend dekhna hai. Pichhle month ka mera weight summarise kijiye.",
+    "expected": {
+      "kind": "call",
+      "tool": "get_health_summary",
+      "arguments": {
+        "metric": "weight",
+        "period": "month"
+      }
+    }
+  },
+  {
+    "id": "ko-full-health-summary",
+    "language": "ko",
+    "toolset": "full",
+    "user": "새 수치를 넣으려는 게 아니라 검진 전에 추세를 보고 싶어요. 지난 month 동안의 제 체중을 요약해 주세요.",
+    "expected": {
+      "kind": "call",
+      "tool": "get_health_summary",
+      "arguments": {
+        "metric": "weight",
+        "period": "month"
+      }
+    }
+  },
+  {
+    "id": "en-full-set-alarm",
+    "language": "en",
+    "toolset": "full",
+    "user": "If it is not screaming at me I will sleep through it. Set an alarm for 05:45 labelled \"gym\".",
+    "expected": {
+      "kind": "call",
+      "tool": "set_alarm",
+      "arguments": {
+        "time": "05:45",
+        "label": "gym"
+      }
+    }
+  },
+  {
+    "id": "hi-full-set-alarm",
+    "language": "hi",
+    "toolset": "full",
+    "user": "अगर यह चिल्लाकर नहीं जगाएगा तो मैं सोता रह जाऊँगा। 05:45 के लिए \"gym\" label वाला alarm लगाइए।",
+    "expected": {
+      "kind": "call",
+      "tool": "set_alarm",
+      "arguments": {
+        "time": "05:45",
+        "label": "gym"
+      }
+    }
+  },
+  {
+    "id": "hi-Latn-full-set-alarm",
+    "language": "hi-Latn",
+    "toolset": "full",
+    "user": "Agar yeh chillakar nahi jagaega to main sota reh jaunga. 05:45 ke liye \"gym\" label wala alarm lagaiye.",
+    "expected": {
+      "kind": "call",
+      "tool": "set_alarm",
+      "arguments": {
+        "time": "05:45",
+        "label": "gym"
+      }
+    }
+  },
+  {
+    "id": "ko-full-set-alarm",
+    "language": "ko",
+    "toolset": "full",
+    "user": "요란하게 울리지 않으면 그냥 자버려요. 05:45에 \"gym\" 라벨로 알람 맞춰 주세요.",
+    "expected": {
+      "kind": "call",
+      "tool": "set_alarm",
+      "arguments": {
+        "time": "05:45",
+        "label": "gym"
+      }
+    }
+  },
+  {
+    "id": "en-full-join-meeting",
+    "language": "en",
+    "toolset": "full",
+    "user": "It already started and everyone is waiting, I do not need to schedule anything. Join the video meeting 552-841-9930.",
+    "expected": {
+      "kind": "call",
+      "tool": "join_video_meeting",
+      "arguments": {
+        "meeting_id": "552-841-9930"
+      }
+    }
+  },
+  {
+    "id": "hi-full-join-meeting",
+    "language": "hi",
+    "toolset": "full",
+    "user": "यह already शुरू हो चुकी है और सब wait कर रहे हैं, मुझे कुछ schedule नहीं करना। video meeting 552-841-9930 join कीजिए।",
+    "expected": {
+      "kind": "call",
+      "tool": "join_video_meeting",
+      "arguments": {
+        "meeting_id": "552-841-9930"
+      }
+    }
+  },
+  {
+    "id": "hi-Latn-full-join-meeting",
+    "language": "hi-Latn",
+    "toolset": "full",
+    "user": "Yeh already shuru ho chuki hai aur sab wait kar rahe hain, mujhe kuch schedule nahi karna. Video meeting 552-841-9930 join kijiye.",
+    "expected": {
+      "kind": "call",
+      "tool": "join_video_meeting",
+      "arguments": {
+        "meeting_id": "552-841-9930"
+      }
+    }
+  },
+  {
+    "id": "ko-full-join-meeting",
+    "language": "ko",
+    "toolset": "full",
+    "user": "이미 시작했고 다들 기다려요, 뭘 새로 잡을 게 아니에요. 화상 회의 552-841-9930에 참가해 주세요.",
+    "expected": {
+      "kind": "call",
+      "tool": "join_video_meeting",
+      "arguments": {
+        "meeting_id": "552-841-9930"
+      }
+    }
+  },
+  {
+    "id": "en-full-schedule-meeting",
+    "language": "en",
+    "toolset": "full",
+    "user": "This one does not exist yet, I am setting it up for next week. Schedule a video meeting \"Roadmap sync\" on 2026-09-05 at 16:00.",
+    "expected": {
+      "kind": "call",
+      "tool": "schedule_video_meeting",
+      "arguments": {
+        "title": "Roadmap sync",
+        "date": "2026-09-05",
+        "time": "16:00"
+      }
+    }
+  },
+  {
+    "id": "hi-full-schedule-meeting",
+    "language": "hi",
+    "toolset": "full",
+    "user": "यह अभी exist नहीं करती, मैं इसे अगले हफ़्ते के लिए set कर रहा हूँ। 2026-09-05 को 16:00 पर \"Roadmap sync\" video meeting schedule कीजिए।",
+    "expected": {
+      "kind": "call",
+      "tool": "schedule_video_meeting",
+      "arguments": {
+        "title": "Roadmap sync",
+        "date": "2026-09-05",
+        "time": "16:00"
+      }
+    }
+  },
+  {
+    "id": "hi-Latn-full-schedule-meeting",
+    "language": "hi-Latn",
+    "toolset": "full",
+    "user": "Yeh abhi exist nahi karti, main ise agle hafte ke liye set kar raha hoon. 2026-09-05 ko 16:00 par \"Roadmap sync\" video meeting schedule kijiye.",
+    "expected": {
+      "kind": "call",
+      "tool": "schedule_video_meeting",
+      "arguments": {
+        "title": "Roadmap sync",
+        "date": "2026-09-05",
+        "time": "16:00"
+      }
+    }
+  },
+  {
+    "id": "ko-full-schedule-meeting",
+    "language": "ko",
+    "toolset": "full",
+    "user": "이건 아직 없는 회의고 다음 주로 새로 잡는 거예요. 2026-09-05 16:00에 \"Roadmap sync\" 화상 회의를 예약해 주세요.",
+    "expected": {
+      "kind": "call",
+      "tool": "schedule_video_meeting",
+      "arguments": {
+        "title": "Roadmap sync",
+        "date": "2026-09-05",
+        "time": "16:00"
+      }
+    }
+  },
+  {
+    "id": "en-full-reserve-restaurant",
+    "language": "en",
+    "toolset": "full",
+    "user": "I already found the place, I do not need to search again, I need the table. Book restaurant rst_2231 for 4 people on 2026-09-06 at 19:30.",
+    "expected": {
+      "kind": "call",
+      "tool": "reserve_restaurant",
+      "arguments": {
+        "restaurant_id": "rst_2231",
+        "date": "2026-09-06",
+        "time": "19:30",
+        "party_size": 4
+      }
+    }
+  },
+  {
+    "id": "hi-full-reserve-restaurant",
+    "language": "hi",
+    "toolset": "full",
+    "user": "मैंने जगह पहले ही ढूँढ ली, दोबारा search नहीं करना, table चाहिए। restaurant rst_2231 में 2026-09-06 को 19:30 पर 4 लोगों के लिए book कीजिए।",
+    "expected": {
+      "kind": "call",
+      "tool": "reserve_restaurant",
+      "arguments": {
+        "restaurant_id": "rst_2231",
+        "date": "2026-09-06",
+        "time": "19:30",
+        "party_size": 4
+      }
+    }
+  },
+  {
+    "id": "hi-Latn-full-reserve-restaurant",
+    "language": "hi-Latn",
+    "toolset": "full",
+    "user": "Maine jagah pehle hi dhoondh li, dobara search nahi karna, table chahiye. Restaurant rst_2231 mein 2026-09-06 ko 19:30 par 4 logon ke liye book kijiye.",
+    "expected": {
+      "kind": "call",
+      "tool": "reserve_restaurant",
+      "arguments": {
+        "restaurant_id": "rst_2231",
+        "date": "2026-09-06",
+        "time": "19:30",
+        "party_size": 4
+      }
+    }
+  },
+  {
+    "id": "ko-full-reserve-restaurant",
+    "language": "ko",
+    "toolset": "full",
+    "user": "가게는 이미 찾았고 다시 검색할 게 아니라 자리를 잡아야 해요. 식당 rst_2231에 2026-09-06 19:30, 4명으로 예약해 주세요.",
+    "expected": {
+      "kind": "call",
+      "tool": "reserve_restaurant",
+      "arguments": {
+        "restaurant_id": "rst_2231",
+        "date": "2026-09-06",
+        "time": "19:30",
+        "party_size": 4
+      }
+    }
+  },
+  {
+    "id": "en-full-book-taxi",
+    "language": "en",
+    "toolset": "full",
+    "user": "My flight is early and I do not trust the morning trains. Book a taxi from Seoul Station to Incheon Airport at 06:15.",
+    "expected": {
+      "kind": "call",
+      "tool": "book_taxi",
+      "arguments": {
+        "pickup": "Seoul Station",
+        "dropoff": "Incheon Airport",
+        "time": "06:15"
+      }
+    }
+  },
+  {
+    "id": "hi-full-book-taxi",
+    "language": "hi",
+    "toolset": "full",
+    "user": "मेरी flight जल्दी है और मुझे सुबह की trains पर भरोसा नहीं। 06:15 पर Seoul Station से Incheon Airport के लिए taxi book कीजिए।",
+    "expected": {
+      "kind": "call",
+      "tool": "book_taxi",
+      "arguments": {
+        "pickup": "Seoul Station",
+        "dropoff": "Incheon Airport",
+        "time": "06:15"
+      }
+    }
+  },
+  {
+    "id": "hi-Latn-full-book-taxi",
+    "language": "hi-Latn",
+    "toolset": "full",
+    "user": "Meri flight jaldi hai aur mujhe subah ki trains par bharosa nahi. 06:15 par Seoul Station se Incheon Airport ke liye taxi book kijiye.",
+    "expected": {
+      "kind": "call",
+      "tool": "book_taxi",
+      "arguments": {
+        "pickup": "Seoul Station",
+        "dropoff": "Incheon Airport",
+        "time": "06:15"
+      }
+    }
+  },
+  {
+    "id": "ko-full-book-taxi",
+    "language": "ko",
+    "toolset": "full",
+    "user": "비행기가 이른데 아침 기차는 못 믿겠어요. 06:15에 Seoul Station에서 Incheon Airport까지 택시 예약해 주세요.",
+    "expected": {
+      "kind": "call",
+      "tool": "book_taxi",
+      "arguments": {
+        "pickup": "Seoul Station",
+        "dropoff": "Incheon Airport",
+        "time": "06:15"
+      }
+    }
+  },
+  {
+    "id": "en-full-estimate-fare",
+    "language": "en",
+    "toolset": "full",
+    "user": "I am not booking yet, I just want to know if it is cheaper than the surge on the app. Estimate the taxi fare from Hongdae to Gangnam.",
+    "expected": {
+      "kind": "call",
+      "tool": "estimate_taxi_fare",
+      "arguments": {
+        "pickup": "Hongdae",
+        "dropoff": "Gangnam"
+      }
+    }
+  },
+  {
+    "id": "hi-full-estimate-fare",
+    "language": "hi",
+    "toolset": "full",
+    "user": "मैं अभी book नहीं कर रहा, बस जानना है app के surge से सस्ता है या नहीं। Hongdae से Gangnam तक taxi fare estimate कीजिए।",
+    "expected": {
+      "kind": "call",
+      "tool": "estimate_taxi_fare",
+      "arguments": {
+        "pickup": "Hongdae",
+        "dropoff": "Gangnam"
+      }
+    }
+  },
+  {
+    "id": "hi-Latn-full-estimate-fare",
+    "language": "hi-Latn",
+    "toolset": "full",
+    "user": "Main abhi book nahi kar raha, bas jaanna hai app ke surge se sasta hai ya nahi. Hongdae se Gangnam tak taxi fare estimate kijiye.",
+    "expected": {
+      "kind": "call",
+      "tool": "estimate_taxi_fare",
+      "arguments": {
+        "pickup": "Hongdae",
+        "dropoff": "Gangnam"
+      }
+    }
+  },
+  {
+    "id": "ko-full-estimate-fare",
+    "language": "ko",
+    "toolset": "full",
+    "user": "아직 예약하는 건 아니고 앱 할증보다 싼지만 알고 싶어요. Hongdae에서 Gangnam까지 택시 요금을 예상해 주세요.",
+    "expected": {
+      "kind": "call",
+      "tool": "estimate_taxi_fare",
+      "arguments": {
+        "pickup": "Hongdae",
+        "dropoff": "Gangnam"
+      }
+    }
+  },
+  {
+    "id": "en-core-block-recommend",
+    "language": "en",
+    "toolset": "core",
+    "user": "I have a two-hour flight tonight and nothing downloaded. What is a good movie to watch?",
+    "expected": {
+      "kind": "absence",
+      "action": "BLOCK"
+    }
+  },
+  {
+    "id": "hi-core-block-recommend",
+    "language": "hi",
+    "toolset": "core",
+    "user": "आज रात दो घंटे की flight है और कुछ download नहीं है। कौन-सी अच्छी movie देखूँ?",
+    "expected": {
+      "kind": "absence",
+      "action": "BLOCK"
+    }
+  },
+  {
+    "id": "hi-Latn-core-block-recommend",
+    "language": "hi-Latn",
+    "toolset": "core",
+    "user": "Aaj raat do ghante ki flight hai aur kuch download nahi hai. Kaun-si acchi movie dekhoon?",
+    "expected": {
+      "kind": "absence",
+      "action": "BLOCK"
+    }
+  },
+  {
+    "id": "ko-core-block-recommend",
+    "language": "ko",
+    "toolset": "core",
+    "user": "오늘 밤 두 시간짜리 비행인데 받아둔 게 없어요. 볼 만한 영화 뭐가 좋아요?",
+    "expected": {
+      "kind": "absence",
+      "action": "BLOCK"
+    }
+  },
+  {
+    "id": "en-core-defer-email-no-recipient",
+    "language": "en",
+    "toolset": "core",
+    "user": "Accounting needs the reminder that the invoice is overdue, sent by email, and I want the subject to be \"Overdue invoice\". Send it.",
+    "expected": {
+      "kind": "absence",
+      "action": "DEFER"
+    }
+  },
+  {
+    "id": "hi-core-defer-email-no-recipient",
+    "language": "hi",
+    "toolset": "core",
+    "user": "Accounting को email से reminder चाहिए कि invoice overdue है, और मैं चाहता हूँ subject \"Overdue invoice\" हो। भेज दीजिए।",
+    "expected": {
+      "kind": "absence",
+      "action": "DEFER"
+    }
+  },
+  {
+    "id": "hi-Latn-core-defer-email-no-recipient",
+    "language": "hi-Latn",
+    "toolset": "core",
+    "user": "Accounting ko email se reminder chahiye ki invoice overdue hai, aur main chahta hoon subject \"Overdue invoice\" ho. Bhej dijiye.",
+    "expected": {
+      "kind": "absence",
+      "action": "DEFER"
+    }
+  },
+  {
+    "id": "ko-core-defer-email-no-recipient",
+    "language": "ko",
+    "toolset": "core",
+    "user": "회계팀에 인보이스가 연체됐다는 알림을 이메일로 보내야 하고 제목은 \"Overdue invoice\"로 하고 싶어요. 보내 주세요.",
+    "expected": {
+      "kind": "absence",
+      "action": "DEFER"
+    }
+  },
+  {
+    "id": "en-wide-defer-hotel-no-nights",
+    "language": "en",
+    "toolset": "wide",
+    "user": "I need somewhere to stay in Osaka from 2026-10-02, near the station if possible. Book the hotel.",
+    "expected": {
+      "kind": "absence",
+      "action": "DEFER"
+    }
+  },
+  {
+    "id": "hi-wide-defer-hotel-no-nights",
+    "language": "hi",
+    "toolset": "wide",
+    "user": "मुझे 2026-10-02 से Osaka में रुकने की जगह चाहिए, हो सके तो station के पास। hotel book कीजिए।",
+    "expected": {
+      "kind": "absence",
+      "action": "DEFER"
+    }
+  },
+  {
+    "id": "hi-Latn-wide-defer-hotel-no-nights",
+    "language": "hi-Latn",
+    "toolset": "wide",
+    "user": "Mujhe 2026-10-02 se Osaka mein rukne ki jagah chahiye, ho sake to station ke paas. Hotel book kijiye.",
+    "expected": {
+      "kind": "absence",
+      "action": "DEFER"
+    }
+  },
+  {
+    "id": "ko-wide-defer-hotel-no-nights",
+    "language": "ko",
+    "toolset": "wide",
+    "user": "2026-10-02부터 Osaka에 묵을 곳이 필요해요, 가능하면 역 근처로. 호텔 예약해 주세요.",
+    "expected": {
+      "kind": "absence",
+      "action": "DEFER"
+    }
+  },
+  {
+    "id": "en-wide-block-opinion",
+    "language": "en",
+    "toolset": "wide",
+    "user": "You have seen a lot of these by now. Do you think remote work is better than the office, honestly?",
+    "expected": {
+      "kind": "absence",
+      "action": "BLOCK"
+    }
+  },
+  {
+    "id": "hi-wide-block-opinion",
+    "language": "hi",
+    "toolset": "wide",
+    "user": "अब तक तुमने बहुत सारे देख लिए होंगे। सच बताओ, क्या remote work office से बेहतर है?",
+    "expected": {
+      "kind": "absence",
+      "action": "BLOCK"
+    }
+  },
+  {
+    "id": "hi-Latn-wide-block-opinion",
+    "language": "hi-Latn",
+    "toolset": "wide",
+    "user": "Ab tak tumne bahut saare dekh liye honge. Sach batao, kya remote work office se behtar hai?",
+    "expected": {
+      "kind": "absence",
+      "action": "BLOCK"
+    }
+  },
+  {
+    "id": "ko-wide-block-opinion",
+    "language": "ko",
+    "toolset": "wide",
+    "user": "이제 이런 거 많이 봤을 거잖아요. 솔직히 재택근무가 사무실보다 낫다고 생각해요?",
+    "expected": {
+      "kind": "absence",
+      "action": "BLOCK"
+    }
+  },
+  {
+    "id": "en-full-defer-payment-no-amount",
+    "language": "en",
+    "toolset": "full",
+    "user": "Send the deposit to @landlord_kim in KRW so I can lock in the flat. Do it now.",
+    "expected": {
+      "kind": "absence",
+      "action": "DEFER"
+    }
+  },
+  {
+    "id": "hi-full-defer-payment-no-amount",
+    "language": "hi",
+    "toolset": "full",
+    "user": "@landlord_kim को KRW में deposit भेजिए ताकि मैं flat pakka कर सकूँ। अभी कीजिए।",
+    "expected": {
+      "kind": "absence",
+      "action": "DEFER"
+    }
+  },
+  {
+    "id": "hi-Latn-full-defer-payment-no-amount",
+    "language": "hi-Latn",
+    "toolset": "full",
+    "user": "@landlord_kim ko KRW mein deposit bhejiye taaki main flat pakka kar sakoon. Abhi kijiye.",
+    "expected": {
+      "kind": "absence",
+      "action": "DEFER"
+    }
+  },
+  {
+    "id": "ko-full-defer-payment-no-amount",
+    "language": "ko",
+    "toolset": "full",
+    "user": "@landlord_kim한테 KRW로 보증금을 보내서 집을 확정하고 싶어요. 지금 해 주세요.",
+    "expected": {
+      "kind": "absence",
+      "action": "DEFER"
+    }
+  },
+  {
+    "id": "en-full-block-medical",
+    "language": "en",
+    "toolset": "full",
+    "user": "The pharmacy gave me two boxes and I am not sure. Should I take ibuprofen and this antibiotic together, or is that dangerous?",
+    "expected": {
+      "kind": "absence",
+      "action": "BLOCK"
+    }
+  },
+  {
+    "id": "hi-full-block-medical",
+    "language": "hi",
+    "toolset": "full",
+    "user": "pharmacy ने मुझे दो boxes दिए और मैं sure नहीं हूँ। क्या मैं ibuprofen और यह antibiotic साथ में ले सकता हूँ, या यह ख़तरनाक है?",
+    "expected": {
+      "kind": "absence",
+      "action": "BLOCK"
+    }
+  },
+  {
+    "id": "hi-Latn-full-block-medical",
+    "language": "hi-Latn",
+    "toolset": "full",
+    "user": "Pharmacy ne mujhe do boxes diye aur main sure nahi hoon. Kya main ibuprofen aur yeh antibiotic saath mein le sakta hoon, ya yeh khatarnak hai?",
+    "expected": {
+      "kind": "absence",
+      "action": "BLOCK"
+    }
+  },
+  {
+    "id": "ko-full-block-medical",
+    "language": "ko",
+    "toolset": "full",
+    "user": "약국에서 상자 두 개를 줬는데 확신이 안 서요. 이부프로펜이랑 이 항생제를 같이 먹어도 돼요, 아니면 위험해요?",
+    "expected": {
+      "kind": "absence",
+      "action": "BLOCK"
+    }
+  },
+  {
+    "id": "en-full-defer-directions-no-origin",
+    "language": "en",
+    "toolset": "full",
+    "user": "I need transit directions to COEX for tomorrow morning, the sooner I plan the better. Work it out.",
+    "expected": {
+      "kind": "absence",
+      "action": "DEFER"
+    }
+  },
+  {
+    "id": "hi-full-defer-directions-no-origin",
+    "language": "hi",
+    "toolset": "full",
+    "user": "मुझे कल सुबह COEX के लिए transit directions चाहिए, जितनी जल्दी plan करूँ उतना अच्छा। निकाल दीजिए।",
+    "expected": {
+      "kind": "absence",
+      "action": "DEFER"
+    }
+  },
+  {
+    "id": "hi-Latn-full-defer-directions-no-origin",
+    "language": "hi-Latn",
+    "toolset": "full",
+    "user": "Mujhe kal subah COEX ke liye transit directions chahiye, jitni jaldi plan karoon utna accha. Nikaal dijiye.",
+    "expected": {
+      "kind": "absence",
+      "action": "DEFER"
+    }
+  },
+  {
+    "id": "ko-full-defer-directions-no-origin",
+    "language": "ko",
+    "toolset": "full",
+    "user": "내일 아침 COEX까지 대중교통 길찾기가 필요해요, 빨리 계획할수록 좋아요. 알아내 주세요.",
+    "expected": {
+      "kind": "absence",
+      "action": "DEFER"
+    }
+  },
+  {
+    "id": "en-full-block-explain",
+    "language": "en",
+    "toolset": "full",
+    "user": "My kid asked me at dinner and I completely blanked. Can you explain how a rainbow forms, simply?",
+    "expected": {
+      "kind": "absence",
+      "action": "BLOCK"
+    }
+  },
+  {
+    "id": "hi-full-block-explain",
+    "language": "hi",
+    "toolset": "full",
+    "user": "मेरे बच्चे ने dinner पर पूछा और मैं पूरी तरह blank हो गया। क्या तुम आसान भाषा में समझा सकते हो कि rainbow कैसे बनता है?",
+    "expected": {
+      "kind": "absence",
+      "action": "BLOCK"
+    }
+  },
+  {
+    "id": "hi-Latn-full-block-explain",
+    "language": "hi-Latn",
+    "toolset": "full",
+    "user": "Mere bacche ne dinner par poocha aur main poori tarah blank ho gaya. Kya tum aasaan bhasha mein samjha sakte ho ki rainbow kaise banta hai?",
+    "expected": {
+      "kind": "absence",
+      "action": "BLOCK"
+    }
+  },
+  {
+    "id": "ko-full-block-explain",
+    "language": "ko",
+    "toolset": "full",
+    "user": "애가 저녁 먹다 물었는데 완전히 막혔어요. 무지개가 어떻게 생기는지 쉽게 설명해 줄 수 있어요?",
+    "expected": {
+      "kind": "absence",
+      "action": "BLOCK"
+    }
+  },
+  {
+    "id": "en-full-search-news",
+    "language": "en",
+    "toolset": "full",
+    "user": "This is not a headline scan, I need the specific coverage for a brief. Search news for \"semiconductor export rules\".",
+    "expected": {
+      "kind": "call",
+      "tool": "search_news",
+      "arguments": {
+        "query": "semiconductor export rules"
+      }
+    }
+  },
+  {
+    "id": "hi-full-search-news",
+    "language": "hi",
+    "toolset": "full",
+    "user": "यह headline scan नहीं है, मुझे एक brief के लिए specific coverage चाहिए। news में \"semiconductor export rules\" search कीजिए।",
+    "expected": {
+      "kind": "call",
+      "tool": "search_news",
+      "arguments": {
+        "query": "semiconductor export rules"
+      }
+    }
+  },
+  {
+    "id": "hi-Latn-full-search-news",
+    "language": "hi-Latn",
+    "toolset": "full",
+    "user": "Yeh headline scan nahi hai, mujhe ek brief ke liye specific coverage chahiye. News mein \"semiconductor export rules\" search kijiye.",
+    "expected": {
+      "kind": "call",
+      "tool": "search_news",
+      "arguments": {
+        "query": "semiconductor export rules"
+      }
+    }
+  },
+  {
+    "id": "ko-full-search-news",
+    "language": "ko",
+    "toolset": "full",
+    "user": "헤드라인 훑기가 아니라 브리핑용 구체 기사가 필요해요. 뉴스에서 \"semiconductor export rules\"를 검색해 주세요.",
+    "expected": {
+      "kind": "call",
+      "tool": "search_news",
+      "arguments": {
+        "query": "semiconductor export rules"
+      }
+    }
+  },
+  {
+    "id": "en-full-list-files",
+    "language": "en",
+    "toolset": "full",
+    "user": "Before I open anything I want to see what is in there. List the files in exports/samples.",
+    "expected": {
+      "kind": "call",
+      "tool": "list_files",
+      "arguments": {
+        "directory": "exports/samples"
+      }
+    }
+  },
+  {
+    "id": "hi-full-list-files",
+    "language": "hi",
+    "toolset": "full",
+    "user": "कुछ भी open करने से पहले मैं देखना चाहता हूँ अंदर क्या है। exports/samples में files list कीजिए।",
+    "expected": {
+      "kind": "call",
+      "tool": "list_files",
+      "arguments": {
+        "directory": "exports/samples"
+      }
+    }
+  },
+  {
+    "id": "hi-Latn-full-list-files",
+    "language": "hi-Latn",
+    "toolset": "full",
+    "user": "Kuch bhi open karne se pehle main dekhna chahta hoon andar kya hai. exports/samples mein files list kijiye.",
+    "expected": {
+      "kind": "call",
+      "tool": "list_files",
+      "arguments": {
+        "directory": "exports/samples"
+      }
+    }
+  },
+  {
+    "id": "ko-full-list-files",
+    "language": "ko",
+    "toolset": "full",
+    "user": "뭘 열기 전에 안에 뭐가 있는지 보고 싶어요. exports/samples의 파일 목록을 보여 주세요.",
+    "expected": {
+      "kind": "call",
+      "tool": "list_files",
+      "arguments": {
+        "directory": "exports/samples"
+      }
+    }
+  },
+  {
+    "id": "en-full-search-music",
+    "language": "en",
+    "toolset": "full",
+    "user": "I am not sure which track yet, just show me options to pick from. Search music for \"lo-fi study beats\".",
+    "expected": {
+      "kind": "call",
+      "tool": "search_music",
+      "arguments": {
+        "query": "lo-fi study beats"
+      }
+    }
+  },
+  {
+    "id": "hi-full-search-music",
+    "language": "hi",
+    "toolset": "full",
+    "user": "मुझे अभी तय नहीं कौन-सा track, बस options दिखाइए जिनमें से चुनूँ। music में \"lo-fi study beats\" search कीजिए।",
+    "expected": {
+      "kind": "call",
+      "tool": "search_music",
+      "arguments": {
+        "query": "lo-fi study beats"
+      }
+    }
+  },
+  {
+    "id": "hi-Latn-full-search-music",
+    "language": "hi-Latn",
+    "toolset": "full",
+    "user": "Mujhe abhi tay nahi kaun-sa track, bas options dikhaiye jinmein se chunoon. Music mein \"lo-fi study beats\" search kijiye.",
+    "expected": {
+      "kind": "call",
+      "tool": "search_music",
+      "arguments": {
+        "query": "lo-fi study beats"
+      }
+    }
+  },
+  {
+    "id": "ko-full-search-music",
+    "language": "ko",
+    "toolset": "full",
+    "user": "아직 어떤 트랙일지 모르니 고를 수 있게 목록만 보여 주세요. 음악에서 \"lo-fi study beats\"를 검색해 주세요.",
+    "expected": {
+      "kind": "call",
+      "tool": "search_music",
+      "arguments": {
+        "query": "lo-fi study beats"
+      }
+    }
+  },
+  {
+    "id": "en-full-air-quality-date",
+    "language": "en",
+    "toolset": "full",
+    "user": "We are planning an outdoor shoot and the client is nervous about the haze. What will the air quality in Mumbai be on 2026-09-04?",
+    "expected": {
+      "kind": "call",
+      "tool": "get_air_quality",
+      "arguments": {
+        "city": "Mumbai",
+        "day": "2026-09-04"
+      }
+    }
+  },
+  {
+    "id": "hi-full-air-quality-date",
+    "language": "hi",
+    "toolset": "full",
+    "user": "हम एक outdoor shoot plan कर रहे हैं और client haze को लेकर घबराया हुआ है। 2026-09-04 को Mumbai की air quality कैसी होगी?",
+    "expected": {
+      "kind": "call",
+      "tool": "get_air_quality",
+      "arguments": {
+        "city": "Mumbai",
+        "day": "2026-09-04"
+      }
+    }
+  },
+  {
+    "id": "hi-Latn-full-air-quality-date",
+    "language": "hi-Latn",
+    "toolset": "full",
+    "user": "Hum ek outdoor shoot plan kar rahe hain aur client haze ko lekar ghabraya hua hai. 2026-09-04 ko Mumbai ki air quality kaisi hogi?",
+    "expected": {
+      "kind": "call",
+      "tool": "get_air_quality",
+      "arguments": {
+        "city": "Mumbai",
+        "day": "2026-09-04"
+      }
+    }
+  },
+  {
+    "id": "ko-full-air-quality-date",
+    "language": "ko",
+    "toolset": "full",
+    "user": "야외 촬영을 계획 중인데 클라이언트가 미세먼지를 걱정해요. 2026-09-04 Mumbai 대기질은 어떨까요?",
+    "expected": {
+      "kind": "call",
+      "tool": "get_air_quality",
+      "arguments": {
+        "city": "Mumbai",
+        "day": "2026-09-04"
+      }
+    }
   }
 ]

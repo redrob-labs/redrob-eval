@@ -23,7 +23,13 @@ export async function GET() {
   return Response.json({
     python: python.available
       ? { available: true as const, version: python.version }
-      : { available: false as const, reason: python.reason },
+      : {
+          available: false as const,
+          // `reason` is the English log line; `reasonCode` is what the page translates.
+          reason: python.reason,
+          reasonCode: python.reasonCode,
+          command: python.command,
+        },
     repoRoot: root,
     runtimes: [
       // Both, always, because the reason Python is normative for publication is that the

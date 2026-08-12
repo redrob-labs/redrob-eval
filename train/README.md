@@ -4,8 +4,8 @@ Optional **research** path (Python). Not required for `yarn install && yarn dev`
 
 Train **both** on the same outcome labels:
 
-1. **Feature MLP** — cheap, default candidate  
-2. **LoRA SLM** — text router for comparison / harder cases  
+1. **Feature MLP** - cheap, default candidate  
+2. **LoRA SLM** - text router for comparison / harder cases  
 
 Both learn `small` | `large` from the collection corpus.
 

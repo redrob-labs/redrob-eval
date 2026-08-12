@@ -1,0 +1,1017 @@
+{
+  "id": "mmlu-pooled",
+  "label": "MMLU (pooled)",
+  "task": "custom",
+  "metric": "accuracy",
+  "source": "huggingface:cais/mmlu",
+  "retrieved_at": "2026-08-11T08:14:54.873Z",
+  "license": "MIT",
+  "seed": 42,
+  "maxSamples": 200,
+  "hfDataset": "cais/mmlu",
+  "hfConfig": "all",
+  "hfSplit": "test",
+  "samples": [
+    {
+      "id": "mmlu-pooled-0",
+      "input": "Cognitive ______ models such as the Theory of _________ serve to try and explain consumer behaviour, but arguably somewhat oversimplify and overestimate individual ________.\n\nA. Decision, Market equilibrium, Rationality\nB. Attitudinal, Planned Behaviour, Social pressures\nC. Decision, Planned behaviour, Rationality\nD. Attitudinal, Market equilibrium, Social pressures\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "C"
+    },
+    {
+      "id": "mmlu-pooled-1",
+      "input": "The head of the sixth rib articulates with\n\nA. The inferior articular facet of T5 and superior articular facet of T6.\nB. The inferior articular demifacet of T5 and superior articular facet of T6.\nC. The inferior articular demifacet of T5 and the superior articular demifacet of T6.\nD. The superior and inferior demifacets of T6.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "C"
+    },
+    {
+      "id": "mmlu-pooled-2",
+      "input": "Laryngoscopic examination of the vocal folds after suspected recurrent laryngeal nerve damage usually shows that the vocal fold on the injured side is tensed and in an intermediate position between adduction and abduction. This is because\n\nA. cricothyroid muscle is still functional but the interarytenoid muscles are fully active.\nB. cricothyroid muscle is still functional but the interarytenoids are weak.\nC. cricothyroid muscle is paralyzed but the interarytenoids are fully active.\nD. cricothyroid muscle is paralyzed but the interarytenoids are weak.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "B"
+    },
+    {
+      "id": "mmlu-pooled-3",
+      "input": "Which muscle is the most active during a right lateral excursion of the mandible?\n\nA. Left lateral pterygoid muscle\nB. Right lateral pterygoid muscle\nC. Left medial pterygoid muscle\nD. Right medial pterygoid muscle\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "A"
+    },
+    {
+      "id": "mmlu-pooled-4",
+      "input": "______ regulation goes further than the ______ that CSOs have with businesses, as it also concerns _______of such processes.\n\nA. Legal, Interactions, Mechanics\nB. Civil, Relations, Outcomes\nC. Political, Interactions, Outcomes\nD. Environmental, Relations, Mechanics\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "B"
+    },
+    {
+      "id": "mmlu-pooled-5",
+      "input": "The lateral pterygoid muscle\n\nA. is attached to the coronoid process and elevates the mandible.\nB. is attached to the condylar process and elevates the mandible.\nC. is attached to the coronoid process and protrudes the mandible.\nD. is attached to the condylar process and protrudes the mandible.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "D"
+    },
+    {
+      "id": "mmlu-pooled-6",
+      "input": "Statement 1 | Every group of order 42 has a normal subgroup of order 7. Statement 2 | Every group of order 42 has a normal subgroup of order 8.\n\nA. True, True\nB. False, False\nC. True, False\nD. False, True\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "C"
+    },
+    {
+      "id": "mmlu-pooled-7",
+      "input": "Which of the following is true about Cushing's Syndrome?\n\nA. It is due to a deficiency of cortisol hormone\nB. Enlarged extremities are commonly seen\nC. Osteoporosis is not a feature\nD. A moon face and a buffalo hump are characteristic of the disease\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "D"
+    },
+    {
+      "id": "mmlu-pooled-8",
+      "input": "The so-called BRIC countries (Brazil, Russia, India and _______) tend to follow a __________ approach to corporate governance. However, recently this has tended to move towards more _______-based mechanisms.\n\nA. Canada, Market, Relationship\nB. China, Market, Relationship\nC. Canada, Relationship, Market\nD. China, Relationship, Market\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "D"
+    },
+    {
+      "id": "mmlu-pooled-9",
+      "input": "The set of integers Z with the binary operation \"*\" defined as a*b =a +b+ 1 for a, b in Z, is a group. The identity element of this group is\n\nA. 0\nB. 1\nC. -1\nD. 12\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "C"
+    },
+    {
+      "id": "mmlu-pooled-10",
+      "input": "The star Betelgeuse is one of the brightest stars in the night sky with remarkable red color. In which constellation is Betelgeuse located?\n\nA. Cassiopeia\nB. Cygnus\nC. Ursa Major\nD. Orion\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "D"
+    },
+    {
+      "id": "mmlu-pooled-11",
+      "input": "Which of the following releases most energy when completely oxidised in the body?\n\nA. One gram of glucose\nB. One gram of palmitic acid\nC. One gram of leucine\nD. One gram of alcohol\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "B"
+    },
+    {
+      "id": "mmlu-pooled-12",
+      "input": "Determine whether the polynomial in Z[x] satisfies an Eisenstein criterion for irreducibility over Q. 8x^3 + 6x^2 - 9x + 24\n\nA. Yes, with p=2.\nB. Yes, with p=3.\nC. Yes, with p=5.\nD. No.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "B"
+    },
+    {
+      "id": "mmlu-pooled-13",
+      "input": "Why do jovian planets bulge around the equator that is have a \"squashed\" appearance?\n\nA. Their large systems of moons and rings gravitationally attract the mass around the equator more.\nB. They are much more massive than the terrestrial planets.\nC. Their rapid rotation flings the mass near the equator outward.\nD. Their internal heat sources exert a pressure against the sides of the planets.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "C"
+    },
+    {
+      "id": "mmlu-pooled-14",
+      "input": "Which of the following is/are common feature(s) of all fresh (i.e. not eroded) impact craters formed on solid surfaces:\n\nA. ejecta\nB. raised rims\nC. central peaks\nD. A and B only\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "D"
+    },
+    {
+      "id": "mmlu-pooled-15",
+      "input": "Osteoclasts\n\nA. deposit bone and differentiate from periosteal mesenchymal cells.\nB. resorb bone and differentiate from periosteal mesenchymal cells.\nC. deposit bone and differentiate from monocytes.\nD. resorb bone and differentiate from monocytes.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "D"
+    },
+    {
+      "id": "mmlu-pooled-16",
+      "input": "______ is an employee's preferred ratio between work-related and non-work-related activities which, due to intensification of work and technological shifts, has become a hotly contested issue in recent years.\n\nA. Presenteeism\nB. Absenteeism\nC. Work-play balance\nD. Work-life balance\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "D"
+    },
+    {
+      "id": "mmlu-pooled-17",
+      "input": "A successful inferior alveolar nerve block will produce anaesthesia of the\n\nA. lower lip.\nB. lower lip and mandibular teeth.\nC. lower lip, mandibular teeth and labial gingivae of the anterior mandibular teeth.\nD. lower lip, mandibular teeth and labial gingivae of the anterior and buccal gingivae of the posterior mandibular teeth.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "C"
+    },
+    {
+      "id": "mmlu-pooled-18",
+      "input": "Performance enhancing synthetic steroids are based on the structure of the hormone:\n\nA. testosterone.\nB. cortisol.\nC. progesterone.\nD. aldosterone.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "A"
+    },
+    {
+      "id": "mmlu-pooled-19",
+      "input": "Let A and B be sets, f: A -> B and g: B -> A be functions such that for all a \\in A, g(f(a)) = a. Statement 1 | The function f must necessarily be injective. Statement 2 | The function f must necessarily be surjective.\n\nA. True, True\nB. False, False\nC. True, False\nD. False, True\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "C"
+    },
+    {
+      "id": "mmlu-pooled-20",
+      "input": "What is the correct numerical value and unit of the Boltzmann constant?\n\nA. 1.38 × 10−21 m^3 · kg · s^−2 · K^−1\nB. 1.38 × 10−22 m^2 · kg · s^−3 · K^−1\nC. 1.38 × 10−23 m^2 · kg · s^−2 · K^−1\nD. 1.38 × 10−24 m^2 · kg · s^−2 · K^−2\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "C"
+    },
+    {
+      "id": "mmlu-pooled-21",
+      "input": "The second cosmic velocity (or escape velocity) is the speed required by an object to escape the gravitational field of a celestial body with mass M and radius R. Which formula correctly calculates this velocity? (G: gravitational constant)\n\nA. v = sqrt(GM/R)\nB. v = 2sqrt(GM/R)\nC. v = sqrt(2GM/R)\nD. v = sqrt(GM/2R)\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "C"
+    },
+    {
+      "id": "mmlu-pooled-22",
+      "input": "Which of the following statements is true?\n\nA. Every equivalence relation is a partial-ordering relation.\nB. Number of relations form A = {x, y, z} to B= (1, 2), is 64.\nC. Empty relation _ is reflexive\nD. Properties of a relation being symmetric and being un-symmetric are negative of each other.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "B"
+    },
+    {
+      "id": "mmlu-pooled-23",
+      "input": "_______ is a system of exchange based on guaranteeing producers in developing countries a living wage, decent working conditions and opportunities for community development.\n\nA. Sustainable sourcing\nB. Fair trade\nC. Ethical sourcing\nD. Supply chain responsibility\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "B"
+    },
+    {
+      "id": "mmlu-pooled-24",
+      "input": "Compute the product in the given ring. (20)(-8) in Z_26\n\nA. 0\nB. 1\nC. 11\nD. 22\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "D"
+    },
+    {
+      "id": "mmlu-pooled-25",
+      "input": "Why can't a patient talk if the cuff is inflated?\n\nA. They are unable to breathe in sufficiently.\nB. They are unable to swallow properly.\nC. It is too tiring.\nD. They are unable to pass air through their vocal cords.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "D"
+    },
+    {
+      "id": "mmlu-pooled-26",
+      "input": "Which of the following is the large bone found superior to the patella and inferior to the ischium?\n\nA. Calcaneus\nB. Femur\nC. Symphysis pubis\nD. Tibia\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "B"
+    },
+    {
+      "id": "mmlu-pooled-27",
+      "input": "Which of the following is true of calcium metabolism?\n\nA. Calcitonin causes a rise in plasma calcium\nB. Primary hyperparathyroidism is usually asymptomatic\nC. Vitamin D is secreted by the parathyroid glands\nD. Oliguria is a symptom of hypercalcaemia\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "B"
+    },
+    {
+      "id": "mmlu-pooled-28",
+      "input": "Patients with the apolipoprotein E gene are at risk of which disease?\n\nA. Cystic fibrosis.\nB. Huntington's dementia.\nC. Alzheimer's disease.\nD. Depression.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "C"
+    },
+    {
+      "id": "mmlu-pooled-29",
+      "input": "Find the characteristic of the ring Z_3 x Z_3.\n\nA. 0\nB. 3\nC. 12\nD. 30\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "B"
+    },
+    {
+      "id": "mmlu-pooled-30",
+      "input": "The ATP store in muscle can only supply energy in high intensity exercise for about:\n\nA. 2 milliseconds.\nB. 2 seconds.\nC. 10 seconds.\nD. 20 seconds.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "B"
+    },
+    {
+      "id": "mmlu-pooled-31",
+      "input": "Statement 1 | Every free abelian group is torsion free. Statement 2 | Every finitely generated torsion-free abelian group is a free abelian group.\n\nA. True, True\nB. False, False\nC. True, False\nD. False, True\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "A"
+    },
+    {
+      "id": "mmlu-pooled-32",
+      "input": "Codons are composed of:\n\nA. triplet sequences of nucleotide bases in mRNA or DNA .\nB. quadruplet sequences of nucleotide bases in mRNA or DNA.\nC. triplet sequences of amino acids in polypeptide chains.\nD. triplet sequences of deoxyribose sugars in DNA.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "A"
+    },
+    {
+      "id": "mmlu-pooled-33",
+      "input": "The Pleiades is an open star cluster that plays a role in many ancient stories and is well-known for containing ... bright stars.\n\nA. 5\nB. 7\nC. 9\nD. 12\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "B"
+    },
+    {
+      "id": "mmlu-pooled-34",
+      "input": "Statement 1 | If G, H and K are groups of order 4, at least two of them are isomorphic. Statement 2 | If Z_r + Z_s is isomorphic to a subgroup Z_m + Z_n, then r divides m and s divides n.\n\nA. True, True\nB. False, False\nC. True, False\nD. False, True\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "C"
+    },
+    {
+      "id": "mmlu-pooled-35",
+      "input": "If you run your finger down the anterior midline of a patient's extended neck from chin to sternal notch, you should be able to palpate, in order, the\n\nA. hyoid bone, cricoid cartilage, thyroid cartilage.\nB. thyroid cartilage, cricoid cartilage, hyoid bone.\nC. hyoid bone, thyroid cartilage, cricoid cartilage.\nD. thyroid cartilage, hyoid bone, cricoids cartilage.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "C"
+    },
+    {
+      "id": "mmlu-pooled-36",
+      "input": "Wound drainage is described as serous if:\n\nA. it contains red blood cells.\nB. it is thick and yellow or green.\nC. it contains microorganisms.\nD. it is clear or slightly yellow.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "D"
+    },
+    {
+      "id": "mmlu-pooled-37",
+      "input": "Which of the following statements is false?\n\nA. Ammonia is produced in repeated high intensity exercise.\nB. Muscle lactate accumulation does not begin until at least 5 seconds of intermittent muscle contractions have taken place.\nC. Muscle phosphocreatine depletion begins in the first few seconds of high intensity exercise.\nD. With an increasing number of repeated sprints the rate of accumulation of lactate in muscle declines.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "B"
+    },
+    {
+      "id": "mmlu-pooled-38",
+      "input": "Which of these has NOT been one of the main hypotheses considered for the origin of the Moon?\n\nA. The Moon split from the Earth due to tidal forces.\nB. The Moon was captured into Earth orbit.\nC. The Earth and Moon co-accreted in the solar nebula.\nD. Earth was rotating so rapidly that the Moon split from it.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "A"
+    },
+    {
+      "id": "mmlu-pooled-39",
+      "input": "The key attribute in successful marathon running is:\n\nA. strength.\nB. power.\nC. stride length.\nD. stamina.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "D"
+    },
+    {
+      "id": "mmlu-pooled-40",
+      "input": "What does the astronomical term ecliptic describe?\n\nA. The path of the Sun in the sky throughout a year.\nB. The axial tilt of the Earth throughout a year.\nC. The movement of the stars due to Earth’s rotation.\nD. The central line through the axis of rotation.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "A"
+    },
+    {
+      "id": "mmlu-pooled-41",
+      "input": "Cultural homogenization.\n\nA. 1,3,4\nB. 1,2,3\nC. 1,2,3,4\nD. 2,3,4\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "B"
+    },
+    {
+      "id": "mmlu-pooled-42",
+      "input": "A Mars year is approximately how many Earth years long?\n\nA. 1/2\nB. 1\nC. 2\nD. 4\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "C"
+    },
+    {
+      "id": "mmlu-pooled-43",
+      "input": "Saliva contains an enzyme that acts upon which of the following nutrients?\n\nA. Starches\nB. Proteins\nC. Fats\nD. Minerals\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "A"
+    },
+    {
+      "id": "mmlu-pooled-44",
+      "input": "Life on Earth originated from\n\nA. We don't know for sure.\nB. aliens (panspermia).\nC. comets.\nD. the Earth's oceans.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "A"
+    },
+    {
+      "id": "mmlu-pooled-45",
+      "input": "The sky is blue because\n\nA. the Sun mainly emits blue light.\nB. the atmosphere absorbs mostly blue light.\nC. molecules scatter red light more effectively than blue light.\nD. molecules scatter blue light more effectively than red light.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "D"
+    },
+    {
+      "id": "mmlu-pooled-46",
+      "input": "Why did the solar nebula heat up as it collapsed?\n\nA. Collisions among planetesimals generated friction and heat.\nB. Radiation from other nearby stars that had formed earlier heated the nebula.\nC. The shock wave from a nearby supernova heated the gas.\nD. As the cloud shrank its gravitational potential energy was converted to kinetic energy and then into thermal energy.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "D"
+    },
+    {
+      "id": "mmlu-pooled-47",
+      "input": "How does the greenhouse effect work?\n\nA. Ozone transmits visible light allowing it to heat the surface but then absorbs most of the infrared heat trapping the heat near the surface.\nB. Greenhouse gases transmit visible light allowing it to heat the surface but then absorb infrared light from Earth trapping the heat near the surface.\nC. Greenhouse gases absorb infrared light from the Sun which then heats the atmosphere and the surface.\nD. Greenhouse gases absorb X-rays and ultraviolet light from the Sun which then heat the atmosphere and the surface.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "B"
+    },
+    {
+      "id": "mmlu-pooled-48",
+      "input": "What is the so-called bolometric luminosity in astronomy?\n\nA. The luminosity integrated over vertically polarized wavelengths.\nB. The luminosity integrated over horizontally wavelengths.\nC. The luminosity integrated over visible wavelengths.\nD. The luminosity integrated over all wavelengths.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "D"
+    },
+    {
+      "id": "mmlu-pooled-49",
+      "input": "_________ such as the ________ in the United States is a key factor in driving ethical business practices.\n\nA. Legislation, Sarbanes-Oxley Act\nB. Internal company policy, Unethical corporate practices act\nC. Internal company policy, Sarbanes-Oxley Act\nD. Legislation, Unethical corporate practices act\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "A"
+    },
+    {
+      "id": "mmlu-pooled-50",
+      "input": "Which planet(s) in the solar system has/have active plate tectonics?\n\nA. Mars\nB. Venus\nC. Earth\nD. Mars and Earth\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "C"
+    },
+    {
+      "id": "mmlu-pooled-51",
+      "input": "The lunar maria are:\n\nA. ancient heavily cratered highlands\nB. dark lavas inside volcanic calderas\nC. dark lavas filling older impact basins\nD. the bright regions on the Moon\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "C"
+    },
+    {
+      "id": "mmlu-pooled-52",
+      "input": "A patient is admitted after a head injury and sinks rapidly into a coma. An MRI scan indicates an extradural haemorrhage because extravasated blood can be detected between the\n\nA. skull bones and dura mater.\nB. dura mater and arachnoid.\nC. arachnoid and pia mater.\nD. pia mater and brain surface.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "A"
+    },
+    {
+      "id": "mmlu-pooled-53",
+      "input": "Where is the sinoatrial node located?\n\nA. Between the left atrium and the left ventricle\nB. Between the right atrium and the right ventricle\nC. In the upper wall of the right atrium\nD. In the upper wall of the left ventricle\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "C"
+    },
+    {
+      "id": "mmlu-pooled-54",
+      "input": "A lesion causing compression of the facial nerve at the stylomastoid foramen will cause ipsilateral\n\nA. paralysis of the facial muscles.\nB. paralysis of the facial muscles and loss of taste.\nC. paralysis of the facial muscles, loss of taste and lacrimation.\nD. paralysis of the facial muscles, loss of taste, lacrimation and decreased salivation.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "A"
+    },
+    {
+      "id": "mmlu-pooled-55",
+      "input": "Find the generator for the finite field Z_7.\n\nA. 1\nB. 2\nC. 3\nD. 4\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "C"
+    },
+    {
+      "id": "mmlu-pooled-56",
+      "input": "Healthy eating, particularly relating to sugar and salt consumption, food and packaging waste and supply chain CO2 emissions are all business ethics issues facing the ________.\n\nA. Supermarket industry\nB. Chemicals industry\nC. Construction industry\nD. Information and mobile technology industry\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "A"
+    },
+    {
+      "id": "mmlu-pooled-57",
+      "input": "Why are the inner planets made of denser materials than the outer planets?\n\nA. In the beginning when the protoplanetary disk was spinning faster centrifugal forces flung the lighter materials toward the outer parts of the solar nebula.\nB. In the inner part of the nebula only metals and rocks were able to condense because of the high temperatures whereas hydrogen compounds although more abundant were only able to condense in the cooler outer regions.\nC. Denser materials were heavier and sank to the center of the nebula.\nD. When the solar nebula formed a disk materials naturally segregated into bands and in our particular solar system the denser materials settled nearer the Sun while lighter materials are found in the outer part.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "B"
+    },
+    {
+      "id": "mmlu-pooled-58",
+      "input": "Cerebrospinal fluid circulates around the brain between the\n\nA. skull and dura mater.\nB. dura mater and arachnoid mater.\nC. arachnoid and pia maters.\nD. pia mater and brain surface.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "C"
+    },
+    {
+      "id": "mmlu-pooled-59",
+      "input": "________ is any business effort to influence government or public policy. It includes activities such as __________, political advertising, financial contributions, ________ action and political ________.\n\nA. Private regulation, Lobbying, Environmental, Fundraising\nB. Private regulation, Consumer Marketing, Legal, Fundraising\nC. Corporate political activity, Lobbying, Legal, Campaigning\nD. Corporate political activity, Consumer marketing, Environmental, Campaigning\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "C"
+    },
+    {
+      "id": "mmlu-pooled-60",
+      "input": "How many different types of microorganisms may colonize the mouth?\n\nA. 35\nB. 100\nC. 350\nD. 500\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "C"
+    },
+    {
+      "id": "mmlu-pooled-61",
+      "input": "Which of the following options completes the following statement? \"The right atrioventricular valve…\"\n\nA. is a semilunar valve\nB. is prevented from everting by papillary muscles.\nC. is open during systole.\nD. prevents blood returning from the pulmonary trunk as the heart relaxes.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "B"
+    },
+    {
+      "id": "mmlu-pooled-62",
+      "input": "What element is most common among the Jovian Planets?\n\nA. Hydrogen\nB. Helium\nC. Carbon\nD. Oxygen\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "A"
+    },
+    {
+      "id": "mmlu-pooled-63",
+      "input": "Which of the following is not one of nor follows directly from Kepler's laws?\n\nA. As a planet moves around its orbit it sweeps out equal areas in equal times.\nB. The orbit of each planet about the Sun is an ellipse with the Sun at one focus.\nC. The force of attraction between any two objects decreases with the square of the distance between their centers.\nD. A planet travels faster when it is nearer to the Sun and slower when it is farther from the Sun.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "C"
+    },
+    {
+      "id": "mmlu-pooled-64",
+      "input": "Dopamine is prescribed at a rate of 4 micrograms/kg/min. For a 65 kg person, how many milligrams will they receive in an hour?\n\nA. 156\nB. 15.6\nC. 1.56\nD. 15600\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "B"
+    },
+    {
+      "id": "mmlu-pooled-65",
+      "input": "Managers are entrusted to run the company in the best interest of ________. Specifically, they have a duty to act for the benefit of the company, as well as a duty of ________ and of _______.\n\nA. Shareholders, Care and Skill, Diligence\nB. Stakeholder, Care and Skill, Diligence\nC. Shareholders, Self-interest, Diligence\nD. Stakeholders, Care and skill, Self-interest\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "A"
+    },
+    {
+      "id": "mmlu-pooled-66",
+      "input": "Statement 1 | A factor group of a non-Abelian group is non-Abelian. Statement 2 | If K is a normal subgroup of H and H is a normal subgroup of G, then K is a normal subgroup of G.\n\nA. True, True\nB. False, False\nC. True, False\nD. False, True\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "B"
+    },
+    {
+      "id": "mmlu-pooled-67",
+      "input": "Which of the following is NOT a symptom of anaphylaxis?\n\nA. Stridor.\nB. Bradycardia.\nC. Severe wheeze.\nD. Rash.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "B"
+    },
+    {
+      "id": "mmlu-pooled-68",
+      "input": "The chain of survival has four links. Put the following list in the correct order: 1. Early defibrillation; 2. Early CPR; 3. Recognition and call for help early; 4. Post-resuscitation care.\n\nA. 3, 1, 2, 4.\nB. 3, 2, 1, 4.\nC. 1, 2, 3, 4.\nD. 2, 1, 3, 4.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "B"
+    },
+    {
+      "id": "mmlu-pooled-69",
+      "input": "Statement 1 | If H is a subgroup of G and a belongs to G then |aH| = |Ha|. Statement 2 | If H is a subgroup of G and a and b belong to G, then aH and Hb are identical or disjoint.\n\nA. True, True\nB. False, False\nC. True, False\nD. False, True\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "C"
+    },
+    {
+      "id": "mmlu-pooled-70",
+      "input": "Mars might be a place for future human explorations. However humans can not breathe on the surface of Mars because the atmosphere consists mostly of ...\n\nA. Nitrogen\nB. Argon\nC. Methane\nD. CO2\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "D"
+    },
+    {
+      "id": "mmlu-pooled-71",
+      "input": "Why are there no impact craters on the surface of Io?\n\nA. Io did have impact craters but they have all been buried in lava flows.\nB. It is too small to have been hit during the Late Heavy Bombardment\nC. Jupiter's strong gravity attracted the planetesimals more strongly than Io and thus none landed on its surface.\nD. Any craters that existed have been eroded through the strong winds on Io's surface.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "A"
+    },
+    {
+      "id": "mmlu-pooled-72",
+      "input": "A subset H of a group (G,*) is a group if\n\nA. a,b in H=> a * b in H\nB. a in H => a^-1 in H\nC. a,b in H=> a * b^-1 in H\nD. H contains the identity element\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "C"
+    },
+    {
+      "id": "mmlu-pooled-73",
+      "input": "Imagine that the Earth was instantly moved to an orbit three times further away from the Sun. How much longer would a year be?\n\nA. exactly 3 times longer\nB. about 5.2 times longer\nC. Not enough information. It will depend on the inclination of the new orbit\nD. The length of the year wouldn't change because the Earth's mass stays the same.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "B"
+    },
+    {
+      "id": "mmlu-pooled-74",
+      "input": "How do scientists know that the majority of meteorites come from the asteroid belt?\n\nA. The spectra of some meteorites are similar to the spectra of asteroids in the asteroid belt.\nB. The asteroid belt is the only possible source of meteorites therefore they must originate there.\nC. Collisions are common in the asteroid belt and we can track the fragments from their source asteroid to the Earth where they become meteorites.\nD. High levels of Iridum have been detected in both asteroids and meteorites therefore meteorites come from the asteroid belt.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "A"
+    },
+    {
+      "id": "mmlu-pooled-75",
+      "input": "If the foot is abducted, it is moved in which direction?\n\nA. Inward\nB. Outward\nC. Upward\nD. Downward\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "D"
+    },
+    {
+      "id": "mmlu-pooled-76",
+      "input": "The smallest increments on a mercury and aneroid sphygmomanometer measure are:\n\nA. 10 mmHg.\nB. 4 mmHg.\nC. 2 mmHg.\nD. 1 mmHg.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "C"
+    },
+    {
+      "id": "mmlu-pooled-77",
+      "input": "All of the following have been cited as evidence for the Giant Impact Hypothesis except:\n\nA. The relative size of the Moon to the size of Earth is large compared to most planets and their moon.\nB. Most rocks on the Moon’s surface are older than those on the Earth’s surface.\nC. The Moon has a much smaller iron core than the Earth even considering its size.\nD. The Moon was once entirely molten.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "B"
+    },
+    {
+      "id": "mmlu-pooled-78",
+      "input": "Statement 1 | There exists a free abelian group of every positive integer rank. Statement 2 | A finitely generated abelian group is free abelian if its Betti number equals the number of elements in some generating set.\n\nA. True, True\nB. False, False\nC. True, False\nD. False, True\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "A"
+    },
+    {
+      "id": "mmlu-pooled-79",
+      "input": "On which surfaces of the teeth is dental plaque most likely to accumulate in the mouth of a patient with poor oral hygiene?\n\nA. The palatal surfaces of the upper molars and lingual surfaces of the lower incisors.\nB. The buccal surfaces of the upper molars and lingual surfaces of the lower incisors.\nC. The palatal surfaces of the upper molars and labial surfaces of the lower incisors.\nD. The buccal surfaces of the upper molars and labial surfaces of the lower incisors.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "B"
+    },
+    {
+      "id": "mmlu-pooled-80",
+      "input": "Gastrulation is the process of\n\nA. mesoderm formation and occurs after neurulation.\nB. ectomesenchyme formation and occurs before neurulation.\nC. mesoderm formation and occurs before neurulation.\nD. ectomesenchyme formation and occurs after neurulation.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "B"
+    },
+    {
+      "id": "mmlu-pooled-81",
+      "input": "What effect or effects would be most significant if the Moon's orbital plane were exactly the same as the ecliptic plane?\n\nA. Solar eclipses would be much rarer.\nB. Solar eclipses would last much longer.\nC. Solar eclipses would be much more frequent.\nD. Solar eclipses would not last as long.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "C"
+    },
+    {
+      "id": "mmlu-pooled-82",
+      "input": "Food is prevented from entering the larynx during the pharyngeal phase of swallowing by\n\nA. constriction of the laryngeal entrance.\nB. upward movement of the epiglottis.\nC. downward movement of the larynx.\nD. increase in respiratory rate.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "A"
+    },
+    {
+      "id": "mmlu-pooled-83",
+      "input": "Which of the following areas is not covered by the principles enshrined in the UN Global Compact?\n\nA. Human rights\nB. Labour\nC. Commercial performance\nD. Anti-corruption\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "C"
+    },
+    {
+      "id": "mmlu-pooled-84",
+      "input": "What is the enlightened self-interest model of CSR?\n\nA. That it is in an organization's own best interest to put itself first rather than its ethics\nB. That it is in an organization's best interest to consider what a shareholder would want\nC. That it is in an organization's own best interest to act in an ethical way\nD. That it is in an organization's own best interest to follow the legislation and abide by the law\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "C"
+    },
+    {
+      "id": "mmlu-pooled-85",
+      "input": "What type of radiation causes a black hole to evaporate over time?\n\nA. Schwarzschild radiation\nB. Planck radiation\nC. Kolmogorov radiation\nD. Hawking radiation\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "D"
+    },
+    {
+      "id": "mmlu-pooled-86",
+      "input": "Which of the following organs removes bilirubin from the blood, manufactures plasma proteins, and is involved with the production of prothrombin and fibrinogen?\n\nA. Gallbladder\nB. Kidney\nC. Liver\nD. Spleen\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "C"
+    },
+    {
+      "id": "mmlu-pooled-87",
+      "input": "By locating the north celestial pole (NCP) in the sky how can you determine your latitude?\n\nA. The azimuth of the NCP is the angular distance from the North Pole.\nB. The azimuth of the NCP is the same as your latitude.\nC. The altitude of the NCP is the same as your latitude.\nD. The altitude of the NCP is your angular distance from the North Pole.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "C"
+    },
+    {
+      "id": "mmlu-pooled-88",
+      "input": "Kirkwood gaps are observed in the main asteroid belt including at the position(s) where:\n\nA. asteroids would orbit with a period half that of Jupiter\nB. asteroids would orbit with a period twice that of Jupiter\nC. asteroids would orbit with a period twice that of Mars\nD. A and B\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "A"
+    },
+    {
+      "id": "mmlu-pooled-89",
+      "input": "Which of the following is not one the underlying principles of the corporate governance Combined Code of Practice?\n\nA. Openness\nB. Integrity\nC. Availability\nD. Acceptability\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "D"
+    },
+    {
+      "id": "mmlu-pooled-90",
+      "input": "Which of the following conditions is characterized by the presence of kidney stones (renal calculi)?\n\nA. Glomerulonephritis\nB. Interstitial nephritis\nC. Nephrolithiasis\nD. Polycystic kidney\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "C"
+    },
+    {
+      "id": "mmlu-pooled-91",
+      "input": "Which of the following is/are true?\n\nA. Titan is the only outer solar system moon with a thick atmosphere\nB. Titan is the only outer solar system moon with evidence for recent geologic activity\nC. Titan's atmosphere is composed mostly of hydrocarbons\nD. A and D\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "D"
+    },
+    {
+      "id": "mmlu-pooled-92",
+      "input": "Which statement about an atom is not true:\n\nA. The nucleus contains most of the atom’s mass but almost none of its volume.\nB. A neutral atom always has equal numbers of electrons and protons.\nC. A neutral atom always has equal numbers of neutrons and protons.\nD. The electrons can only orbit at particular energy levels.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "C"
+    },
+    {
+      "id": "mmlu-pooled-93",
+      "input": "Sustainability can broadly be defined as\n\nA. The short-term maintenance of systems according to environmental, economic and social considerations\nB. The long-term maintenance of processes according to environmental, economic and cultural considerations.\nC. The short-term maintenance of systems according to environmental, political and social considerations.\nD. The long-term maintenance of systems according to environmental, economic and social considerations.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "D"
+    },
+    {
+      "id": "mmlu-pooled-94",
+      "input": "The rise in business led, private regulation can be attributed to: encouragement of a _______ approach from industry, _________ and _______ achievement of objectives.\n\nA. Faster, Cost effectiveness, Slower\nB. Faster, Heightened costs, Slower\nC. Proactive, Cost effectiveness, Faster\nD. Proactive, Heightened costs, Faster\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "C"
+    },
+    {
+      "id": "mmlu-pooled-95",
+      "input": "Statement 1 | A homomorphism may have an empty kernel. Statement 2 | It is not possible to have a nontrivial homomorphism of some finite group into some infinite group.\n\nA. True, True\nB. False, False\nC. True, False\nD. False, True\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "B"
+    },
+    {
+      "id": "mmlu-pooled-96",
+      "input": "A keloid is:\n\nA. evidence of infection.\nB. a firm mass of scar tissue.\nC. a fine, hairline scar.\nD. formed if a wound drain is removed too soon.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "B"
+    },
+    {
+      "id": "mmlu-pooled-97",
+      "input": "Which one of these constellations is not located along the Milky Way in the sky?\n\nA. Perseus\nB. Cygnus\nC. Scorpius\nD. Leo\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "D"
+    },
+    {
+      "id": "mmlu-pooled-98",
+      "input": "The state of being unable to make an informed, reasoned decision about a product purchase is known as?\n\nA. Consumer inclusion\nB. Consumer competence\nC. Consumer exclusion\nD. Consumer vulnerability\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "D"
+    },
+    {
+      "id": "mmlu-pooled-99",
+      "input": "In relation to the rib, the corresponding intercostal nerve lies\n\nA. deep to its superior border.\nB. superficial to its superior border.\nC. deep to its inferior border.\nD. superficial to its inferior border.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "C"
+    },
+    {
+      "id": "mmlu-pooled-100",
+      "input": "Removal of adhesive strips:\n\nA. can be carried out by the patient.\nB. should be undertaken under aseptic conditions.\nC. is a specialist skill.\nD. should not be undertaken until at least seven days after application.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "A"
+    },
+    {
+      "id": "mmlu-pooled-101",
+      "input": "What defines the habitable zone around a star?\n\nA. the region around a star where liquid water can potentially exist on planetary surfaces\nB. the region around a star where humans can survive\nC. the region around a star where the ultraviolet radiation does not destroy organisms on a planetary surface\nD. the region around a star where life exists\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "A"
+    },
+    {
+      "id": "mmlu-pooled-102",
+      "input": "During CPR chest compressions and ventilations should be delivered in a ratio of:\n\nA. 2:25\nB. 15:02\nC. 1:05\nD. 30:02:00\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "D"
+    },
+    {
+      "id": "mmlu-pooled-103",
+      "input": "Which of the following is true of headache?\n\nA. When associated with neck stiffness is always due to meningitis\nB. Severe pain usually indicates a life threatening cause\nC. Temporal arteritis is strongly associated with rheumatoid arthritis\nD. Tension headaches is a common cause of headache\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "D"
+    },
+    {
+      "id": "mmlu-pooled-104",
+      "input": "Which of the following is an accessory organ of the gastrointestinal system that is responsible for secreting insulin?\n\nA. Adrenal gland\nB. Gallbladder\nC. Liver\nD. Pancreas\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "D"
+    },
+    {
+      "id": "mmlu-pooled-105",
+      "input": "The auscultatory gap is:\n\nA. when you can no longer hear the Korotkoff sounds because the bladder is equal with the diastolic pressure.\nB. when the Korotkoff sounds can be heard between systolic and diastolic phases.\nC. when the Korotkoff sounds disappear then return during phase 2 as the bladder is deflated.\nD. When the Korotkoff sounds do not disappear when the cuff is fully deflated.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "C"
+    },
+    {
+      "id": "mmlu-pooled-106",
+      "input": "In what situation are closed pouches applied?\n\nA. The patient has a semi-formed or liquid output.\nB. The patient has a colostomy.\nC. In the immediate post-operative period.\nD. The patient has a urostomy.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "B"
+    },
+    {
+      "id": "mmlu-pooled-107",
+      "input": "______ is the corporate role in governing citizenship rights for the individual\n\nA. Political Corporate Social Responsibility\nB. Triple Bottom Line\nC. Sustainability\nD. Corporate Citizenship\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "D"
+    },
+    {
+      "id": "mmlu-pooled-108",
+      "input": "Statement 1 | If a R is an integral domain, then R[x] is an integral domain. Statement 2 | If R is a ring and f(x) and g(x) are in R[x], then deg (f(x)g(x)) = deg f(x) + deg g(x).\n\nA. True, True\nB. False, False\nC. True, False\nD. False, True\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "C"
+    },
+    {
+      "id": "mmlu-pooled-109",
+      "input": "Predatory pricing.\n\nA. 1,2,4\nB. 1,2,3,4\nC. 1,2\nD. 1,4\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "D"
+    },
+    {
+      "id": "mmlu-pooled-110",
+      "input": "Businesses engage in social accounting due to demands from _________, in order to identify ________, to improve ___________ and to encourage _________ and ___________\n\nA. Stakeholders, Risks, Stakeholder management, Accountability, Transparency\nB. Stakeholders, Accountability, Transparency, Risks, Stakeholder Management\nC. Stakeholders, Accountability, Risks, Stakeholders, Stakeholder Management\nD. Stakeholders, Stakeholder Management, Transparency, Risks, Accountability\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "A"
+    },
+    {
+      "id": "mmlu-pooled-111",
+      "input": "What does Milton Friedman believe to be the sole responsibility of business?\n\nA. The only social responsibility of business is to its shareholders\nB. Managers should act in ways that balance the interest of society and shareholders\nC. The primary responsibility organizations have is to its employees\nD. The primary responsibility organizations have is to its stakeholders\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "A"
+    },
+    {
+      "id": "mmlu-pooled-112",
+      "input": "In games like soccer the blood lactate concentration:\n\nA. rarely increases above 3 mM.\nB. is usually lower at the end of the game than at the end of the first half.\nC. is usually higher at the end of the game than at the end of the first half.\nD. increases throughout the course of the game as the players become more fatigued.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "B"
+    },
+    {
+      "id": "mmlu-pooled-113",
+      "input": "Which of the following is true in ulna nerve palsy?\n\nA. The ulna nerve can be affected by a fracture of the spiral groove of the humerus\nB. It gives rise to a positive phalen's sign\nC. It leads to loss of sensation over the medial half of the hand and medial one and a half digits on both palmar and dorsal aspects of the hand\nD. It supplies the biceps muscles\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "C"
+    },
+    {
+      "id": "mmlu-pooled-114",
+      "input": "Which statement concerning the atrioventricular bundle is correct?\n\nA. It is formed of autonomic nerve processes and is the only electrical connection between the atria and the ventricles.\nB. It is formed of Purkinje fibres and is the only electrical connection between the atria and the ventricles\nC. It is formed of autonomic nerve processes and forms one of several electrical connections between the atria and ventricles.\nD. It is formed of Purkinje fibres and forms one of several electrical connections between the atria and ventricles.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "B"
+    },
+    {
+      "id": "mmlu-pooled-115",
+      "input": "Find the best approximation for the surface temperature of the Sun:\n\nA. 6000 K\nB. 7000 K\nC. 9000 K\nD. 13000 K\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "A"
+    },
+    {
+      "id": "mmlu-pooled-116",
+      "input": "How did Eratosthenes estimate the size of Earth in 240 B.C.?\n\nA. By observing the duration of a solar eclipse.\nB. By measuring the size of Earth's shadow on the Moon in a lunar eclipse.\nC. By comparing the maximum altitude of the Sun in two cities at different latitudes at the same time on the same day.\nD. By sending fleets of ships around Earth.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "C"
+    },
+    {
+      "id": "mmlu-pooled-117",
+      "input": "Muscle lactate production increases when:\n\nA. oxygen is readily available.\nB. pyruvate cannot be formed from glucose breakdown.\nC. the pH of the muscle falls.\nD. glycolysis is activated at the onset of exercise.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "D"
+    },
+    {
+      "id": "mmlu-pooled-118",
+      "input": "Fertilization of an ovum by a spermatozoon occurs in which of the following structures?\n\nA. Cervix\nB. Fallopian tube\nC. Ovary\nD. Uterus\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "B"
+    },
+    {
+      "id": "mmlu-pooled-119",
+      "input": "The Anglo-American model being considered the best model in light of the recession in the late 2000s.\n\nA. 1,2,3\nB. 1,3,4\nC. 2,3,4\nD. 1,2,3,4\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "A"
+    },
+    {
+      "id": "mmlu-pooled-120",
+      "input": "Statement 1 | If a group has an element of order 10, then it has elements of orders 1, 2, and 5. Statement 2 | If a group has an element of order 2 and an element of order 3, then it has an element of order 6.\n\nA. True, True\nB. False, False\nC. True, False\nD. False, True\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "C"
+    },
+    {
+      "id": "mmlu-pooled-121",
+      "input": "Find the degree for the given field extension Q(sqrt(2), sqrt(3), sqrt(18)) over Q.\n\nA. 0\nB. 4\nC. 2\nD. 6\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "B"
+    },
+    {
+      "id": "mmlu-pooled-122",
+      "input": "For T: Z x Z -> Z where T(1, 0) = 3 and T(0, 1) = -5, find T(-3,2).\n\nA. -19\nB. -10\nC. 19\nD. 10\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "A"
+    },
+    {
+      "id": "mmlu-pooled-123",
+      "input": "If a patient is cyanosed, what might their oxygen saturation level be?\n\nA. 98% or above.\nB. 94% or above.\nC. 80% or below.\nD. 85% or above.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "C"
+    },
+    {
+      "id": "mmlu-pooled-124",
+      "input": "The bones of the viscerocranium develop initially by\n\nA. endochondral ossification and follow the somatic growth pattern.\nB. endochondral ossification and follow the neural growth pattern.\nC. intramembranous ossification and follow the somatic growth pattern.\nD. intramembranous ossification and follow the neural growth pattern.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "C"
+    },
+    {
+      "id": "mmlu-pooled-125",
+      "input": "The four big moons of Jupiter are Callisto Europa Ganymede and Io. Which one of them has the smallest distance to Jupiter?\n\nA. Callisto\nB. Europa\nC. Ganymede\nD. Io\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "D"
+    },
+    {
+      "id": "mmlu-pooled-126",
+      "input": "During swallowing the\n\nA. auditory tube opens.\nB. cricopharyngeus muscle contracts.\nC. rima glottis opens.\nD. gag reflex is suspended.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "A"
+    },
+    {
+      "id": "mmlu-pooled-127",
+      "input": "Some of Mars'water is frozen in the soil and the ice caps and some was lost due to solar wind stripping but much of the original water is thought to have been lost through another mechanism. What happened to this \"lost\"water?\n\nA. it was stripped away by the magnetic field when it rapidly decreased in strength\nB. it was broken into hydrogen and oxygen by ultraviolet light and the hydrogen was lost through thermal escape\nC. it was consumed by a civilization of thirsty Martians\nD. it was vaporized during a period of intense volcanism and was lost to space through thermal escape\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "B"
+    },
+    {
+      "id": "mmlu-pooled-128",
+      "input": "Statement 1 | Every quotient ring of every commutative ring is again a commutative ring. Statement 2 | An ideal N in a ring R with unity 1 is all of R if and only if 1 in N.\n\nA. True, True\nB. False, False\nC. True, False\nD. False, True\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "C"
+    },
+    {
+      "id": "mmlu-pooled-129",
+      "input": "The relationship between ethics and the law can be described as…\n\nA. Incredibly close, in fact, in all instances what is ethical is also what is legal and vice versa.\nB. Not close, ethics and the law share a small amount of overlap, but fundamentally address differing questions and themes.\nC. Close, as there is considerable overlap between ethics and law, but the two are not equivalent.\nD. Not at all close, ethics and the law are virtually incompatible.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "C"
+    },
+    {
+      "id": "mmlu-pooled-130",
+      "input": "Macrostomia results from failure of fusion of\n\nA. maxillary and mandibular processes.\nB. left and right mandibular processes.\nC. maxillary and frontonasal processes.\nD. mandibular and hyoid arches.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "A"
+    },
+    {
+      "id": "mmlu-pooled-131",
+      "input": "Negative advertising, stealing or poaching customers and predatory pricing are all strategies employed by businesses described using the umbrella term ________.\n\nA. Reasonable competitive behaviour\nB. Swindles\nC. Competitive tricks\nD. Dirty tricks\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "D"
+    },
+    {
+      "id": "mmlu-pooled-132",
+      "input": "Replacing supply chains with _______ enhances the importance of product _______as well as a fundamental redesign of every activity a firm engages in that produces _______.\n\nA. Supply loops, Recapture, Waste\nB. Supply loops, Redesign, Profit\nC. Global production networks, Recapture, Waste\nD. Global production networks, Redesign, Profit\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "A"
+    },
+    {
+      "id": "mmlu-pooled-133",
+      "input": "Fatty acids are transported into the mitochondria bound to:\n\nA. thiokinase.\nB. coenzyme A (CoA).\nC. acetyl-CoA.\nD. carnitine.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "D"
+    },
+    {
+      "id": "mmlu-pooled-134",
+      "input": "Calcium, potassium, and sodium are classified as which of the following?\n\nA. Androgens\nB. Catecholamines\nC. Electrolytes\nD. Estrogens\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "C"
+    },
+    {
+      "id": "mmlu-pooled-135",
+      "input": "The regional lymphatic drainage of the left side of the tip of the tongue is to the\n\nA. left submental lymph node.\nB. left and right submental lymph nodes.\nC. left submandibular lymph node.\nD. left and right submandibular lymph nodes.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "B"
+    },
+    {
+      "id": "mmlu-pooled-136",
+      "input": "Lactate and hydrogen ions leave the muscle:\n\nA. via a cotransport mechanism with carnosine.\nB. via an active transport mechanism.\nC. via a protein transporter molecule.\nD. by simple diffusion.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "C"
+    },
+    {
+      "id": "mmlu-pooled-137",
+      "input": "Find all cosets of the subgroup 4Z of 2Z.\n\nA. 4Z\nB. 4Z, 2 + 4Z\nC. 2Z\nD. Z\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "B"
+    },
+    {
+      "id": "mmlu-pooled-138",
+      "input": "A normal heart rate for an adult at rest is:\n\nA. 60-80 bpm.\nB. 60-100 bpm.\nC. 60-90 bpm.\nD. 60-110 bpm.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "B"
+    },
+    {
+      "id": "mmlu-pooled-139",
+      "input": "(Z,*) is a group with a*b = a+b+1 for all a, b in Z. The inverse of a is\n\nA. 0\nB. -2\nC. a-2\nD. (2+a)*-1\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "D"
+    },
+    {
+      "id": "mmlu-pooled-140",
+      "input": "Creatine is synthesized from:\n\nA. amino acids in the muscles.\nB. amino acids in the liver.\nC. amino acids in the kidneys.\nD. creatinine in the kidneys.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "B"
+    },
+    {
+      "id": "mmlu-pooled-141",
+      "input": "The dorsal roots of all spinal nerves contain\n\nA. sensory neuronal processes.\nB. sensory and autonomic neuronal processes.\nC. motor neuronal processes.\nD. motor and autonomic neuronal processes.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "A"
+    },
+    {
+      "id": "mmlu-pooled-142",
+      "input": "Why do we see essentially the same face of the Moon at all times?\n\nA. because the Moon has a nearly circular orbit around the Earth\nB. because the Moon does not rotate\nC. because the other face points toward us only at new moon when we can't see the Moon\nD. because the Moon's rotational and orbital periods are equal\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "D"
+    },
+    {
+      "id": "mmlu-pooled-143",
+      "input": "Suppose the angular separation of two stars is smaller than the angular resolution of your eyes. How will the stars appear to your eyes?\n\nA. You will not be able to see these two stars at all.\nB. You will see two distinct stars.\nC. The two stars will look like a single point of light.\nD. The two stars will appear to be touching looking rather like a small dumbbell.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "C"
+    },
+    {
+      "id": "mmlu-pooled-144",
+      "input": "Statement 1 | If a group has an element of order 15 it must have at least 8 elements of order 15. Statement 2 | If a group has more than 8 elements of order 15, it must have at least 16 elements of order 15.\n\nA. True, True\nB. False, False\nC. True, False\nD. False, True\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "A"
+    },
+    {
+      "id": "mmlu-pooled-145",
+      "input": "Which of the following is a disorder characterized by uncontrollable episodes of falling asleep during the day?\n\nA. Dyslexia\nB. Epilepsy\nC. Hydrocephalus\nD. Narcolepsy\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "D"
+    },
+    {
+      "id": "mmlu-pooled-146",
+      "input": "Which orbital wall is most likely to collapse in a 'blow out' fracture?\n\nA. The roof\nB. The floor\nC. The lateral wall\nD. The medial wall\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "B"
+    },
+    {
+      "id": "mmlu-pooled-147",
+      "input": "A(n) __________ is a ________, __________ framework which goes beyond linear functions, operations and transactions to produce a certain commodity or product\n\nA. International supply chain, Static, Disconnected\nB. Global production network, Dynamic, Relational\nC. International supply chain, Dynamic, Disconnected\nD. Global production network, Static, Relational\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "B"
+    },
+    {
+      "id": "mmlu-pooled-148",
+      "input": "Statement 1 | If R is a ring and f(x) and g(x) are in R[x], then deg (f(x)+g(x)) = maximum (deg f(x), deg g(x)). Statement 2 | If F is a field then every ideal of F[x] is principal.\n\nA. True, True\nB. False, False\nC. True, False\nD. False, True\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "D"
+    },
+    {
+      "id": "mmlu-pooled-149",
+      "input": "Which of the following statements about sidereal and solar days is not true?\n\nA. The time it takes for the Sun to make one circuit of our sky is one solar day.\nB. A solar day is 4 minutes longer than a sidereal day.\nC. A solar day represents more than 360° of rotation for the earth.\nD. The time it takes for the Moon to make one circuit of our sky is one solar day.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "D"
+    },
+    {
+      "id": "mmlu-pooled-150",
+      "input": "Radio telescopes are crucial for astronomical observations. Which one of these well-known radio telescopes has the largest parabolic antenna?\n\nA. Green Bank Telescope\nB. Arecibo Telescope\nC. Yevpatoria RT-70 Telescope\nD. Effelsberg Telescope\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "B"
+    },
+    {
+      "id": "mmlu-pooled-151",
+      "input": "What is not true of Jupiter's magnetic field?\n\nA. it is about 20000 times stronger than Earth's magnetic field\nB. it traps charged particles from Io's volcanoes in a \"plasma torus\" around the planet\nC. it causes spectacular auroral displays at Jupiter's north and south poles\nD. it switches polarity every 11 years\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "D"
+    },
+    {
+      "id": "mmlu-pooled-152",
+      "input": "Glycogen breakdown in muscle initially results in the formation of:\n\nA. glucose.\nB. glucose-1-phosphate.\nC. glucose-6-phosphate.\nD. glucose-1,6-diphosphate.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "B"
+    },
+    {
+      "id": "mmlu-pooled-153",
+      "input": "_______ such as bitcoin are becoming increasingly mainstream and have a whole host of associated ethical implications, for example, they are______ and more ______. However, they have also been used to engage in _______.\n\nA. Cryptocurrencies, Expensive, Secure, Financial Crime\nB. Traditional currency, Cheap, Unsecure, Charitable giving\nC. Cryptocurrencies, Cheap, Secure, Financial crime\nD. Traditional currency, Expensive, Unsecure, Charitable giving\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "C"
+    },
+    {
+      "id": "mmlu-pooled-154",
+      "input": "The race to the ______ is when, due to increased ________, countries compete for foreign investment through companies' relocation decisions by weakening their ______ and _____ standards.\n\nA. Bottom, Globalisation, Social, Environmental\nB. Top, Globalisation, Political, Environmental\nC. Bottom, Standardisation, Social, Economic\nD. Top, Standardisation, Political, Economic\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "A"
+    },
+    {
+      "id": "mmlu-pooled-155",
+      "input": "Which of the following characteristics would not necessarily suggest that a rock we found is a meteorite.\n\nA. It has a fusion crust\nB. It contains solidified spherical droplets\nC. It is highly processed\nD. It has different elemental composition than earth\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "C"
+    },
+    {
+      "id": "mmlu-pooled-156",
+      "input": "A patient suffers a broken neck with damage to the spinal cord at the level of the sixth cervical vertebra.\n\nA. They will be unable to breathe without life support.\nB. They will only be able to breathe quietly.\nC. It is impossible to predict an effect on breathing.\nD. Breathing will be unaffected.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "B"
+    },
+    {
+      "id": "mmlu-pooled-157",
+      "input": "Statement 1 | S_n is non-Abelian for all n >= 3. Statement 2 | If a is a permutation that is an m-cycle and b is a permutation that is an n-cycle, then |ab| = lcm(m,n).\n\nA. True, True\nB. False, False\nC. True, False\nD. False, True\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "C"
+    },
+    {
+      "id": "mmlu-pooled-158",
+      "input": "Which one of the following manoeuvres is not a central painful stimulus?\n\nA. Supra-orbital ridge pressure.\nB. Pressure on the little finger pulp.\nC. Trapezius squeeze.\nD. Sternal rub.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "B"
+    },
+    {
+      "id": "mmlu-pooled-159",
+      "input": "Which is not an essential requirement for life as we know it?\n\nA. The ability to breathe oxygen\nB. The ability to make energy from sunlight or to eat things that do\nC. A source of organic molecules\nD. A and B\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "D"
+    },
+    {
+      "id": "mmlu-pooled-160",
+      "input": "The Right to _______ has been a long-standing ethical concern for employees which today are addressed in most developed countries through a dense network of occupational health, safety and environmental regulations companies must abide by.\n\nA. Work-life balance\nB. Healthy and safe working conditions\nC. Employee privacy\nD. Free Speech\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "B"
+    },
+    {
+      "id": "mmlu-pooled-161",
+      "input": "The phrenic nerves innervate the\n\nA. diaphragm.\nB. diaphragm and parietal pleura.\nC. diaphragm, parietal pleura and pericardium.\nD. diaphragm, parietal pleura, pericardium and intercostals muscles.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "C"
+    },
+    {
+      "id": "mmlu-pooled-162",
+      "input": "Although the benefit and contribution of civil society in encouraging sustainability, lobbying on important issues and helping the needy are taken for granted in many places, in many other countries, such as _____ and ______ civil society is far less developed than in, for instance, _______.\n\nA. Russia, China, Britain\nB. Norway, China, Russia\nC. Britain, United States, Australia\nD. Canada, Russia, United States\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "A"
+    },
+    {
+      "id": "mmlu-pooled-163",
+      "input": "______ the workplace involves empowering employees through, for example, 'job enrichment' where employees are given a larger scope for deciding how to organize their work or 'job enlargement' where employees are given a wider range of tasks to do.\n\nA. Re-invigorating\nB. Re-flourishing\nC. Revitalizing\nD. Rehumanizing\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "D"
+    },
+    {
+      "id": "mmlu-pooled-164",
+      "input": "Find the maximum possible order for an element of S_n for n = 10.\n\nA. 6\nB. 12\nC. 30\nD. 105\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "C"
+    },
+    {
+      "id": "mmlu-pooled-165",
+      "input": "According to Mitchell et al (1997) ______, the perceived ability of a stakeholder to influence organisational action, ________ whether the organisation perceives the stakeholder's actions as desirable, proper and appropriate and ________, the immediacy of attention the stakeholder claims require, determine stakeholder ________.\n\nA. Power, Legitimacy, Salience Urgency\nB. Legitimacy, Urgency, Salience, Power\nC. Power, Legitimacy, Urgency, Salience\nD. Salience, Power, Urgency, Legitimacy\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "C"
+    },
+    {
+      "id": "mmlu-pooled-166",
+      "input": "The lithosphere of a planet is the layer that consists of\n\nA. the softer rocky material of the mantle.\nB. the lava that comes out of volcanoes.\nC. material between the crust and the mantle.\nD. the rigid rocky material of the crust and uppermost portion of the mantle.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "D"
+    },
+    {
+      "id": "mmlu-pooled-167",
+      "input": "Statement 1 | A homomorphism is one to one if and only if the kernel consists of the identity element alone. Statement 2 | The image of a group of 6 elements under some homomorphism may have 4 elements.\n\nA. True, True\nB. False, False\nC. True, False\nD. False, True\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "C"
+    },
+    {
+      "id": "mmlu-pooled-168",
+      "input": "Approximately how long does it take Pluto to orbit the Sun once?\n\nA. 150 years\nB. 200 years\nC. 250 years\nD. 300 years\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "C"
+    },
+    {
+      "id": "mmlu-pooled-169",
+      "input": "Moons cause/contribute to which of the following?\n\nA. stability of particles within rings.\nB. gravitational effects at ring edges as the moons pass by.\nC. gaps between rings.\nD. Moons contribute to all of the above.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "D"
+    },
+    {
+      "id": "mmlu-pooled-170",
+      "input": "Suppose you live on the Moon. How long is a day (i.e. from sunrise to sunrise)?\n\nA. about 18 years\nB. 24 hours\nC. 29 Earth days\nD. a year\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "C"
+    },
+    {
+      "id": "mmlu-pooled-171",
+      "input": "The Theory of _________ posits that 3 three levels of moral reasoning exist which an individual can engage in to assess ethical issues, dependant on their cognitive capacity.\n\nA. Egoism\nB. Cognitive moral development\nC. Power distance\nD. Uncertainty avoidance\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "B"
+    },
+    {
+      "id": "mmlu-pooled-172",
+      "input": "Statement 1 | Every integral domain with characteristic 0 is infinite. Statement 2 | Every integral domain with prime characteristic is finite.\n\nA. True, True\nB. False, False\nC. True, False\nD. False, True\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "C"
+    },
+    {
+      "id": "mmlu-pooled-173",
+      "input": "Name the bones of the middle finger in the correct order from the hand.\n\nA. Proximal phalynx, middle phalynx, distal phalynx.\nB. Distal phalynx, middle phalynx, proximal phalynx.\nC. Middle phalynx, distal phalynx, proximal phalynx.\nD. Distal phalynx, proximal phalynx, middle phalynx.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "A"
+    },
+    {
+      "id": "mmlu-pooled-174",
+      "input": "Parasympathetic preganglionic nerves leave the central nervous system with the\n\nA. third cranial nerves.\nB. fourth cranial nerves.\nC. fifth cranial nerves.\nD. sixth cranial nerves.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "A"
+    },
+    {
+      "id": "mmlu-pooled-175",
+      "input": "One astronomical unit (AU) is equal to approximately ...\n\nA. 130 million km\nB. 150 million km\nC. 170 million km\nD. 190 million km\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "B"
+    },
+    {
+      "id": "mmlu-pooled-176",
+      "input": "What is the source of the material that causes meteor showers?\n\nA. Near-Earth asteroids gradually disintegrate and spread out along their orbital path. When the Earth passes through the orbit of an asteroid we are bombarded by sand-sized particles which cause a meteor shower.\nB. Near-Earth asteroids disintegrate as they enter Earth's atmosphere creating hundreds of bright meteors that appear to radiate from a single location in the sky.\nC. The nuclei of comets disintigrate as they enter Earth's atmosphere creating hundreds of bright meteors that appear to radiate from a central location in the sky.\nD. The nuclei of comets gradually disintegrate and spread out along the comet's orbital path. When the Earth passes through the orbit of a comet we are bombarded by sand-sized particles which cause a meteor shower.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "D"
+    },
+    {
+      "id": "mmlu-pooled-177",
+      "input": "Statement 1 | Every solvable group is of prime-power order. Statement 2 | Every group of prime-power order is solvable.\n\nA. True, True\nB. False, False\nC. True, False\nD. False, True\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "D"
+    },
+    {
+      "id": "mmlu-pooled-178",
+      "input": "The walls of the maxillary sinus are sinus is related to\n\nA. the floor of the orbit.\nB. the floor of the orbit and the upper posterior teeth.\nC. the floor of the orbit, the upper posterior teeth and the infratemporal fossa.\nD. the floor of the orbit, the upper posterior teeth, the infratemporal fossa and the hard palate.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "C"
+    },
+    {
+      "id": "mmlu-pooled-179",
+      "input": "_______ economy is the term used to describe individuals being hired for a specific task rather than on a long-term basis. While this results in _________ which is beneficial for businesses, issues for those employed in such a manner relate to increased ________, uncertainty and a lack of _______.\n\nA. Gig, Flexibility, Risk, Social welfare structures\nB. Sharing, Risk, Flexibility, Autonomy\nC. Gig, Risk, Flexibility, Autonomy\nD. Sharing, Flexibility, Risk, Social welfare structures\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "A"
+    },
+    {
+      "id": "mmlu-pooled-180",
+      "input": "Find all zeros in the indicated finite field of the given polynomial with coefficients in that field. x^3 + 2x + 2 in Z_7\n\nA. 1\nB. 2\nC. 2,3\nD. 6\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "C"
+    },
+    {
+      "id": "mmlu-pooled-181",
+      "input": "The auditory tube\n\nA. connects the inner ear and nasopharynx.\nB. is derived from the second pharyngeal pouch.\nC. is opened by the action of levator veli palatini.\nD. is closed by the action of tensor veli palatini.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "C"
+    },
+    {
+      "id": "mmlu-pooled-182",
+      "input": "Which of the following statements is false?\n\nA. Phosphofructokinase is the rate limiting enzyme in glycolysis.\nB. Phosphorylase activity is higher in Type II fibres than in Type I fibres.\nC. Endurance training increases the amount of TCA cycle enzymes in muscle.\nD. Oxygen is consumed in the TCA cycle.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "D"
+    },
+    {
+      "id": "mmlu-pooled-183",
+      "input": "Which of the following lists the ingredients of the solar nebula from highest to lowest percentage of mass in the nebula?\n\nA. hydrogen compounds (H2O CH4 NH3) light gases (H He) metals rocks\nB. hydrogen compounds (H2O CH4 NH3) light gases (H He) rocks metals\nC. light gases (H He) hydrogen compounds (H2O CH4 NH3) metals rocks\nD. light gases (H He) hydrogen compounds (H2O CH4 NH3) rocks metals\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "D"
+    },
+    {
+      "id": "mmlu-pooled-184",
+      "input": "Determine whether the polynomial in Z[x] satisfies an Eisenstein criterion for irreducibility over Q. x^2 - 12\n\nA. Yes, with p=2.\nB. Yes, with p=3.\nC. Yes, with p=5.\nD. No.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "B"
+    },
+    {
+      "id": "mmlu-pooled-185",
+      "input": "Patients with which of the following diseases are treated with injections of vitamin B-12?\n\nA. Bell's palsy\nB. Crohn's disease\nC. Pernicious anemia\nD. Graves' disease\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "C"
+    },
+    {
+      "id": "mmlu-pooled-186",
+      "input": "In hypovolaemic shock, what percentage of blood can be lost before it is reflected in changes in heart rate and blood pressure?\n\nA. 5%\nB. 10%\nC. 20%\nD. 30%\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "D"
+    },
+    {
+      "id": "mmlu-pooled-187",
+      "input": "The astronomical unit parsec (pc) plays a crucial role in astronomy. One parsec is equal to about 3.26 light-years. How is one parsec defined in astronomy?\n\nA. Distance at which one astronomical unit measures one arcsecond from Earth.\nB. Orbital distance of the solar system around the center of the Milky Way in one year.\nC. Effective distance of the solar wind (i.e. the radius of the heliosphere).\nD. Historical distance to the brightest star Sirius.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "A"
+    },
+    {
+      "id": "mmlu-pooled-188",
+      "input": "Pick the correct description of the following term: Utilitarianism is…\n\nA. A theory which states that an action is morally incorrect if it promotes the greatest good for the greatest number\nB. A theory which states that an action is morally right if it promotes the greatest good for the decision maker\nC. A theory which states that an action is morally right if it promotes the greatest good for the smallest number\nD. A theory which states that an action is morally right if it promotes the greatest good for the greatest number\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "D"
+    },
+    {
+      "id": "mmlu-pooled-189",
+      "input": "Statement 1 | For any two groups G and G', there exists a homomorphism of G into G'. Statement 2 | Every homomorphism is a one-to-one map.\n\nA. True, True\nB. False, False\nC. True, False\nD. False, True\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "C"
+    },
+    {
+      "id": "mmlu-pooled-190",
+      "input": "A person weighs 62 kg. Their drug dose is 15 mg/kg. How many grams is their dose? Choose one answer from the following:\n\nA. 930\nB. 93\nC. 9.3\nD. 0.93\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "D"
+    },
+    {
+      "id": "mmlu-pooled-191",
+      "input": "Statement 1 | Every permutation is a cycle. Statement 2 | Every cycle is a permutation.\n\nA. True, True\nB. False, False\nC. True, False\nD. False, True\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "D"
+    },
+    {
+      "id": "mmlu-pooled-192",
+      "input": "Which of the following is true in spastic paraplegia?\n\nA. Multiple Sclerosis can cause this neurological pattern\nB. Proprioceptive loss is a common feature\nC. Coordination in the legs is affected\nD. The tone is normal or flaccid\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "A"
+    },
+    {
+      "id": "mmlu-pooled-193",
+      "input": "Which of the following best describes the human body's defense mechanism against environmental bacteria?\n\nA. Hair in the nose\nB. Mucous membranes\nC. Osteoblasts\nD. Saliva\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "B"
+    },
+    {
+      "id": "mmlu-pooled-194",
+      "input": "With an increasing number of sprints the:\n\nA. anaerobic contribution progressively increases.\nB. pH of the muscle falls below 6.0.\nC. blood glucose concentration falls below 3 mmol/L.\nD. relative contribution of aerobic metabolism increases.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "D"
+    },
+    {
+      "id": "mmlu-pooled-195",
+      "input": "Statement 1 | If T: V -> W is a linear transformation and dim(V ) < dim(W) < 1, then T must be injective. Statement 2 | Let dim(V) = n and suppose that T: V -> V is linear. If T is injective, then it is a bijection.\n\nA. True, True\nB. False, False\nC. True, False\nD. False, True\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "A"
+    },
+    {
+      "id": "mmlu-pooled-196",
+      "input": "There are a number of means by which can influence _______. These include _________to decision maker, varying from very direct modes to indirect modes, _________, being either public or private and ________ of communication.\n\nA. Government, Avenue of approach, Breadth of transmission, Content\nB. Consumers, Avenue of approach, Height of transmission, Content\nC. Government, Breath of transmission, Avenue of approach, Content\nD. Employees, Breadth of transmission, Content, Avenue of approach\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "A"
+    },
+    {
+      "id": "mmlu-pooled-197",
+      "input": "Find the number of elements in the indicated cyclic group: The cyclic subgroup of Z_30 generated by 25.\n\nA. 25\nB. 5\nC. 6\nD. 30\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "C"
+    },
+    {
+      "id": "mmlu-pooled-198",
+      "input": "Which of the following best describes the process whereby the stomach muscles contract to propel food through the digestive tract?\n\nA. Absorption\nB. Emulsion\nC. Peristalsis\nD. Regurgitation\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "C"
+    },
+    {
+      "id": "mmlu-pooled-199",
+      "input": "Examination of a patient indicates that they have a medially directed strabismus (squint). This could be due to damage to the\n\nA. oculomotor nerve.\nB. trochlear nerve.\nC. ophthalmic trigeminal nerve.\nD. abducens nerve.\n\nReply with only the letter of the correct choice (A, B, C, or D).",
+      "gold": "D"
+    }
+  ],
+  "revision": "de63eb04156d6d332fac12e53b4758f0c09c53bd"
+}

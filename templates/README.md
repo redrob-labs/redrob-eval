@@ -40,7 +40,7 @@ banned word caught in any casing.
 
 A locale layer must be reviewed by a native speaker before it is used for anything anyone will
 cite. A machine-translated prompt measures the translation as much as it measures the model, and
-in a fertility comparison — where the whole claim is that only the surface wording differs — a
+in a fertility comparison, where the whole claim is that only the surface wording differs, a
 bad translation invalidates the measurement outright rather than merely adding noise.
 
 Concretely, a new locale layer needs a reviewer to confirm that:

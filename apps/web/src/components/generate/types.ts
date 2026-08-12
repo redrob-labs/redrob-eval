@@ -45,8 +45,23 @@ export interface StudyConfigSummary {
   offline: boolean;
 }
 
+export type PythonUnavailableCode =
+  | 'not-found'
+  | 'not-executable'
+  | 'timed-out'
+  | 'spawn-failed'
+  | 'version-failed';
+
 export interface GenerateStatus {
-  python: { available: true; version: string } | { available: false; reason: string };
+  python:
+    | { available: true; version: string }
+    | {
+        available: false;
+        /** English, for a log or a bug report. Prefer `reasonCode` on screen. */
+        reason: string;
+        reasonCode?: PythonUnavailableCode;
+        command?: string;
+      };
   repoRoot: string | null;
   runtimes: {
     implementation: string;

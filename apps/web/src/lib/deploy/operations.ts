@@ -5,9 +5,15 @@ import {
   SELF_HOSTED_CANDIDATES,
   SELF_HOSTED_DEFAULTS,
   applyMeasuredThroughput,
+  probeVllmEndpoint,
+  resetLiveSelfHostedCache,
   resetMeasuredThroughputApplied,
 } from '@redrob/harness';
 import { ensureVllmApiKey } from '@/lib/settings/env-store';
+import {
+  removeDeploySlotHost,
+  upsertDeploySlotHost,
+} from '@/lib/settings/vllm-hosts';
 import { sshWriteFile, shellQuote } from './ssh';
 import { ensureTerminal, writeTerminal, terminalExists } from './sessions';
 import {
@@ -15,9 +21,25 @@ import {
   benchmarkScript,
   healthScript,
   installScript,
+  purgeAllScript,
   serviceControl,
+  undeployScript,
 } from './remote';
 import { measureScript } from './remote-measure';
+import { deployPort } from './port';
+import { classifyReachFailure, type SlotReachKind } from './reachability';
+import {
+  MAX_DEPLOY_SLOTS,
+  allSlotIndexes,
+  removeSlotRecord,
+  resolveSlotIndex,
+  slotFor,
+  upsertSlot,
+  type DeploySlot,
+} from './slots';
+
+/** Short: this runs inside the status poll, once per active slot, in parallel. */
+const SLOT_REACH_TIMEOUT_MS = 4_000;
 
 export type DeployOp =
   | 'install'
@@ -25,49 +47,50 @@ export type DeployOp =
   | 'start'
   | 'stop'
   | 'health'
-  | 'benchmark';
+  | 'benchmark'
+  | 'undeploy'
+  /** Every slot at once, weights included. */
+  | 'purge';
 
 type CandidateKey = keyof typeof SELF_HOSTED_CANDIDATES;
 
+/** The model one Deploy slot serves. */
 export interface ServeConfig {
-  modelS: string;
-  modelL: string;
-  servedS: string;
-  servedL: string;
+  model: string;
+  servedName: string;
   maxModelLen: number;
   maxNumSeqs: number;
+  slot: DeploySlot;
 }
 
 /**
- * Resolve S/L HF repos. Preference order per axis:
- *   1. Explicit hfS / hfL (from a pasted Hugging Face link)
- *   2. Catalog key (axisS / axisL)
- *   3. Catalog defaults
+ * Resolve the model to serve. Preference order:
+ *   1. Explicit hf (from a pasted Hugging Face link)
+ *   2. Catalog key
+ *   3. The catalog default
+ * Served name always comes from the slot (`redrob-s{n}`).
  */
-export function resolveServeConfig(params: {
-  axisSKey?: string;
-  axisLKey?: string;
-  hfS?: string;
-  hfL?: string;
-} = {}): ServeConfig {
-  const sKey = ((params.axisSKey as CandidateKey) in SELF_HOSTED_CANDIDATES
-    ? (params.axisSKey as CandidateKey)
-    : (SELF_HOSTED_DEFAULTS.axisS as CandidateKey));
-  const lKey = ((params.axisLKey as CandidateKey) in SELF_HOSTED_CANDIDATES
-    ? (params.axisLKey as CandidateKey)
-    : (SELF_HOSTED_DEFAULTS.axisL as CandidateKey));
-  const s = SELF_HOSTED_CANDIDATES[sKey];
-  const l = SELF_HOSTED_CANDIDATES[lKey];
-  const modelS = params.hfS?.trim() || s.hfRepoId;
-  const modelL = params.hfL?.trim() || l.hfRepoId;
+export function resolveServeConfig(
+  params: { modelKey?: string; hf?: string; slot?: number } = {},
+): ServeConfig {
+  const key = ((params.modelKey as CandidateKey) in SELF_HOSTED_CANDIDATES
+    ? (params.modelKey as CandidateKey)
+    : (SELF_HOSTED_DEFAULTS.model as CandidateKey));
+  const slot = slotFor(resolveSlotIndex(params.slot ?? 0));
   return {
-    modelS,
-    modelL,
-    servedS: 'redrob-s',
-    servedL: 'redrob-l',
+    model: params.hf?.trim() || SELF_HOSTED_CANDIDATES[key].hfRepoId,
+    servedName: slot.servedName,
     maxModelLen: SELF_HOSTED_DEFAULTS.maxModelLen,
     maxNumSeqs: 8,
+    slot,
   };
+}
+
+export interface OpParams {
+  modelKey?: string;
+  hf?: string;
+  /** Deploy slot index; defaults to 0. */
+  slot?: number;
 }
 
 async function secretEnv(): Promise<Record<string, string>> {
@@ -82,19 +105,48 @@ function buildOpBody(
   op: DeployOp,
   cfg: ServeConfig,
 ): { body: string; sudo: boolean; label: string } {
+  const slot = cfg.slot;
   switch (op) {
     case 'install':
       return { body: installScript(), sudo: true, label: 'Install' };
     case 'measure':
-      return { body: measureScript(cfg), sudo: true, label: 'Measure' };
+      // Measure sizes VRAM and writes measured.env, then the slot is served in
+      // the same run: a measured model nobody Started was the whole surprise of
+      // the two-button flow. The probe is torn down inside measureScript, so the
+      // systemd unit does a clean second load with the util it just recorded.
+      return {
+        body: `${measureScript({ ...cfg, slot })}\necho "==> serving slot ${slot.index} with the measurement just written"\n${serviceControl('start', slot)}`,
+        sudo: true,
+        label: `Measure & serve (slot ${slot.index})`,
+      };
     case 'start':
     case 'stop':
-      return { body: serviceControl(op), sudo: true, label: op === 'start' ? 'Start' : 'Stop' };
+      return {
+        body: serviceControl(op, slot),
+        sudo: true,
+        label: `${op === 'start' ? 'Start' : 'Stop'} (slot ${slot.index})`,
+      };
+    case 'undeploy':
+      return {
+        body: undeployScript(slot),
+        sudo: true,
+        label: `Undeploy (slot ${slot.index})`,
+      };
+    case 'purge':
+      return { body: purgeAllScript(), sudo: true, label: 'Remove all models' };
     case 'health':
-      return { body: healthScript(cfg.servedS, cfg.servedL), sudo: false, label: 'Health' };
+      return {
+        body: healthScript(cfg.servedName, 600, slot),
+        sudo: false,
+        label: `Health (slot ${slot.index})`,
+      };
     case 'benchmark':
       // Writes tok/s back into measured.env, so it needs root.
-      return { body: benchmarkScript(cfg.servedS, cfg.servedL), sudo: true, label: 'Benchmark' };
+      return {
+        body: benchmarkScript(cfg.servedName, 256, slot),
+        sudo: true,
+        label: `Benchmark (slot ${slot.index})`,
+      };
     default:
       throw new Error(`Unknown op: ${op}`);
   }
@@ -106,7 +158,7 @@ function buildOpBody(
  */
 export async function buildOpScriptFile(
   op: DeployOp,
-  params: { axisSKey?: string; axisLKey?: string; hfS?: string; hfL?: string } = {},
+  params: OpParams = {},
 ): Promise<{ content: string; sudo: boolean; label: string; cfg: ServeConfig }> {
   const cfg = resolveServeConfig(params);
   const { body, sudo, label } = buildOpBody(op, cfg);
@@ -116,8 +168,8 @@ export async function buildOpScriptFile(
     .join('\n');
   const content = [
     '#!/usr/bin/env bash',
-    `# redrob-eval deploy op: ${op}`,
-    '# Generated — do not commit. Deleted after run.',
+    `# redrob-eval deploy op: ${op} slot ${cfg.slot.index}`,
+    '# Generated, do not commit. Deleted after run.',
     'set -euo pipefail',
     exports,
     '',
@@ -125,6 +177,39 @@ export async function buildOpScriptFile(
     '',
   ].join('\n');
   return { content, sudo, label, cfg };
+}
+
+async function syncLocalAfterOp(op: DeployOp, cfg: ServeConfig): Promise<void> {
+  const slot = cfg.slot;
+  if (op === 'measure' || op === 'start') {
+    const short = cfg.model.includes('/') ? cfg.model.split('/').pop()! : cfg.model;
+    await upsertSlot({
+      index: slot.index,
+      hf: cfg.model,
+      label: `Slot ${slot.index}: ${short}`,
+    });
+  }
+  if (op === 'start' || op === 'measure') {
+    const host = process.env.GPU_HOST?.trim();
+    if (host) {
+      const short = cfg.model.includes('/') ? cfg.model.split('/').pop()! : cfg.model;
+      await upsertDeploySlotHost({
+        slot: slot.index,
+        label: `Slot ${slot.index}: ${short}`,
+        baseUrl: `http://${host}:${slot.port}/v1`,
+      });
+    }
+  }
+  if (op === 'undeploy') {
+    await removeSlotRecord(slot.index);
+    await removeDeploySlotHost(slot.index, slot.port);
+  }
+  if (op === 'purge') {
+    for (const index of allSlotIndexes()) {
+      await removeSlotRecord(index);
+      await removeDeploySlotHost(index, slotFor(index).port);
+    }
+  }
 }
 
 /**
@@ -135,7 +220,7 @@ export async function buildOpScriptFile(
 export async function injectOpIntoTerminal(
   sessionId: string,
   op: DeployOp,
-  params: { axisSKey?: string; axisLKey?: string; hfS?: string; hfL?: string } = {},
+  params: OpParams = {},
 ): Promise<{ remotePath: string; label: string; cfg: ServeConfig }> {
   // Reconnect rather than fail if the channel dropped — tmux still has the pane.
   if (!terminalExists(sessionId)) {
@@ -148,14 +233,16 @@ export async function injectOpIntoTerminal(
   const rm = sudo ? 'sudo rm -f' : 'rm -f';
   // The marker lets the status poll report this step as in flight, so a
   // reattaching browser sees "running" instead of being offered the button again.
+  // Line two is the pid of this shell: if the pane is killed mid-op the marker
+  // would otherwise outlive the work and disable every button for good.
   const run =
-    `echo ${shellQuote(op)} > ${RUNNING_MARKER}; ` +
+    `printf '%s\\n%s\\n' ${shellQuote(op)} $$ > ${RUNNING_MARKER}; ` +
     `${sudo ? 'sudo ' : ''}bash ${shellQuote(remotePath)}; ec=$?; ` +
     `${rm} ${shellQuote(remotePath)}; rm -f ${RUNNING_MARKER}; ` +
     `echo \"[redrob] ${label} exit $ec\"`;
   const typed = [
     '',
-    `echo \"[redrob] ▶ ${label}  :8101=${cfg.modelS}  :8102=${cfg.modelL}\"`,
+    `echo \"[redrob] ▶ ${label}  ${cfg.model} as ${cfg.servedName} (slot ${cfg.slot.index}, :${cfg.slot.port})\"`,
     `chmod 700 ${shellQuote(remotePath)}`,
     run,
     '',
@@ -163,20 +250,22 @@ export async function injectOpIntoTerminal(
   if (!writeTerminal(sessionId, typed)) {
     throw new Error('Failed to write to remote shell');
   }
+  await syncLocalAfterOp(op, cfg);
   return { remotePath, label, cfg };
 }
 
 /** Quick helpers the user can also inject (logs / GPU watch). */
 export function injectHelperIntoTerminal(
   sessionId: string,
-  helper: 'tail-s' | 'tail-l' | 'gpu' | 'interrupt',
+  helper: 'tail' | 'gpu' | 'interrupt',
+  slotIndex = 0,
 ): void {
   if (!terminalExists(sessionId)) {
     throw new Error('Remote shell is not open');
   }
+  const slot = slotFor(resolveSlotIndex(slotIndex));
   const cmds: Record<typeof helper, string> = {
-    'tail-s': 'sudo tail -f /var/log/redrob-vllm/s.log\n',
-    'tail-l': 'sudo tail -f /var/log/redrob-vllm/l.log\n',
+    tail: `sudo tail -f ${slot.logFile}\n`,
     gpu: 'watch -n1 nvidia-smi\n',
     interrupt: '\x03', // Ctrl+C
   };
@@ -193,6 +282,168 @@ export function parseStatus(stdout: string): Record<string, string> {
     if (m) out[m[1]!] = m[2]!.trim();
   }
   return out;
+}
+
+export interface SlotStatusView {
+  index: number;
+  port: number;
+  unit: string;
+  active: boolean;
+  enabled: boolean;
+  measured: boolean;
+  /** Measured, but the slot directory is root-only, so the poll cannot read it. */
+  unreadable: boolean;
+  modelHf: string | null;
+  servedName: string;
+  tokPerSec: string | null;
+  util: string | null;
+  precision: string | null;
+  measuredAt: string | null;
+  paths: {
+    measuredEnv: string;
+    serveScript: string;
+    logFile: string;
+  };
+  /** From local registry when present. */
+  label: string | null;
+  hf: string | null;
+  /**
+   * Whether the workbench itself can call this port.
+   *
+   * systemd being active is not enough: the port has to be open to this machine
+   * too, and a slot past the base port often is not. Compare can only offer a
+   * slot it can reach, so an active-but-unreachable slot has to say so here or
+   * it just silently goes missing from the picker.
+   */
+  reachable: boolean | null;
+  reachError: string | null;
+  /** Why it could not be called, so the UI names the actual cause. */
+  reachKind: SlotReachKind;
+}
+
+/** Build per-slot views from the flat SLOT{n}_* status keys + local registry. */
+export function buildSlotStatusViews(
+  remote: Record<string, string> | null,
+  local: Array<{ index: number; hf: string; label: string }>,
+): SlotStatusView[] {
+  const byIndex = new Map(local.map((r) => [r.index, r]));
+  return Array.from({ length: MAX_DEPLOY_SLOTS }, (_, i) => {
+    const slot = slotFor(i);
+    const prefix = `SLOT${i}_`;
+    const get = (k: string) => remote?.[`${prefix}${k}`]?.trim() || null;
+    const measured = get('MEASURED') === '1' && Boolean(get('GPU_MEM_UTIL'));
+    const localRec = byIndex.get(i);
+    return {
+      index: i,
+      port: Number(get('PORT') || slot.port),
+      unit: get('UNIT') || slot.unit,
+      active: get('ACTIVE') === 'active',
+      enabled: get('ENABLED') === 'enabled' || get('ENABLED') === 'enabled-runtime',
+      measured,
+      unreadable: get('UNREADABLE') === '1',
+      modelHf: get('MODEL_HF') || localRec?.hf || null,
+      servedName: get('SERVED_NAME') || get('SERVED_MODEL_NAME') || slot.servedName,
+      tokPerSec: get('MEASURED_TOK_PER_SEC'),
+      util: get('GPU_MEM_UTIL'),
+      precision: get('QUANTIZATION') === 'fp8' ? 'fp8' : get('DTYPE') ? 'bf16' : null,
+      measuredAt: get('MEASURED_AT'),
+      paths: {
+        measuredEnv: get('MEASURED_ENV') || slot.measuredEnv,
+        serveScript: get('SERVE_SCRIPT') || slot.serveScript,
+        logFile: get('LOG') || slot.logFile,
+      },
+      label: localRec?.label ?? null,
+      hf: localRec?.hf ?? null,
+      reachable: null,
+      reachError: null,
+      reachKind: 'unknown' as SlotReachKind,
+    };
+  });
+}
+
+/**
+ * Fill in whether each active slot answers from this machine.
+ *
+ * Only active slots are probed: a stopped slot not answering is not news, and
+ * every probe is a round trip the status poll has to wait for.
+ */
+export async function attachSlotReachability(
+  slots: SlotStatusView[],
+  host: string | null,
+): Promise<SlotStatusView[]> {
+  if (!host) return slots;
+  const probes = slots.map(async (slot) => {
+    if (!slot.active) return slot;
+    const probe = await probeVllmEndpoint({
+      baseUrl: `http://${host}:${slot.port}/v1`,
+      servedModelId: slot.servedName,
+      timeoutMs: SLOT_REACH_TIMEOUT_MS,
+    });
+    const serving = probe.reachable && probe.servedModels.includes(slot.servedName);
+    if (serving) {
+      return { ...slot, reachable: true, reachError: null, reachKind: 'ok' as SlotReachKind };
+    }
+    // Answering at all rules out both the firewall and a service that is not up.
+    if (probe.reachable) {
+      return {
+        ...slot,
+        reachable: false,
+        reachError: `Answered, but does not serve ${slot.servedName}`,
+        reachKind: 'wrongModel' as SlotReachKind,
+      };
+    }
+    return {
+      ...slot,
+      reachable: false,
+      reachError: probe.error ?? 'No answer',
+      reachKind: classifyReachFailure(probe.error),
+    };
+  });
+  return Promise.all(probes);
+}
+
+/**
+ * Pick which measured slot to mirror into process.env for Eval relative cost.
+ * Prefer MEASURED_MODEL_HF match, else most recently measured, else slot 0.
+ */
+function pickMeasuredFlat(remote: Record<string, string>): Record<string, string> {
+  const preferredHf = process.env.MEASURED_MODEL_HF?.trim();
+  type Cand = { flat: Record<string, string>; at: string; index: number };
+  const cands: Cand[] = [];
+  for (let i = 0; i < MAX_DEPLOY_SLOTS; i++) {
+    const prefix = `SLOT${i}_`;
+    const at = remote[`${prefix}MEASURED_AT`]?.trim();
+    const util = remote[`${prefix}GPU_MEM_UTIL`]?.trim();
+    if (!at || !util) continue;
+    const flat: Record<string, string> = {
+      MEASURED_AT: at,
+      MODEL_HF: remote[`${prefix}MODEL_HF`] ?? '',
+      MEASURED_TOK_PER_SEC: remote[`${prefix}MEASURED_TOK_PER_SEC`] ?? '',
+      QUANTIZATION: remote[`${prefix}QUANTIZATION`] ?? '',
+      DTYPE: remote[`${prefix}DTYPE`] ?? '',
+      GPU_MEM_UTIL: util,
+      MAX_MODEL_LEN: remote[`${prefix}MAX_MODEL_LEN`] ?? '',
+      SERVED_MODEL_NAME: remote[`${prefix}SERVED_MODEL_NAME`] ?? '',
+      WEIGHT_MIB: remote[`${prefix}WEIGHT_MIB`] ?? '',
+      FREE_MIB: remote[`${prefix}FREE_MIB`] ?? '',
+      GPU_NAME: remote.GPU_NAME ?? '',
+      GPU_TOTAL_MIB: remote.GPU_TOTAL_MIB ?? remote[`${prefix}GPU_TOTAL_MIB`] ?? '',
+      _slot: String(i),
+    };
+    cands.push({ flat, at, index: i });
+  }
+
+  if (cands.length === 0) {
+    // Fall back to legacy flat keys (slot 0 / pre-multi-slot).
+    return remote;
+  }
+
+  if (preferredHf) {
+    const hit = cands.find((c) => c.flat.MODEL_HF === preferredHf);
+    if (hit) return { ...remote, ...hit.flat };
+  }
+  cands.sort((a, b) => (a.at < b.at ? 1 : a.at > b.at ? -1 : a.index - b.index));
+  return { ...remote, ...cands[0]!.flat };
 }
 
 async function findRepoFile(rel: string): Promise<string | null> {
@@ -221,22 +472,28 @@ let appliedSignature: string | null = null;
  * deploy/MEMORY.md. Values only ever come from the GPU host — never guessed.
  */
 export async function applyRemoteMeasured(remote: Record<string, string>): Promise<void> {
-  const measuredAt = remote.MEASURED_AT?.trim();
+  const chosen = pickMeasuredFlat(remote);
+  const measuredAt = chosen.MEASURED_AT?.trim();
   if (!measuredAt) return;
 
-  const tokS = remote.MEASURED_TOK_PER_SEC_S?.trim();
-  const tokL = remote.MEASURED_TOK_PER_SEC_L?.trim();
-  const precisionL = remote.QUANTIZATION_L === 'fp8' ? 'fp8' : 'bf16';
+  const model = chosen.MODEL_HF?.trim();
+  const tok = chosen.MEASURED_TOK_PER_SEC?.trim();
+  const precision = chosen.QUANTIZATION === 'fp8' ? 'fp8' : 'bf16';
+  const slotIdx = chosen._slot?.trim() || '0';
+  const port = deployPort() + Number(slotIdx || 0);
 
-  const signature = `${measuredAt} tok/s ${tokS ?? '-'}/${tokL ?? '-'}`;
+  const signature = `${measuredAt} ${model ?? '?'} tok/s ${tok ?? '-'} slot ${slotIdx}`;
   if (appliedSignature === signature) return;
   appliedSignature = signature;
 
+  if (model && model !== process.env.MEASURED_MODEL_HF?.trim()) {
+    resetLiveSelfHostedCache();
+  }
   process.env.MEASURED_AT = measuredAt;
-  process.env.MEASURED_PRECISION_L = precisionL;
-  process.env.MEASURED_PRECISION_S = 'bf16';
-  if (tokS) process.env.MEASURED_TOK_PER_SEC_S = tokS;
-  if (tokL) process.env.MEASURED_TOK_PER_SEC_L = tokL;
+  process.env.MEASURED_PRECISION = precision;
+  if (model) process.env.MEASURED_MODEL_HF = model;
+  if (tok) process.env.MEASURED_TOK_PER_SEC = tok;
+  else delete process.env.MEASURED_TOK_PER_SEC;
   resetMeasuredThroughputApplied();
   applyMeasuredThroughput();
 
@@ -255,16 +512,16 @@ export async function applyRemoteMeasured(remote: Record<string, string>): Promi
     '',
     '| Field | Value |',
     '| --- | --- |',
-    `| GPU name / total MiB | ${remote.GPU_NAME ?? 'n/a'} / ${remote.GPU_TOTAL_MIB ?? 'n/a'} |`,
-    `| :8101 HF repo | ${remote.MODEL_HF_S ?? 'n/a'} |`,
-    `| :8102 HF repo | ${remote.MODEL_HF_L ?? 'n/a'} |`,
-    `| dtype :8101 / :8102 | ${remote.DTYPE_S ?? 'n/a'} / ${remote.DTYPE_L ?? 'n/a'} |`,
-    `| quantization :8102 | ${remote.QUANTIZATION_L ?? 'none'} |`,
-    `| weight MiB :8101 / :8102 | ${remote.S_WEIGHT_MIB ?? 'n/a'} / ${remote.L_WEIGHT_MIB ?? 'n/a'} |`,
-    `| gpu-memory-utilization :8101 / :8102 | ${remote.GPU_MEM_UTIL_S ?? 'n/a'} / ${remote.GPU_MEM_UTIL_L ?? 'n/a'} |`,
-    `| max-model-len :8101 / :8102 | ${remote.MAX_MODEL_LEN_S ?? 'n/a'} / ${remote.MAX_MODEL_LEN_L ?? 'n/a'} |`,
-    `| dual-load free MiB | ${remote.DUAL_FREE_MIB ?? 'n/a'} |`,
-    `| tok/s :8101 / :8102 | ${tokS ?? 'pending (run Benchmark)'} / ${tokL ?? 'pending (run Benchmark)'} |`,
+    `| GPU name / total MiB | ${chosen.GPU_NAME ?? 'n/a'} / ${chosen.GPU_TOTAL_MIB ?? 'n/a'} |`,
+    `| HF repo | ${model ?? 'n/a'} |`,
+    `| slot | ${slotIdx} |`,
+    `| served as | ${chosen.SERVED_MODEL_NAME ?? 'n/a'} (:${port}) |`,
+    `| dtype / quantization | ${chosen.DTYPE ?? 'n/a'} / ${chosen.QUANTIZATION ?? 'none'} |`,
+    `| weight MiB | ${chosen.WEIGHT_MIB || 'not in log'} |`,
+    `| gpu-memory-utilization | ${chosen.GPU_MEM_UTIL ?? 'n/a'} |`,
+    `| max-model-len | ${chosen.MAX_MODEL_LEN ?? 'n/a'} |`,
+    `| free MiB after load | ${chosen.FREE_MIB ?? 'n/a'} |`,
+    `| tok/s | ${tok ?? 'pending (run Benchmark)'} |`,
     '',
   ].join('\n');
   try {

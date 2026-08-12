@@ -5,13 +5,17 @@
 import assert from 'node:assert/strict';
 import {
   advance,
+  advanceGroup,
   aggregateTournament,
+  bracketIsSettled,
   createBracket,
+  groupIsPending,
+  GROUP_VOTE_MAX,
   nextPendingMatch,
   resolvedMatches,
   totalMatches,
 } from '../packages/harness/src/lib/tournament/index.ts';
-import type { Competitor } from '../packages/harness/src/lib/tournament/types.ts';
+import type { Competitor, Vote } from '../packages/harness/src/lib/tournament/types.ts';
 import { labelsFromPreference } from '../packages/harness/src/lib/routing-data/labels-from-preference.ts';
 
 function field(n: number, opts?: { errorOn?: string[] }): Competitor[] {
@@ -26,33 +30,75 @@ function field(n: number, opts?: { errorOn?: string[] }): Competitor[] {
   });
 }
 
-/** Vote every pending match for the lexicographically smallest model id. */
-function playOut(bracket: ReturnType<typeof createBracket>) {
-  const votes = [];
+/**
+ * Decide everything pending in favour of the lexicographically smallest id,
+ * skipping answers that errored the way a reader would.
+ */
+function playOut(bracket: ReturnType<typeof createBracket>): Vote[] {
+  const votes: Vote[] = [];
+  const broken = new Set(
+    bracket.competitors.filter((c) => c.error).map((c) => c.modelId),
+  );
+  const pick = (a: string, b: string) => {
+    if (broken.has(a)) return 'b' as const;
+    if (broken.has(b)) return 'a' as const;
+    return a < b ? ('a' as const) : ('b' as const);
+  };
+
+  if (bracket.group) {
+    if (!groupIsPending(bracket)) return votes;
+    const winner = bracket.group.contenders.slice().sort()[0]!;
+    votes.push(...advanceGroup(bracket, bracket.group.matchId, winner).votes);
+    return votes;
+  }
+
   let guard = 0;
   while (guard++ < 100) {
     const match = nextPendingMatch(bracket);
     if (!match) break;
-    const winner = match.a! < match.b! ? 'a' : 'b';
-    votes.push(advance(bracket, match.matchId, winner).vote);
+    votes.push(advance(bracket, match.matchId, pick(match.a!, match.b!)).vote);
   }
   return votes;
 }
 
-// A power-of-two field plays a clean 4 -> 2 -> 1
-{
-  const b = createBracket({ promptId: 'p1', promptText: 'q', competitors: field(4) });
-  assert.equal(b.rounds.length, 2, 'four competitors take two rounds');
-  assert.equal(totalMatches(b), 3, 'four competitors play three matches');
+// A field that fits on one screen is one ballot, never a bracket
+for (const n of [2, 3, 4]) {
+  const b = createBracket({ promptId: `g${n}`, promptText: 'q', competitors: field(n) });
+  assert.equal(b.rounds.length, 0, `field of ${n} skips the bracket`);
+  assert.equal(b.group?.contenders.length, n, `field of ${n} puts everyone on the ballot`);
+  assert.equal(totalMatches(b), 1, `field of ${n} is a single decision`);
   assert.equal(b.championModelId, null, 'no champion before voting');
-  playOut(b);
+  assert.equal(bracketIsSettled(b), false, 'the ballot is waiting on a vote');
+
+  const votes = playOut(b);
   assert.equal(b.championModelId, 'm1', 'lowest id wins under our vote rule');
-  assert.equal(resolvedMatches(b), 3, 'every match resolved');
+  assert.equal(votes.length, n - 1, 'the winner is logged against each model it beat');
+  assert.equal(resolvedMatches(b), 1, 'the ballot is resolved');
+  assert.equal(bracketIsSettled(b), true, 'nothing left to vote on');
 }
 
-// A non-power-of-two field pads with byes and still resolves
-for (const n of [3, 5, 6, 7, 9]) {
+// A group tie names no winner and ties every pair
+{
+  const b = createBracket({ promptId: 'gtie', promptText: 'q', competitors: field(3) });
+  const { votes } = advanceGroup(b, b.group!.matchId, null);
+  assert.equal(b.championModelId, null, 'a tie crowns nobody');
+  assert.equal(votes.length, 3, 'three contenders make three tied pairs');
+  assert.equal(votes.every((v) => v.winner === 'tie'), true);
+  assert.equal(bracketIsSettled(b), true, 'a tie still settles the prompt');
+}
+
+// A group vote says nothing about the models the voter passed over
+{
+  const b = createBracket({ promptId: 'gpair', promptText: 'q', competitors: field(3) });
+  const { votes } = advanceGroup(b, b.group!.matchId, 'm2');
+  const pairs = votes.map((v) => `${v.aModelId}>${v.bModelId}`).sort();
+  assert.deepEqual(pairs, ['m2>m1', 'm2>m3'], 'only the winner gets head-to-head rows');
+}
+
+// Above the group limit the field still plays out as a bracket
+for (const n of [GROUP_VOTE_MAX + 1, 6, 7, 9]) {
   const b = createBracket({ promptId: `p${n}`, promptText: 'q', competitors: field(n) });
+  assert.equal(b.group, null, `field of ${n} is too wide to read side by side`);
   playOut(b);
   assert.ok(b.championModelId, `field of ${n} produced a champion`);
   assert.equal(
@@ -71,9 +117,10 @@ for (const n of [3, 5, 6, 7, 9]) {
   const b = createBracket({ promptId: 'solo', promptText: 'q', competitors: field(1) });
   assert.equal(b.championModelId, 'm1');
   assert.equal(nextPendingMatch(b), null);
+  assert.equal(bracketIsSettled(b), true);
 }
 
-// An errored model loses its first match without a human vote
+// An errored model never reaches the ballot
 {
   const b = createBracket({
     promptId: 'err',
@@ -81,7 +128,20 @@ for (const n of [3, 5, 6, 7, 9]) {
     competitors: field(2, { errorOn: ['m1'] }),
   });
   assert.equal(b.championModelId, 'm2', 'a failed call cannot win');
-  assert.equal(nextPendingMatch(b), null, 'walkover needs no vote');
+  assert.deepEqual(b.group?.contenders, ['m2'], 'the failed answer is off the ballot');
+  assert.equal(groupIsPending(b), false, 'a walkover needs no vote');
+  assert.equal(totalMatches(b), 0, 'a walkover is not a decision the voter made');
+}
+
+// An errored model in a wider field loses its first match without a vote
+{
+  const b = createBracket({
+    promptId: 'errwide',
+    promptText: 'q',
+    competitors: field(5, { errorOn: ['m1'] }),
+  });
+  playOut(b);
+  assert.notEqual(b.championModelId, 'm1', 'a failed call cannot win');
 }
 
 // Aggregation counts champions, head-to-head wins and ties
@@ -100,16 +160,16 @@ for (const n of [3, 5, 6, 7, 9]) {
   assert.equal(agg.standings[0]?.winRate, 1);
 }
 
-// A tie advances side A but is recorded as a tie for both models
+// A tie is recorded as a tie for both models
 {
   const b = createBracket({ promptId: 'tie', promptText: 'q', competitors: field(2) });
-  const match = nextPendingMatch(b)!;
-  const { vote } = advance(b, match.matchId, 'tie');
+  const { votes } = advanceGroup(b, b.group!.matchId, null);
+  const vote = votes[0]!;
   assert.equal(vote.winner, 'tie');
   assert.equal(vote.winnerModelId, null, 'a tie names no winner in the log');
-  assert.equal(b.championModelId, match.a, 'side A advances so the bracket can finish');
+  assert.equal(b.championModelId, null, 'a tie crowns nobody');
 
-  const agg = aggregateTournament({ brackets: [b], votes: [vote] });
+  const agg = aggregateTournament({ brackets: [b], votes });
   assert.equal(agg.standings.every((s) => s.ties === 1), true, 'both models get a tie');
   assert.equal(agg.standings.every((s) => s.wins === 0), true, 'a tie is not a win');
 }
@@ -174,11 +234,10 @@ for (const n of [3, 5, 6, 7, 9]) {
     promptText: 'q',
     competitors: field(2),
   });
-  const match = nextPendingMatch(b)!;
-  const { vote } = advance(b, match.matchId, 'tie');
+  const { votes } = advanceGroup(b, b.group!.matchId, null);
   const labelled = labelsFromPreference({
     brackets: [b],
-    votes: [vote],
+    votes,
     smallModelId: 'm2',
     largeModelId: 'm1',
     runId: '2026-01-01_000000_pref',

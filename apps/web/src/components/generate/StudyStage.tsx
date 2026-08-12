@@ -2,9 +2,17 @@
 
 import { useCallback, useState } from 'react';
 
+import { useT } from '@/components/LocaleProvider';
+import type { MessageKey } from '@/lib/i18n';
 import { downloadJson, downloadText } from '@/lib/download';
 
-import { STATUS_TONE, type StudyConfigSummary, type StudyRunResponse } from './types';
+import { type StudyConfigSummary, type StudyRunResponse, type TranslationStatus } from './types';
+
+const STATUS_KEYS: Record<TranslationStatus, { labelKey: MessageKey; tone: string }> = {
+  'native-reviewed': { labelKey: 'generate.status.nativeReviewed', tone: 'ok' },
+  'single-reviewer': { labelKey: 'generate.status.singleReviewer', tone: 'warn' },
+  untranslated: { labelKey: 'generate.status.untranslated', tone: 'stub' },
+};
 
 function pct(value: number): string {
   return `${(value * 100).toFixed(1)}%`;
@@ -28,6 +36,7 @@ export function StudyStage({
   studies: StudyConfigSummary[];
   pythonAvailable: boolean;
 }) {
+  const t = useT();
   const [selected, setSelected] = useState<string | null>(studies[0]?.path ?? null);
   const [run, setRun] = useState<StudyRunResponse | null>(null);
   const [running, setRunning] = useState(false);
@@ -46,7 +55,7 @@ export function StudyStage({
         body: JSON.stringify({ configPath, offlineOnly: true }),
       });
       const body = (await res.json()) as StudyRunResponse & { error?: string; detail?: string };
-      if (!res.ok) throw new Error(body.detail ? `${body.error} — ${body.detail}` : body.error);
+      if (!res.ok) throw new Error(body.detail ? `${body.error}: ${body.detail}` : body.error);
       setRun(body);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'the study failed');
@@ -60,9 +69,9 @@ export function StudyStage({
   return (
     <div className="gen-study">
       <section className="cmp-card">
-        <div className="pane-label">Study config</div>
+        <div className="pane-label">{t('generate.study.config')}</div>
         {studies.length === 0 ? (
-          <p className="gen-empty">No study configs found under packages/generate/examples/.</p>
+          <p className="gen-empty">{t('generate.study.none')}</p>
         ) : (
           <div className="gen-study-picker">
             {studies.map((entry) => (
@@ -79,9 +88,9 @@ export function StudyStage({
                 </span>
                 <code className="gen-template-id">{entry.id}</code>
                 {entry.offline ? (
-                  <span className="gen-chip gen-chip-ok">mock only, no spend</span>
+                  <span className="gen-chip gen-chip-ok">{t('generate.study.mockOnly')}</span>
                 ) : (
-                  <span className="gen-chip gen-chip-warn">calls providers</span>
+                  <span className="gen-chip gen-chip-warn">{t('generate.study.callsProviders')}</span>
                 )}
               </button>
             ))}
@@ -97,13 +106,10 @@ export function StudyStage({
             disabled={!pythonAvailable || running || !config || !config.offline}
             onClick={() => config && void start(config.path)}
           >
-            {running ? 'Running…' : 'Run study'}
+            {running ? t('generate.study.running') : t('generate.study.runStudy')}
           </button>
           {config && !config.offline ? (
-            <span className="gen-warn-inline">
-              This config reaches providers. Run it from the CLI, where the spend is
-              deliberate.
-            </span>
+            <span className="gen-warn-inline">{t('generate.study.reachesProviders')}</span>
           ) : null}
         </div>
 
@@ -117,17 +123,17 @@ export function StudyStage({
           <section className="cmp-card gen-export">
             <div className="gen-export-head">
               <span className="gen-export-title">
-                Result artifact for <code>{run.result.study_id}</code>
+                {t('generate.study.resultArtifactFor', { studyId: run.result.study_id })}
               </span>
               <span
                 className={`gen-chip gen-chip-${run.publishable ? 'ok' : 'stub'}`}
                 title={
                   run.publishable
-                    ? 'Passed the publication gate'
-                    : 'Refused publication — see the reason below'
+                    ? t('generate.study.passedGate')
+                    : t('generate.study.refusedPublication')
                 }
               >
-                {run.publishable ? 'publishable' : 'not publishable'}
+                {run.publishable ? t('generate.study.publishable') : t('generate.study.notPublishable')}
               </span>
             </div>
             <div className="gen-export-actions">
@@ -138,29 +144,22 @@ export function StudyStage({
                   downloadJson(`${run.result.study_id}.result.json`, run.result)
                 }
               >
-                Download artifact
+                {t('generate.study.downloadArtifact')}
               </button>
               <button
                 type="button"
                 className="app-ghost-btn"
                 onClick={() => downloadText(`${run.result.study_id}.table.txt`, run.table)}
               >
-                Download table
+                {t('generate.study.downloadTable')}
               </button>
             </div>
-            <p className="gen-export-hint">
-              The JSON is the whole run: provenance, every instance, and the aggregates the
-              tables below are drawn from. Nothing is written to the repository by this
-              page, so this download is the only copy.
-            </p>
+            <p className="gen-export-hint">{t('generate.study.artifactHint')}</p>
           </section>
 
           <section className="cmp-card">
-            <div className="pane-label">Provenance</div>
-            <p className="gen-desc">
-              Both runtimes are listed because they read different Unicode tables, which is
-              the whole reason only one of them may be published from.
-            </p>
+            <div className="pane-label">{t('generate.study.provenance')}</div>
+            <p className="gen-desc">{t('generate.study.provenanceHint')}</p>
             <ul className="gen-provenance">
               {run.result.provenance.runtimes.map((runtime) => (
                 <li key={runtime.implementation}>
@@ -170,19 +169,21 @@ export function StudyStage({
                     className={`gen-chip gen-chip-${runtime.authoritative ? 'ok' : 'stub'}`}
                     title={
                       runtime.authoritative
-                        ? 'Verdicts from this implementation may be published'
-                        : 'Display only: the two runtimes read different Unicode tables'
+                        ? t('generate.study.authoritativeTitle')
+                        : t('generate.study.displayOnlyTitle')
                     }
                   >
-                    {runtime.authoritative ? 'authoritative' : 'display only'}
+                    {runtime.authoritative
+                      ? t('generate.study.authoritative')
+                      : t('generate.study.displayOnly')}
                   </span>
                 </li>
               ))}
               <li>
-                tokenizer <code>{run.result.provenance.tokenizer.name}</code>{' '}
+                {t('generate.study.tokenizer')} <code>{run.result.provenance.tokenizer.name}</code>{' '}
                 {run.result.provenance.tokenizer.version}
-                <span className="gen-chip gen-chip-warn" title="Not a model tokenizer">
-                  offline proxy
+                <span className="gen-chip gen-chip-warn" title={t('generate.study.offlineProxyTitle')}>
+                  {t('generate.study.offlineProxy')}
                 </span>
               </li>
             </ul>
@@ -190,29 +191,28 @@ export function StudyStage({
 
           {!run.publishable ? (
             <section className="cmp-card gen-notice gen-notice-error">
-              <div className="pane-label">Refused for publication</div>
+              <div className="pane-label">{t('generate.study.refused')}</div>
               {run.refusal ? <pre className="gen-json">{run.refusal}</pre> : null}
               {stubs.length > 0 ? (
                 <p>
-                  {stubs.map((l) => l.tag).join(', ')} render placeholder text, so every
-                  per-locale number below measures the placeholder rather than the locale.
-                  The deltas are zero for the same reason: the stubs are the English prompt
-                  byte for byte, so there is nothing for a tokenizer to find.
+                  {t('generate.study.stubsWarning', {
+                    locales: stubs.map((l) => l.tag).join(', '),
+                  })}
                 </p>
               ) : null}
             </section>
           ) : null}
 
           <section className="cmp-card">
-            <div className="pane-label">Locales</div>
+            <div className="pane-label">{t('generate.study.locales')}</div>
             <div className="table-scroll">
               <table className="data-table text-xs">
                 <thead>
                   <tr>
-                    <th>Locale</th>
-                    <th>Fertility</th>
-                    <th>Resource</th>
-                    <th>Translation</th>
+                    <th>{t('generate.study.table.locale')}</th>
+                    <th>{t('generate.study.table.fertility')}</th>
+                    <th>{t('generate.study.table.resource')}</th>
+                    <th>{t('generate.study.table.translation')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -225,9 +225,9 @@ export function StudyStage({
                       <td>{l.resource_level}</td>
                       <td>
                         <span
-                          className={`gen-chip gen-chip-${STATUS_TONE[l.translation_status].tone}`}
+                          className={`gen-chip gen-chip-${STATUS_KEYS[l.translation_status].tone}`}
                         >
-                          {STATUS_TONE[l.translation_status].label}
+                          {t(STATUS_KEYS[l.translation_status].labelKey)}
                         </span>
                       </td>
                     </tr>
@@ -238,19 +238,19 @@ export function StudyStage({
           </section>
 
           <section className="cmp-card">
-            <div className="pane-label">Paired deltas (right minus left, matched on item)</div>
+            <div className="pane-label">{t('generate.study.pairedDeltas')}</div>
             <div className="table-scroll">
               <table className="data-table text-xs">
                 <thead>
                   <tr>
-                    <th>Comparison</th>
-                    <th>Left</th>
-                    <th>Right</th>
-                    <th>Pairs</th>
-                    <th>Tokens left</th>
-                    <th>Tokens right</th>
-                    <th>Token delta</th>
-                    <th>Accuracy delta</th>
+                    <th>{t('generate.study.table.comparison')}</th>
+                    <th>{t('generate.study.table.left')}</th>
+                    <th>{t('generate.study.table.right')}</th>
+                    <th>{t('generate.study.table.pairs')}</th>
+                    <th>{t('generate.study.table.tokensLeft')}</th>
+                    <th>{t('generate.study.table.tokensRight')}</th>
+                    <th>{t('generate.study.table.tokenDelta')}</th>
+                    <th>{t('generate.study.table.accuracyDelta')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -276,14 +276,14 @@ export function StudyStage({
           </section>
 
           <section className="cmp-card">
-            <div className="pane-label">Mean prompt tokens per locale</div>
+            <div className="pane-label">{t('generate.study.meanTokensPerLocale')}</div>
             <div className="table-scroll">
               <table className="data-table text-xs">
                 <thead>
                   <tr>
-                    <th>Locale</th>
-                    <th>n</th>
-                    <th>Mean tokens</th>
+                    <th>{t('generate.study.table.locale')}</th>
+                    <th>{t('generate.study.table.n')}</th>
+                    <th>{t('generate.study.table.meanTokens')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -302,17 +302,17 @@ export function StudyStage({
           </section>
 
           <section className="cmp-card">
-            <div className="pane-label">Accuracy per locale per verifier family</div>
+            <div className="pane-label">{t('generate.study.accuracyPerLocale')}</div>
             <div className="table-scroll">
               <table className="data-table text-xs">
                 <thead>
                   <tr>
-                    <th>Model</th>
-                    <th>Locale</th>
-                    <th>Verifier family</th>
-                    <th>n</th>
-                    <th>Passed</th>
-                    <th>Accuracy</th>
+                    <th>{t('generate.study.table.model')}</th>
+                    <th>{t('generate.study.table.locale')}</th>
+                    <th>{t('generate.study.table.verifierFamily')}</th>
+                    <th>{t('generate.study.table.n')}</th>
+                    <th>{t('generate.study.table.passed')}</th>
+                    <th>{t('generate.study.table.accuracy')}</th>
                   </tr>
                 </thead>
                 <tbody>

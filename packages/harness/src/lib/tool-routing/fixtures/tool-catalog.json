@@ -1,0 +1,704 @@
+{
+  "toolsets": {
+    "core": [
+      "get_weather",
+      "send_email",
+      "create_calendar_event",
+      "lookup_order",
+      "convert_currency",
+      "translate_text"
+    ],
+    "wide": [
+      "get_weather",
+      "get_air_quality",
+      "get_time_zone",
+      "send_email",
+      "send_sms",
+      "create_calendar_event",
+      "create_reminder",
+      "lookup_order",
+      "cancel_order",
+      "track_shipment",
+      "convert_currency",
+      "convert_units",
+      "get_stock_price",
+      "translate_text",
+      "summarize_text",
+      "search_documents",
+      "book_flight",
+      "book_hotel"
+    ],
+    "full": [
+      "get_weather",
+      "get_air_quality",
+      "get_time_zone",
+      "send_email",
+      "send_sms",
+      "create_calendar_event",
+      "create_reminder",
+      "lookup_order",
+      "cancel_order",
+      "track_shipment",
+      "track_package",
+      "lookup_delivery_status",
+      "convert_currency",
+      "convert_units",
+      "get_stock_price",
+      "translate_text",
+      "summarize_text",
+      "search_documents",
+      "book_flight",
+      "book_hotel",
+      "get_directions",
+      "estimate_travel_time",
+      "find_nearby_places",
+      "get_place_details",
+      "send_payment",
+      "check_payment_status",
+      "lookup_contact",
+      "add_contact",
+      "create_note",
+      "search_notes",
+      "play_music",
+      "search_music",
+      "add_to_cart",
+      "search_products",
+      "get_news_headlines",
+      "search_news",
+      "create_git_branch",
+      "list_git_branches",
+      "read_file",
+      "list_files",
+      "log_health_metric",
+      "get_health_summary",
+      "set_alarm",
+      "list_alarms",
+      "join_video_meeting",
+      "schedule_video_meeting",
+      "find_restaurant",
+      "reserve_restaurant",
+      "book_taxi",
+      "estimate_taxi_fare"
+    ]
+  },
+  "tools": [
+    {
+      "name": "get_weather",
+      "description": "Look up the weather forecast for a city on a given day.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "city": {
+            "type": "string",
+            "description": "City name in English, e.g. Seoul."
+          },
+          "day": {
+            "type": "string",
+            "description": "One of: today, tomorrow, or an ISO date YYYY-MM-DD."
+          }
+        },
+        "required": ["city", "day"]
+      }
+    },
+    {
+      "name": "get_air_quality",
+      "description": "Look up the air quality index for a city on a given day.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "city": { "type": "string", "description": "City name in English." },
+          "day": {
+            "type": "string",
+            "description": "One of: today, tomorrow, or an ISO date YYYY-MM-DD."
+          }
+        },
+        "required": ["city", "day"]
+      }
+    },
+    {
+      "name": "get_time_zone",
+      "description": "Look up the current local time and UTC offset of a city.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "city": { "type": "string", "description": "City name in English." }
+        },
+        "required": ["city"]
+      }
+    },
+    {
+      "name": "send_email",
+      "description": "Send an email to one recipient.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "to": { "type": "string", "description": "Recipient email address." },
+          "subject": { "type": "string", "description": "Subject line, verbatim from the request." },
+          "body": { "type": "string", "description": "Message body, verbatim from the request." }
+        },
+        "required": ["to", "subject", "body"]
+      }
+    },
+    {
+      "name": "send_sms",
+      "description": "Send a text message to one phone number. Has no subject line.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "phone": {
+            "type": "string",
+            "description": "Recipient phone number, digits and dashes exactly as written."
+          },
+          "message": { "type": "string", "description": "Message text, verbatim from the request." }
+        },
+        "required": ["phone", "message"]
+      }
+    },
+    {
+      "name": "create_calendar_event",
+      "description": "Create a calendar event other people can be invited to.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "title": { "type": "string", "description": "Event title in English." },
+          "date": { "type": "string", "description": "ISO date YYYY-MM-DD." },
+          "time": { "type": "string", "description": "24-hour local time HH:MM." }
+        },
+        "required": ["title", "date", "time"]
+      }
+    },
+    {
+      "name": "create_reminder",
+      "description": "Set a private reminder that pings the user. Not a calendar event and not shared.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "text": { "type": "string", "description": "What to be reminded about, verbatim." },
+          "date": { "type": "string", "description": "ISO date YYYY-MM-DD." },
+          "time": { "type": "string", "description": "24-hour local time HH:MM." }
+        },
+        "required": ["text", "date", "time"]
+      }
+    },
+    {
+      "name": "lookup_order",
+      "description": "Look up the status of a purchase order by its id.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "order_id": { "type": "string", "description": "Order id exactly as written by the user." }
+        },
+        "required": ["order_id"]
+      }
+    },
+    {
+      "name": "cancel_order",
+      "description": "Cancel a purchase order by its id. Irreversible.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "order_id": { "type": "string", "description": "Order id exactly as written by the user." }
+        },
+        "required": ["order_id"]
+      }
+    },
+    {
+      "name": "track_shipment",
+      "description": "Locate a parcel by carrier tracking number. Takes a tracking number, never an order id.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "tracking_number": {
+            "type": "string",
+            "description": "Carrier tracking number exactly as written by the user."
+          }
+        },
+        "required": ["tracking_number"]
+      }
+    },
+    {
+      "name": "convert_currency",
+      "description": "Convert an amount between two currencies.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "amount": { "type": "number", "description": "Numeric amount, digits only." },
+          "from_currency": { "type": "string", "description": "ISO 4217 code, e.g. USD." },
+          "to_currency": { "type": "string", "description": "ISO 4217 code, e.g. KRW." }
+        },
+        "required": ["amount", "from_currency", "to_currency"]
+      }
+    },
+    {
+      "name": "convert_units",
+      "description": "Convert an amount between two physical units, such as kg to lb or km to mi.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "amount": { "type": "number", "description": "Numeric amount, digits only." },
+          "from_unit": { "type": "string", "description": "Unit symbol, e.g. kg." },
+          "to_unit": { "type": "string", "description": "Unit symbol, e.g. lb." }
+        },
+        "required": ["amount", "from_unit", "to_unit"]
+      }
+    },
+    {
+      "name": "get_stock_price",
+      "description": "Look up the latest share price for a ticker symbol.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "ticker": { "type": "string", "description": "Ticker symbol in capitals, e.g. AAPL." }
+        },
+        "required": ["ticker"]
+      }
+    },
+    {
+      "name": "translate_text",
+      "description": "Translate a phrase into a target language.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "text": { "type": "string", "description": "The phrase to translate, verbatim." },
+          "target_language": {
+            "type": "string",
+            "description": "BCP-47 code, one of: en, hi, ko."
+          }
+        },
+        "required": ["text", "target_language"]
+      }
+    },
+    {
+      "name": "summarize_text",
+      "description": "Shorten a passage into a summary in the language it is already written in.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "text": { "type": "string", "description": "The passage to summarize, verbatim." },
+          "max_words": { "type": "number", "description": "Word budget for the summary." }
+        },
+        "required": ["text", "max_words"]
+      }
+    },
+    {
+      "name": "search_documents",
+      "description": "Full-text search over the user's own stored documents.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "query": { "type": "string", "description": "Search terms, verbatim from the request." }
+        },
+        "required": ["query"]
+      }
+    },
+    {
+      "name": "book_flight",
+      "description": "Book a one-way flight between two cities on a given date.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "from_city": { "type": "string", "description": "Departure city in English." },
+          "to_city": { "type": "string", "description": "Arrival city in English." },
+          "date": { "type": "string", "description": "ISO date YYYY-MM-DD." }
+        },
+        "required": ["from_city", "to_city", "date"]
+      }
+    },
+    {
+      "name": "book_hotel",
+      "description": "Book a hotel room in a city for a number of nights.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "city": { "type": "string", "description": "City name in English." },
+          "check_in": { "type": "string", "description": "ISO date YYYY-MM-DD." },
+          "nights": { "type": "number", "description": "Number of nights, digits only." }
+        },
+        "required": ["city", "check_in", "nights"]
+      }
+    },
+    {
+      "name": "get_directions",
+      "description": "Get turn-by-turn driving, walking, or transit directions between two places.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "origin": { "type": "string", "description": "Starting address or place name, verbatim." },
+          "destination": { "type": "string", "description": "Ending address or place name, verbatim." },
+          "mode": { "type": "string", "description": "One of: driving, walking, transit." }
+        },
+        "required": ["origin", "destination", "mode"]
+      }
+    },
+    {
+      "name": "estimate_travel_time",
+      "description": "Estimate how long a trip takes without turn-by-turn directions. Not for navigation.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "origin": { "type": "string", "description": "Starting address or place name, verbatim." },
+          "destination": { "type": "string", "description": "Ending address or place name, verbatim." },
+          "mode": { "type": "string", "description": "One of: driving, walking, transit." }
+        },
+        "required": ["origin", "destination", "mode"]
+      }
+    },
+    {
+      "name": "find_nearby_places",
+      "description": "Find places of a category near a location, such as pharmacies or ATMs.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "category": { "type": "string", "description": "Place category, e.g. pharmacy, atm, cafe." },
+          "location": { "type": "string", "description": "Address or neighbourhood to search around, verbatim." },
+          "radius_km": { "type": "number", "description": "Search radius in kilometres, digits only." }
+        },
+        "required": ["category", "location", "radius_km"]
+      }
+    },
+    {
+      "name": "get_place_details",
+      "description": "Look up hours, phone, and address for one place by its id. Not for searching nearby.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "place_id": { "type": "string", "description": "Place id exactly as written by the user." }
+        },
+        "required": ["place_id"]
+      }
+    },
+    {
+      "name": "send_payment",
+      "description": "Send money to a person or merchant. Requires an amount and currency.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "recipient": { "type": "string", "description": "Recipient handle or account id, verbatim." },
+          "amount": { "type": "number", "description": "Numeric amount, digits only." },
+          "currency": { "type": "string", "description": "ISO 4217 code, e.g. USD." }
+        },
+        "required": ["recipient", "amount", "currency"]
+      }
+    },
+    {
+      "name": "check_payment_status",
+      "description": "Check whether an already-sent payment cleared. Takes a payment id, not a recipient.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "payment_id": { "type": "string", "description": "Payment id exactly as written by the user." }
+        },
+        "required": ["payment_id"]
+      }
+    },
+    {
+      "name": "lookup_contact",
+      "description": "Find a saved contact's phone or email by name.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string", "description": "Contact name, verbatim from the request." }
+        },
+        "required": ["name"]
+      }
+    },
+    {
+      "name": "add_contact",
+      "description": "Save a new contact with name, phone, and email. Not for looking up an existing one.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string", "description": "Contact name, verbatim from the request." },
+          "phone": { "type": "string", "description": "Phone number, digits and dashes exactly as written." },
+          "email": { "type": "string", "description": "Email address, verbatim from the request." }
+        },
+        "required": ["name", "phone", "email"]
+      }
+    },
+    {
+      "name": "create_note",
+      "description": "Create a new personal note with a title and body.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "title": { "type": "string", "description": "Note title, verbatim from the request." },
+          "body": { "type": "string", "description": "Note body, verbatim from the request." }
+        },
+        "required": ["title", "body"]
+      }
+    },
+    {
+      "name": "search_notes",
+      "description": "Search existing notes by keyword. Not for creating a new note.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "query": { "type": "string", "description": "Search terms, verbatim from the request." }
+        },
+        "required": ["query"]
+      }
+    },
+    {
+      "name": "play_music",
+      "description": "Start playing a specific track by a named artist.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "track": { "type": "string", "description": "Track title, verbatim from the request." },
+          "artist": { "type": "string", "description": "Artist name, verbatim from the request." }
+        },
+        "required": ["track", "artist"]
+      }
+    },
+    {
+      "name": "search_music",
+      "description": "Search the music library by keyword. Does not start playback.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "query": { "type": "string", "description": "Search terms, verbatim from the request." }
+        },
+        "required": ["query"]
+      }
+    },
+    {
+      "name": "add_to_cart",
+      "description": "Add a product to the shopping cart by its product id.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "product_id": { "type": "string", "description": "Product id exactly as written by the user." },
+          "quantity": { "type": "number", "description": "Number of units, digits only." }
+        },
+        "required": ["product_id", "quantity"]
+      }
+    },
+    {
+      "name": "search_products",
+      "description": "Search the product catalogue by keyword. Does not add anything to the cart.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "query": { "type": "string", "description": "Search terms, verbatim from the request." }
+        },
+        "required": ["query"]
+      }
+    },
+    {
+      "name": "get_news_headlines",
+      "description": "Fetch top headlines for a topic in a given country.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "topic": { "type": "string", "description": "News topic, e.g. technology, sports." },
+          "country": { "type": "string", "description": "ISO 3166-1 alpha-2 country code, e.g. US." }
+        },
+        "required": ["topic", "country"]
+      }
+    },
+    {
+      "name": "search_news",
+      "description": "Full-text search over news articles by keyword. Not for top headlines.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "query": { "type": "string", "description": "Search terms, verbatim from the request." }
+        },
+        "required": ["query"]
+      }
+    },
+    {
+      "name": "create_git_branch",
+      "description": "Create a new branch in a git repository.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "repo": { "type": "string", "description": "Repository name, verbatim from the request." },
+          "branch": { "type": "string", "description": "New branch name, verbatim from the request." }
+        },
+        "required": ["repo", "branch"]
+      }
+    },
+    {
+      "name": "list_git_branches",
+      "description": "List existing branches in a git repository. Does not create a branch.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "repo": { "type": "string", "description": "Repository name, verbatim from the request." }
+        },
+        "required": ["repo"]
+      }
+    },
+    {
+      "name": "read_file",
+      "description": "Read the contents of one file by path.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "path": { "type": "string", "description": "File path, verbatim from the request." }
+        },
+        "required": ["path"]
+      }
+    },
+    {
+      "name": "list_files",
+      "description": "List files in a directory. Does not read file contents.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "directory": { "type": "string", "description": "Directory path, verbatim from the request." }
+        },
+        "required": ["directory"]
+      }
+    },
+    {
+      "name": "log_health_metric",
+      "description": "Record a health measurement such as weight or blood pressure.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "metric": { "type": "string", "description": "Metric name, e.g. weight, blood_pressure." },
+          "value": { "type": "number", "description": "Numeric reading, digits only." },
+          "unit": { "type": "string", "description": "Unit symbol, e.g. kg, mmHg." }
+        },
+        "required": ["metric", "value", "unit"]
+      }
+    },
+    {
+      "name": "get_health_summary",
+      "description": "Summarize logged health metrics over a period. Does not record a new reading.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "metric": { "type": "string", "description": "Metric name, e.g. weight, blood_pressure." },
+          "period": { "type": "string", "description": "One of: week, month, year." }
+        },
+        "required": ["metric", "period"]
+      }
+    },
+    {
+      "name": "set_alarm",
+      "description": "Set a one-time alarm at a given time with a label.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "time": { "type": "string", "description": "24-hour local time HH:MM." },
+          "label": { "type": "string", "description": "Alarm label, verbatim from the request." }
+        },
+        "required": ["time", "label"]
+      }
+    },
+    {
+      "name": "list_alarms",
+      "description": "List alarms scheduled for a given date. Does not create a new alarm.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "date": { "type": "string", "description": "ISO date YYYY-MM-DD." }
+        },
+        "required": ["date"]
+      }
+    },
+    {
+      "name": "join_video_meeting",
+      "description": "Join an already-scheduled video meeting by its meeting id.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "meeting_id": { "type": "string", "description": "Meeting id exactly as written by the user." }
+        },
+        "required": ["meeting_id"]
+      }
+    },
+    {
+      "name": "schedule_video_meeting",
+      "description": "Schedule a new video meeting with a title, date, and time. Not for joining one.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "title": { "type": "string", "description": "Meeting title, verbatim from the request." },
+          "date": { "type": "string", "description": "ISO date YYYY-MM-DD." },
+          "time": { "type": "string", "description": "24-hour local time HH:MM." }
+        },
+        "required": ["title", "date", "time"]
+      }
+    },
+    {
+      "name": "find_restaurant",
+      "description": "Search for restaurants by cuisine type near a location.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "cuisine": { "type": "string", "description": "Cuisine type, e.g. Italian, Korean." },
+          "location": { "type": "string", "description": "Neighbourhood or address, verbatim from the request." }
+        },
+        "required": ["cuisine", "location"]
+      }
+    },
+    {
+      "name": "reserve_restaurant",
+      "description": "Book a table at a specific restaurant by its id. Not for searching.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "restaurant_id": { "type": "string", "description": "Restaurant id exactly as written by the user." },
+          "date": { "type": "string", "description": "ISO date YYYY-MM-DD." },
+          "time": { "type": "string", "description": "24-hour local time HH:MM." },
+          "party_size": { "type": "number", "description": "Number of guests, digits only." }
+        },
+        "required": ["restaurant_id", "date", "time", "party_size"]
+      }
+    },
+    {
+      "name": "book_taxi",
+      "description": "Book a taxi pickup at a specific time between two addresses.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "pickup": { "type": "string", "description": "Pickup address, verbatim from the request." },
+          "dropoff": { "type": "string", "description": "Drop-off address, verbatim from the request." },
+          "time": { "type": "string", "description": "24-hour local time HH:MM." }
+        },
+        "required": ["pickup", "dropoff", "time"]
+      }
+    },
+    {
+      "name": "estimate_taxi_fare",
+      "description": "Estimate the fare for a taxi trip without booking. Not for scheduling a pickup.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "pickup": { "type": "string", "description": "Pickup address, verbatim from the request." },
+          "dropoff": { "type": "string", "description": "Drop-off address, verbatim from the request." }
+        },
+        "required": ["pickup", "dropoff"]
+      }
+    },
+    {
+      "name": "track_package",
+      "description": "Track a parcel by its carrier reference number. Takes a reference number, not an order id or tracking number.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "reference_number": {
+            "type": "string",
+            "description": "Carrier reference number exactly as written by the user."
+          }
+        },
+        "required": ["reference_number"]
+      }
+    },
+    {
+      "name": "lookup_delivery_status",
+      "description": "Check delivery status by purchase order id. Takes an order id, not a carrier reference.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "order_id": { "type": "string", "description": "Order id exactly as written by the user." }
+        },
+        "required": ["order_id"]
+      }
+    }
+  ]
+}

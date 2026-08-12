@@ -1,10 +1,20 @@
 'use client';
 
-import { delta, rankEntries, type ArenaEntry } from './model-arena';
+import { useT } from '@/components/LocaleProvider';
+import type { MessageKey } from '@/lib/i18n';
+import { delta, rankEntries, type ArenaEntry, type ArenaStatus } from './model-arena';
 
 function pct(v: number | null | undefined): string {
   return v == null ? '—' : `${(v * 100).toFixed(1)}%`;
 }
+
+const STATUS_KEYS: Record<ArenaStatus, MessageKey> = {
+  queued: 'evolve.arena.status.queued',
+  running: 'evolve.arena.status.running',
+  done: 'evolve.arena.status.done',
+  failed: 'evolve.arena.status.failed',
+  stopped: 'evolve.arena.status.stopped',
+};
 
 /**
  * Which model to ship the evolved prompt on.
@@ -21,6 +31,7 @@ function pct(v: number | null | undefined): string {
  * reason behind.
  */
 export function ModelArena({ entries }: { entries: ArenaEntry[] }) {
+  const t = useT();
   if (entries.length === 0) return null;
 
   const ranked = rankEntries(entries);
@@ -29,10 +40,9 @@ export function ModelArena({ entries }: { entries: ArenaEntry[] }) {
   return (
     <section className="arena">
       <div className="arena-head">
-        <div className="pane-label">Which model to ship the prompt on</div>
+        <div className="pane-label">{t('evolve.arena.title')}</div>
         <span className="field-hint">
-          {finished}/{entries.length} finished · ranked by held-out test, not by the split
-          each run was fitted to, and not by how much it improved
+          {t('evolve.arena.finishedRatio', { finished, total: entries.length })}
         </span>
       </div>
 
@@ -50,7 +60,7 @@ export function ModelArena({ entries }: { entries: ArenaEntry[] }) {
                 </span>
                 <span className="arena-test">
                   <strong>{pct(e.testQuality)}</strong>
-                  <span>test</span>
+                  <span>{t('evolve.arena.test')}</span>
                 </span>
               </div>
 
@@ -58,8 +68,11 @@ export function ModelArena({ entries }: { entries: ArenaEntry[] }) {
                 {/* Labelled `val`, because the big number beside it is test and two
                     unexplained percentages that disagree read as a bug rather than as
                     the difference between the split fitted to and the one held out. */}
-                <span title="Validation: the split this run was fitted against">
-                  val {pct(e.baselineQuality)} → {pct(e.evolvedQuality)}
+                <span title={t('evolve.arena.valTitle')}>
+                  {t('evolve.arena.valLabel', {
+                    baseline: pct(e.baselineQuality),
+                    evolved: pct(e.evolvedQuality),
+                  })}
                 </span>
                 {d != null ? (
                   <span className={d > 0 ? 'delta-up' : d < 0 ? 'delta-down' : undefined}>
@@ -67,9 +80,11 @@ export function ModelArena({ entries }: { entries: ArenaEntry[] }) {
                     {(d * 100).toFixed(1)} pts
                   </span>
                 ) : null}
-                {e.evolvedTokens != null ? <span>{e.evolvedTokens} tokens</span> : null}
+                {e.evolvedTokens != null ? (
+                  <span>{t('evolve.arena.tokens', { count: e.evolvedTokens })}</span>
+                ) : null}
                 <span className={`arena-status is-${e.status}`}>
-                  {e.status}
+                  {t(STATUS_KEYS[e.status])}
                   {e.status === 'running' ? ` ${e.rollouts}/${e.maxRollouts}` : ''}
                 </span>
               </div>
@@ -88,7 +103,7 @@ export function ModelArena({ entries }: { entries: ArenaEntry[] }) {
 
               {e.instruction ? (
                 <details className="arena-prompt">
-                  <summary>The prompt it won with</summary>
+                  <summary>{t('evolve.arena.promptItWonWith')}</summary>
                   <pre>{e.instruction}</pre>
                 </details>
               ) : null}

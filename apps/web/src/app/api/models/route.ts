@@ -2,7 +2,10 @@ import { NextResponse } from 'next/server';
 import { EVAL_MODELS } from '@redrob/harness';
 import {
   canonicalIdForRef,
+  getLiveSelfHostedModel,
+  getLiveSelfHostedSlots,
   getOpenRouterCatalog,
+  selfHostedSlotRow,
   normalizeModelId,
   OR_MODALITIES,
   sourceForProvider,
@@ -33,11 +36,18 @@ type Public = {
   source: ModelSource;
   callable: boolean;
   selfHosted?: {
-    axis: 'S' | 'L';
     precision: string;
     license: string;
     hfRepoId: string;
     maxModelLen: number;
+    /** What the endpoint answered when asked, as opposed to what Deploy planned. */
+    live?: {
+      reachable: boolean;
+      /** True when the row above was rewritten from the endpoint's own answer. */
+      synced: boolean;
+      baseUrl: string;
+      error: string | null;
+    };
   } | null;
 };
 
@@ -72,10 +82,15 @@ export async function GET(request: Request) {
     providers.find((p) => p.id === 'openrouter')?.configured,
   );
 
-  const curated: Public[] = EVAL_MODELS.map((m) => {
+  const curated: Public[] = [];
+  const curatedSeen = new Set<string>();
+  for (const m of EVAL_MODELS) {
+    const id = canonicalIdForRef(m);
+    if (curatedSeen.has(id)) continue;
+    curatedSeen.add(id);
     const provider = providers.find((p) => p.id === m.providerId);
-    return {
-      id: canonicalIdForRef(m),
+    curated.push({
+      id,
       label: m.label,
       providerId: m.providerId,
       modelId: m.modelId,
@@ -92,15 +107,87 @@ export async function GET(request: Request) {
       callable: Boolean(provider?.configured),
       selfHosted: m.selfHosted
         ? {
-            axis: m.selfHosted.axis,
             precision: m.selfHosted.precision,
             license: m.selfHosted.license,
             hfRepoId: m.selfHosted.hfRepoId,
             maxModelLen: m.selfHosted.maxModelLen,
           }
         : null,
-    };
-  });
+    });
+  }
+
+  // The vLLM row is built from the deploy default, which is a plan, not a fact.
+  // Ask the endpoint what it is actually serving before the picker names it,
+  // otherwise swapping the model on /deploy silently mislabels every result.
+  const wantsSelfHosted =
+    source === 'curated' || source === 'all' || source === 'selfhosted';
+  if (wantsSelfHosted && curated.some((c) => c.source === 'selfhosted')) {
+    // Every slot that answered gets its own row. The single placeholder row only
+    // survives when nothing answered, so the picker can still show why.
+    const slots = await getLiveSelfHostedSlots({ forceRefresh: refresh });
+    if (slots.length > 0) {
+      const placeholderIndex = curated.findIndex((c) => c.source === 'selfhosted');
+      const template = curated[placeholderIndex]!;
+      const slotRows: Public[] = slots.map((slot) => {
+        const ref = selfHostedSlotRow({
+          slot: slot.slot,
+          servedModelName: slot.servedModelName,
+          hfRepoId: slot.hfRepoId!,
+          maxModelLen: slot.maxModelLen,
+        });
+        return {
+          ...template,
+          id: canonicalIdForRef(ref),
+          label: `${ref.label} · slot ${slot.slot}`,
+          modelId: ref.modelId,
+          tier: ref.tier ?? null,
+          contextLength: ref.selfHosted?.maxModelLen ?? null,
+          callable: true,
+          selfHosted: {
+            precision: ref.selfHosted!.precision,
+            license: ref.selfHosted!.license,
+            hfRepoId: ref.selfHosted!.hfRepoId,
+            maxModelLen: ref.selfHosted!.maxModelLen,
+            live: {
+              reachable: true,
+              synced: true,
+              baseUrl: slot.baseUrl,
+              error: null,
+            },
+          },
+        };
+      });
+      // Drop every static self-hosted placeholder and use the live rows instead.
+      for (let i = curated.length - 1; i >= 0; i -= 1) {
+        if (curated[i]!.source === 'selfhosted') curated.splice(i, 1);
+      }
+      curated.splice(placeholderIndex, 0, ...slotRows);
+    } else {
+      // Nothing answered. Keep the single placeholder and describe the failure on
+      // it: an unreachable endpoint must not be selectable, because a key with
+      // nothing behind it used to look like a model scoring zero.
+      const live = await getLiveSelfHostedModel({ forceRefresh: refresh });
+      for (const row of curated) {
+        if (row.source !== 'selfhosted' || !row.selfHosted) continue;
+        const synced = live.reachable && Boolean(live.hfRepoId);
+        if (synced) {
+          row.label = `Self-hosted: ${live.label ?? live.hfRepoId}`;
+          row.selfHosted.hfRepoId = live.hfRepoId!;
+          if (live.maxModelLen) {
+            row.selfHosted.maxModelLen = live.maxModelLen;
+            row.contextLength = live.maxModelLen;
+          }
+        }
+        row.callable = row.callable && live.reachable;
+        row.selfHosted.live = {
+          reachable: live.reachable,
+          synced,
+          baseUrl: live.baseUrl,
+          error: live.error,
+        };
+      }
+    }
+  }
 
   let openrouter: Public[] = [];
   let fetchedAt: number | null = null;
@@ -185,6 +272,20 @@ export async function GET(request: Request) {
       .slice()
       .sort((a, b) => (b.created ?? 0) - (a.created ?? 0) || a.label.localeCompare(b.label));
   }
+
+  // Curated rows carry no `created`, so the newest-first sort buried them under
+  // hundreds of OpenRouter entries and the first page dropped them entirely:
+  // your own endpoint was findable only by searching for it. The picker already
+  // renders self-hosted and frontier as the first two groups, so pin them to
+  // match. Within each side the chosen sort still decides the order.
+  const SOURCE_RANK: Record<ModelSource, number> = {
+    selfhosted: 0,
+    frontier: 1,
+    openrouter: 2,
+  };
+  models = models
+    .slice()
+    .sort((a, b) => SOURCE_RANK[a.source] - SOURCE_RANK[b.source]);
 
   const total = models.length;
   const page = models.slice(offset, offset + limit);

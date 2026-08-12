@@ -36,6 +36,7 @@ export {
 } from './json-schema-subset';
 
 export {
+  COMMAND_ENV_VAR,
   DEFAULT_COMMAND,
   DEFAULT_TIMEOUT_MS,
   emitWithPython,
@@ -46,6 +47,7 @@ export {
   type BridgeOptions,
   type BridgeOutcome,
   type BridgePayload,
+  type BridgeUnavailableCode,
   type EmitOutcome,
   type EmitRequest,
   type StudyOutcome,

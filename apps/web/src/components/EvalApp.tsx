@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react';
 import { AppShell } from '@/components/AppShell';
+import { useT } from '@/components/LocaleProvider';
 import { GettingStartedPanel } from '@/components/GettingStartedPanel';
 import { ModelPicker, type CatalogModel } from '@/components/ModelPicker';
 import { EvolutionParetoChart } from '@/components/EvolutionParetoChart';
@@ -89,6 +90,7 @@ function RubricBreakdown({
   baseline?: Record<string, number>;
   evolved?: Record<string, number>;
 }) {
+  const t = useT();
   const names = [...new Set([...Object.keys(baseline ?? {}), ...Object.keys(evolved ?? {})])];
   if (names.length === 0) return null;
 
@@ -96,13 +98,13 @@ function RubricBreakdown({
 
   return (
     <div className="rubric-breakdown">
-      <div className="pane-label">By rubric dimension (out of 10)</div>
+      <div className="pane-label">{t('evolve.arena.rubricByDimension')}</div>
       <table className="data-table text-xs">
         <thead>
           <tr>
-            <th>Dimension</th>
-            <th>Baseline</th>
-            <th>Evolved</th>
+            <th>{t('evolve.arena.table.dimension')}</th>
+            <th>{t('evolve.arena.table.baseline')}</th>
+            <th>{t('evolve.arena.table.evolved')}</th>
             <th>Δ</th>
           </tr>
         </thead>
@@ -137,6 +139,7 @@ function RubricBreakdown({
 }
 
 export function EvalApp() {
+  const t = useT();
   const [status, setStatus] = useState<StatusResponse | null>(null);
   const [datasets, setDatasets] = useState<DatasetInfo[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -241,9 +244,16 @@ export function EvalApp() {
       mergeKnown(mJson.models ?? []);
 
       const callables = (mJson.models ?? []).filter((m) => m.callable);
-      setSelectedModels((prev) =>
-        prev.length ? prev : callables.slice(0, 2).map((m) => m.id),
-      );
+      setSelectedModels((prev) => {
+        if (prev.length) return [...new Set(prev)];
+        const defaults: string[] = [];
+        for (const m of callables) {
+          if (defaults.includes(m.id)) continue;
+          defaults.push(m.id);
+          if (defaults.length >= 2) break;
+        }
+        return defaults;
+      });
 
       const small =
         callables.find((m) => m.tier === 'small') ??
@@ -308,8 +318,8 @@ export function EvalApp() {
     setMaxPromptTokens(2048);
     setEvolveInstruction('');
     if (!routerSmallId && routerOptions[0]) setRouterSmallId(routerOptions[0].id);
-    setStatusLine('Starter applied — click Run GEPA');
-  }, [datasets, routerSmallId, routerOptions]);
+    setStatusLine(t('evolve.starterApplied'));
+  }, [datasets, routerSmallId, routerOptions, t]);
 
   const loadSampleReport = useCallback(async () => {
     setSampleLoading(true);
@@ -367,7 +377,7 @@ export function EvalApp() {
       setQualityFloor(json.qualityFloor);
       if (json.datasetId) setDatasetId(json.datasetId);
       setRunProgress([]);
-      setStatusLine('Sample report (offline) — no API calls');
+      setStatusLine('Sample report (offline), no API calls');
     } catch (e) {
       setRunError(e instanceof Error ? e.message : 'Failed to load sample report');
     } finally {
@@ -424,8 +434,8 @@ export function EvalApp() {
       });
     }
     abortRef.current?.abort();
-    setStatusLine('Stopping…');
-  }, []);
+    setStatusLine(t('evolve.stopping'));
+  }, [t]);
 
 
   const labelForModel = useCallback(
@@ -555,7 +565,7 @@ export function EvalApp() {
           setFrontierPoints(event.frontier);
           setEvolveTestQuality(event.test?.quality ?? null);
           setProgress({ done: event.rollouts, total: event.rollouts });
-          setStatusLine(`Done · ${event.best?.id ?? 'no feasible'}`);
+          setStatusLine(t('evolve.done', { best: event.best?.id ?? t('evolve.noFeasible') }));
           sessionStorage.removeItem(OPT_RUN_KEY);
           activeOptRunRef.current = null;
           void fetch(`/api/optimize/runs/${encodeURIComponent(runId)}`)
@@ -565,18 +575,18 @@ export function EvalApp() {
             })
             .catch(() => undefined);
         } else if (event.type === 'cancelled') {
-          setStatusLine('Stopped');
+          setStatusLine(t('evolve.stopped'));
           sessionStorage.removeItem(OPT_RUN_KEY);
           activeOptRunRef.current = null;
         } else if (event.type === 'error') {
           setRunError(event.message);
-          setStatusLine('Failed');
+          setStatusLine(t('evolve.failed'));
           sessionStorage.removeItem(OPT_RUN_KEY);
           activeOptRunRef.current = null;
         }
       }
     }
-  }, [maxRollouts]);
+  }, [maxRollouts, t]);
 
   // Reconnect GEPA optimize job after refresh
   useEffect(() => {
@@ -588,14 +598,14 @@ export function EvalApp() {
     activeOptRunRef.current = runId;
     const frame = requestAnimationFrame(() => {
       setRunning(true);
-      setStatusLine(`Reconnecting GEPA · ${runId}`);
+      setStatusLine(t('evolve.reconnecting', { runId }));
       void (async () => {
         try {
           await consumeOptimizeEvents(runId, ac.signal);
         } catch (e) {
           if (!cancelled && !isAbortError(e)) {
-            setRunError(e instanceof Error ? e.message : 'Reconnect failed');
-            setStatusLine('Failed');
+            setRunError(e instanceof Error ? e.message : t('evolve.reconnectFailed'));
+            setStatusLine(t('evolve.failed'));
             sessionStorage.removeItem('redrob.activeOptimizeRunId');
           }
         } finally {
@@ -611,21 +621,21 @@ export function EvalApp() {
       cancelAnimationFrame(frame);
       ac.abort();
     };
-  }, [consumeOptimizeEvents]);
+  }, [consumeOptimizeEvents, t]);
 
   const runEvolve = async () => {
     if (running) return;
     if (!routerSmallId) {
-      setRunError('Pick a seed model');
+      setRunError(t('evolve.pickSeedModel'));
       return;
     }
     if (evolveSource === 'custom') {
       if (!customGoalText.trim() || !customRubric.trim()) {
-        setRunError('Custom goal requires both goal and rubric');
+        setRunError(t('evolve.customGoalNeedsBoth'));
         return;
       }
       if (!customExamplesRaw.trim()) {
-        setRunError('Paste at least 3 JSONL examples with an "input" field');
+        setRunError(t('evolve.needsExamples'));
         return;
       }
     }
@@ -641,7 +651,7 @@ export function EvalApp() {
     setEvolveTestQuality(null);
     setEvolveReport(null);
     setProgress({ done: 0, total: maxRollouts });
-    setStatusLine('Starting GEPA…');
+    setStatusLine(t('evolve.starting'));
 
     try {
       const base = {
@@ -715,10 +725,10 @@ export function EvalApp() {
       await consumeOptimizeEvents(startBody.runId, ac.signal);
     } catch (e) {
       if (isAbortError(e)) {
-        setStatusLine('Stopped');
+        setStatusLine(t('evolve.stopped'));
       } else {
-        setRunError(e instanceof Error ? e.message : 'Optimize failed');
-        setStatusLine('Failed');
+        setRunError(e instanceof Error ? e.message : t('evolve.optimizeFailed'));
+        setStatusLine(t('evolve.failed'));
       }
     } finally {
       abortRef.current = null;
@@ -734,9 +744,9 @@ export function EvalApp() {
   const runBlockedReason = (() => {
     if (running || !runDisabled) return null;
     if (!canRun) {
-      return 'Add a provider key to repo-root .env, restart yarn dev, then Refresh.';
+      return t('evolve.blockedNoKey');
     }
-    if (!routerSmallId) return 'Pick a Seed model in Config.';
+    if (!routerSmallId) return t('evolve.blockedNoSeed');
     return null;
   })();
 
@@ -757,22 +767,25 @@ export function EvalApp() {
       }
       right={
         <>
-          <span className="app-muted" title="Configured provider keys / total providers">
-            keys {configuredCount}/{status?.providers.length ?? 0}
+          <span className="app-muted" title={t('evolve.keysCountTitle')}>
+            {t('evolve.keysCount', {
+              configured: configuredCount,
+              total: status?.providers.length ?? 0,
+            })}
           </span>
           <button
             type="button"
             className="app-ghost-btn"
             onClick={() => (showGuide ? dismissGuide() : openGuide())}
           >
-            {showGuide ? 'Hide guide' : 'Guide'}
+            {showGuide ? t('evolve.hideGuide') : t('evolve.showGuide')}
           </button>
           <button type="button" className="app-ghost-btn" onClick={() => void bootstrap()}>
-            Refresh
+            {t('evolve.refresh')}
           </button>
           {running ? (
             <button type="button" className="app-stop-btn" onClick={stopRun}>
-              Stop
+              {t('evolve.stop')}
             </button>
           ) : (
             <span className="app-titlebar-run">
@@ -783,7 +796,7 @@ export function EvalApp() {
                 title={runBlockedReason ?? undefined}
                 onClick={() => void runEvolve()}
               >
-                Run GEPA
+                {t('evolve.runGepa')}
               </button>
             </span>
           )}
@@ -807,7 +820,7 @@ export function EvalApp() {
         }
       >
         <aside className="app-pane app-pane-config">
-          <div className="pane-label">Config</div>
+          <div className="pane-label">{t('evolve.config.label')}</div>
 
           {showGuide ? (
             <GettingStartedPanel
@@ -830,21 +843,21 @@ export function EvalApp() {
                   className={evolveSource === 'catalog' ? 'on' : undefined}
                   onClick={() => setEvolveSource('catalog')}
                 >
-                  Catalog dataset
+                  {t('evolve.config.catalogDataset')}
                 </button>
                 <button
                   type="button"
                   className={evolveSource === 'custom' ? 'on' : undefined}
                   onClick={() => setEvolveSource('custom')}
                 >
-                  Custom goal
+                  {t('evolve.config.customGoal')}
                 </button>
               </div>
 
               {evolveSource === 'catalog' ? (
                 <>
                   <label className="field">
-                    <span>Dataset</span>
+                    <span>{t('evolve.config.dataset')}</span>
                     <select value={datasetId} onChange={(e) => setDatasetId(e.target.value)}>
                       {datasets.map((d) => (
                         <option key={d.id} value={d.id}>
@@ -856,7 +869,7 @@ export function EvalApp() {
 
                   <label className="field">
                     <span>
-                      Samples <strong>{sampleCount}</strong>
+                      {t('evolve.config.samples')} <strong>{sampleCount}</strong>
                     </span>
                     <div className="sample-presets">
                       {SAMPLE_PRESETS.map((n) => (
@@ -882,27 +895,27 @@ export function EvalApp() {
               ) : (
                 <>
                   <label className="field">
-                    <span>Goal</span>
+                    <span>{t('evolve.config.goal')}</span>
                     <textarea
                       rows={3}
                       value={customGoalText}
                       onChange={(e) => setCustomGoalText(e.target.value)}
-                      placeholder="e.g. Write the best system prompt for evaluating a hiring candidate against a job description."
+                      placeholder={t('evolve.config.goalPlaceholder')}
                       style={{ width: '100%', font: 'inherit', padding: '0.4rem' }}
                     />
                   </label>
                   <label className="field">
-                    <span>Rubric</span>
+                    <span>{t('evolve.config.rubric')}</span>
                     <textarea
                       rows={4}
                       value={customRubric}
                       onChange={(e) => setCustomRubric(e.target.value)}
-                      placeholder="What should the judge score? List criteria (clarity, evidence, bias, …)."
+                      placeholder={t('evolve.config.rubricPlaceholder')}
                       style={{ width: '100%', font: 'inherit', padding: '0.4rem' }}
                     />
                   </label>
                   <label className="field">
-                    <span>Examples (JSONL or JSON array)</span>
+                    <span>{t('evolve.config.examples')}</span>
                     <textarea
                       rows={6}
                       value={customExamplesRaw}
@@ -916,13 +929,10 @@ export function EvalApp() {
                         fontSize: '0.75rem',
                       }}
                     />
-                    <span className="field-hint">
-                      Input-only · 3–80 rows · scored by an LLM judge (can be gamed — use a strong
-                      judge + floor you trust).
-                    </span>
+                    <span className="field-hint">{t('evolve.config.examplesHint')}</span>
                   </label>
                   <label className="field">
-                    <span>Judge model</span>
+                    <span>{t('evolve.config.judgeModel')}</span>
                     <select
                       value={evolveJudgeModelId || routerLargeId || routerSmallId}
                       onChange={(e) => setEvolveJudgeModelId(e.target.value)}
@@ -933,17 +943,14 @@ export function EvalApp() {
                         </option>
                       ))}
                     </select>
-                    <span className="field-hint">
-                      Scores each answer against your fixed goal + rubric (quality signal for GEPA).
-                      Prefer a strong model; defaults to reflect if unset.
-                    </span>
+                    <span className="field-hint">{t('evolve.config.judgeModelHint')}</span>
                   </label>
                 </>
               )}
 
               <label className="field">
                 <span>
-                  Quality floor <strong>{qualityFloor.toFixed(2)}</strong>
+                  {t('evolve.config.qualityFloor')} <strong>{qualityFloor.toFixed(2)}</strong>
                 </span>
                 <input
                   type="range"
@@ -953,12 +960,12 @@ export function EvalApp() {
                   value={qualityFloor}
                   onChange={(e) => setQualityFloor(Number(e.target.value))}
                 />
-                <span className="field-hint">Below floor = infeasible (not a soft penalty).</span>
+                <span className="field-hint">{t('evolve.config.qualityFloorHint')}</span>
               </label>
 
               <label className="field">
                 <span>
-                  Max rollouts <strong>{maxRollouts}</strong>
+                  {t('evolve.config.maxRollouts')} <strong>{maxRollouts}</strong>
                 </span>
                 <input
                   type="range"
@@ -971,7 +978,7 @@ export function EvalApp() {
 
               <label className="field">
                 <span>
-                  Minibatch <strong>{minibatchSize}</strong>
+                  {t('evolve.config.minibatch')} <strong>{minibatchSize}</strong>
                 </span>
                 <input
                   type="range"
@@ -984,7 +991,7 @@ export function EvalApp() {
 
               <div className="router-pair">
                 <label className="field">
-                  <span>Seed model</span>
+                  <span>{t('evolve.config.seedModel')}</span>
                   <select
                     value={routerSmallId}
                     onChange={(e) => setRouterSmallId(e.target.value)}
@@ -995,12 +1002,10 @@ export function EvalApp() {
                       </option>
                     ))}
                   </select>
-                  <span className="field-hint">
-                    Runs the candidate prompt on your examples (the model you are optimizing for).
-                  </span>
+                  <span className="field-hint">{t('evolve.config.seedModelHint')}</span>
                 </label>
                 <label className="field">
-                  <span>Reflect model</span>
+                  <span>{t('evolve.config.reflectModel')}</span>
                   <select
                     value={routerLargeId || routerSmallId}
                     onChange={(e) => setRouterLargeId(e.target.value)}
@@ -1011,10 +1016,7 @@ export function EvalApp() {
                       </option>
                     ))}
                   </select>
-                  <span className="field-hint">
-                    Meta-LLM: reads failures and rewrites the instruction (does not serve end users).
-                    A stronger model often mutates better.
-                  </span>
+                  <span className="field-hint">{t('evolve.config.reflectModelHint')}</span>
                 </label>
               </div>
 
@@ -1022,7 +1024,7 @@ export function EvalApp() {
                   whether the prompt improved, and the model that improves most is
                   routinely not the answer: it improves most because it started worst. */}
               <div className="field">
-                <span>Also evolve, for comparison</span>
+                <span>{t('evolve.config.alsoEvolve')}</span>
                 {arenaModelIds.length > 0 ? (
                   <div className="arena-picker">
                     {arenaModelIds.map((id) => (
@@ -1031,7 +1033,7 @@ export function EvalApp() {
                         type="button"
                         className="arena-chip on"
                         disabled={running}
-                        title={`Remove ${labelForModel(id)}`}
+                        title={t('evolve.config.removeChallenger', { label: labelForModel(id) })}
                         onClick={() => setArenaModelIds((prev) => prev.filter((x) => x !== id))}
                       >
                         <span>{labelForModel(id)}</span>
@@ -1054,8 +1056,8 @@ export function EvalApp() {
                   >
                     <option value="">
                       {arenaModelIds.length >= ARENA_MAX
-                        ? `At most ${ARENA_MAX} challengers`
-                        : 'Add a model to race…'}
+                        ? t('evolve.config.maxChallengers', { max: ARENA_MAX })
+                        : t('evolve.config.addModelToRace')}
                     </option>
                     {routerOptions
                       .filter((m) => m.id !== routerSmallId && !arenaModelIds.includes(m.id))
@@ -1068,14 +1070,15 @@ export function EvalApp() {
                 </div>
                 <span className="field-hint">
                   {arenaModelIds.length === 0
-                    ? 'Off. Add models to run the same search on each and rank them by held-out test.'
-                    : `${arenaModelIds.length + 1} models, one goal, one rubric, one budget — and ${arenaModelIds.length + 1}× the calls.`}
+                    ? t('evolve.config.arenaOffHint')
+                    : t('evolve.config.arenaOnHint', { count: arenaModelIds.length + 1 })}
                 </span>
               </div>
 
               <label className="field">
                 <span>
-                  Prompt budget <strong>{maxPromptTokens}</strong> tokens
+                  {t('evolve.config.promptBudget')}{' '}
+                  <strong>{t('evolve.config.promptBudgetTokens', { tokens: maxPromptTokens })}</strong>
                 </span>
                 <input
                   type="range"
@@ -1085,42 +1088,39 @@ export function EvalApp() {
                   value={maxPromptTokens}
                   onChange={(e) => setMaxPromptTokens(Number(e.target.value))}
                 />
-                <span className="field-hint">
-                  Demos that do not fit are dropped (demos_requested vs demos_fitted).
-                </span>
+                <span className="field-hint">{t('evolve.config.promptBudgetHint')}</span>
               </label>
 
               <label className="field">
-                <span>Seed instruction</span>
+                <span>{t('evolve.config.seedInstruction')}</span>
                 <textarea
                   rows={4}
                   value={evolveInstruction}
                   onChange={(e) => setEvolveInstruction(e.target.value)}
                   placeholder={
                     evolveSource === 'custom'
-                      ? 'Optional — blank derives a seed from your goal'
-                      : 'Optional — leave blank for a task default'
+                      ? t('evolve.config.seedInstructionPlaceholderCustom')
+                      : t('evolve.config.seedInstructionPlaceholderCatalog')
                   }
                   style={{ width: '100%', font: 'inherit', padding: '0.4rem' }}
                 />
               </label>
 
               <p className="field-hint">
-                GEPA evolves instruction / demos / model / script_policy under a quality floor,
-                minimizing tokens. Seed runs the prompt; reflect rewrites it
-                {evolveSource === 'custom' ? '; judge scores outputs vs your rubric' : ''}.
-                Train+val only; test once at the end.
+                {t('evolve.config.gepaExplainer', {
+                  judgeNote: evolveSource === 'custom' ? t('evolve.config.judgeNote') : '',
+                })}
               </p>
           </>
 
           <div className="providers-compact">
-            <div className="pane-label">Providers</div>
+            <div className="pane-label">{t('evolve.config.providers')}</div>
             <ul>
               {status?.providers.map((p) => (
                 <li key={p.id}>
                   <span>{p.label}</span>
                   <span className={p.configured ? 'ok' : 'miss'}>
-                    {p.configured ? 'ready' : '—'}
+                    {p.configured ? t('evolve.config.providerReady') : '—'}
                   </span>
                 </li>
               ))}
@@ -1156,11 +1156,11 @@ export function EvalApp() {
         />
 
         <section className="app-pane app-pane-results">
-          <div className="pane-label">GEPA evolution</div>
+          <div className="pane-label">{t('evolve.results.title')}</div>
 
           {runProgress.length > 0 ? (
             <div className="run-progress">
-              <div className="pane-label">Progress</div>
+              <div className="pane-label">{t('evolve.results.progress')}</div>
               <ul className="run-progress-list">
                 {runProgress.map((row) => {
                   const pctDone =
@@ -1193,7 +1193,11 @@ export function EvalApp() {
           <div className="results-stack">
               {frontierPoints.length > 0 || evolveHistory.length > 0 ? (
                 <>
-                  <div className="evolve-view-switch" role="tablist" aria-label="Evolve chart">
+                  <div
+                    className="evolve-view-switch"
+                    role="tablist"
+                    aria-label={t('evolve.results.chartAria')}
+                  >
                     <button
                       type="button"
                       role="tab"
@@ -1201,7 +1205,7 @@ export function EvalApp() {
                       className={evolveView === 'progress' ? 'on' : undefined}
                       onClick={() => setEvolveView('progress')}
                     >
-                      Progress
+                      {t('evolve.results.progress')}
                       {evolveHistory.length > 0
                         ? ` · ${evolveHistory.length}`
                         : ''}
@@ -1213,7 +1217,7 @@ export function EvalApp() {
                       className={evolveView === 'frontier' ? 'on' : undefined}
                       onClick={() => setEvolveView('frontier')}
                     >
-                      Frontier
+                      {t('evolve.results.frontier')}
                       {frontierPoints.length > 0
                         ? ` · ${frontierPoints.length}`
                         : ''}
@@ -1226,10 +1230,7 @@ export function EvalApp() {
                         qualityFloor={evolveReport?.qualityFloor ?? qualityFloor}
                       />
                     ) : (
-                      <p className="empty">
-                        Waiting for the first rollout… Progress plots quality over time as
-                        candidates evaluate.
-                      </p>
+                      <p className="empty">{t('evolve.results.waitingFirstRollout')}</p>
                     )
                   ) : frontierPoints.length > 0 ? (
                     <EvolutionParetoChart
@@ -1239,32 +1240,27 @@ export function EvalApp() {
                       qualityFloor={evolveReport?.qualityFloor ?? qualityFloor}
                     />
                   ) : (
-                    <p className="empty">
-                      Frontier updates after rollouts. Switch to Progress to watch the run.
-                    </p>
+                    <p className="empty">{t('evolve.results.frontierUpdatesAfterRollouts')}</p>
                   )}
                 </>
               ) : (
                 <>
-                  <p className="field-hint">
-                    Progress shows quality over rollout time. Frontier shows the final
-                    quality-vs-tokens tradeoff. Prefer higher quality and fewer tokens.
-                  </p>
+                  <p className="field-hint">{t('evolve.results.chartsExplainer')}</p>
                   <p className="empty">
                     {showGuide
-                      ? 'Apply starter settings in Config, then Run GEPA — or Preview sample report (offline).'
-                      : 'Open Guide for a sample workflow, or set quality floor + seed → Run GEPA.'}
+                      ? t('evolve.results.emptyGuideOpen')
+                      : t('evolve.results.emptyGuideClosed')}
                   </p>
                 </>
               )}
               {evolveLesson ? (
                 <p className="field-hint">
-                  <strong>Lesson:</strong> {evolveLesson}
+                  <strong>{t('evolve.results.lesson')}</strong> {evolveLesson}
                 </p>
               ) : null}
               {bestCandidate ? (
                 <div className="selected-summary">
-                  <div className="pane-label">Best feasible</div>
+                  <div className="pane-label">{t('evolve.results.bestFeasible')}</div>
                   <p className="field-hint">
                     {bestCandidate.id} · {bestCandidate.model.modelId} · demos{' '}
                     {bestCandidate.demos.length}
@@ -1291,9 +1287,10 @@ export function EvalApp() {
 
               {evolveReport ? (
                 <div className="selected-summary">
-                  <div className="pane-label">Baseline vs evolved</div>
+                  <div className="pane-label">{t('evolve.results.baselineVsEvolved')}</div>
                   <p className="field-hint">
-                    Val quality {evolveReport.baseline.val?.quality != null
+                    {t('evolve.results.valQuality')}{' '}
+                    {evolveReport.baseline.val?.quality != null
                       ? pct(evolveReport.baseline.val.quality)
                       : '—'}{' '}
                     →{' '}
@@ -1309,17 +1306,17 @@ export function EvalApp() {
                     evolved={evolveReport.evolved.val?.dimensions}
                   />
                   <p className="field-hint">
-                    Val tokens {evolveReport.baseline.val?.totalTokens ?? '—'} →{' '}
+                    {t('evolve.results.valTokens')} {evolveReport.baseline.val?.totalTokens ?? '—'} →{' '}
                     {evolveReport.evolved.val?.totalTokens ?? '—'}
                     {evolveReport.tokenDelta != null
                       ? ` (Δ ${evolveReport.tokenDelta >= 0 ? '+' : ''}${evolveReport.tokenDelta})`
                       : ''}
                     {evolveReport.relativeCostPct != null
-                      ? ` · rel. cost ${evolveReport.relativeCostPct.toFixed(1)}% of baseline`
+                      ? ` ${t('evolve.results.relCost', { pct: evolveReport.relativeCostPct.toFixed(1) })}`
                       : ''}
                   </p>
                   <p className="field-hint">
-                    Demos fitted {evolveReport.demos.baselineFitted}/
+                    {t('evolve.results.demosFitted')} {evolveReport.demos.baselineFitted}/
                     {evolveReport.demos.baselineRequested} →{' '}
                     {evolveReport.demos.evolvedFitted}/
                     {evolveReport.demos.evolvedRequested}
@@ -1330,14 +1327,14 @@ export function EvalApp() {
                         href={`/api/optimize/runs/${encodeURIComponent(evolveReport.runId)}?export=md`}
                         download
                       >
-                        Download report.md
+                        {t('evolve.results.downloadReport')}
                       </a>
                       {' · '}
                       <a
                         href={`/api/optimize/runs/${encodeURIComponent(evolveReport.runId)}?export=json`}
                         download
                       >
-                        report.json
+                        {t('evolve.results.downloadJson')}
                       </a>
                     </p>
                   ) : null}

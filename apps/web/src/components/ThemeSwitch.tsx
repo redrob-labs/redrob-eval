@@ -1,13 +1,8 @@
 'use client';
 
+import { useT } from '@/components/LocaleProvider';
 import { useTheme } from '@/components/ThemeProvider';
 import { THEMES, type Theme } from '@/lib/theme';
-
-const LABELS: Record<Theme, string> = {
-  system: 'System',
-  light: 'Light',
-  dark: 'Dark',
-};
 
 function Icon({ theme }: { theme: Theme }) {
   const common = {
@@ -44,6 +39,15 @@ function Icon({ theme }: { theme: Theme }) {
   );
 }
 
+function useThemeLabels(): Record<Theme, string> {
+  const t = useT();
+  return {
+    system: t('theme.system'),
+    light: t('theme.light'),
+    dark: t('theme.dark'),
+  };
+}
+
 /**
  * The three-way choice, spelled out.
  *
@@ -52,11 +56,13 @@ function Icon({ theme }: { theme: Theme }) {
  * to invent a position for the case where the OS is dark and the user never chose.
  */
 export function ThemeSwitch() {
+  const t = useT();
   const { theme, resolved, setTheme } = useTheme();
+  const labels = useThemeLabels();
 
   return (
     <div className="theme-switch">
-      <div className="theme-switch-options" role="radiogroup" aria-label="Colour theme">
+      <div className="theme-switch-options" role="radiogroup" aria-label={t('theme.ariaGroup')}>
         {THEMES.map((option) => (
           <button
             key={option}
@@ -67,14 +73,12 @@ export function ThemeSwitch() {
             onClick={() => setTheme(option)}
           >
             <Icon theme={option} />
-            {LABELS[option]}
+            {labels[option]}
           </button>
         ))}
       </div>
       {theme === 'system' ? (
-        <p className="theme-switch-note">
-          Following your operating system, which is currently {resolved}.
-        </p>
+        <p className="theme-switch-note">{t('theme.followingSystem', { resolved })}</p>
       ) : null}
     </div>
   );
@@ -88,7 +92,9 @@ export function ThemeSwitch() {
  * for the person who just walked into a dark room.
  */
 export function ThemeToggle() {
+  const t = useT();
   const { theme, resolved, setTheme } = useTheme();
+  const labels = useThemeLabels();
   const next = THEMES[(THEMES.indexOf(theme) + 1) % THEMES.length];
 
   return (
@@ -96,8 +102,12 @@ export function ThemeToggle() {
       type="button"
       className="app-theme-toggle"
       onClick={() => setTheme(next)}
-      title={`Theme: ${LABELS[theme]}${theme === 'system' ? ` (${resolved})` : ''} — click for ${LABELS[next]}`}
-      aria-label={`Colour theme: ${LABELS[theme]}. Switch to ${LABELS[next]}.`}
+      title={t('theme.toggleTitle', {
+        current: labels[theme],
+        note: theme === 'system' ? ` (${resolved})` : '',
+        next: labels[next],
+      })}
+      aria-label={t('theme.toggleAria', { current: labels[theme], next: labels[next] })}
     >
       <Icon theme={theme} />
     </button>

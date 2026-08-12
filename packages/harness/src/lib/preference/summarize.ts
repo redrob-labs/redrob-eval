@@ -66,12 +66,12 @@ export function summarizePreferenceRun(params: {
     const parts: string[] = [];
     if (anyTrunc) {
       parts.push(
-        'Non-zero truncationRate: some outputs stopped on a length/token cap (finishReason length/max_tokens). Raise generationParams.maxTokens — especially for reasoning models that share the budget — or shorten the task before voting.',
+        'Non-zero truncationRate: some outputs stopped on a length/token cap (finishReason length/max_tokens). Raise generationParams.maxTokens, especially for reasoning models that share the budget, or shorten the task before voting.',
       );
     }
     if (nearCap) {
       parts.push(
-        'Per-section lengths cluster near maxTokens across models — classic cap signature. Raise maxTokens or shorten sections before voting.',
+        'Per-section lengths cluster near maxTokens across models, the classic cap signature. Raise maxTokens or shorten sections before voting.',
       );
     }
     truncationWarningMessage = parts.join(' ');

@@ -64,9 +64,16 @@ export async function writeTournamentMeta(
 }
 
 export async function appendVote(runId: string, vote: Vote): Promise<void> {
+  await appendVotes(runId, [vote]);
+}
+
+/** One write, so a group vote's pairwise rows cannot land half-written. */
+export async function appendVotes(runId: string, votes: Vote[]): Promise<void> {
+  if (votes.length === 0) return;
   const dir = runDir(runId);
   await fs.mkdir(dir, { recursive: true });
-  await fs.appendFile(path.join(dir, 'votes.jsonl'), `${JSON.stringify(vote)}\n`, 'utf8');
+  const lines = votes.map((v) => `${JSON.stringify(v)}\n`).join('');
+  await fs.appendFile(path.join(dir, 'votes.jsonl'), lines, 'utf8');
 }
 
 export async function readTournament(runId: string): Promise<TournamentRun> {

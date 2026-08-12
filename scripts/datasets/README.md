@@ -7,4 +7,4 @@ yarn datasets:fetch
 yarn datasets:fetch --id=gsm8k-main
 ```
 
-`indic-glue-iitp-mr-hi` writes to `datasets/local/` (gitignored) because of CC-BY-NC / external terms — do not commit those rows.
+A dataset whose terms bar redistribution goes in `LOCAL_ONLY_DATASET_IDS` and writes to `datasets/local/` (gitignored) instead. The catalog has none today.

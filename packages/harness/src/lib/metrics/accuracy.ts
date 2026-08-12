@@ -18,10 +18,14 @@ export function accuracyMatch(gold: string, prediction: string): AccuracyResult 
   const p = normalizeLabel(prediction);
   // Allow "label: 2" / "Label 2" style model answers for int ClassLabels
   const goldNum = g.match(/^-?\d+$/)?.[0];
+  const goldLetter = g.match(/^[a-d]$/)?.[0];
   let predNorm = p;
   if (goldNum != null) {
     const m = p.match(/-?\d+/);
     if (m) predNorm = m[0]!;
+  } else if (goldLetter != null) {
+    const letters = [...p.matchAll(/\b([a-d])\b/gi)].map((m) => m[1]!.toLowerCase());
+    if (letters.length > 0) predNorm = letters[letters.length - 1]!;
   }
   const correct = g === predNorm || g === p;
   return {

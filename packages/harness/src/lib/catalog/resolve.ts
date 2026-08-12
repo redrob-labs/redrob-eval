@@ -1,4 +1,10 @@
-import { EVAL_MODELS, getModelById, type ModelRef } from '../../config/models';
+import {
+  EVAL_MODELS,
+  getModelById,
+  selfHostedSlotId,
+  selfHostedSlotRow,
+  type ModelRef,
+} from '../../config/models';
 import {
   canonicalIdForRef,
   normalizeModelId,
@@ -12,6 +18,7 @@ import {
   OR_ID_PREFIX,
   type OpenRouterCatalogEntry,
 } from './openrouter';
+import { getLiveSelfHostedSlots, syncSelfHostedRef } from './self-hosted-live';
 
 function stripPrivate(e: OpenRouterCatalogEntry): ModelRef & { evalEligible: boolean } {
   return {
@@ -41,19 +48,62 @@ function toResolved(ref: ModelRef & { evalEligible?: boolean }): ResolvedModel {
 }
 
 /**
+ * Match a deploy-slot id against the endpoints that are actually serving.
+ *
+ * Accepts the catalog id (`vllm-endpoint-s1`), the canonical id
+ * (`vllm/redrob-s1`) and the bare served alias, so a saved run keeps resolving
+ * whichever spelling it stored.
+ */
+async function resolveSelfHostedSlot(id: string): Promise<ModelRef | undefined> {
+  const wanted = id.trim();
+  if (!wanted || !/(^|\/|-)(vllm|redrob)/i.test(wanted)) return undefined;
+
+  const slots = await getLiveSelfHostedSlots();
+  if (slots.length === 0) return undefined;
+
+  const hit = slots.find((s) => {
+    const canonical = `vllm/${s.servedModelName}`;
+    return (
+      wanted === selfHostedSlotId(s.slot) ||
+      wanted === canonical ||
+      wanted === s.servedModelName
+    );
+  });
+  if (!hit?.hfRepoId) return undefined;
+
+  return selfHostedSlotRow({
+    slot: hit.slot,
+    servedModelName: hit.servedModelName,
+    hfRepoId: hit.hfRepoId,
+    maxModelLen: hit.maxModelLen,
+  });
+}
+
+/**
  * Resolve any model id — curated, canonical, `or/<slug>`, or a bare
  * OpenRouter slug — into a callable reference.
  *
- * Self-hosted vLLM rows resolve from the curated catalog without touching the
- * network, so Compare can rank a local deploy next to a frontier API model.
+ * Self-hosted vLLM rows resolve from the curated catalog, then follow the live
+ * endpoint: Deploy can swap the weights behind the alias, and a result labeled
+ * with the model that used to be there is worse than no result. The probe is
+ * memoized and never throws, so an endpoint that is off costs one timeout.
  */
 export async function resolveModel(id: string): Promise<ResolvedModel | undefined> {
+  // Deploy slots come before the curated lookup: they are the live fact, and
+  // their ids (`vllm-endpoint-s1`, `vllm/redrob-s1`) are not in the static list.
+  const slotRef = await resolveSelfHostedSlot(id);
+  if (slotRef) return toResolved({ ...slotRef, evalEligible: true });
+
   const curatedDirect = getModelById(id);
-  if (curatedDirect) return toResolved({ ...curatedDirect, evalEligible: true });
+  if (curatedDirect) {
+    return toResolved(await syncSelfHostedRef({ ...curatedDirect, evalEligible: true }));
+  }
 
   const canonical = normalizeModelId(id);
   const curatedByCanonical = EVAL_MODELS.find((m) => canonicalIdForRef(m) === canonical);
-  if (curatedByCanonical) return toResolved({ ...curatedByCanonical, evalEligible: true });
+  if (curatedByCanonical) {
+    return toResolved(await syncSelfHostedRef({ ...curatedByCanonical, evalEligible: true }));
+  }
 
   const parsed = parseCanonicalModelId(canonical);
 

@@ -7,6 +7,7 @@ import type { EvalSample } from '../datasets/types';
 import { scorePair } from '../metrics/index';
 import { callModel, ProviderError } from '../providers/index';
 import { routeSample, type RouteDecision } from '../router/index';
+import { stripReasoning } from '../tool-routing/parse';
 import { enrichSummaries, pickLargeBaseline, summarizeTarget } from './aggregate';
 import { buildEvalPrompt, maxTokensForTask } from './prompts';
 import { ensureResultCaveats, withMandatoryCaveat } from './results';
@@ -62,6 +63,23 @@ function customDatasetRef(req: EvalRunRequest, metric: MetricId, count: number):
   };
 }
 
+/**
+ * Ceiling for a hosted reply that may open with a reasoning trace. The task
+ * budgets below are sized for the answer alone, and a thinking model spends
+ * them before it starts one: cut there, we would be scoring our own cap. Local
+ * (vLLM) runs omit the field entirely and let the server's context be the
+ * limit; hosted APIs keep a number because an unbounded call there is a bill.
+ */
+export const REASONING_REPLY_MAX_TOKENS = 4096;
+
+export function replyMaxTokens(
+  providerId: ModelRef['providerId'],
+  taskMax: number,
+): number | null {
+  if (providerId === 'vllm') return null;
+  return Math.max(taskMax, REASONING_REPLY_MAX_TOKENS);
+}
+
 async function evalOneSample(params: {
   model: ModelRef;
   prompt: string;
@@ -75,15 +93,32 @@ async function evalOneSample(params: {
 }): Promise<EvalSampleResult & { timeToFirstTokenMs?: number }> {
   try {
     const result = await callModel(params.model.providerId, params.model.modelId, params.prompt, {
-      maxTokens: params.maxTokens,
+      maxTokens: replyMaxTokens(params.model.providerId, params.maxTokens),
       temperature: 0,
     });
-    const score = params.scored ? scorePair(params.metric, params.gold, result.text).score : 0;
+    // A thinking model's trace is not the answer, and scoring it as one reads
+    // as a wrong answer from a model that never got to speak.
+    const answer = stripReasoning(result.text).trim();
+    if (!answer) {
+      return {
+        sampleId: params.sampleId,
+        score: 0,
+        latencyMs: result.latencyMs,
+        prediction: result.text,
+        error:
+          result.finishReason === 'length'
+            ? 'Cut off inside the reasoning trace before any answer'
+            : 'Reasoning trace only, no answer',
+        route: params.route,
+        timeToFirstTokenMs: result.timeToFirstTokenMs,
+      };
+    }
+    const score = params.scored ? scorePair(params.metric, params.gold, answer).score : 0;
     return {
       sampleId: params.sampleId,
       score,
       latencyMs: result.latencyMs,
-      prediction: result.text,
+      prediction: answer,
       route: params.route,
       timeToFirstTokenMs: result.timeToFirstTokenMs,
     };
@@ -295,6 +330,7 @@ export async function* runEval(
         sampleId: sample.id,
         score: result.error || !scored ? undefined : result.score,
         latencyMs: result.latencyMs,
+        prediction: result.prediction,
         error: result.error,
         route,
       };
@@ -316,7 +352,7 @@ export async function* runEval(
       : undefined;
     const extra: string[] = [];
     if (costSource === 'unmeasured-fallback') {
-      extra.push('relative cost uses unmeasured fallback — run Benchmark on /deploy');
+      extra.push('relative cost uses unmeasured fallback, run Benchmark on /deploy');
     }
     if (kind === 'router' && routerSmall && routerLarge) {
       extra.push(`router; small=${routerSmall.id}; large=${routerLarge.id}`);

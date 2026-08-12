@@ -60,7 +60,7 @@ export function lintChecklistRubric(text: string): RubricLintResult {
     warnings,
     message:
       `Rubric lint warnings (${warnings.length}): checklist items must be ` +
-      `observable binary process checks — not causal explanation, prediction, ` +
-      `or 1–10 holistic scores. Hits: ${warnings.map((w) => w.pattern).join(', ')}.`,
+      `observable binary process checks, not causal explanation, prediction, ` +
+      `or 1-10 holistic scores. Hits: ${warnings.map((w) => w.pattern).join(', ')}.`,
   };
 }

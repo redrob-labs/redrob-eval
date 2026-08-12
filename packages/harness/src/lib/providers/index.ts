@@ -3,7 +3,7 @@ import type { ProviderId } from '../../config/models';
 import { anthropicAdapter } from './anthropic';
 import { googleAdapter } from './google';
 import { createOpenAICompatAdapter } from './openai-compat';
-import { vllmAdapter } from './vllm';
+import { probeVllmEndpoint, vllmAdapter, type VllmProbeResult } from './vllm';
 import type { CallModelParams, CallModelResult, ProviderAdapter } from './types';
 import { ProviderError } from './types';
 
@@ -56,8 +56,10 @@ export async function callModel(
     temperature: options?.temperature,
     images: options?.images,
     vision: options?.vision,
+    extraBody: options?.extraBody,
+    endpoint: options?.endpoint,
   });
 }
 
-export { ProviderError };
-export type { CallModelParams, CallModelResult, ProviderAdapter };
+export { ProviderError, probeVllmEndpoint };
+export type { CallModelParams, CallModelResult, ProviderAdapter, VllmProbeResult };

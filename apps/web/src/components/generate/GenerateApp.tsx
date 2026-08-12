@@ -3,17 +3,32 @@
 import { useEffect, useState } from 'react';
 
 import { AppShell } from '@/components/AppShell';
+import { useT } from '@/components/LocaleProvider';
+import type { MessageKey } from '@/lib/i18n';
 
 import { StudyStage } from './StudyStage';
 import { TemplatesStage } from './TemplatesStage';
 import {
-  STAGE_LABELS,
   STAGE_ORDER,
   type CatalogTemplate,
   type GenerateStage,
   type GenerateStatus,
+  type PythonUnavailableCode,
   type StudyConfigSummary,
 } from './types';
+
+const STAGE_LABEL_KEYS: Record<GenerateStage, MessageKey> = {
+  templates: 'generate.stage.templates',
+  study: 'generate.stage.study',
+};
+
+const UNAVAILABLE_KEYS: Record<PythonUnavailableCode, MessageKey> = {
+  'not-found': 'generate.unavailable.notFound',
+  'not-executable': 'generate.unavailable.notExecutable',
+  'timed-out': 'generate.unavailable.timedOut',
+  'spawn-failed': 'generate.unavailable.spawnFailed',
+  'version-failed': 'generate.unavailable.versionFailed',
+};
 
 /**
  * Generate makes the items the other modules are run on: parametric task families that
@@ -26,6 +41,7 @@ import {
  * plainly rather than failing one button at a time.
  */
 export function GenerateApp() {
+  const t = useT();
   const [stage, setStage] = useState<GenerateStage>('templates');
   const [status, setStatus] = useState<GenerateStatus | null>(null);
   const [templates, setTemplates] = useState<CatalogTemplate[]>([]);
@@ -68,11 +84,24 @@ export function GenerateApp() {
 
   const pythonMissing = status !== null && !status.python.available;
 
+  /**
+   * The server's `reason` is an English log line. Translate it from the code when there
+   * is one, and fall back to the raw text rather than swallowing an unexpected cause.
+   */
+  const unavailableReason =
+    status && !status.python.available
+      ? status.python.reasonCode
+        ? t(UNAVAILABLE_KEYS[status.python.reasonCode], {
+            command: status.python.command ?? 'redrob-generate',
+          })
+        : status.python.reason
+      : null;
+
   return (
     <AppShell
       module="generate"
       center={
-        <nav className="cmp-stages" aria-label="Generate stages">
+        <nav className="cmp-stages" aria-label={t('generate.stagesAria')}>
           {STAGE_ORDER.map((s, i) => (
             <button
               key={s}
@@ -81,7 +110,7 @@ export function GenerateApp() {
               onClick={() => setStage(s)}
             >
               <span className="cmp-stage-n">{i + 1}</span>
-              {STAGE_LABELS[s]}
+              {t(STAGE_LABEL_KEYS[s])}
             </button>
           ))}
         </nav>
@@ -92,11 +121,13 @@ export function GenerateApp() {
             className={`gen-runtime${status.python.available ? '' : ' off'}`}
             title={
               status.python.available
-                ? `${status.python.version} is on PATH`
-                : status.python.reason
+                ? t('generate.onPath', { version: status.python.version })
+                : (unavailableReason ?? '')
             }
           >
-            {status.python.available ? `redrob-generate ${status.python.version}` : 'CLI missing'}
+            {status.python.available
+              ? t('generate.cliRunning', { version: status.python.version })
+              : t('generate.cliMissing')}
           </span>
         ) : null
       }
@@ -104,21 +135,16 @@ export function GenerateApp() {
       <main className="cmp-page">
         {pythonMissing && !status.python.available ? (
           <section className="cmp-card gen-notice">
-            <div className="pane-label">Generation is not installed</div>
-            <p>{status.python.reason}</p>
-            <p className="gen-notice-detail">
-              The catalog below is read from disk and works without it. Sampling an
-              instance and running a study both need the CLI, because generation is
-              deliberately implemented once, in Python, and this runtime only reads and
-              verifies what it produces.
-            </p>
-            <code className="gen-code">pip install -e packages/generate</code>
+            <div className="pane-label">{t('generate.notInstalled.title')}</div>
+            <p>{unavailableReason}</p>
+            <p className="gen-notice-detail">{t('generate.notInstalled.detail')}</p>
+            <code className="gen-code">{t('generate.notInstalled.installCmd')}</code>
           </section>
         ) : null}
 
         {catalogError ? (
           <section className="cmp-card gen-notice gen-notice-error">
-            <div className="pane-label">Could not read the template catalog</div>
+            <div className="pane-label">{t('generate.catalogError.title')}</div>
             <p>{catalogError}</p>
           </section>
         ) : null}

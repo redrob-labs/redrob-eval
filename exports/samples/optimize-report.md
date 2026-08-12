@@ -1,4 +1,4 @@
-# Optimize report — sample_offline_in22-hi-en
+# Optimize report: sample_offline_in22-hi-en
 
 - Dataset: in22-gen-hi-en
 - Optimizer: gepa

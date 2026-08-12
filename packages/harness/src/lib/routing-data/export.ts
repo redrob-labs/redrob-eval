@@ -8,7 +8,7 @@ export function toChatTrainRow(ex: RoutingExample): RoutingTrainChatRow {
     `Task: ${ex.task}`,
     `Dataset: ${ex.datasetId}`,
     `Chars: ${feat.charLen}; words: ${feat.wordCount}; digits: ${feat.digitCount}`,
-    `Heuristic: ${feat.heuristicComplexity} (${feat.heuristicScore.toFixed(2)}) — ${feat.heuristicReasons.join(', ')}`,
+    `Heuristic: ${feat.heuristicComplexity} (${feat.heuristicScore.toFixed(2)}): ${feat.heuristicReasons.join(', ')}`,
     '',
     'Query:',
     ex.input,

@@ -1,14 +1,15 @@
 'use client';
 
+import { useT } from '@/components/LocaleProvider';
 import type { Modality } from './types';
 
 /**
- * One side of a blind match. Model identity is deliberately absent — the voter
- * only sees "A" or "B" and the answer itself, so the vote measures the output
- * rather than the brand.
+ * One answer on a blind ballot. Model identity is deliberately absent: the
+ * voter only sees a letter and the answer itself, so the vote measures the
+ * output rather than the brand.
  */
 export function VoteCard(props: {
-  side: 'A' | 'B';
+  side: string;
   modality: Modality;
   answer: string;
   error?: string;
@@ -18,6 +19,7 @@ export function VoteCard(props: {
   revealedLabel?: string | null;
 }) {
   const { side, modality, answer, error, onPick, disabled, revealedLabel } = props;
+  const t = useT();
 
   return (
     <article className="vote-card">
@@ -28,12 +30,12 @@ export function VoteCard(props: {
 
       <div className="vote-card-body">
         {error ? (
-          <p className="vote-card-error">Failed: {error}</p>
+          <p className="vote-card-error">{t('compare.vote.failed', { error })}</p>
         ) : modality === 'image' ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img className="vote-card-image" src={answer} alt={`Answer ${side}`} />
+          <img className="vote-card-image" src={answer} alt={t('compare.vote.answerAlt', { side })} />
         ) : (
-          <pre className="vote-card-text">{answer || '(empty answer)'}</pre>
+          <pre className="vote-card-text">{answer || t('compare.vote.emptyAnswer')}</pre>
         )}
       </div>
 
@@ -43,7 +45,7 @@ export function VoteCard(props: {
         disabled={disabled}
         onClick={onPick}
       >
-        {side} wins
+        {t('compare.vote.wins', { side })}
       </button>
     </article>
   );

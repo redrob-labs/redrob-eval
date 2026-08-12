@@ -106,10 +106,10 @@ export async function reflectAndMutate(params: {
   const goalBlock = params.customGoal
     ? [
         '',
-        '## Optimization goal (fixed — do not invent a new goal)',
+        '## Optimization goal (fixed, do not invent a new goal)',
         params.customGoal.goal,
         '',
-        '## Scoring rubric (fixed — improve the instruction so outputs score higher)',
+        '## Scoring rubric (fixed, improve the instruction so outputs score higher)',
         params.customGoal.rubric,
       ].join('\n')
     : '';
@@ -143,7 +143,7 @@ export async function reflectAndMutate(params: {
     JSON.stringify(parentPolicies),
     '',
     '## Current frame_policy',
-    parentFrame ? JSON.stringify(parentFrame) : '(none — text-only candidate)',
+    parentFrame ? JSON.stringify(parentFrame) : '(none, text-only candidate)',
     goalBlock,
     '',
     '## Ancestor lessons',

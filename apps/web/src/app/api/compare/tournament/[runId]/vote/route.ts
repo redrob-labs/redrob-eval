@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
 import {
   advance,
+  advanceGroup,
   aggregateTournament,
-  appendVote,
+  appendVotes,
+  bracketIsSettled,
   readTournament,
   writeTournamentMeta,
   type VoteWinner,
@@ -16,7 +18,10 @@ type Ctx = { params: Promise<{ runId: string }> };
 type VoteBody = {
   promptId: string;
   matchId: string;
-  winner: VoteWinner;
+  /** Head-to-head ballot: which side won. */
+  winner?: VoteWinner;
+  /** Group ballot: the id that won, or null for a tie across the whole ballot. */
+  winnerModelId?: string | null;
 };
 
 /**
@@ -32,9 +37,10 @@ export async function POST(request: Request, context: Ctx) {
   } catch {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
-  if (!body.promptId || !body.matchId || !body.winner) {
+  const isGroupBallot = 'winnerModelId' in body;
+  if (!body.promptId || !body.matchId || (!body.winner && !isGroupBallot)) {
     return NextResponse.json(
-      { error: 'Provide promptId, matchId and winner' },
+      { error: 'Provide promptId, matchId and a winner' },
       { status: 400 },
     );
   }
@@ -49,11 +55,15 @@ export async function POST(request: Request, context: Ctx) {
       );
     }
 
-    const { vote } = advance(bracket, body.matchId, body.winner);
-    await appendVote(runId, vote);
+    // A group ballot is one human decision that stands for several pairings, so
+    // it comes back as several votes.
+    const newVotes = bracket.group
+      ? advanceGroup(bracket, body.matchId, body.winnerModelId ?? null).votes
+      : [advance(bracket, body.matchId, body.winner!).vote];
+    await appendVotes(runId, newVotes);
 
-    const votes = [...run.votes, vote];
-    const allResolved = run.brackets.every((b) => b.championModelId != null);
+    const votes = [...run.votes, ...newVotes];
+    const allResolved = run.brackets.every(bracketIsSettled);
     const meta = {
       ...run.meta,
       finishedAt: allResolved ? new Date().toISOString() : null,

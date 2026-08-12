@@ -3,20 +3,28 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
+import { useT } from '@/components/LocaleProvider';
+import type { MessageKey } from '@/lib/i18n';
 import { copyText, downloadJson } from '@/lib/download';
 import { stashComparePrompts } from '@/lib/handoff';
 
 import {
-  STATUS_TONE,
   type CatalogLocale,
   type CatalogTemplate,
   type PreviewInstance,
   type TranslationStatus,
 } from './types';
 
+const STATUS_KEYS: Record<TranslationStatus, { labelKey: MessageKey; tone: string }> = {
+  'native-reviewed': { labelKey: 'generate.status.nativeReviewed', tone: 'ok' },
+  'single-reviewer': { labelKey: 'generate.status.singleReviewer', tone: 'warn' },
+  untranslated: { labelKey: 'generate.status.untranslated', tone: 'stub' },
+};
+
 function StatusChip({ status }: { status: TranslationStatus }) {
-  const { label, tone } = STATUS_TONE[status];
-  return <span className={`gen-chip gen-chip-${tone}`}>{label}</span>;
+  const t = useT();
+  const { labelKey, tone } = STATUS_KEYS[status];
+  return <span className={`gen-chip gen-chip-${tone}`}>{t(labelKey)}</span>;
 }
 
 /**
@@ -26,9 +34,10 @@ function StatusChip({ status }: { status: TranslationStatus }) {
  * family has stubs but not which ones, which is the only part a reader can act on.
  */
 function LocaleChip({ locale }: { locale: CatalogLocale }) {
-  const { label, tone } = STATUS_TONE[locale.translationStatus];
+  const t = useT();
+  const { labelKey, tone } = STATUS_KEYS[locale.translationStatus];
   return (
-    <span className={`gen-chip gen-chip-${tone}`} title={`${locale.tag}: ${label}`}>
+    <span className={`gen-chip gen-chip-${tone}`} title={`${locale.tag}: ${t(labelKey)}`}>
       {locale.tag}
     </span>
   );
@@ -49,6 +58,7 @@ export function TemplatesStage({
   templates: CatalogTemplate[];
   pythonAvailable: boolean;
 }) {
+  const t = useT();
   const router = useRouter();
   const [chosenPath, setChosenPath] = useState<string | null>(null);
   const [chosenLocale, setChosenLocale] = useState<string | null>(null);
@@ -94,7 +104,7 @@ export function TemplatesStage({
           detail?: string;
         };
         if (cancelled) return;
-        if (!res.ok) throw new Error(body.detail ? `${body.error} — ${body.detail}` : body.error);
+        if (!res.ok) throw new Error(body.detail ? `${body.error}: ${body.detail}` : body.error);
         setResult({ key, instances: body.instances ?? [] });
         setExpanded(0);
       } catch (err) {
@@ -121,9 +131,11 @@ export function TemplatesStage({
   return (
     <div className="gen-split">
       <section className="cmp-card gen-list">
-        <div className="pane-label">Template families ({templates.length})</div>
+        <div className="pane-label">
+          {t('generate.templates.familiesCount', { count: templates.length })}
+        </div>
         {templates.length === 0 ? (
-          <p className="gen-empty">No templates found under templates/.</p>
+          <p className="gen-empty">{t('generate.templates.none')}</p>
         ) : (
           <ul className="gen-template-list">
             {templates.map((entry) => (
@@ -135,8 +147,8 @@ export function TemplatesStage({
                 >
                   <span className="gen-template-title">{entry.title}</span>
                   <span className="gen-template-meta">
-                    {entry.familyLabel} · {entry.verifierFamily} · {entry.parameterCount}{' '}
-                    parameters
+                    {entry.familyLabel} · {entry.verifierFamily} ·{' '}
+                    {t('generate.templates.parametersCount', { count: entry.parameterCount })}
                   </span>
                   <code className="gen-template-id">{entry.id}</code>
                   <span className="gen-locale-row">
@@ -153,7 +165,7 @@ export function TemplatesStage({
 
       <section className="cmp-card gen-detail">
         {!template ? (
-          <p className="gen-empty">Nothing to show until a template family is on disk.</p>
+          <p className="gen-empty">{t('generate.templates.nothingToShow')}</p>
         ) : (
           <>
             <div className="gen-detail-head">
@@ -167,7 +179,7 @@ export function TemplatesStage({
             {template.description ? <p className="gen-desc">{template.description}</p> : null}
 
             <div className="gen-controls">
-              <div className="gen-locale-picker" role="group" aria-label="Locale">
+              <div className="gen-locale-picker" role="group" aria-label={t('generate.templates.locale')}>
                 {template.locales.map((l) => (
                   <button
                     key={l.tag}
@@ -181,7 +193,7 @@ export function TemplatesStage({
                 ))}
               </div>
               <label className="gen-count">
-                instances to sample
+                {t('generate.templates.instancesToSample')}
                 <input
                   type="number"
                   min={1}
@@ -196,31 +208,25 @@ export function TemplatesStage({
                 disabled={!pythonAvailable || loading}
                 onClick={() => setNonce((n) => n + 1)}
               >
-                {loading ? 'Generating…' : 'Generate'}
+                {loading ? t('generate.templates.generating') : t('generate.templates.generate')}
               </button>
             </div>
 
             {localeStatus === 'untranslated' ? (
-              <p className="gen-warn">
-                This locale is a stub: the prompt is the English text copied verbatim, so a
-                token count measured on it describes English. It exists to exercise the
-                pipeline and cannot be published.
-              </p>
+              <p className="gen-warn">{t('generate.templates.untranslatedWarn')}</p>
             ) : null}
 
             {error ? <p className="gen-error">{error}</p> : null}
 
             {!pythonAvailable ? (
-              <p className="gen-empty">
-                Sampling needs the Python CLI. The locales above are read from disk.
-              </p>
+              <p className="gen-empty">{t('generate.templates.needsCli')}</p>
             ) : null}
 
             {instances && instances.length > 0 ? (
               <div className="gen-export">
                 <div className="gen-export-head">
                   <span className="gen-export-title">
-                    {instances.length} instance{instances.length === 1 ? '' : 's'} sampled
+                    {t('generate.templates.instancesSampled', { count: instances.length })}
                   </span>
                   {note ? <span className="gen-export-note">{note}</span> : null}
                 </div>
@@ -237,10 +243,10 @@ export function TemplatesStage({
                         })),
                       });
                       if (ok) router.push('/compare');
-                      else setNote('this browser blocked session storage — download instead');
+                      else setNote(t('generate.templates.sessionStorageBlocked'));
                     }}
                   >
-                    Compare models on these →
+                    {t('generate.templates.compareOnThese')}
                   </button>
                   <button
                     type="button"
@@ -256,7 +262,7 @@ export function TemplatesStage({
                       })
                     }
                   >
-                    Download set
+                    {t('generate.templates.downloadSet')}
                   </button>
                   <button
                     type="button"
@@ -271,29 +277,35 @@ export function TemplatesStage({
                           null,
                           2,
                         ),
-                      ).then((ok) => setNote(ok ? 'prompts copied' : 'could not reach the clipboard'));
+                      ).then((ok) =>
+                        setNote(
+                          ok
+                            ? t('generate.templates.promptsCopied')
+                            : t('generate.templates.clipboardUnreachable'),
+                        ),
+                      );
                     }}
                   >
-                    Copy prompts
+                    {t('generate.templates.copyPrompts')}
                   </button>
                   <button
                     type="button"
                     className="app-ghost-btn"
                     onClick={() => {
                       void copyText(cliCommand).then((ok) =>
-                        setNote(ok ? 'command copied' : 'could not reach the clipboard'),
+                        setNote(
+                          ok
+                            ? t('generate.templates.commandCopied')
+                            : t('generate.templates.clipboardUnreachable'),
+                        ),
                       );
                     }}
                     title={cliCommand}
                   >
-                    Copy CLI command
+                    {t('generate.templates.copyCliCommand')}
                   </button>
                 </div>
-                <p className="gen-export-hint">
-                  Sending these to Compare runs them as custom prompts. There are no
-                  reference answers on that path, so rank the answers with the preference
-                  tournament — the verifier stays here, with the set.
-                </p>
+                <p className="gen-export-hint">{t('generate.templates.sendToCompareHint')}</p>
               </div>
             ) : null}
 
@@ -309,20 +321,22 @@ export function TemplatesStage({
                       className="gen-instance-head"
                       onClick={() => setExpanded(expanded === index ? null : index)}
                     >
-                      <span className="gen-instance-n">instance {instance.instance_index}</span>
+                      <span className="gen-instance-n">
+                        {t('generate.templates.instanceLabel', { index: instance.instance_index })}
+                      </span>
                       <span className="gen-seed">
-                        seed <code>{instance.seed}</code>
+                        {t('generate.templates.seed')} <code>{instance.seed}</code>
                       </span>
                     </button>
                     {expanded === index ? (
                       <div className="gen-instance-body">
-                        <div className="pane-label">Prompt</div>
+                        <div className="pane-label">{t('generate.templates.prompt')}</div>
                         <pre className="gen-prompt">{instance.prompt}</pre>
-                        <div className="pane-label">Parameters</div>
+                        <div className="pane-label">{t('generate.templates.parameters')}</div>
                         <pre className="gen-json">
                           {JSON.stringify(instance.parameters, null, 2)}
                         </pre>
-                        <div className="pane-label">Verifier that will score the answer</div>
+                        <div className="pane-label">{t('generate.templates.verifier')}</div>
                         <pre className="gen-json">{JSON.stringify(instance.verifier, null, 2)}</pre>
                       </div>
                     ) : null}

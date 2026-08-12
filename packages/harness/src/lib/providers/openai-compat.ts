@@ -114,6 +114,9 @@ export function createOpenAICompatAdapter(
       if (params.vision?.max_pixels != null) {
         body.max_pixels = params.vision.max_pixels;
       }
+      if (params.extraBody) {
+        Object.assign(body, params.extraBody);
+      }
 
       const headers: Record<string, string> = {
         Authorization: `Bearer ${apiKey}`,

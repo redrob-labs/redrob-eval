@@ -10,8 +10,12 @@ import { HfDatasetError } from './hf';
 import type { EvalSample, LoadedDataset } from './types';
 import type { VendoredDatasetFile } from './vendored';
 
-/** Datasets that must not be committed (NC / incompatible). Local-only via fetcher. */
-export const LOCAL_ONLY_DATASET_IDS = new Set(['indic-glue-iitp-mr-hi']);
+/**
+ * Datasets that must not be committed (NC / incompatible). Local-only via fetcher.
+ * Empty today: the catalog carries nothing whose terms bar redistribution. Kept so
+ * adding such a dataset is one entry here rather than a licensing decision remade.
+ */
+export const LOCAL_ONLY_DATASET_IDS = new Set<string>([]);
 
 function readVendoredFile(path: string): VendoredDatasetFile {
   const raw = readFileSync(path, 'utf8');

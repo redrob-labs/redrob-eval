@@ -105,10 +105,10 @@ export function reportModelTarget(params: {
 
   const extra: string[] = [];
   if (costSource === 'unmeasured-fallback') {
-    extra.push('relative cost uses unmeasured fallback — run Benchmark on /deploy');
+    extra.push('relative cost uses unmeasured fallback, run Benchmark on /deploy');
   }
   if (params.model.selfHosted?.precision === 'fp8') {
-    extra.push('FP8 — not directly comparable to bf16 without this caveat');
+    extra.push('FP8, not directly comparable to bf16 without this caveat');
   }
 
   return withMandatoryCaveat(summary, {
@@ -122,7 +122,7 @@ export function reportModelTarget(params: {
 }
 
 /** Indic-focused dataset ids for L-candidate A/B slices. */
-export const INDIC_DATASET_IDS = ['in22-gen-hi-en', 'indic-glue-iitp-mr-hi'] as const;
+export const INDIC_DATASET_IDS = ['in22-gen-hi-en'] as const;
 
 export function isIndicDataset(datasetId: string): boolean {
   return (INDIC_DATASET_IDS as readonly string[]).includes(datasetId);
@@ -130,7 +130,6 @@ export function isIndicDataset(datasetId: string): boolean {
 
 export function sliceLabelForDataset(datasetId: string): string | null {
   if (datasetId === 'in22-gen-hi-en') return 'indic:IN22-Gen';
-  if (datasetId === 'indic-glue-iitp-mr-hi') return 'indic:IndicGLUE';
   return null;
 }
 

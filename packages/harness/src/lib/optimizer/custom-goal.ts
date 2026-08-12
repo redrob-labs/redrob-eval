@@ -119,7 +119,7 @@ export function parseCustomExamples(raw: string): Example[] {
 function normalizeAnchors(raw: ReferenceAnchor[] | undefined): ReferenceAnchor[] | undefined {
   if (!raw || raw.length === 0) return undefined;
   if (raw.length < 2 || raw.length > 3) {
-    throw new Error('Checklist reference anchors must be 2–3 labeled frame-sets');
+    throw new Error('Checklist reference anchors must be 2-3 labeled frame-sets');
   }
   return raw.map((a, i) => {
     const label = a.label?.trim();
@@ -159,7 +159,7 @@ export function defaultInstructionFromGoal(goal: string, mode: CustomGoalMode = 
       `You score a hands-on skill from sampled frames using ONLY observable binary checklist items.\n` +
       `Goal:\n${clipped}\n\n` +
       `For each item, answer whether the verifiable event occurred (0/1). ` +
-      `Do not give holistic 1–10 ratings, causal explanations, or predictions. ` +
+      `Do not give holistic 1-10 ratings, causal explanations, or predictions. ` +
       `If lighting/angle/focus make the clip unscorable, reply with ABSTAIN. ` +
       `Do not mention absolute prices or dollar costs.`
     );
@@ -183,7 +183,7 @@ export function appendAnchorBlock(
   const lines = [
     instruction.trim(),
     '',
-    '## Reference anchors (fixed — do not omit; judge relatively against these)',
+    '## Reference anchors (fixed, do not omit; judge relatively against these)',
     ...anchors.map(
       (a) =>
         `- ${a.label}: ${a.framePaths.length} exemplar frame(s)` +

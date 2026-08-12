@@ -97,6 +97,8 @@ export type EvalStreamEvent =
       sampleId: string;
       score?: number;
       latencyMs?: number;
+      /** The answer as scored, so the table can show it before the target finishes. */
+      prediction?: string;
       error?: string;
       route?: RouteDecision;
     }

@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useT } from '@/components/LocaleProvider';
 
 type Entry = { name: string; path: string; isDir: boolean };
 type Listing = {
@@ -29,6 +30,7 @@ export function FilePickerModal({
   onPick: (filePath: string) => void;
   onClose: () => void;
 }) {
+  const t = useT();
   const [listing, setListing] = useState<Listing | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -55,11 +57,11 @@ export function FilePickerModal({
       setListing((await res.json()) as Listing);
     } catch {
       if (seq !== seqRef.current) return;
-      setError('Could not list directory.');
+      setError(t('settings.fields.couldNotList'));
     } finally {
       if (seq === seqRef.current) setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   /** Navigate into a directory and clear the search box. */
   const goDir = useCallback(
@@ -101,8 +103,8 @@ export function FilePickerModal({
 
   useEffect(() => {
     if (!open) return;
-    const t = setTimeout(() => searchRef.current?.focus(), 50);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => searchRef.current?.focus(), 50);
+    return () => clearTimeout(timer);
   }, [open]);
 
   const visible = useMemo(() => {
@@ -118,9 +120,9 @@ export function FilePickerModal({
     <div className="picker-backdrop" role="dialog" aria-modal="true" onClick={onClose}>
       <div className="picker" onClick={(e) => e.stopPropagation()}>
         <div className="picker-head">
-          <strong>Choose a file</strong>
+          <strong>{t('settings.fields.pickerTitle')}</strong>
           <button type="button" className="app-ghost-btn" onClick={onClose}>
-            Close
+            {t('common.close')}
           </button>
         </div>
 
@@ -130,14 +132,14 @@ export function FilePickerModal({
             type="search"
             className="picker-search-input"
             value={query}
-            placeholder="Filter this folder…"
+            placeholder={t('settings.fields.filterFolder')}
             spellCheck={false}
             autoComplete="off"
             onChange={(e) => setQuery(e.target.value)}
           />
           {query ? (
             <button type="button" className="app-ghost-btn" onClick={() => setQuery('')}>
-              Clear
+              {t('common.clear')}
             </button>
           ) : null}
         </div>
@@ -149,7 +151,7 @@ export function FilePickerModal({
             onClick={() => goDir(listing?.home)}
             disabled={!listing || loading}
           >
-            Home
+            {t('settings.fields.home')}
           </button>
           <button
             type="button"
@@ -157,7 +159,7 @@ export function FilePickerModal({
             onClick={() => goDir(listing?.sshDir)}
             disabled={!listing || loading}
           >
-            .ssh
+            {t('settings.fields.sshDir')}
           </button>
           <button
             type="button"
@@ -165,7 +167,7 @@ export function FilePickerModal({
             onClick={() => goDir(listing?.parent)}
             disabled={!listing?.parent || loading}
           >
-            Up
+            {t('settings.fields.up')}
           </button>
           <code className="picker-path">{listing?.dir ?? '…'}</code>
         </div>
@@ -176,10 +178,10 @@ export function FilePickerModal({
 
         <div className={`picker-list${loading ? ' is-loading' : ''}`}>
           {loading && !listing ? (
-            <p className="deploy-empty">Loading…</p>
+            <p className="deploy-empty">{t('common.loading')}</p>
           ) : visible.length === 0 ? (
             <p className="deploy-empty">
-              {query.trim() ? 'No matches in this folder.' : 'Empty directory.'}
+              {query.trim() ? t('settings.fields.noMatches') : t('settings.fields.emptyDirectory')}
             </p>
           ) : (
             visible.map((e) => (

@@ -1,0 +1,1057 @@
+[
+  {
+    "id": "en-weather",
+    "language": "en",
+    "user": "I am flying out on Friday and still have not packed. Can you check what the weather in Seoul will be on 2026-08-14 so I know whether to bring a coat?",
+    "expected": {
+      "kind": "call",
+      "tool": "get_weather",
+      "arguments": { "city": "Seoul", "day": "2026-08-14" }
+    }
+  },
+  {
+    "id": "en-order",
+    "language": "en",
+    "user": "The parcel I was promised on Monday never turned up and support has stopped replying. The confirmation email says the order id is A-40321. Where is it right now?",
+    "expected": {
+      "kind": "call",
+      "tool": "lookup_order",
+      "arguments": { "order_id": "A-40321" }
+    }
+  },
+  {
+    "id": "en-currency",
+    "language": "en",
+    "user": "I am settling an invoice from a supplier abroad and my accountant needs the local figure. Convert 250 USD into KRW for me.",
+    "expected": {
+      "kind": "call",
+      "tool": "convert_currency",
+      "arguments": { "amount": 250, "from_currency": "USD", "to_currency": "KRW" }
+    }
+  },
+  {
+    "id": "en-calendar",
+    "language": "en",
+    "user": "The team finally agreed on a slot after three rounds of email. Put \"Design review\" on my calendar for 2026-08-15 at 14:30.",
+    "expected": {
+      "kind": "call",
+      "tool": "create_calendar_event",
+      "arguments": { "title": "Design review", "date": "2026-08-15", "time": "14:30" }
+    }
+  },
+  {
+    "id": "en-email",
+    "language": "en",
+    "user": "Accounting has been chasing this all week and I would rather not deal with it again tomorrow. Send an email to sora@acme.io with the subject \"Invoice 2291\" and the body \"The invoice is attached.\"",
+    "expected": {
+      "kind": "call",
+      "tool": "send_email",
+      "arguments": {
+        "to": "sora@acme.io",
+        "subject": "Invoice 2291",
+        "body": "The invoice is attached."
+      }
+    }
+  },
+  {
+    "id": "en-translate",
+    "language": "en",
+    "user": "I land in Delhi late at night and my phone will probably be dead. Translate \"Where is the nearest pharmacy?\" into Hindi so I can show it to someone.",
+    "expected": {
+      "kind": "call",
+      "tool": "translate_text",
+      "arguments": { "text": "Where is the nearest pharmacy?", "target_language": "hi" }
+    }
+  },
+  {
+    "id": "en-block-chitchat",
+    "language": "en",
+    "user": "It has been a long week and I could use a laugh before the standup starts. Tell me a joke about cats, and make it a short one.",
+    "expected": { "kind": "absence", "action": "BLOCK" }
+  },
+  {
+    "id": "en-defer-missing-city",
+    "language": "en",
+    "user": "I have an outdoor shoot booked and the client keeps asking whether it is going ahead. What will the weather be like on 2026-08-14?",
+    "expected": { "kind": "absence", "action": "DEFER" }
+  },
+  {
+    "id": "en-wide-shipment",
+    "language": "en",
+    "toolset": "wide",
+    "user": "The courier left a card but no parcel, and the tracking page in the app just spins forever. The card says the tracking number is 1Z999AA10123456784. Can you find out where the box actually is?",
+    "expected": {
+      "kind": "call",
+      "tool": "track_shipment",
+      "arguments": { "tracking_number": "1Z999AA10123456784" }
+    }
+  },
+  {
+    "id": "en-wide-units",
+    "language": "en",
+    "toolset": "wide",
+    "user": "The recipe I am following was written in pounds and my kitchen scale only speaks metric, so I keep guessing. Convert 5 kg into lb for me.",
+    "expected": {
+      "kind": "call",
+      "tool": "convert_units",
+      "arguments": { "amount": 5, "from_unit": "kg", "to_unit": "lb" }
+    }
+  },
+  {
+    "id": "en-wide-sms",
+    "language": "en",
+    "toolset": "wide",
+    "user": "I am stuck in traffic and the person waiting for me does not read email on her phone. Send a text to 010-2233-4455 saying \"I am running twenty minutes late.\"",
+    "expected": {
+      "kind": "call",
+      "tool": "send_sms",
+      "arguments": { "phone": "010-2233-4455", "message": "I am running twenty minutes late." }
+    }
+  },
+  {
+    "id": "en-wide-reminder",
+    "language": "en",
+    "toolset": "wide",
+    "user": "Nobody else needs to see this and I would rather it did not show up on the shared calendar. On 2026-08-16 at 09:00, just remind me privately: \"take the passport photos\".",
+    "expected": {
+      "kind": "call",
+      "tool": "create_reminder",
+      "arguments": { "text": "take the passport photos", "date": "2026-08-16", "time": "09:00" }
+    }
+  },
+  {
+    "id": "en-wide-defer-flight",
+    "language": "en",
+    "toolset": "wide",
+    "user": "My manager approved the trip this morning and now the travel desk wants it on the books before they leave. Book me a flight from Seoul to Delhi.",
+    "expected": { "kind": "absence", "action": "DEFER" }
+  },
+
+  {
+    "id": "hi-weather",
+    "language": "hi",
+    "user": "मुझे शुक्रवार को निकलना है और अब तक सामान नहीं बाँधा है। ज़रा देख दीजिए कि 2026-08-14 को Seoul का मौसम कैसा रहेगा, ताकि पता चले कोट ले जाऊँ या नहीं।",
+    "expected": {
+      "kind": "call",
+      "tool": "get_weather",
+      "arguments": { "city": "Seoul", "day": "2026-08-14" }
+    }
+  },
+  {
+    "id": "hi-order",
+    "language": "hi",
+    "user": "जो पार्सल सोमवार को आने वाला था वह अब तक नहीं पहुँचा और सपोर्ट ने जवाब देना बंद कर दिया है। कन्फ़र्मेशन ईमेल में ऑर्डर आईडी A-40321 लिखा है। वह अभी कहाँ है?",
+    "expected": {
+      "kind": "call",
+      "tool": "lookup_order",
+      "arguments": { "order_id": "A-40321" }
+    }
+  },
+  {
+    "id": "hi-currency",
+    "language": "hi",
+    "user": "मैं विदेश के एक सप्लायर का बिल चुका रहा हूँ और मेरे अकाउंटेंट को स्थानीय रकम चाहिए। 250 USD को KRW में बदल दीजिए।",
+    "expected": {
+      "kind": "call",
+      "tool": "convert_currency",
+      "arguments": { "amount": 250, "from_currency": "USD", "to_currency": "KRW" }
+    }
+  },
+  {
+    "id": "hi-calendar",
+    "language": "hi",
+    "user": "तीन बार ईमेल चलने के बाद आख़िरकार टीम एक समय पर राज़ी हुई है। मेरे कैलेंडर में 2026-08-15 को 14:30 बजे \"Design review\" डाल दीजिए।",
+    "expected": {
+      "kind": "call",
+      "tool": "create_calendar_event",
+      "arguments": { "title": "Design review", "date": "2026-08-15", "time": "14:30" }
+    }
+  },
+  {
+    "id": "hi-email",
+    "language": "hi",
+    "user": "अकाउंटिंग वाले पूरे हफ़्ते इसके पीछे पड़े हैं और कल फिर यही झंझट नहीं चाहिए। sora@acme.io पर \"Invoice 2291\" विषय और \"The invoice is attached.\" संदेश के साथ एक ईमेल भेज दीजिए।",
+    "expected": {
+      "kind": "call",
+      "tool": "send_email",
+      "arguments": {
+        "to": "sora@acme.io",
+        "subject": "Invoice 2291",
+        "body": "The invoice is attached."
+      }
+    }
+  },
+  {
+    "id": "hi-translate",
+    "language": "hi",
+    "user": "मैं देर रात दिल्ली पहुँचूँगा और तब तक फ़ोन की बैटरी शायद ख़त्म हो जाएगी। \"Where is the nearest pharmacy?\" को हिंदी में अनुवाद कर दीजिए ताकि मैं किसी को दिखा सकूँ।",
+    "expected": {
+      "kind": "call",
+      "tool": "translate_text",
+      "arguments": { "text": "Where is the nearest pharmacy?", "target_language": "hi" }
+    }
+  },
+  {
+    "id": "hi-block-chitchat",
+    "language": "hi",
+    "user": "हफ़्ता बहुत लंबा रहा और स्टैंडअप शुरू होने से पहले थोड़ा हँस लूँ तो अच्छा रहेगा। बिल्लियों पर कोई छोटा सा चुटकुला सुनाइए।",
+    "expected": { "kind": "absence", "action": "BLOCK" }
+  },
+  {
+    "id": "hi-defer-missing-city",
+    "language": "hi",
+    "user": "मेरी एक आउटडोर शूट तय है और क्लाइंट बार-बार पूछ रहा है कि वह होगी या नहीं। 2026-08-14 को मौसम कैसा रहेगा?",
+    "expected": { "kind": "absence", "action": "DEFER" }
+  },
+  {
+    "id": "hi-wide-shipment",
+    "language": "hi",
+    "toolset": "wide",
+    "user": "कूरियर वाला सिर्फ़ एक पर्ची छोड़ गया, पार्सल नहीं, और ऐप का ट्रैकिंग पेज बस घूमता रहता है। पर्ची पर ट्रैकिंग नंबर 1Z999AA10123456784 लिखा है। ज़रा पता कीजिए कि डिब्बा असल में कहाँ है।",
+    "expected": {
+      "kind": "call",
+      "tool": "track_shipment",
+      "arguments": { "tracking_number": "1Z999AA10123456784" }
+    }
+  },
+  {
+    "id": "hi-wide-units",
+    "language": "hi",
+    "toolset": "wide",
+    "user": "जो रेसिपी मैं देख रहा हूँ वह पाउंड में लिखी है और मेरा किचन स्केल सिर्फ़ मीट्रिक दिखाता है, इसलिए हर बार अंदाज़ा लगाना पड़ता है। 5 kg को lb में बदल दीजिए।",
+    "expected": {
+      "kind": "call",
+      "tool": "convert_units",
+      "arguments": { "amount": 5, "from_unit": "kg", "to_unit": "lb" }
+    }
+  },
+  {
+    "id": "hi-wide-sms",
+    "language": "hi",
+    "toolset": "wide",
+    "user": "मैं ट्रैफ़िक में फँसा हूँ और जो मेरा इंतज़ार कर रही हैं वे फ़ोन पर ईमेल नहीं पढ़तीं। 010-2233-4455 पर \"I am running twenty minutes late.\" लिखकर एक मैसेज भेज दीजिए।",
+    "expected": {
+      "kind": "call",
+      "tool": "send_sms",
+      "arguments": { "phone": "010-2233-4455", "message": "I am running twenty minutes late." }
+    }
+  },
+  {
+    "id": "hi-wide-reminder",
+    "language": "hi",
+    "toolset": "wide",
+    "user": "यह किसी और को दिखाने की ज़रूरत नहीं है और मैं इसे शेयर्ड कैलेंडर पर भी नहीं डालना चाहता। 2026-08-16 को 09:00 बजे मुझे निजी तौर पर बस इतना याद दिला दीजिए: \"take the passport photos\"।",
+    "expected": {
+      "kind": "call",
+      "tool": "create_reminder",
+      "arguments": { "text": "take the passport photos", "date": "2026-08-16", "time": "09:00" }
+    }
+  },
+  {
+    "id": "hi-wide-defer-flight",
+    "language": "hi",
+    "toolset": "wide",
+    "user": "मेरे मैनेजर ने आज सुबह ट्रिप मंज़ूर कर दी और अब ट्रैवल डेस्क चाहती है कि छुट्टी से पहले बुकिंग हो जाए। Seoul से Delhi की एक फ़्लाइट बुक कर दीजिए।",
+    "expected": { "kind": "absence", "action": "DEFER" }
+  },
+
+  {
+    "id": "hi-Latn-weather",
+    "language": "hi-Latn",
+    "user": "Mujhe Friday ko nikalna hai aur abhi tak samaan nahi bandha hai. Zara dekh dijiye ki 2026-08-14 ko Seoul ka mausam kaisa rahega, taaki pata chale coat le jaun ya nahi.",
+    "expected": {
+      "kind": "call",
+      "tool": "get_weather",
+      "arguments": { "city": "Seoul", "day": "2026-08-14" }
+    }
+  },
+  {
+    "id": "hi-Latn-order",
+    "language": "hi-Latn",
+    "user": "Jo parcel Monday ko aane wala tha wo abhi tak nahi pahuncha aur support ne jawab dena band kar diya hai. Confirmation email mein order id A-40321 likha hai. Wo abhi kahan hai?",
+    "expected": {
+      "kind": "call",
+      "tool": "lookup_order",
+      "arguments": { "order_id": "A-40321" }
+    }
+  },
+  {
+    "id": "hi-Latn-currency",
+    "language": "hi-Latn",
+    "user": "Main videsh ke ek supplier ka bill chuka raha hoon aur mere accountant ko local rakam chahiye. 250 USD ko KRW mein badal dijiye.",
+    "expected": {
+      "kind": "call",
+      "tool": "convert_currency",
+      "arguments": { "amount": 250, "from_currency": "USD", "to_currency": "KRW" }
+    }
+  },
+  {
+    "id": "hi-Latn-calendar",
+    "language": "hi-Latn",
+    "user": "Teen baar email chalne ke baad aakhirkaar team ek time par raazi hui hai. Mere calendar mein 2026-08-15 ko 14:30 baje \"Design review\" daal dijiye.",
+    "expected": {
+      "kind": "call",
+      "tool": "create_calendar_event",
+      "arguments": { "title": "Design review", "date": "2026-08-15", "time": "14:30" }
+    }
+  },
+  {
+    "id": "hi-Latn-email",
+    "language": "hi-Latn",
+    "user": "Accounting wale poore hafte iske peeche pade hain aur kal phir yahi jhanjhat nahi chahiye. sora@acme.io par \"Invoice 2291\" subject aur \"The invoice is attached.\" message ke saath ek email bhej dijiye.",
+    "expected": {
+      "kind": "call",
+      "tool": "send_email",
+      "arguments": {
+        "to": "sora@acme.io",
+        "subject": "Invoice 2291",
+        "body": "The invoice is attached."
+      }
+    }
+  },
+  {
+    "id": "hi-Latn-translate",
+    "language": "hi-Latn",
+    "user": "Main der raat Delhi pahunchunga aur tab tak phone ki battery shayad khatam ho jayegi. \"Where is the nearest pharmacy?\" ko Hindi mein translate kar dijiye taaki main kisi ko dikha sakun.",
+    "expected": {
+      "kind": "call",
+      "tool": "translate_text",
+      "arguments": { "text": "Where is the nearest pharmacy?", "target_language": "hi" }
+    }
+  },
+  {
+    "id": "hi-Latn-block-chitchat",
+    "language": "hi-Latn",
+    "user": "Hafta bahut lamba raha aur standup shuru hone se pehle thoda hans lun to accha rahega. Billiyon par koi chhota sa chutkula sunaiye.",
+    "expected": { "kind": "absence", "action": "BLOCK" }
+  },
+  {
+    "id": "hi-Latn-defer-missing-city",
+    "language": "hi-Latn",
+    "user": "Meri ek outdoor shoot tay hai aur client baar baar pooch raha hai ki wo hogi ya nahi. 2026-08-14 ko mausam kaisa rahega?",
+    "expected": { "kind": "absence", "action": "DEFER" }
+  },
+  {
+    "id": "hi-Latn-wide-shipment",
+    "language": "hi-Latn",
+    "toolset": "wide",
+    "user": "Courier wala sirf ek parchi chhod gaya, parcel nahi, aur app ka tracking page bas ghoomta rehta hai. Parchi par tracking number 1Z999AA10123456784 likha hai. Zara pata kijiye ki dabba asal mein kahan hai.",
+    "expected": {
+      "kind": "call",
+      "tool": "track_shipment",
+      "arguments": { "tracking_number": "1Z999AA10123456784" }
+    }
+  },
+  {
+    "id": "hi-Latn-wide-units",
+    "language": "hi-Latn",
+    "toolset": "wide",
+    "user": "Jo recipe main dekh raha hoon wo pound mein likhi hai aur mera kitchen scale sirf metric dikhata hai, isliye har baar andaza lagana padta hai. 5 kg ko lb mein badal dijiye.",
+    "expected": {
+      "kind": "call",
+      "tool": "convert_units",
+      "arguments": { "amount": 5, "from_unit": "kg", "to_unit": "lb" }
+    }
+  },
+  {
+    "id": "hi-Latn-wide-sms",
+    "language": "hi-Latn",
+    "toolset": "wide",
+    "user": "Main traffic mein phansa hoon aur jo mera intezaar kar rahi hain wo phone par email nahi padhti. 010-2233-4455 par \"I am running twenty minutes late.\" likhkar ek message bhej dijiye.",
+    "expected": {
+      "kind": "call",
+      "tool": "send_sms",
+      "arguments": { "phone": "010-2233-4455", "message": "I am running twenty minutes late." }
+    }
+  },
+  {
+    "id": "hi-Latn-wide-reminder",
+    "language": "hi-Latn",
+    "toolset": "wide",
+    "user": "Yeh kisi aur ko dikhane ki zaroorat nahi hai aur main ise shared calendar par bhi nahi daalna chahta. 2026-08-16 ko 09:00 baje mujhe niji taur par bas itna yaad dila dijiye: \"take the passport photos\".",
+    "expected": {
+      "kind": "call",
+      "tool": "create_reminder",
+      "arguments": { "text": "take the passport photos", "date": "2026-08-16", "time": "09:00" }
+    }
+  },
+  {
+    "id": "hi-Latn-wide-defer-flight",
+    "language": "hi-Latn",
+    "toolset": "wide",
+    "user": "Mere manager ne aaj subah trip manzoor kar di aur ab travel desk chahti hai ki chhutti se pehle booking ho jaye. Seoul se Delhi ki ek flight book kar dijiye.",
+    "expected": { "kind": "absence", "action": "DEFER" }
+  },
+
+  {
+    "id": "ko-weather",
+    "language": "ko",
+    "user": "금요일에 출발하는데 아직 짐도 못 쌌어요. 코트를 챙겨야 할지 알아야 하니까 2026-08-14에 Seoul 날씨가 어떨지 확인해 주세요.",
+    "expected": {
+      "kind": "call",
+      "tool": "get_weather",
+      "arguments": { "city": "Seoul", "day": "2026-08-14" }
+    }
+  },
+  {
+    "id": "ko-order",
+    "language": "ko",
+    "user": "월요일에 온다던 택배가 아직도 안 왔고 고객센터는 답이 없네요. 확인 메일에 주문번호가 A-40321이라고 적혀 있어요. 지금 어디쯤인가요?",
+    "expected": {
+      "kind": "call",
+      "tool": "lookup_order",
+      "arguments": { "order_id": "A-40321" }
+    }
+  },
+  {
+    "id": "ko-currency",
+    "language": "ko",
+    "user": "해외 공급사 청구서를 처리하는 중인데 회계팀이 원화 금액을 달라고 합니다. 250 USD를 KRW로 환산해 주세요.",
+    "expected": {
+      "kind": "call",
+      "tool": "convert_currency",
+      "arguments": { "amount": 250, "from_currency": "USD", "to_currency": "KRW" }
+    }
+  },
+  {
+    "id": "ko-calendar",
+    "language": "ko",
+    "user": "메일을 세 번이나 주고받은 끝에 드디어 팀 일정이 잡혔어요. 2026-08-15 14:30에 \"Design review\"로 일정 하나 잡아 주세요.",
+    "expected": {
+      "kind": "call",
+      "tool": "create_calendar_event",
+      "arguments": { "title": "Design review", "date": "2026-08-15", "time": "14:30" }
+    }
+  },
+  {
+    "id": "ko-email",
+    "language": "ko",
+    "user": "회계팀이 이번 주 내내 재촉하는데 내일 또 같은 얘기를 듣고 싶지는 않아요. sora@acme.io로 제목은 \"Invoice 2291\", 본문은 \"The invoice is attached.\"로 메일 보내 주세요.",
+    "expected": {
+      "kind": "call",
+      "tool": "send_email",
+      "arguments": {
+        "to": "sora@acme.io",
+        "subject": "Invoice 2291",
+        "body": "The invoice is attached."
+      }
+    }
+  },
+  {
+    "id": "ko-translate",
+    "language": "ko",
+    "user": "델리에 밤늦게 도착하는데 그때쯤이면 휴대폰 배터리가 없을 것 같아요. \"Where is the nearest pharmacy?\"를 힌디어로 번역해 주세요. 누군가에게 보여 주려고요.",
+    "expected": {
+      "kind": "call",
+      "tool": "translate_text",
+      "arguments": { "text": "Where is the nearest pharmacy?", "target_language": "hi" }
+    }
+  },
+  {
+    "id": "ko-block-chitchat",
+    "language": "ko",
+    "user": "이번 주가 유난히 길었는데 스탠드업 시작 전에 좀 웃고 싶네요. 고양이 농담 하나만 짧게 해 주세요.",
+    "expected": { "kind": "absence", "action": "BLOCK" }
+  },
+  {
+    "id": "ko-defer-missing-city",
+    "language": "ko",
+    "user": "야외 촬영이 잡혀 있는데 클라이언트가 진행 여부를 계속 물어봐요. 2026-08-14에 날씨가 어떨까요?",
+    "expected": { "kind": "absence", "action": "DEFER" }
+  },
+  {
+    "id": "ko-wide-shipment",
+    "language": "ko",
+    "toolset": "wide",
+    "user": "택배 기사님이 부재중 스티커만 붙이고 물건은 두고 가지 않았는데, 앱 배송조회 화면은 계속 돌기만 합니다. 스티커에 적힌 운송장 번호가 1Z999AA10123456784예요. 상자가 지금 실제로 어디 있는지 확인해 주세요.",
+    "expected": {
+      "kind": "call",
+      "tool": "track_shipment",
+      "arguments": { "tracking_number": "1Z999AA10123456784" }
+    }
+  },
+  {
+    "id": "ko-wide-units",
+    "language": "ko",
+    "toolset": "wide",
+    "user": "지금 보고 있는 레시피가 파운드로 적혀 있는데 저희 주방 저울은 미터법만 나와서 매번 감으로 맞추고 있어요. 5 kg를 lb로 바꿔 주세요.",
+    "expected": {
+      "kind": "call",
+      "tool": "convert_units",
+      "arguments": { "amount": 5, "from_unit": "kg", "to_unit": "lb" }
+    }
+  },
+  {
+    "id": "ko-wide-sms",
+    "language": "ko",
+    "toolset": "wide",
+    "user": "차가 막혀서 늦고 있는데 기다리시는 분은 휴대폰으로 메일을 안 봅니다. 010-2233-4455로 \"I am running twenty minutes late.\"라고 문자 한 통 보내 주세요.",
+    "expected": {
+      "kind": "call",
+      "tool": "send_sms",
+      "arguments": { "phone": "010-2233-4455", "message": "I am running twenty minutes late." }
+    }
+  },
+  {
+    "id": "ko-wide-reminder",
+    "language": "ko",
+    "toolset": "wide",
+    "user": "이건 다른 사람이 볼 필요도 없고 공유 캘린더에 올리고 싶지도 않아요. 2026-08-16 09:00에 저한테만 \"take the passport photos\"라고 알려 주세요.",
+    "expected": {
+      "kind": "call",
+      "tool": "create_reminder",
+      "arguments": { "text": "take the passport photos", "date": "2026-08-16", "time": "09:00" }
+    }
+  },
+  {
+    "id": "ko-wide-defer-flight",
+    "language": "ko",
+    "toolset": "wide",
+    "user": "오늘 아침에 매니저가 출장을 승인했고, 총무팀은 퇴근 전에 예약을 끝내 달라고 합니다. Seoul에서 Delhi로 가는 항공편을 예약해 주세요.",
+    "expected": { "kind": "absence", "action": "DEFER" }
+  },
+
+  {
+    "id": "en-full-directions",
+    "language": "en",
+    "toolset": "full",
+    "user": "I rented a car at Incheon airport and need to reach the hotel before check-in closes. Give me driving directions from Incheon International Airport to Lotte Hotel Seoul.",
+    "expected": {
+      "kind": "call",
+      "tool": "get_directions",
+      "arguments": {
+        "origin": "Incheon International Airport",
+        "destination": "Lotte Hotel Seoul",
+        "mode": "driving"
+      }
+    }
+  },
+  {
+    "id": "en-full-payment",
+    "language": "en",
+    "toolset": "full",
+    "user": "The freelancer finished the logo work and sent an invoice. Send 450 USD to @designstudio via the payment app.",
+    "expected": {
+      "kind": "call",
+      "tool": "send_payment",
+      "arguments": { "recipient": "@designstudio", "amount": 450, "currency": "USD" }
+    }
+  },
+  {
+    "id": "en-full-contact",
+    "language": "en",
+    "toolset": "full",
+    "user": "I met someone at the conference and wrote down a first name only. Look up the phone number for Min-jun Park in my contacts.",
+    "expected": {
+      "kind": "call",
+      "tool": "lookup_contact",
+      "arguments": { "name": "Min-jun Park" }
+    }
+  },
+  {
+    "id": "en-full-note",
+    "language": "en",
+    "toolset": "full",
+    "user": "Before I forget what the architect said on the call, save a note titled \"Kitchen layout\" with the body \"Move the island 30 cm east and widen the pantry door.\"",
+    "expected": {
+      "kind": "call",
+      "tool": "create_note",
+      "arguments": {
+        "title": "Kitchen layout",
+        "body": "Move the island 30 cm east and widen the pantry door."
+      }
+    }
+  },
+  {
+    "id": "en-full-music",
+    "language": "en",
+    "toolset": "full",
+    "user": "The cafe playlist stopped and the owner asked for something calm. Play \"Holocene\" by Bon Iver.",
+    "expected": {
+      "kind": "call",
+      "tool": "play_music",
+      "arguments": { "track": "Holocene", "artist": "Bon Iver" }
+    }
+  },
+  {
+    "id": "en-full-cart",
+    "language": "en",
+    "toolset": "full",
+    "user": "The office ran out of filters again and I found the exact replacement on the supplier site. Add product SKU-FILTER-9 to the cart, quantity 2.",
+    "expected": {
+      "kind": "call",
+      "tool": "add_to_cart",
+      "arguments": { "product_id": "SKU-FILTER-9", "quantity": 2 }
+    }
+  },
+  {
+    "id": "en-full-news",
+    "language": "en",
+    "toolset": "full",
+    "user": "My investor call starts in ten minutes and I have been heads-down all day. Pull the top technology headlines for the US.",
+    "expected": {
+      "kind": "call",
+      "tool": "get_news_headlines",
+      "arguments": { "topic": "technology", "country": "US" }
+    }
+  },
+  {
+    "id": "en-full-git",
+    "language": "en",
+    "toolset": "full",
+    "user": "QA found a regression on main and we agreed to hotfix without touching the release branch. Create branch hotfix/login-timeout in the redrob-eval repo.",
+    "expected": {
+      "kind": "call",
+      "tool": "create_git_branch",
+      "arguments": { "repo": "redrob-eval", "branch": "hotfix/login-timeout" }
+    }
+  },
+  {
+    "id": "en-full-restaurant",
+    "language": "en",
+    "toolset": "full",
+    "user": "The client team lands tonight and wants something local, not another hotel buffet. Find Korean restaurants near Gangnam Station.",
+    "expected": {
+      "kind": "call",
+      "tool": "find_restaurant",
+      "arguments": { "cuisine": "Korean", "location": "Gangnam Station" }
+    }
+  },
+  {
+    "id": "en-full-taxi",
+    "language": "en",
+    "toolset": "full",
+    "user": "My train gets in late and the last airport bus already left. Book a taxi from Seoul Station to 14 Teheran-ro at 23:15.",
+    "expected": {
+      "kind": "call",
+      "tool": "book_taxi",
+      "arguments": {
+        "pickup": "Seoul Station",
+        "dropoff": "14 Teheran-ro",
+        "time": "23:15"
+      }
+    }
+  },
+  {
+    "id": "en-full-block-opinion",
+    "language": "en",
+    "toolset": "full",
+    "user": "I am choosing between two job offers and keep going in circles. Which one would you pick if you were me, and why?",
+    "expected": { "kind": "absence", "action": "BLOCK" }
+  },
+  {
+    "id": "en-full-defer-payment",
+    "language": "en",
+    "toolset": "full",
+    "user": "The landlord finally sent the bank details and I want this done before I board. Send the rent to account KR-8821-0044 in KRW.",
+    "expected": { "kind": "absence", "action": "DEFER" }
+  },
+
+  {
+    "id": "hi-full-directions",
+    "language": "hi",
+    "toolset": "full",
+    "user": "मैंने Incheon airport पर कार किराए पर ली है और check-in बंद होने से पहले होटल पहुँचना है। Incheon International Airport से Lotte Hotel Seoul तक driving directions दीजिए।",
+    "expected": {
+      "kind": "call",
+      "tool": "get_directions",
+      "arguments": {
+        "origin": "Incheon International Airport",
+        "destination": "Lotte Hotel Seoul",
+        "mode": "driving"
+      }
+    }
+  },
+  {
+    "id": "hi-full-payment",
+    "language": "hi",
+    "toolset": "full",
+    "user": "फ़्रीलांसर ने लोगो का काम पूरा करके इनवॉइस भेज दिया है। payment app से @designstudio को 450 USD भेज दीजिए।",
+    "expected": {
+      "kind": "call",
+      "tool": "send_payment",
+      "arguments": { "recipient": "@designstudio", "amount": 450, "currency": "USD" }
+    }
+  },
+  {
+    "id": "hi-full-contact",
+    "language": "hi",
+    "toolset": "full",
+    "user": "कॉन्फ़्रेंस में किसी से मिला और सिर्फ़ पहला नाम लिखा है। मेरे contacts में Min-jun Park का phone number ढूँढिए।",
+    "expected": {
+      "kind": "call",
+      "tool": "lookup_contact",
+      "arguments": { "name": "Min-jun Park" }
+    }
+  },
+  {
+    "id": "hi-full-note",
+    "language": "hi",
+    "toolset": "full",
+    "user": "कॉल पर architect ने जो कहा वह भूलने से पहले एक note save कर दीजिए: title \"Kitchen layout\", body \"Move the island 30 cm east and widen the pantry door.\"",
+    "expected": {
+      "kind": "call",
+      "tool": "create_note",
+      "arguments": {
+        "title": "Kitchen layout",
+        "body": "Move the island 30 cm east and widen the pantry door."
+      }
+    }
+  },
+  {
+    "id": "hi-full-music",
+    "language": "hi",
+    "toolset": "full",
+    "user": "कैफ़े का playlist रुक गया और owner ने कुछ शांत चाहा। Bon Iver का \"Holocene\" चलाइए।",
+    "expected": {
+      "kind": "call",
+      "tool": "play_music",
+      "arguments": { "track": "Holocene", "artist": "Bon Iver" }
+    }
+  },
+  {
+    "id": "hi-full-cart",
+    "language": "hi",
+    "toolset": "full",
+    "user": "ऑफ़िस में फ़िल्टर फिर ख़त्म हो गए और supplier site पर exact replacement मिल गया। product SKU-FILTER-9 cart में quantity 2 add कर दीजिए।",
+    "expected": {
+      "kind": "call",
+      "tool": "add_to_cart",
+      "arguments": { "product_id": "SKU-FILTER-9", "quantity": 2 }
+    }
+  },
+  {
+    "id": "hi-full-news",
+    "language": "hi",
+    "toolset": "full",
+    "user": "investor call दस मिनट में है और मैं पूरा दिन काम में लगा रहा हूँ। US के top technology headlines निकाल दीजिए।",
+    "expected": {
+      "kind": "call",
+      "tool": "get_news_headlines",
+      "arguments": { "topic": "technology", "country": "US" }
+    }
+  },
+  {
+    "id": "hi-full-git",
+    "language": "hi",
+    "toolset": "full",
+    "user": "QA ने main पर regression पकड़ा और release branch छुए बिना hotfix पर सहमति है। redrob-eval repo में hotfix/login-timeout branch बना दीजिए।",
+    "expected": {
+      "kind": "call",
+      "tool": "create_git_branch",
+      "arguments": { "repo": "redrob-eval", "branch": "hotfix/login-timeout" }
+    }
+  },
+  {
+    "id": "hi-full-restaurant",
+    "language": "hi",
+    "toolset": "full",
+    "user": "client team आज रात पहुँचती है और hotel buffet नहीं चाहिए, कुछ local चाहिए। Gangnam Station के पास Korean restaurants ढूँढिए।",
+    "expected": {
+      "kind": "call",
+      "tool": "find_restaurant",
+      "arguments": { "cuisine": "Korean", "location": "Gangnam Station" }
+    }
+  },
+  {
+    "id": "hi-full-taxi",
+    "language": "hi",
+    "toolset": "full",
+    "user": "train देर से आती है और last airport bus जा चुकी है। 23:15 पर Seoul Station से 14 Teheran-ro तक taxi book कर दीजिए।",
+    "expected": {
+      "kind": "call",
+      "tool": "book_taxi",
+      "arguments": {
+        "pickup": "Seoul Station",
+        "dropoff": "14 Teheran-ro",
+        "time": "23:15"
+      }
+    }
+  },
+  {
+    "id": "hi-full-block-opinion",
+    "language": "hi",
+    "toolset": "full",
+    "user": "दो job offers के बीच चुन रहा हूँ और बार-बार घूम रहा हूँ। अगर आप मेरी जगह होते तो कौन-सा चुनते और क्यों?",
+    "expected": { "kind": "absence", "action": "BLOCK" }
+  },
+  {
+    "id": "hi-full-defer-payment",
+    "language": "hi",
+    "toolset": "full",
+    "user": "landlord ने आख़िरकार bank details भेज दी हैं और board करने से पहले यह निपटाना है। account KR-8821-0044 को KRW में rent भेज दीजिए।",
+    "expected": { "kind": "absence", "action": "DEFER" }
+  },
+
+  {
+    "id": "hi-Latn-full-directions",
+    "language": "hi-Latn",
+    "toolset": "full",
+    "user": "Maine Incheon airport par car kiraye par li hai aur check-in band hone se pehle hotel pahunchna hai. Incheon International Airport se Lotte Hotel Seoul tak driving directions dijiye.",
+    "expected": {
+      "kind": "call",
+      "tool": "get_directions",
+      "arguments": {
+        "origin": "Incheon International Airport",
+        "destination": "Lotte Hotel Seoul",
+        "mode": "driving"
+      }
+    }
+  },
+  {
+    "id": "hi-Latn-full-payment",
+    "language": "hi-Latn",
+    "toolset": "full",
+    "user": "Freelancer ne logo ka kaam poora karke invoice bhej diya hai. Payment app se @designstudio ko 450 USD bhej dijiye.",
+    "expected": {
+      "kind": "call",
+      "tool": "send_payment",
+      "arguments": { "recipient": "@designstudio", "amount": 450, "currency": "USD" }
+    }
+  },
+  {
+    "id": "hi-Latn-full-contact",
+    "language": "hi-Latn",
+    "toolset": "full",
+    "user": "Conference mein kisi se mila aur sirf pehla naam likha hai. Mere contacts mein Min-jun Park ka phone number dhoondhiye.",
+    "expected": {
+      "kind": "call",
+      "tool": "lookup_contact",
+      "arguments": { "name": "Min-jun Park" }
+    }
+  },
+  {
+    "id": "hi-Latn-full-note",
+    "language": "hi-Latn",
+    "toolset": "full",
+    "user": "Call par architect ne jo kaha wo bhoolne se pehle ek note save kar dijiye: title \"Kitchen layout\", body \"Move the island 30 cm east and widen the pantry door.\"",
+    "expected": {
+      "kind": "call",
+      "tool": "create_note",
+      "arguments": {
+        "title": "Kitchen layout",
+        "body": "Move the island 30 cm east and widen the pantry door."
+      }
+    }
+  },
+  {
+    "id": "hi-Latn-full-music",
+    "language": "hi-Latn",
+    "toolset": "full",
+    "user": "Cafe ka playlist ruk gaya aur owner ne kuch shaant chaha. Bon Iver ka \"Holocene\" chalaiye.",
+    "expected": {
+      "kind": "call",
+      "tool": "play_music",
+      "arguments": { "track": "Holocene", "artist": "Bon Iver" }
+    }
+  },
+  {
+    "id": "hi-Latn-full-cart",
+    "language": "hi-Latn",
+    "toolset": "full",
+    "user": "Office mein filter phir khatam ho gaye aur supplier site par exact replacement mil gaya. Product SKU-FILTER-9 cart mein quantity 2 add kar dijiye.",
+    "expected": {
+      "kind": "call",
+      "tool": "add_to_cart",
+      "arguments": { "product_id": "SKU-FILTER-9", "quantity": 2 }
+    }
+  },
+  {
+    "id": "hi-Latn-full-news",
+    "language": "hi-Latn",
+    "toolset": "full",
+    "user": "Investor call das minute mein hai aur main poora din kaam mein laga raha hoon. US ke top technology headlines nikaal dijiye.",
+    "expected": {
+      "kind": "call",
+      "tool": "get_news_headlines",
+      "arguments": { "topic": "technology", "country": "US" }
+    }
+  },
+  {
+    "id": "hi-Latn-full-git",
+    "language": "hi-Latn",
+    "toolset": "full",
+    "user": "QA ne main par regression pakda aur release branch chhue bina hotfix par sahmati hai. redrob-eval repo mein hotfix/login-timeout branch bana dijiye.",
+    "expected": {
+      "kind": "call",
+      "tool": "create_git_branch",
+      "arguments": { "repo": "redrob-eval", "branch": "hotfix/login-timeout" }
+    }
+  },
+  {
+    "id": "hi-Latn-full-restaurant",
+    "language": "hi-Latn",
+    "toolset": "full",
+    "user": "Client team aaj raat pahunchti hai aur hotel buffet nahi chahiye, kuch local chahiye. Gangnam Station ke paas Korean restaurants dhoondhiye.",
+    "expected": {
+      "kind": "call",
+      "tool": "find_restaurant",
+      "arguments": { "cuisine": "Korean", "location": "Gangnam Station" }
+    }
+  },
+  {
+    "id": "hi-Latn-full-taxi",
+    "language": "hi-Latn",
+    "toolset": "full",
+    "user": "Train der se aati hai aur last airport bus ja chuki hai. 23:15 par Seoul Station se 14 Teheran-ro tak taxi book kar dijiye.",
+    "expected": {
+      "kind": "call",
+      "tool": "book_taxi",
+      "arguments": {
+        "pickup": "Seoul Station",
+        "dropoff": "14 Teheran-ro",
+        "time": "23:15"
+      }
+    }
+  },
+  {
+    "id": "hi-Latn-full-block-opinion",
+    "language": "hi-Latn",
+    "toolset": "full",
+    "user": "Do job offers ke beech chun raha hoon aur baar baar ghoom raha hoon. Agar aap meri jagah hote to kaun sa chunte aur kyun?",
+    "expected": { "kind": "absence", "action": "BLOCK" }
+  },
+  {
+    "id": "hi-Latn-full-defer-payment",
+    "language": "hi-Latn",
+    "toolset": "full",
+    "user": "Landlord ne aakhirkaar bank details bhej di hain aur board karne se pehle yeh nipatana hai. Account KR-8821-0044 ko KRW mein rent bhej dijiye.",
+    "expected": { "kind": "absence", "action": "DEFER" }
+  },
+
+  {
+    "id": "ko-full-directions",
+    "language": "ko",
+    "toolset": "full",
+    "user": "인천공항에서 렌터카를 받았는데 체크인 마감 전에 호텔에 도착해야 해요. Incheon International Airport에서 Lotte Hotel Seoul까지 운전 경로 알려 주세요.",
+    "expected": {
+      "kind": "call",
+      "tool": "get_directions",
+      "arguments": {
+        "origin": "Incheon International Airport",
+        "destination": "Lotte Hotel Seoul",
+        "mode": "driving"
+      }
+    }
+  },
+  {
+    "id": "ko-full-payment",
+    "language": "ko",
+    "toolset": "full",
+    "user": "프리랜서가 로고 작업을 끝내고 인보이스를 보냈어요. 결제 앱으로 @designstudio에게 450 USD 보내 주세요.",
+    "expected": {
+      "kind": "call",
+      "tool": "send_payment",
+      "arguments": { "recipient": "@designstudio", "amount": 450, "currency": "USD" }
+    }
+  },
+  {
+    "id": "ko-full-contact",
+    "language": "ko",
+    "toolset": "full",
+    "user": "컨퍼런스에서 만난 분인데 이름만 적어 두었어요. 연락처에서 Min-jun Park의 전화번호 찾아 주세요.",
+    "expected": {
+      "kind": "call",
+      "tool": "lookup_contact",
+      "arguments": { "name": "Min-jun Park" }
+    }
+  },
+  {
+    "id": "ko-full-note",
+    "language": "ko",
+    "toolset": "full",
+    "user": "통화에서 건축가가 한 말을 잊기 전에 메모로 남겨 주세요. 제목은 \"Kitchen layout\", 내용은 \"Move the island 30 cm east and widen the pantry door.\"",
+    "expected": {
+      "kind": "call",
+      "tool": "create_note",
+      "arguments": {
+        "title": "Kitchen layout",
+        "body": "Move the island 30 cm east and widen the pantry door."
+      }
+    }
+  },
+  {
+    "id": "ko-full-music",
+    "language": "ko",
+    "toolset": "full",
+    "user": "카페 재생 목록이 멈췄는데 사장님이 잔잔한 곡을 원하세요. Bon Iver의 \"Holocene\"을 틀어 주세요.",
+    "expected": {
+      "kind": "call",
+      "tool": "play_music",
+      "arguments": { "track": "Holocene", "artist": "Bon Iver" }
+    }
+  },
+  {
+    "id": "ko-full-cart",
+    "language": "ko",
+    "toolset": "full",
+    "user": "사무실 필터가 또 떨어졌는데 공급사 사이트에서 정확한 교체품을 찾았어요. SKU-FILTER-9를 수량 2개 장바구니에 담아 주세요.",
+    "expected": {
+      "kind": "call",
+      "tool": "add_to_cart",
+      "arguments": { "product_id": "SKU-FILTER-9", "quantity": 2 }
+    }
+  },
+  {
+    "id": "ko-full-news",
+    "language": "ko",
+    "toolset": "full",
+    "user": "투자자 통화가 10분 뒤인데 하루 종일 코딩만 했어요. 미국 technology 주요 헤드라인 가져와 주세요.",
+    "expected": {
+      "kind": "call",
+      "tool": "get_news_headlines",
+      "arguments": { "topic": "technology", "country": "US" }
+    }
+  },
+  {
+    "id": "ko-full-git",
+    "language": "ko",
+    "toolset": "full",
+    "user": "QA가 main에서 회귀를 찾았고 릴리스 브랜치는 건드리지 않고 핫픽스로 가기로 했어요. redrob-eval 저장소에 hotfix/login-timeout 브랜치 만들어 주세요.",
+    "expected": {
+      "kind": "call",
+      "tool": "create_git_branch",
+      "arguments": { "repo": "redrob-eval", "branch": "hotfix/login-timeout" }
+    }
+  },
+  {
+    "id": "ko-full-restaurant",
+    "language": "ko",
+    "toolset": "full",
+    "user": "클라이언트 팀이 오늘 밤 도착하는데 또 호텔 뷔페는 싫대요. 강남역 근처 한식당 찾아 주세요.",
+    "expected": {
+      "kind": "call",
+      "tool": "find_restaurant",
+      "arguments": { "cuisine": "Korean", "location": "Gangnam Station" }
+    }
+  },
+  {
+    "id": "ko-full-taxi",
+    "language": "ko",
+    "toolset": "full",
+    "user": "기차가 늦게 도착해서 마지막 공항버스는 이미 갔어요. 23:15에 Seoul Station에서 14 Teheran-ro까지 택시 예약해 주세요.",
+    "expected": {
+      "kind": "call",
+      "tool": "book_taxi",
+      "arguments": {
+        "pickup": "Seoul Station",
+        "dropoff": "14 Teheran-ro",
+        "time": "23:15"
+      }
+    }
+  },
+  {
+    "id": "ko-full-block-opinion",
+    "language": "ko",
+    "toolset": "full",
+    "user": "두 곳에서 offer를 받았는데 계속 망설여져요. 당신이 저라면 어느 쪽을 고르겠어요, 그리고 왜요?",
+    "expected": { "kind": "absence", "action": "BLOCK" }
+  },
+  {
+    "id": "ko-full-defer-payment",
+    "language": "ko",
+    "toolset": "full",
+    "user": "집주인이 드디어 계좌 정보를 보냈고 탑승 전에 처리하고 싶어요. KR-8821-0044 계좌로 KRW 월세 보내 주세요.",
+    "expected": { "kind": "absence", "action": "DEFER" }
+  }
+]

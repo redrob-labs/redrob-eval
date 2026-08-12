@@ -50,9 +50,8 @@ The reference GEPA repository is licensed under the MIT License:
 Third-party datasets (vendored subsets)
 
 - openai/gsm8k — MIT License
+- cais/mmlu (MMLU) — MIT License
+  Attribution: Hendrycks et al., "Measuring Massive Multitask Language Understanding"
+  (https://github.com/hendrycks/test)
 - ai4bharat/IN22-Gen (via mteb/IN22-Gen mirror where applicable) — CC-BY-4.0
   Attribution: AI4Bharat / IndicTrans2 IN22 benchmark (Agrawal et al. / AI4Bharat)
-
-IndicGLUE IITP-MR rows are NOT committed to this repository (CC-BY-NC / external
-terms). Contributors who accept those terms may regenerate them locally via
-`yarn datasets:fetch --id=indic-glue-iitp-mr-hi` into datasets/local/.

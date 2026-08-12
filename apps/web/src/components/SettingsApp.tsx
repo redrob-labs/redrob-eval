@@ -3,7 +3,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AppShell } from '@/components/AppShell';
 import { FilePickerModal } from '@/components/FilePickerModal';
+import { LocaleSwitch } from '@/components/LocaleSwitch';
+import { useT } from '@/components/LocaleProvider';
 import { ThemeSwitch } from '@/components/ThemeSwitch';
+import { VllmHostsPanel } from '@/components/VllmHostsPanel';
+import { en, type MessageKey } from '@/lib/i18n';
 
 type Setting = {
   key: string;
@@ -31,38 +35,58 @@ type Payload = {
  */
 type SectionId = 'appearance' | Setting['group'];
 
-const SECTIONS: { id: SectionId; title: string; blurb: string; summary: string }[] = [
-  {
-    id: 'appearance',
-    title: 'Appearance',
-    blurb:
-      'Stored in this browser, not in .env, and applied immediately — there is nothing to save.',
-    summary: 'Theme',
+const SECTION_IDS: SectionId[] = ['appearance', 'providers', 'selfhosted', 'gpu'];
+
+const SECTION_KEYS: Record<
+  SectionId,
+  { title: MessageKey; blurb: MessageKey; summary: MessageKey }
+> = {
+  appearance: {
+    title: 'settings.sections.appearance.title',
+    blurb: 'settings.sections.appearance.blurb',
+    summary: 'settings.sections.appearance.summary',
   },
-  {
-    id: 'providers',
-    title: 'Provider API keys',
-    blurb: 'Hosted models. Stored in the repo-root .env and applied right away — no restart.',
-    summary: 'OpenRouter, OpenAI, Anthropic and the rest',
+  providers: {
+    title: 'settings.sections.providers.title',
+    blurb: 'settings.sections.providers.blurb',
+    summary: 'settings.sections.providers.summary',
   },
-  {
-    id: 'selfhosted',
-    title: 'Self-hosted vLLM',
-    blurb:
-      'Endpoints for your own axes. vLLM API key is auto-issued on first Install. Hugging Face token is yours — create at huggingface.co/settings/tokens.',
-    summary: 'Endpoints and Hugging Face token',
+  selfhosted: {
+    title: 'settings.sections.selfhosted.title',
+    blurb: 'settings.sections.selfhosted.blurb',
+    summary: 'settings.sections.selfhosted.summary',
   },
-  {
-    id: 'gpu',
-    title: 'GPU host (SSH)',
-    blurb: 'Used by Deploy. The private key stays on this machine — only its path is stored.',
-    summary: 'Host, user and key used by Deploy',
+  gpu: {
+    title: 'settings.sections.gpu.title',
+    blurb: 'settings.sections.gpu.blurb',
+    summary: 'settings.sections.gpu.summary',
   },
-];
+};
 
 const HF_TOKEN_URL = 'https://huggingface.co/settings/tokens';
 
+/** True when `key` has a translation, so a dynamic field key can opt in without a lookup throwing. */
+function hasMsg(key: string): key is MessageKey {
+  return key in en;
+}
+
+type T = ReturnType<typeof useT>;
+
+/** Field label from `settings.fields.<KEY>.label` when translated, else the API's own label. */
+function fieldLabel(t: T, key: string, fallback: string): string {
+  const msgKey = `settings.fields.${key}.label`;
+  return hasMsg(msgKey) ? t(msgKey) : fallback;
+}
+
+/** Same as {@link fieldLabel}, for the optional hint text. */
+function fieldHint(t: T, key: string, fallback: string | undefined): string | undefined {
+  const msgKey = `settings.fields.${key}.hint`;
+  if (hasMsg(msgKey)) return t(msgKey);
+  return fallback;
+}
+
 export function SettingsApp() {
+  const t = useT();
   const [data, setData] = useState<Payload | null>(null);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
@@ -71,6 +95,17 @@ export function SettingsApp() {
   const [pickerFor, setPickerFor] = useState<string | null>(null);
   const [focusKey, setFocusKey] = useState<string | null>(null);
   const [section, setSection] = useState<SectionId>('providers');
+
+  const sections = useMemo(
+    () =>
+      SECTION_IDS.map((id) => ({
+        id,
+        title: t(SECTION_KEYS[id].title),
+        blurb: t(SECTION_KEYS[id].blurb),
+        summary: t(SECTION_KEYS[id].summary),
+      })),
+    [t],
+  );
 
   const load = useCallback(async () => {
     try {
@@ -82,9 +117,9 @@ export function SettingsApp() {
       }
       setData((await res.json()) as Payload);
     } catch {
-      setError('Could not reach the workbench server.');
+      setError(t('settings.loadFailed'));
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => void load());
@@ -147,7 +182,7 @@ export function SettingsApp() {
         applied?: string[];
       };
       if (!res.ok) {
-        setError(json.error ?? 'Failed to save');
+        setError(json.error ?? t('settings.saveFailed'));
         return;
       }
       if (json.settings && json.providers) {
@@ -158,9 +193,9 @@ export function SettingsApp() {
         }));
       }
       setDrafts({});
-      setMessage(`Saved ${json.applied?.length ?? 0} value(s) — active now.`);
+      setMessage(t('settings.savedMessage', { count: json.applied?.length ?? 0 }));
     } catch {
-      setError('Save failed.');
+      setError(t('settings.saveFailed'));
     } finally {
       setSaving(false);
     }
@@ -189,7 +224,7 @@ export function SettingsApp() {
     (key) => data?.settings.find((s) => s.key === key)?.group !== section,
   ).length;
 
-  const active = SECTIONS.find((s) => s.id === section) ?? SECTIONS[0]!;
+  const active = sections.find((s) => s.id === section) ?? sections[0]!;
 
   const currentPathValue = pickerFor
     ? (drafts[pickerFor] ??
@@ -200,18 +235,14 @@ export function SettingsApp() {
   return (
     <AppShell module="settings">
       <main className="settings-layout">
-        <aside className="settings-nav" aria-label="Settings sections">
+        <aside className="settings-nav" aria-label={t('settings.navAria')}>
           <div className="settings-nav-head">
-            <h1 className="settings-h1">Settings</h1>
-            <p className="settings-lede">
-              Keys and host details live here instead of in a hand-edited file. Secrets are
-              written to the gitignored repo-root <code>.env</code> and never sent back to
-              the browser — you only see whether a value is set and its last 4 characters.
-            </p>
+            <h1 className="settings-h1">{t('settings.title')}</h1>
+            <p className="settings-lede">{t('settings.lede')}</p>
           </div>
 
           <ul className="settings-nav-list">
-            {SECTIONS.map((s) => {
+            {sections.map((s) => {
               const counts = s.id === 'appearance' ? null : groupCount(s.id);
               const pending = Object.keys(drafts).some(
                 (key) => data?.settings.find((row) => row.key === key)?.group === s.id,
@@ -227,11 +258,13 @@ export function SettingsApp() {
                     <span className="settings-nav-title">
                       {s.title}
                       {pending ? (
-                        <span className="settings-nav-dot" title="Unsaved changes" />
+                        <span className="settings-nav-dot" title={t('settings.unsavedDot')} />
                       ) : null}
                     </span>
                     <span className="settings-nav-sub">
-                      {counts ? `${counts.set} of ${counts.total} set` : s.summary}
+                      {counts
+                        ? t('settings.fields.setCount', { set: counts.set, total: counts.total })
+                        : s.summary}
                     </span>
                   </button>
                 </li>
@@ -240,9 +273,7 @@ export function SettingsApp() {
           </ul>
 
           {data?.envFile ? (
-            <p className="settings-note">
-              Writing to <code>{data.envFile}</code>
-            </p>
+            <p className="settings-note">{t('settings.writingTo', { file: data.envFile })}</p>
           ) : null}
         </aside>
 
@@ -259,18 +290,25 @@ export function SettingsApp() {
             <div className="settings-rows">
               <div className="settings-row">
                 <label className="settings-label">
-                  <span className="settings-label-main">Colour theme</span>
-                  <span className="settings-hint">
-                    System follows your operating system and changes with it.
-                  </span>
+                  <span className="settings-label-main">{t('settings.colourTheme')}</span>
+                  <span className="settings-hint">{t('settings.colourThemeHint')}</span>
                 </label>
                 <ThemeSwitch />
+              </div>
+              <div className="settings-row">
+                <label className="settings-label">
+                  <span className="settings-label-main">{t('settings.language.label')}</span>
+                  <span className="settings-hint">{t('settings.language.hint')}</span>
+                </label>
+                <LocaleSwitch />
               </div>
             </div>
           ) : null}
 
+          {section === 'selfhosted' ? <VllmHostsPanel /> : null}
+
           {section !== 'appearance' && !data && !error ? (
-            <p className="settings-note">Checking saved settings…</p>
+            <p className="settings-note">{t('settings.checking')}</p>
           ) : null}
 
           {section !== 'appearance' && data ? (
@@ -289,6 +327,8 @@ export function SettingsApp() {
                   if (hasDraft) return draft !== '' ? draft : (s.defaultValue ?? '');
                   return s.effective ?? s.defaultValue ?? '';
                 })();
+                const label = fieldLabel(t, s.key, s.label);
+                const hint = fieldHint(t, s.key, s.hint);
                 return (
                   <div
                     key={s.key}
@@ -296,17 +336,17 @@ export function SettingsApp() {
                   >
                     <label className="settings-label" htmlFor={`field-${s.key}`}>
                       <span className="settings-label-main">
-                        {s.label}
+                        {label}
                         <span
                           className={`settings-dot ${s.set || (hasDraft && draft !== '') ? 'on' : 'off'}`}
                           aria-hidden
                         />
                         {usingDefault ? (
-                          <span className="settings-default-tag">default</span>
+                          <span className="settings-default-tag">{t('settings.default')}</span>
                         ) : null}
                       </span>
                       <code className="settings-key">{s.key}</code>
-                      {s.hint ? <span className="settings-hint">{s.hint}</span> : null}
+                      {hint ? <span className="settings-hint">{hint}</span> : null}
                       {s.key === 'HF_TOKEN' ? (
                         <a
                           className="settings-hint-link"
@@ -314,7 +354,7 @@ export function SettingsApp() {
                           target="_blank"
                           rel="noreferrer"
                         >
-                          Open Hugging Face tokens →
+                          {t('settings.openHfTokens')}
                         </a>
                       ) : null}
                     </label>
@@ -327,7 +367,7 @@ export function SettingsApp() {
                         value={displayValue}
                         placeholder={
                           s.kind === 'secret' && s.set
-                            ? `${s.value} (set — type to replace)`
+                            ? t('settings.setToReplace', { value: s.value ?? '' })
                             : (s.placeholder ?? s.defaultValue ?? '')
                         }
                         autoComplete="off"
@@ -340,7 +380,7 @@ export function SettingsApp() {
                           className="app-ghost-btn"
                           onClick={() => setPickerFor(s.key)}
                         >
-                          Browse…
+                          {t('common.browse')}
                         </button>
                       ) : null}
                       {s.set || (hasDraft && draft !== '') ? (
@@ -350,11 +390,11 @@ export function SettingsApp() {
                           onClick={() => clearValue(s.key)}
                           title={
                             s.defaultValue
-                              ? 'Clear and use default'
-                              : 'Clear this value'
+                              ? t('settings.clearDefault')
+                              : t('settings.clearValue')
                           }
                         >
-                          Clear
+                          {t('common.clear')}
                         </button>
                       ) : null}
                     </div>
@@ -375,17 +415,20 @@ export function SettingsApp() {
                 onClick={save}
                 disabled={!dirty || saving}
               >
-                {saving ? 'Saving…' : dirty ? 'Save changes' : 'No changes'}
+                {saving
+                  ? t('common.saving')
+                  : dirty
+                    ? t('common.saveChanges')
+                    : t('common.noChanges')}
               </button>
               {dirty ? (
                 <button type="button" className="app-ghost-btn" onClick={() => setDrafts({})}>
-                  Discard
+                  {t('common.discard')}
                 </button>
               ) : null}
               {draftsElsewhere > 0 ? (
                 <span className="settings-hint">
-                  {draftsElsewhere} unsaved change{draftsElsewhere === 1 ? '' : 's'} in another
-                  section, saved together
+                  {t('settings.unsavedElsewhere', { count: draftsElsewhere })}
                 </span>
               ) : null}
             </div>

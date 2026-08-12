@@ -1014,6 +1014,15 @@ body.is-pane-resizing * {
   padding: 0.12rem 0.3rem;
 }
 
+/* Marks the one catalog row whose label was read back off a live endpoint. */
+.or-live-mark {
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: var(--ok);
+  border: 1px solid color-mix(in srgb, var(--ok) 45%, transparent);
+  padding: 0.12rem 0.3rem;
+}
+
 .or-model-desc {
   margin: 0.35rem 0 0;
   font-size: 0.7rem;
@@ -1768,6 +1777,21 @@ body.is-pane-resizing * {
   color: var(--brand-deep);
   font-weight: 600;
 }
+/* Sits inline at the end of the callout sentence, so it reads as part of it. */
+.deploy-callout-action {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--brand-deep);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.deploy-callout-action:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
 .deploy-steps {
   list-style: none;
   margin: 0;
@@ -1846,6 +1870,91 @@ body.is-pane-resizing * {
 .deploy-op-btn.is-primary:hover:not(:disabled) {
   background: var(--brand-solid-hover);
 }
+.deploy-op-btn.is-danger {
+  color: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 35%, var(--line));
+}
+.deploy-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.deploy-section-head h2 {
+  margin: 0;
+}
+.deploy-host-banner {
+  margin-top: 8px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  background: color-mix(in srgb, var(--panel) 88%, var(--brand) 12%);
+}
+.deploy-host-banner-title {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.deploy-host-facts {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
+  margin: 0;
+}
+.deploy-host-facts dt {
+  font-size: 11px;
+  color: var(--muted);
+}
+.deploy-host-facts dd {
+  margin: 0;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.deploy-host-facts code {
+  font-size: 11px;
+}
+.deploy-slot-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.deploy-slot-card {
+  padding: 12px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+}
+.deploy-slot-card-head h3 {
+  margin: 0 0 4px;
+  font-size: 14px;
+}
+.deploy-slot-status {
+  font-weight: 400;
+  color: var(--muted);
+  font-size: 12px;
+}
+.deploy-slot-meta {
+  margin: 0 0 10px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.deploy-slot-paths {
+  display: grid;
+  gap: 6px;
+  margin: 10px 0;
+}
+.deploy-slot-paths dt {
+  font-size: 11px;
+  color: var(--muted);
+}
+.deploy-slot-paths dd {
+  margin: 0;
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+.deploy-slot-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
 .deploy-facts {
   margin: 0;
   display: flex;
@@ -1867,6 +1976,13 @@ body.is-pane-resizing * {
   margin: 0;
   overflow-wrap: anywhere;
 }
+.deploy-hint {
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 .deploy-models {
   display: grid;
   grid-template-columns: 1fr;
@@ -2490,6 +2606,71 @@ body.is-pane-resizing * {
   gap: 8px;
   align-items: center;
 }
+
+/* Endpoint registry. Sits above the env rows in the self-hosted section and
+   saves per row, so it is boxed off from the batched Save below. */
+.settings-hosts {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  margin-bottom: 18px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface-sunken);
+}
+.settings-hosts-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+.settings-hosts-head > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.settings-host-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.settings-host {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px 10px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+.settings-host-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.settings-host-actions {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+.settings-host-form {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+.settings-host-form-actions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
 .settings-input {
   flex: 1;
   min-width: 0;
@@ -2696,11 +2877,143 @@ body.is-pane-resizing * {
   min-width: 0;
 }
 
+/* Setup and the run share the page, so the settings stay put while a run
+   streams. The run needs the room, so this stage drops the reading-width cap. */
+.cmp-page-wide {
+  max-width: none;
+}
+
+.cmp-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  gap: 0.85rem;
+  align-items: start;
+}
+
+.cmp-run-pane {
+  position: sticky;
+  top: 0.85rem;
+  min-width: 0;
+  max-height: calc(100vh - 6rem);
+  overflow: auto;
+}
+
+/* Between the two breakpoints the run pane takes the width the setup grid
+   needs, so the pickers stack instead of squeezing. */
+@media (max-width: 1560px) and (min-width: 1301px) {
+  .cmp-workspace .cmp-setup-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 1300px) {
+  .cmp-workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .cmp-run-pane {
+    position: static;
+    max-height: none;
+    overflow: visible;
+  }
+}
+
 .cmp-setup,
 .cmp-run {
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
+}
+
+.cmp-reports {
+  margin-top: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--panel);
+  padding: 0.9rem 1rem;
+}
+
+.cmp-reports-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.cmp-reports-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.cmp-reports-lede {
+  margin: 0.2rem 0 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.cmp-reports-actions {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.cmp-reports-danger:not(:disabled) {
+  color: var(--danger);
+  border-color: var(--danger-line);
+}
+
+.cmp-reports-list {
+  list-style: none;
+  margin: 0.8rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.cmp-reports-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.4rem 0.55rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-sunken);
+}
+
+.cmp-reports-item-main {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+.cmp-reports-badge {
+  flex: none;
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 0.12rem 0.4rem;
+  border-radius: 999px;
+  background: var(--surface-hover);
+  color: var(--muted);
+}
+
+.cmp-reports-item-label {
+  font-size: 0.82rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cmp-reports-x {
+  flex: none;
+  line-height: 1;
+  padding: 0.15rem 0.5rem;
 }
 
 .cmp-setup-grid {
@@ -2901,41 +3214,6 @@ body.is-pane-resizing * {
   white-space: nowrap;
 }
 
-.cmp-answers {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  max-height: 26rem;
-  overflow: auto;
-}
-
-.cmp-answer {
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--surface-sunken);
-  padding: 0.45rem 0.55rem;
-}
-
-.cmp-answer header {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.64rem;
-  color: var(--muted);
-  margin-bottom: 0.25rem;
-}
-
-.cmp-answer-id {
-  font-weight: 700;
-}
-
-.cmp-answer pre {
-  margin: 0;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-  font-size: 0.72rem;
-  line-height: 1.45;
-}
-
 .cmp-next {
   flex-direction: row;
   align-items: center;
@@ -2978,8 +3256,15 @@ body.is-pane-resizing * {
   gap: 0.75rem;
 }
 
+/* A group ballot holds three or four answers, so let them wrap rather than
+   squeezing every column to a quarter width. */
+.vote-grid.is-group {
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+}
+
 @media (max-width: 860px) {
-  .vote-grid {
+  .vote-grid,
+  .vote-grid.is-group {
     grid-template-columns: 1fr;
   }
 }
@@ -3570,4 +3855,340 @@ body.is-pane-resizing * {
   margin: 0;
   font-size: 0.7rem;
   color: var(--muted);
+}
+
+/* ---- Compare · tool routing ---- */
+
+.cmp-facts {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.cmp-legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.cmp-legend li {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-size: 0.72rem;
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+.cmp-legend-key {
+  flex: none;
+  min-width: 4.5rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--brand-deep);
+}
+
+.cmp-host-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.4rem;
+}
+
+.cmp-host-row .field {
+  flex: 1;
+}
+
+.cmp-host-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-sunken);
+}
+
+.cmp-host-form-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Live state of the vLLM endpoint. Grey while probing, so an unknown endpoint
+   never looks like a healthy one. */
+.cmp-endpoint {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.cmp-endpoint-dot {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--muted);
+}
+
+.cmp-endpoint-dot.ok {
+  background: var(--ok);
+}
+
+.cmp-endpoint-dot.warn {
+  background: var(--warn);
+}
+
+.cmp-endpoint-dot.down {
+  background: var(--miss);
+}
+
+.cmp-endpoint .app-ghost-btn {
+  margin-left: auto;
+}
+
+/* An estimate must never read like a measurement. */
+.cmp-unmeasured {
+  color: var(--warn);
+  font-weight: 600;
+}
+
+/* Second-level heading inside a card, so a card never shows two pane-labels. */
+.cmp-subhead {
+  margin: 0.2rem 0 0;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* Secondary detail folded away, so the card leads with the result. */
+.cmp-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  border-top: 1px solid var(--line);
+  padding-top: 0.6rem;
+  margin-top: 0.2rem;
+}
+
+.cmp-details > summary {
+  cursor: pointer;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--ink);
+  list-style: none;
+}
+
+.cmp-details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.cmp-details > summary::before {
+  content: '▸';
+  display: inline-block;
+  width: 1em;
+  color: var(--muted);
+}
+
+.cmp-details[open] > summary::before {
+  content: '▾';
+}
+
+/* A cell that stands in for numbers that were never measured. */
+.cmp-cell-muted {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.cmp-table-filters {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(12rem, 20rem));
+  gap: 0.7rem;
+  margin: 0.8rem 0;
+}
+
+.cmp-results-table .data-table th,
+.cmp-results-table .data-table td {
+  padding: 0.65rem 0.7rem;
+  vertical-align: middle;
+}
+
+.cmp-results-table .data-table th:first-child,
+.cmp-results-table .data-table td:first-child {
+  min-width: 10rem;
+}
+
+.cmp-sort-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 0.45rem;
+  padding: 0;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+}
+
+.cmp-sort-button.on {
+  color: var(--ink);
+}
+
+/* The row whose answers are open below it. */
+.cmp-row-on > td {
+  background: var(--surface-sunken);
+}
+
+.cmp-prompt-detail-row > td {
+  background: var(--surface-sunken);
+}
+
+/* The prompt and reply, expanded in the row under the one they belong to. */
+.cmp-row-detail > td {
+  padding: 0.75rem 0.9rem;
+  background: var(--surface-sunken);
+  /* The open row above it carries the separator, so a second line here would
+     read as an empty row between the question and its answer. */
+  border-top: 0;
+}
+
+.cmp-prompt-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.cmp-prompt-detail-title {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  font-size: 0.78rem;
+}
+
+.cmp-prompt-stack h4 {
+  margin: 0 0 0.35rem;
+  color: var(--muted);
+  font-size: 0.66rem;
+  text-transform: uppercase;
+}
+
+.cmp-prompt-stack pre {
+  max-height: 20rem;
+  margin: 0;
+  padding: 0.7rem;
+  overflow: auto;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--ink);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 0.72rem;
+  line-height: 1.5;
+}
+
+.cmp-prompt-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding: 0.35rem;
+}
+
+.cmp-prompt-table .data-table th:first-child,
+.cmp-prompt-table .data-table td:first-child {
+  min-width: 8rem;
+}
+
+.cmp-prompt-details-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.cmp-prompt-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.7rem;
+}
+
+.cmp-prompt-grid h4 {
+  margin: 0 0 0.35rem;
+  color: var(--muted);
+  font-size: 0.66rem;
+  text-transform: uppercase;
+}
+
+.cmp-prompt-grid pre {
+  max-height: 24rem;
+  margin: 0;
+  padding: 0.7rem;
+  overflow: auto;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--ink);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 760px) {
+  .cmp-table-filters,
+  .cmp-prompt-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* The finding, stated before the table that supports it. */
+.cmp-verdict {
+  margin: 0.45rem 0 0;
+  padding: 0.55rem 0.7rem;
+  border-left: 3px solid var(--brand);
+  border-radius: 0 6px 6px 0;
+  background: var(--surface-sunken);
+  color: var(--ink);
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+
+.cmp-progress-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.cmp-log-toggle {
+  flex: none;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--brand-deep);
+  cursor: pointer;
+}
+
+/* The streamed step log. Muted by design: it is reassurance, not the result. */
+.cmp-log {
+  max-height: 11rem;
+  overflow: auto;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-sunken);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.68rem;
+  line-height: 1.5;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
 }

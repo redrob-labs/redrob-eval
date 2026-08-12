@@ -1,6 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import { access, chmod, mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { DEFAULT_VLLM_PORT } from '../deploy/port';
 
 /**
  * Browser-editable environment for this local workbench.
@@ -24,6 +25,8 @@ export interface SettingDef {
   placeholder?: string;
   /** Used when the env key is unset. Never for secrets. */
   defaultValue?: string;
+  /** A default that only exists at runtime, such as one built from another setting. */
+  deriveDefault?: () => string | undefined;
 }
 
 export const SETTING_DEFS: SettingDef[] = [
@@ -33,7 +36,7 @@ export const SETTING_DEFS: SettingDef[] = [
     label: 'OpenRouter',
     group: 'providers',
     kind: 'secret',
-    hint: 'Widest model coverage — the usual starting key.',
+    hint: 'Widest model coverage, the usual starting key.',
   },
   { key: 'OPENAI_API_KEY', label: 'OpenAI', group: 'providers', kind: 'secret' },
   { key: 'ANTHROPIC_API_KEY', label: 'Anthropic', group: 'providers', kind: 'secret' },
@@ -50,19 +53,23 @@ export const SETTING_DEFS: SettingDef[] = [
     hint: 'Local bearer for vLLM --api-key (not Hugging Face). Auto-issued when you open Deploy shell or run Install.',
   },
   {
-    key: 'VLLM_S_BASE_URL',
-    label: 'S base URL',
+    key: 'VLLM_PORT',
+    label: 'vLLM port',
     group: 'selfhosted',
     kind: 'plain',
-    defaultValue: 'http://127.0.0.1:8101/v1',
-    hint: 'Filled by Start tunnel if unset; default matches local S port.',
+    defaultValue: String(DEFAULT_VLLM_PORT),
+    hint: 'Port exposed by Deploy. vLLM convention is 8000; choose another port when the host already uses it.',
   },
   {
-    key: 'VLLM_L_BASE_URL',
-    label: 'L base URL',
+    key: 'VLLM_BASE_URL',
+    label: 'Base URL',
     group: 'selfhosted',
     kind: 'plain',
-    defaultValue: 'http://127.0.0.1:8102/v1',
+    // Static localhost, never derived from GPU_HOST: a placeholder should show a
+    // generic example, not leak the deployed hostname. Set this (or add a vLLM
+    // host below) to reach a remote deploy.
+    defaultValue: `http://localhost:${DEFAULT_VLLM_PORT}/v1`,
+    hint: 'Where the deployed model answers. Defaults to localhost; set it to the GPU host to reach a remote deploy.',
   },
   {
     key: 'HF_TOKEN',
@@ -100,20 +107,6 @@ export const SETTING_DEFS: SettingDef[] = [
     group: 'gpu',
     kind: 'plain',
     defaultValue: '22',
-  },
-  {
-    key: 'LOCAL_S_PORT',
-    label: 'Local tunnel port (S)',
-    group: 'gpu',
-    kind: 'plain',
-    defaultValue: '8101',
-  },
-  {
-    key: 'LOCAL_L_PORT',
-    label: 'Local tunnel port (L)',
-    group: 'gpu',
-    kind: 'plain',
-    defaultValue: '8102',
   },
 ];
 
@@ -162,15 +155,25 @@ let baselineReady = false;
  * process.env for absent keys (so deploy/eval see them) without marking
  * those keys as "set" in the Settings UI.
  */
+function defaultFor(def: SettingDef): string | null {
+  return def.defaultValue ?? def.deriveDefault?.() ?? null;
+}
+
+/** A derived default can change when the setting it reads changes, so this reruns. */
+function applyDefaults(): void {
+  for (const d of SETTING_DEFS) {
+    const fallback = defaultFor(d);
+    if (!fallback) continue;
+    if (!(baselineEnv.get(d.key) ?? '')) process.env[d.key] = fallback;
+  }
+}
+
 function ensureBaseline(): void {
   if (baselineReady) return;
   for (const d of SETTING_DEFS) {
     baselineEnv.set(d.key, process.env[d.key]?.trim() ?? '');
   }
-  for (const d of SETTING_DEFS) {
-    if (!d.defaultValue) continue;
-    if (!(baselineEnv.get(d.key) ?? '')) process.env[d.key] = d.defaultValue;
-  }
+  applyDefaults();
   baselineReady = true;
 }
 
@@ -181,8 +184,9 @@ export function ensureSettingsDefaultsApplied(): void {
 
 /**
  * Mint a local VLLM_API_KEY if unset, persist to .env, and return it.
- * Not a cloud credential — shared secret for vLLM --api-key on the GPU host
- * and for Eval through the tunnel. Idempotent once stored.
+ * Not a cloud credential: a shared secret for vLLM --api-key on the GPU host
+ * and for Eval calling it. The port is open, so this is the only thing standing
+ * in front of the endpoint. Idempotent once stored.
  */
 export async function ensureVllmApiKey(): Promise<string> {
   ensureBaseline();
@@ -208,7 +212,7 @@ export function readSettings(): SettingView[] {
   return SETTING_DEFS.map((d) => {
     const raw = (baselineEnv.get(d.key) ?? '').trim();
     const set = raw.length > 0;
-    const defaultValue = d.defaultValue ?? null;
+    const defaultValue = defaultFor(d);
     const effective = set ? raw : defaultValue;
     return {
       key: d.key,
@@ -301,16 +305,13 @@ export async function updateSettings(
   }
 
   for (const [key, value] of Object.entries(filtered)) {
-    const def = DEF_BY_KEY.get(key);
     baselineEnv.set(key, value);
-    if (value.length === 0) {
-      // Cleared — fall back to default if any
-      if (def?.defaultValue) process.env[key] = def.defaultValue;
-      else delete process.env[key];
-    } else {
-      process.env[key] = value;
-    }
+    if (value.length === 0) delete process.env[key];
+    else process.env[key] = value;
   }
+  // Saving the GPU host is what gives the vLLM base URL a default, so the
+  // defaults are recomputed here rather than only at startup.
+  applyDefaults();
 
   const file = await writeEnvFile(filtered);
   return { file, applied: Object.keys(filtered) };

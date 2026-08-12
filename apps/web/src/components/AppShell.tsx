@@ -2,12 +2,22 @@
 
 import Link from 'next/link';
 import { MODULES, type ModuleId } from '@/lib/modules';
+import { useT } from '@/components/LocaleProvider';
 import { RedrobLogo } from '@/components/RedrobLogo';
 import { ThemeToggle } from '@/components/ThemeSwitch';
+import type { MessageKey } from '@/lib/i18n';
+
+const MODULE_LABEL_KEYS: Record<Exclude<ModuleId, 'settings'>, MessageKey> = {
+  compare: 'nav.compare',
+  evolve: 'nav.evolve',
+  deploy: 'nav.deploy',
+  generate: 'nav.generate',
+};
 
 export function ModuleNav({ current }: { current: ModuleId }) {
+  const t = useT();
   return (
-    <nav className="mode-switch" aria-label="Modules">
+    <nav className="mode-switch" aria-label={t('nav.modulesAria')}>
       {MODULES.map((m) => (
         <Link
           key={m.id}
@@ -15,7 +25,7 @@ export function ModuleNav({ current }: { current: ModuleId }) {
           className={current === m.id ? 'on' : undefined}
           aria-current={current === m.id ? 'page' : undefined}
         >
-          {m.label}
+          {t(MODULE_LABEL_KEYS[m.id])}
         </Link>
       ))}
     </nav>
@@ -37,6 +47,7 @@ type ShellProps = {
  * Port stays in the brand tooltip only (local workbench hint, not chrome noise).
  */
 export function AppShell({ module, port = 3939, center, right, children }: ShellProps) {
+  const t = useT();
   return (
     <div className="app">
       <header className="app-titlebar">
@@ -44,10 +55,10 @@ export function AppShell({ module, port = 3939, center, right, children }: Shell
           <Link
             href="/"
             className="app-name"
-            title={`Home · localhost:${port}`}
+            title={t('nav.homeTitle', { port })}
           >
             <RedrobLogo size={16} className="app-logo" />
-            <span>redrob-eval</span>
+            <span>{t('nav.home')}</span>
           </Link>
           <span className="app-sep" aria-hidden />
           <ModuleNav current={module} />
@@ -63,7 +74,7 @@ export function AppShell({ module, port = 3939, center, right, children }: Shell
             className={`app-settings-link${module === 'settings' ? ' on' : ''}`}
             aria-current={module === 'settings' ? 'page' : undefined}
           >
-            Settings
+            {t('nav.settings')}
           </Link>
         </div>
       </header>

@@ -9,10 +9,12 @@ cp .env.example .env   # add provider keys you need
 yarn install
 yarn verify:phase1 && yarn verify:gepa && yarn verify:phase3
 yarn verify:preference-gen
+yarn verify:tool-routing
+yarn test
 yarn typecheck
 ```
 
-Do not commit `.env`, caches, run artifacts, or model weights.
+Do not commit `.env`, caches, run artifacts, model weights, `.redrob/`, or local agent skill installs (`.agents/`, `skills-lock.json`).
 
 ## Branching model
 
@@ -81,13 +83,13 @@ This is the rule the rest of the model depends on, so it is worth stating on its
 
 - **Feature, fix and refactor PRs into `develop`: squash by default.** One branch becomes one
   commit and `develop` stays readable. A branch whose commits are each already a self-contained
-  logical change — not a trail of "wip" and "fix typo" — may be merged with `--no-ff` instead, to
+  logical change, not a trail of "wip" and "fix typo", may be merged with `--no-ff` instead, to
   keep boundaries that are worth bisecting later. Either is fine here; the point is that nothing
   merges into `develop` as a pile of noise.
 - **Release and hotfix merges: real merge commits, `--no-ff`, never squash or rebase.** This one is
   not a preference.
 
-A squash does not record that the two branches share history — it produces a brand new commit
+A squash does not record that the two branches share history. It produces a brand new commit
 holding the same text. So if you squash a hotfix into `main` and then squash it into `develop`,
 Git does not know those are the same fix. The next release merge sees both sides changing the same
 lines with no common ancestor to compare against, and reports a conflict for a fix that was already
@@ -139,7 +141,7 @@ drags them into production when it merges. Avoiding that is the only reason hotf
 
 **If a release branch is open when the hotfix lands, merge the hotfix into the release branch
 instead of into `develop`.** The release branch then carries it to `develop` through its own
-merge-back, so the fix travels once, and — more importantly — the thing QA is testing now contains
+merge-back, so the fix travels once, and, more importantly, the thing QA is testing now contains
 the fix that is already in production.
 
 ### Why the three do not collide
@@ -163,7 +165,7 @@ Three things genuinely do conflict, and only the last one is a mistake:
 
 1. **The version fields, always.** If `release/0.2.0` is open and a hotfix takes `main` to `0.1.1`,
    merging that hotfix conflicts on all five version fields. This is expected rather than a
-   problem — resolve it by keeping the release branch's number, `0.2.0`.
+   problem, so resolve it by keeping the release branch's number, `0.2.0`.
 2. **Code that both sides really did change.** If a feature on `develop` rewrote the function a
    hotfix patched, the merge-back conflicts and it *should*. Resolve it once, in `develop`, with
    both versions visible.
@@ -192,7 +194,7 @@ in the root, `apps/web`, `packages/harness` and `packages/tokenizers` `package.j
    that is fine in isolation and broken in combination.
 3. *On the release branch*, by hand, the things CI structurally cannot do. CI has no browser, no
    API keys and no GPU, so none of the following is covered by a green build:
-   - click through the UI — there are no end-to-end tests, so `yarn build` proves it compiles and
+   - click through the UI: there are no end-to-end tests, so `yarn build` proves it compiles and
      nothing proves it works
    - one real call against a live provider key, since the `verify:*` scripts are deliberately
      offline and deterministic

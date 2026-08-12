@@ -2,12 +2,21 @@
 
 import { useCallback, useEffect, useImperativeHandle, useRef, useState, forwardRef } from 'react';
 import '@xterm/xterm/css/xterm.css';
+import { useT } from '@/components/LocaleProvider';
+import { filterTerminalInput } from '@/lib/deploy/terminal-input';
 
 export type DeployTerminalHandle = {
   sessionId: string | null;
   status: 'idle' | 'connecting' | 'open' | 'error';
   open: () => Promise<void>;
   focus: () => void;
+};
+
+type TerminalLike = {
+  focus: () => void;
+  hasSelection: () => boolean;
+  getSelection: () => string;
+  buffer: { active: { length: number; getLine: (i: number) => { translateToString: (trim?: boolean) => string } | undefined } };
 };
 
 /**
@@ -21,8 +30,10 @@ export const DeployTerminal = forwardRef<
   DeployTerminalHandle,
   { sshReady: boolean; autoOpen?: boolean; onOpened?: () => void }
 >(function DeployTerminal({ sshReady, autoOpen = false, onOpened }, ref) {
+  const t = useT();
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const termRef = useRef<{ focus: () => void } | null>(null);
+  const termRef = useRef<TerminalLike | null>(null);
+  const [copied, setCopied] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [status, setStatus] = useState<'idle' | 'connecting' | 'open' | 'error'>('idle');
   const [error, setError] = useState<string | null>(null);
@@ -88,10 +99,13 @@ export const DeployTerminal = forwardRef<
       termRef.current = term;
 
       const postInput = (data: string) => {
+        const typed = filterTerminalInput(data);
+        // A payload that was nothing but a capability answer is not a keystroke.
+        if (!typed) return;
         void fetch(`/api/deploy/terminal/${id}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ data }),
+          body: JSON.stringify({ data: typed }),
         });
       };
       const disposable = term.onData(postInput);
@@ -157,11 +171,37 @@ export const DeployTerminal = forwardRef<
       };
     } catch (e) {
       setStatus('error');
-      setError(e instanceof Error ? e.message : 'Failed to open terminal');
+      setError(e instanceof Error ? e.message : t('deploy.terminal.openFailed'));
     } finally {
       openingRef.current = false;
     }
-  }, [status, onOpened]);
+  }, [status, onOpened, t]);
+
+  /**
+   * The selection when there is one, the whole scrollback otherwise. A failed
+   * step is worth pasting somewhere, and hunting for the start of a traceback
+   * with the mouse is the slowest way to get it.
+   */
+  const copyOutput = async () => {
+    const term = termRef.current;
+    if (!term) return;
+    let text = term.hasSelection() ? term.getSelection() : '';
+    if (!text) {
+      const buffer = term.buffer.active;
+      const lines: string[] = [];
+      for (let i = 0; i < buffer.length; i++) {
+        lines.push(buffer.getLine(i)?.translateToString(true) ?? '');
+      }
+      text = lines.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+    }
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1500);
+    } catch {
+      /* clipboard refused, and there is nothing useful to say about it */
+    }
+  };
 
   /** Stop watching, leave the op running on the host. */
   const detach = () => {
@@ -213,29 +253,37 @@ export const DeployTerminal = forwardRef<
   return (
     <div className="deploy-terminal deploy-terminal-main">
       <div className="deploy-terminal-bar">
-        <span className="deploy-terminal-title">Remote shell</span>
+        <span className="deploy-terminal-title">{t('deploy.terminal.title')}</span>
         <span className="deploy-terminal-hint">
           {status === 'open' && reused
-            ? 'Reattached — steps already running kept going'
-            : 'Runs in tmux — steps survive a disconnect'}
+            ? t('deploy.terminal.reattached')
+            : t('deploy.terminal.persistHint')}
         </span>
         {status === 'open' ? (
           <>
             <button
               type="button"
               className="app-ghost-btn"
-              onClick={detach}
-              title="Stop watching. Steps keep running on the GPU host."
+              onClick={() => void copyOutput()}
+              title={t('deploy.terminal.copyTitle')}
             >
-              Detach
+              {copied ? t('deploy.terminal.copied') : t('deploy.terminal.copy')}
+            </button>
+            <button
+              type="button"
+              className="app-ghost-btn"
+              onClick={detach}
+              title={t('deploy.terminal.detachTitle')}
+            >
+              {t('deploy.terminal.detach')}
             </button>
             <button
               type="button"
               className="app-ghost-btn"
               onClick={endSession}
-              title="Kill the tmux session and stop whatever step is running."
+              title={t('deploy.terminal.endSessionTitle')}
             >
-              End session
+              {t('deploy.terminal.endSession')}
             </button>
           </>
         ) : (
@@ -244,9 +292,9 @@ export const DeployTerminal = forwardRef<
             className="app-ghost-btn"
             onClick={() => void open()}
             disabled={!sshReady || status === 'connecting'}
-            title={sshReady ? 'Attach to the remote shell' : 'Set GPU_HOST / GPU_USER / GPU_SSH_KEY first'}
+            title={sshReady ? t('deploy.terminal.attachTitle') : t('deploy.terminal.setHostFirstTitle')}
           >
-            {status === 'connecting' ? 'Attaching…' : 'Attach shell'}
+            {status === 'connecting' ? t('deploy.terminal.attaching') : t('deploy.terminal.attach')}
           </button>
         )}
       </div>

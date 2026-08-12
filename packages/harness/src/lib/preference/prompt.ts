@@ -13,7 +13,7 @@ export function preferenceSystemPrompt(task: CustomGoalSpec): string {
  */
 export function preferenceUserTemplate(): string {
   return (
-    'Task rubric (for your awareness — produce the best answer to the input):\n' +
+    'Task rubric (for your awareness, produce the best answer to the input):\n' +
     '{{rubric}}\n\n' +
     'Input:\n{{input}}\n\n' +
     '{{sectionBlock}}' +

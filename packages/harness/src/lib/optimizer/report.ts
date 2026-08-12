@@ -75,7 +75,7 @@ export function buildOptimizeReport(params: {
   }
   if (evolvedVal?.abstentionRate != null && evolvedVal.abstentionRate > 0) {
     notes.push(
-      `Abstention rate (val): ${(evolvedVal.abstentionRate * 100).toFixed(1)}% — excluded from QWK.`,
+      `Abstention rate (val): ${(evolvedVal.abstentionRate * 100).toFixed(1)}%, excluded from QWK.`,
     );
   }
 
@@ -149,7 +149,7 @@ export function reportToMarkdown(report: OptimizeReport): string {
   const b = report.baseline;
   const e = report.evolved;
   const lines = [
-    `# Optimize report — ${report.runId}`,
+    `# Optimize report: ${report.runId}`,
     '',
     `- Dataset: ${report.datasetId}`,
     `- Optimizer: ${report.optimizer}`,

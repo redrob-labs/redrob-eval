@@ -24,7 +24,9 @@ jobs:
       - run: yarn verify:video
       - run: yarn verify:tournament
       - run: yarn verify:selfhosted
+      - run: yarn verify:tool-routing
       - run: yarn verify:preference-gen
+      - run: yarn test
       - run: yarn export:samples
       # committed samples must be byte-identical to a fresh offline regeneration
       - run: git diff --exit-code -- exports/samples

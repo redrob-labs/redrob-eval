@@ -22,7 +22,6 @@ export async function GET() {
       callable: Boolean(provider?.configured),
       selfHosted: m.selfHosted
         ? {
-            axis: m.selfHosted.axis,
             precision: m.selfHosted.precision,
             license: m.selfHosted.license,
             hfRepoId: m.selfHosted.hfRepoId,

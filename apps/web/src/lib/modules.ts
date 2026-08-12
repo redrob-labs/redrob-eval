@@ -7,18 +7,18 @@ export type ModuleId =
   | 'settings';
 
 export type ModuleDef = {
-  id: ModuleId;
+  id: Exclude<ModuleId, 'settings'>;
   href: string;
-  label: string;
 };
 
 /**
- * Compare decides, Evolve optimizes, Deploy serves, Generate makes the items the other
- * three are run on. Settings lives in the titlebar.
+ * Compare decides (including tool-routing modality), Evolve optimizes, Deploy serves,
+ * Generate makes the items the other modules run on. Settings lives in the titlebar.
+ * Labels come from i18n (`nav.*`).
  */
 export const MODULES: ModuleDef[] = [
-  { id: 'compare', href: '/compare', label: 'Compare' },
-  { id: 'evolve', href: '/evolve', label: 'Evolve' },
-  { id: 'deploy', href: '/deploy', label: 'Deploy' },
-  { id: 'generate', href: '/generate', label: 'Generate' },
+  { id: 'compare', href: '/compare' },
+  { id: 'evolve', href: '/evolve' },
+  { id: 'deploy', href: '/deploy' },
+  { id: 'generate', href: '/generate' },
 ];

@@ -130,3 +130,9 @@ scripts/parity/results/
 # a file whose parent directory is itself excluded.
 logs/*
 !logs/SUMMARY*.md
+
+# Screenshots and recordings taken while checking a change by hand. Evidence for a review,
+# reproducible by looking again, and already uploaded where the review can see it. One
+# reached a release tag through `git add -A`, which is the only way this directory ever
+# gets staged.
+.artifacts/

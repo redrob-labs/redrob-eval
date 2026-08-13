@@ -20,8 +20,12 @@ import {
 
 test('optimize run ids', async (t) => {
   await t.test('differ when minted in the same tick', () => {
-    const ids = new Set(Array.from({ length: 200 }, () => makeOptimizeRunId('custom-goal')));
-    assert.equal(ids.size, 200, 'every id in a burst should be distinct');
+    // A burst is collision-free, not merely unlikely to collide. Four random
+    // characters failed this about 1% of the time at 200 ids, which is both a
+    // flaky test and, on the days it passed, two runs sharing a directory.
+    const burst = 20_000;
+    const ids = new Set(Array.from({ length: burst }, () => makeOptimizeRunId('custom-goal')));
+    assert.equal(ids.size, burst, 'every id in a burst should be distinct');
   });
 
   await t.test('still start with a sortable timestamp', () => {

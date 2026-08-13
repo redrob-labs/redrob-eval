@@ -184,6 +184,15 @@ happen and the branch is just `develop` under another name.
 in the root, `apps/web`, `packages/harness` and `packages/tokenizers` `package.json`, plus
 `version:` in `CITATION.cff`.
 
+Those five are the whole list because the workspaces depend on each other by `"*"` rather than by
+an exact version. Do not pin them: 0.2.0 shipped with `@redrob/harness` still asked for at
+`0.1.0`, so `yarn install --frozen-lockfile` looked for a private package on npm and every CI job
+failed, while a local install kept working because `node_modules` was already linked. Nothing here
+is published, so an exact internal pin only adds a second place to remember.
+
+**Run `yarn install --frozen-lockfile` on the release branch** before merging, in a clean checkout
+rather than in your working tree. It is the one check that sees a version bump the way CI does.
+
 **QA happens in three layers, and only the first two are automated.**
 
 1. *Every pull request into `develop`* runs both workflows: typecheck, lint, the `verify:*`

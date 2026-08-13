@@ -145,6 +145,7 @@ Checklist / 비디오 스킬 채점(커스텀 goal `mode: "checklist"` 또는 `d
 - [기본 워크플로](docs/workflow.md) - Generate → Compare → Analyze, 선택적 Deploy,
   결정론적 참조 채점, 모듈 사이에 보존되는 근거
 - [Contributing](CONTRIBUTING.md) - 설정, 그리고 브랜칭 모델: `main`은 프로덕션이고 릴리스만 받고, `develop`에서 분기하고 대상으로 삼습니다
+- [Changelog](CHANGELOG.md) - 태그가 붙은 릴리스마다 무엇이 바뀌었고 왜 바뀌었는지
 - [Security](SECURITY.md)
 - [Methodology](docs/methodology.md) - 라우팅 라벨, 피처, 내보내기
 - [Experiment registry](docs/registry.md) - 모든 종류의 실행이 공유하는 하나의 기록, `yarn runs`로 무엇을

@@ -71,6 +71,11 @@ datasets/video-local/*
 eval/runs/
 eval/tournaments/
 
+# Experiment registry (local history; the sqlite file and the fs driver's runs)
+eval/registry/
+eval/registry.sqlite
+eval/registry.sqlite-journal
+
 # routing-SLM collection (generated — keep .gitkeep)
 eval/routing-runs/*
 !eval/routing-runs/.gitkeep

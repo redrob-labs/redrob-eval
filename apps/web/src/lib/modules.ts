@@ -3,6 +3,7 @@ export type ModuleId =
   | 'evolve'
   | 'deploy'
   | 'generate'
+  | 'analyze'
   /** Titlebar destination, not part of the module loop nav */
   | 'settings';
 
@@ -21,4 +22,5 @@ export const MODULES: ModuleDef[] = [
   { id: 'evolve', href: '/evolve' },
   { id: 'deploy', href: '/deploy' },
   { id: 'generate', href: '/generate' },
+  { id: 'analyze', href: '/analyze' },
 ];

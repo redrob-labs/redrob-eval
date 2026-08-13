@@ -116,13 +116,14 @@ per-slice numbers and the models that failed.
 
 ## Not done yet
 
-- **Resumable job queue.** The `queued` status and per-run events are the hooks
-  for it, but nothing schedules work yet. A run matrix that can be paused and
-  resumed cell by cell is the next piece.
 - **No migration of existing runs.** The registry is forward-only by choice.
   `eval/tournaments/` and the rest keep working exactly as they did.
-- **One producer wired.** Tool routing records; eval, tournaments and multi-turn
-  do not yet.
+- **Producers.** A tool-routing sweep and a tool-routing matrix record; eval,
+  tournaments and multi-turn do not yet.
+
+The [resumable job queue](job-queue.md) is built on this: the `queued` status
+and the append-only event log were the hooks for it, and a matrix now
+checkpoints its cells into a run's events so it can be paused and resumed.
 
 ## Related
 

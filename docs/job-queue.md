@@ -97,11 +97,31 @@ resuming through a second, independent store instance over the same directory.
   change to the queue, the same way new kinds of run need no change to the
   registry.
 
+## Running a grid as a registry run
+
+`runRegistryMatrix` is the one verb that binds the queue to the
+[registry](registry.md): it opens (or reopens) a run, checkpoints every cell to
+that run's event log, drives the queue, and finalises the run's status. The
+first producer built on it is a tool-routing matrix — one cell per
+`(model, language)`:
+
+```bash
+yarn tool-routing:matrix --models granite-4.1-8b,qwen3.5-9b --languages en,ko --limit 20
+# Ctrl-C to pause; it prints the resume command:
+yarn tool-routing:matrix --resume 2026-08-13_023853_tool-routing-matrix
+```
+
+A resume reopens the same run, reruns only the cells that had not finished, and
+rebuilds the results table from the registry — so the numbers a cancelled pass
+produced are read back rather than lost. The dimensions, provider and sample
+size are remembered on the run, so the resume flag is all that is needed; and a
+resume whose parameters hash differently from the original is refused, so it
+cannot quietly become a different experiment under the same id.
+
 ## Not done yet
 
-- **No producer is wired to it yet.** The queue is the engine; a run-matrix UI
-  and a `tool-routing`/`eval` matrix runner that drive it are the next step, and
-  where resumability becomes visible to a researcher.
+- **No web UI.** The matrix runs from the CLI. A run-matrix screen that launches
+  and watches one of these is the next step.
 - **No cross-run cost accounting.** Estimated calls/tokens before launch and
   live usage totals belong on top of this.
 

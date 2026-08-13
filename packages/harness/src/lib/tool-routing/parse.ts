@@ -19,6 +19,86 @@ export function stripReasoning(raw: string): string {
 }
 
 /**
+ * Drop `//` and block comments that are not inside a string.
+ *
+ * Several instruction-tuned models answer with a fenced block of JSON annotated
+ * the way a person would write it - `"amount": 0,  // missing, cannot proceed`.
+ * That is not JSON, so it threw, and the report then said "unparseable" about a
+ * model that had in fact chosen a tool and filled its arguments in. Rejecting
+ * the reply is still right, but the reason has to be the real one: what those
+ * models got wrong on those tasks was inventing a placeholder argument instead
+ * of deferring, and that is a routing failure the scores should show as one.
+ *
+ * String-aware, or the `//` in every URL inside an argument would be eaten.
+ */
+export function stripJsonComments(text: string): string {
+  let out = '';
+  let inString = false;
+  let escaped = false;
+
+  for (let i = 0; i < text.length; i += 1) {
+    const ch = text[i]!;
+    const next = text[i + 1];
+
+    if (inString) {
+      out += ch;
+      if (escaped) escaped = false;
+      else if (ch === '\\') escaped = true;
+      else if (ch === '"') inString = false;
+      continue;
+    }
+
+    if (ch === '"') {
+      inString = true;
+      out += ch;
+      continue;
+    }
+    if (ch === '/' && next === '/') {
+      while (i < text.length && text[i] !== '\n') i += 1;
+      out += '\n';
+      continue;
+    }
+    if (ch === '/' && next === '*') {
+      i += 2;
+      while (i < text.length && !(text[i] === '*' && text[i + 1] === '/')) i += 1;
+      i += 1;
+      continue;
+    }
+    out += ch;
+  }
+  return out;
+}
+
+/** A trailing comma left behind by a comment is still not JSON. */
+function dropTrailingCommas(text: string): string {
+  let out = '';
+  let inString = false;
+  let escaped = false;
+  for (let i = 0; i < text.length; i += 1) {
+    const ch = text[i]!;
+    if (inString) {
+      out += ch;
+      if (escaped) escaped = false;
+      else if (ch === '\\') escaped = true;
+      else if (ch === '"') inString = false;
+      continue;
+    }
+    if (ch === '"') {
+      inString = true;
+      out += ch;
+      continue;
+    }
+    if (ch === ',') {
+      let j = i + 1;
+      while (j < text.length && /\s/.test(text[j]!)) j += 1;
+      if (text[j] === '}' || text[j] === ']') continue;
+    }
+    out += ch;
+  }
+  return out;
+}
+
+/**
  * Every complete top-level `{...}` in the text, in the order they appear.
  *
  * Brace counting rather than first-brace-to-last-brace: a reply that mentions
@@ -63,13 +143,16 @@ function extractJsonObject(raw: string): unknown {
     /* fall through - the answer is wrapped in prose or a code fence */
   }
 
-  const candidates = topLevelObjects(trimmed);
+  // Comments and trailing commas are stripped only after strict parsing has
+  // already failed, so a well-formed reply never goes through this path.
+  const relaxed = dropTrailingCommas(stripJsonComments(trimmed));
+  const candidates = [...topLevelObjects(trimmed), ...topLevelObjects(relaxed)];
   if (candidates.length === 0) throw new Error('no JSON object in response');
 
   // Last, not first: anything before it is preamble the model talked itself out of.
-  for (let i = candidates.length - 1; i >= 0; i -= 1) {
+  for (const text of [...candidates].reverse()) {
     try {
-      return JSON.parse(candidates[i]!);
+      return JSON.parse(text);
     } catch {
       /* try the one before it */
     }
@@ -128,6 +211,21 @@ export function parseToolRoutingPrediction(rawReply: string): ParsedPrediction {
         raw,
         message: `tool name in "action" instead of "tool": ${obj.action}`,
         envelope: { tool: obj.action, arguments: args },
+      };
+    }
+    // Same mistake, one step further: the tool name is in `action` and the
+    // arguments were spread across the top level instead of nested. Everything
+    // that is not the action is the argument set. Still scored as a parse
+    // failure - this only keeps the diagnostic honest about what was meant.
+    const flattened = Object.fromEntries(
+      Object.entries(obj).filter(([key]) => key !== 'action'),
+    );
+    if (Object.keys(flattened).length > 0) {
+      return {
+        kind: 'parse_error',
+        raw,
+        message: `tool name in "action" and arguments not nested: ${obj.action}`,
+        envelope: { tool: obj.action, arguments: flattened },
       };
     }
     return { kind: 'parse_error', raw, message: `unknown action ${obj.action}` };

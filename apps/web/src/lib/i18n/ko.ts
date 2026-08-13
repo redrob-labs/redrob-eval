@@ -244,12 +244,49 @@ export const ko: Record<MessageKey, string> = {
 
   'compare.pref.title': '블라인드 선호도 토너먼트',
   'compare.pref.explainer':
-    '프롬프트마다 따로 결정하고, 모델 이름은 가려집니다. 답변이 4개 이하면 한 화면에 전부 띄워 그중 가장 나은 것을 고르고, 그보다 많으면 둘씩 붙여 승자가 올라갑니다. 이 프롬프트별 승자가 다음 단계의 라우팅 라벨이 됩니다.',
+    '프롬프트마다 따로 결정하고, 모델 이름은 가려집니다. 답변이 4개 이하면 한 화면에 전부 띄워 가장 나은 것을 고르거나, 순위를 매기거나, 하나씩 탈락시킬 수 있고, 그보다 많으면 둘씩 붙여 승자가 올라갑니다. 이전 프롬프트로 돌아가 다시 투표할 수도 있습니다. 이 프롬프트별 승자가 다음 단계의 라우팅 라벨이 됩니다.',
   'compare.pref.buildingBrackets': '브래킷 구성 중…',
   'compare.pref.buildBrackets': '브래킷 구성',
   'compare.pref.matchesDecided': '{voted} / {total} 매치 결정됨',
-  'compare.pref.promptRound': '· 프롬프트 {promptId}, 라운드 {round}',
-  'compare.pref.promptGroup': '· 프롬프트 {promptId}, 답변 {count}개 한 화면',
+  'compare.pref.promptPosition': '프롬프트 {index} / {total}',
+  'compare.pref.round': '라운드 {round}',
+  'compare.pref.noPrompts': '이 토너먼트에는 투표할 프롬프트가 없습니다.',
+  'compare.pref.nav.prev': '← 이전 프롬프트',
+  'compare.pref.nav.next': '다음 프롬프트 →',
+  'compare.pref.nav.pending': '아직 남은 첫 프롬프트로',
+  'compare.pref.ballotMode': '이 프롬프트를 결정하는 방식',
+  'compare.pref.mode.pick': '승자 고르기',
+  'compare.pref.mode.rank': '순위 매기기',
+  'compare.pref.mode.eliminate': '하나씩 탈락',
+  'compare.pref.modeHint.pick':
+    '한 번 누르면 프롬프트가 끝납니다. 승자가 나머지를 이겼다는 것만 기록하고, 나머지끼리의 우열은 남기지 않습니다.',
+  'compare.pref.modeHint.rank':
+    '나은 답변부터 차례로 누르세요. 순위는 모든 쌍에 대한 판단이므로 모든 쌍이 기록됩니다.',
+  'compare.pref.modeHint.eliminate':
+    '가장 약한 답변부터 하나씩 떨어뜨려 하나가 남을 때까지 갑니다. 매번 남은 답변들이 방금 탈락한 답변을 이긴 것으로 기록됩니다.',
+  'compare.pref.eliminate': '탈락',
+  'compare.pref.place': '{place}위',
+  'compare.pref.placeNext': '{place}위로 두기',
+  'compare.pref.rankSubmit': '이 순위 저장',
+  'compare.pref.rankReset': '순위 다시 매기기',
+  'compare.pref.promptWonBy': '답변 {side}이(가) 이 프롬프트에서 이겼습니다.',
+  'compare.pref.promptUnresolved': '이 프롬프트에는 승자가 없습니다.',
+  'compare.pref.tieRecorded': '판단하기 어려움으로 기록되어 이 프롬프트에는 승자가 없습니다.',
+  'compare.pref.erroredHere': '답변 없음',
+  'compare.pref.revote': '이 프롬프트 다시 투표',
+  'compare.pref.byPrompt': '프롬프트별 결과',
+  'compare.pref.blindUntilDone':
+    '모든 프롬프트가 끝날 때까지 답변은 글자로만 표시됩니다. 한 프롬프트의 승자를 밝히면 다음 프롬프트에서 어떤 모델인지 알게 됩니다.',
+  'compare.pref.lettersPerPrompt':
+    '글자는 프롬프트마다 새로 매겨집니다. 어떤 프롬프트의 A와 다른 프롬프트의 A는 같은 모델이 아닙니다.',
+  'compare.pref.statusOpen': '진행 중',
+  'compare.pref.statusDecided': '결정됨',
+  'compare.pref.statusTie': '판단하기 어려움',
+  'compare.pref.goToPrompt': '열기',
+  'compare.pref.table.prompt': '프롬프트',
+  'compare.pref.table.status': '상태',
+  'compare.pref.table.winner': '승자',
+  'compare.pref.table.knockedOut': '이후 순서',
   'compare.pref.walkovers':
     '프롬프트 {count}개는 나머지 답변이 모두 실패해서 투표 없이 한 모델로 결정됐어요. 이건 투표가 아니라 획득한 프롬프트로만 집계합니다.',
   'compare.pref.prompt': '프롬프트',
@@ -332,6 +369,7 @@ export const ko: Record<MessageKey, string> = {
   'deploy.notice.opInstall': '호스트에 Install을 넣었습니다 (슬롯 공통, 한 번).',
   'deploy.notice.opSlot':
     '슬롯 {slot}에 {op}을(를) 넣었습니다 (:{port}, served {served}). 셸을 확인하세요.',
+  'deploy.notice.opFleet': '슬롯 {slots}에 {op}을(를) 넣었습니다. 셸을 확인하세요.',
   'deploy.error.cancelFailed': '단계를 중지하지 못했습니다',
   'deploy.staleOp':
     '{step}이(가) 끝나기 전에 중단됐습니다. 셸이 닫힌 경우가 대부분입니다. 지금 호스트에서 실행 중인 작업은 없으니 다시 시작하면 됩니다.',
@@ -359,6 +397,14 @@ export const ko: Record<MessageKey, string> = {
   'deploy.slots.title': '슬롯',
   'deploy.slots.hint':
     'Install은 호스트당 한 번입니다. 슬롯마다 Measure / Start를 하세요. 남은 VRAM이 허락하는 한 슬롯을 더 추가할 수 있어요(상한 {max}). 한 장을 나눠 쓰면 컨텍스트와 VRAM을 희생합니다. Undeploy는 그 슬롯만 지웁니다.',
+  'deploy.slots.measureAll': '모든 슬롯 측정 ({count})',
+  'deploy.slots.measureAllHint':
+    '아래 모든 슬롯을 한 번에 측정하고 바로 서빙합니다. 슬롯마다 지정한 모델을 그대로 씁니다.',
+  'deploy.slots.measureAllWhy':
+    '모든 슬롯의 가중치를 먼저 병렬로 내려받고, 크기 측정은 슬롯마다 하나씩 진행합니다. 측정은 그 순간 실제로 비어 있는 VRAM을 기준으로 하므로, 두 프로브가 동시에 올라오면 서로가 곧 가져갈 메모리를 읽게 됩니다. 실패한 슬롯은 그대로 보고하고 나머지는 계속 진행합니다.',
+  'deploy.slots.healthAll': '서빙 중인 슬롯 점검 ({count})',
+  'deploy.slots.healthAllHint':
+    '실행 중인 모든 슬롯의 준비 상태와 짧은 응답을 한꺼번에 확인합니다. 서로 독립적인 HTTP 호출이라 실제로 병렬로 돕니다.',
   'deploy.slot.heading': '슬롯 {slot}',
   'deploy.slot.add': '슬롯 추가',
   'deploy.slot.addHint': '다음 빈 슬롯 번호를 할당합니다 (Measure 때 남은 VRAM이 실제 한계)',

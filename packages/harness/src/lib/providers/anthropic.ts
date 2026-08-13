@@ -41,7 +41,13 @@ export const anthropicAdapter: ProviderAdapter = {
             max_tokens: maxTokens,
             temperature: params.temperature ?? 0,
             system: params.systemPrompt?.trim() || undefined,
-            messages: [{ role: 'user', content: params.prompt }],
+            messages: [
+              ...(params.history ?? []).map((turn) => ({
+                role: turn.role,
+                content: turn.content,
+              })),
+              { role: 'user', content: params.prompt },
+            ],
           }),
         });
 

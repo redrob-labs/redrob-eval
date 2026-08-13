@@ -4,18 +4,27 @@
  */
 import assert from 'node:assert/strict';
 import {
+  activeContenders,
   advance,
   advanceGroup,
   aggregateTournament,
   bracketIsSettled,
   createBracket,
+  eliminateFromGroup,
+  foldVoteLog,
   groupIsPending,
   GROUP_VOTE_MAX,
   nextPendingMatch,
+  rankBracket,
+  rankGroup,
   resolvedMatches,
   totalMatches,
 } from '../packages/harness/src/lib/tournament/index.ts';
-import type { Competitor, Vote } from '../packages/harness/src/lib/tournament/types.ts';
+import type {
+  Competitor,
+  Vote,
+  VoteLogEntry,
+} from '../packages/harness/src/lib/tournament/types.ts';
 import { labelsFromPreference } from '../packages/harness/src/lib/routing-data/labels-from-preference.ts';
 
 function field(n: number, opts?: { errorOn?: string[] }): Competitor[] {
@@ -95,6 +104,118 @@ for (const n of [2, 3, 4]) {
   assert.deepEqual(pairs, ['m2>m1', 'm2>m3'], 'only the winner gets head-to-head rows');
 }
 
+// Eliminating one answer at a time settles the ballot and orders the field
+{
+  const b = createBracket({ promptId: 'gout', promptText: 'q', competitors: field(4) });
+  const matchId = b.group!.matchId;
+
+  const first = eliminateFromGroup(b, matchId, 'm3').votes;
+  assert.equal(first.length, 3, 'the three still standing each beat the one that went out');
+  assert.equal(
+    first.every((v) => v.bModelId === 'm3' && v.winner === 'a'),
+    true,
+    'an elimination is only evidence against the answer eliminated',
+  );
+  assert.deepEqual(activeContenders(b.group!).sort(), ['m1', 'm2', 'm4']);
+  assert.equal(b.championModelId, null, 'three left is not a decision yet');
+  assert.equal(bracketIsSettled(b), false, 'the ballot is still open');
+
+  eliminateFromGroup(b, matchId, 'm1');
+  eliminateFromGroup(b, matchId, 'm4');
+  assert.equal(b.championModelId, 'm2', 'the last one standing wins the prompt');
+  assert.deepEqual(
+    b.group?.ranking,
+    ['m2', 'm4', 'm1', 'm3'],
+    'the order they went out is the ranking, worst last',
+  );
+  assert.equal(bracketIsSettled(b), true);
+  assert.throws(
+    () => eliminateFromGroup(b, matchId, 'm2'),
+    /already resolved/,
+    'a decided ballot takes no more votes',
+  );
+}
+
+// A ballot half decided by elimination can still be finished by naming a winner
+{
+  const b = createBracket({ promptId: 'gmixed', promptText: 'q', competitors: field(4) });
+  const matchId = b.group!.matchId;
+  eliminateFromGroup(b, matchId, 'm2');
+  assert.throws(
+    () => advanceGroup(b, matchId, 'm2'),
+    /not on this ballot/,
+    'an answer already out cannot then win',
+  );
+
+  const { votes } = advanceGroup(b, matchId, 'm1');
+  assert.equal(votes.length, 2, 'only the two still standing were judged against the winner');
+  assert.equal(
+    votes.some((v) => v.bModelId === 'm2'),
+    false,
+    'beating an answer already knocked out is not a new fact',
+  );
+  const agg = aggregateTournament({ brackets: [b], votes });
+  assert.deepEqual(
+    agg.rankingByPrompt.gmixed?.[3],
+    'm2',
+    'the one knocked out places last, below the answers still standing',
+  );
+}
+
+// A tie called after an elimination ties what is left, not what is out
+{
+  const b = createBracket({ promptId: 'gtiepart', promptText: 'q', competitors: field(4) });
+  const matchId = b.group!.matchId;
+  eliminateFromGroup(b, matchId, 'm3');
+  const { votes } = advanceGroup(b, matchId, null);
+  assert.equal(votes.length, 3, 'three survivors make three tied pairs');
+  assert.equal(
+    votes.some((v) => v.aModelId === 'm3' || v.bModelId === 'm3'),
+    false,
+    'the answer knocked out did not tie with anyone',
+  );
+}
+
+// A ranking is a claim about every pair, so every pair is recorded
+{
+  const b = createBracket({ promptId: 'grank', promptText: 'q', competitors: field(4) });
+  const { votes } = rankGroup(b, b.group!.matchId, ['m4', 'm1', 'm3', 'm2']);
+  assert.equal(votes.length, 6, 'four answers make six pairs');
+  assert.equal(b.championModelId, 'm4', 'the top of the ranking wins the prompt');
+  assert.deepEqual(b.group?.ranking, ['m4', 'm1', 'm3', 'm2']);
+  assert.deepEqual(b.group?.eliminated, ['m2', 'm3', 'm1'], 'worst first, as if eliminated');
+
+  const agg = aggregateTournament({ brackets: [b], votes });
+  assert.equal(agg.winMatrix.m1?.m3, 1, 'a mid-table pair is judged too');
+  assert.equal(agg.winMatrix.m3?.m1, 0);
+  assert.deepEqual(agg.rankingByPrompt.grank, ['m4', 'm1', 'm3', 'm2']);
+}
+
+// A ranking has to place the whole field
+{
+  const b = createBracket({ promptId: 'gpartial', promptText: 'q', competitors: field(3) });
+  assert.throws(
+    () => rankGroup(b, b.group!.matchId, ['m1', 'm2']),
+    /every answer/,
+    'a partial order is not a ranking',
+  );
+  assert.throws(
+    () => rankGroup(b, b.group!.matchId, ['m1', 'm1', 'm2']),
+    /twice/,
+    'an answer cannot hold two places',
+  );
+  assert.equal(groupIsPending(b), true, 'a refused ranking leaves the ballot open');
+}
+
+// Picking a winner refuses to invent an order for the answers passed over
+{
+  const b = createBracket({ promptId: 'gpick', promptText: 'q', competitors: field(3) });
+  advanceGroup(b, b.group!.matchId, 'm2');
+  assert.equal(b.group?.ranking ?? null, null, 'picking a winner is not a ranking');
+  assert.equal(rankBracket(b)[0], 'm2', 'the winner still leads the prompt');
+  assert.equal(rankBracket(b).length, 3, 'the rest follow in the order they were shown');
+}
+
 // Above the group limit the field still plays out as a bracket
 for (const n of [GROUP_VOTE_MAX + 1, 6, 7, 9]) {
   const b = createBracket({ promptId: `p${n}`, promptText: 'q', competitors: field(n) });
@@ -110,6 +231,56 @@ for (const n of [GROUP_VOTE_MAX + 1, 6, 7, 9]) {
     field(n).some((c) => c.modelId === b.championModelId),
     `field of ${n} champion is a real competitor`,
   );
+}
+
+// A knockout is ranked by how far each answer got
+{
+  const b = createBracket({ promptId: 'krank', promptText: 'q', competitors: field(8) });
+  playOut(b);
+  const order = rankBracket(b);
+  assert.equal(order.length, 8, 'every competitor is placed');
+  assert.equal(order[0], b.championModelId, 'the champion leads');
+  assert.equal(new Set(order).size, 8, 'nobody is placed twice');
+  assert.deepEqual(
+    aggregateTournament({ brackets: [b], votes: [] }).rankingByPrompt.krank,
+    order,
+    'the aggregate reports the same order',
+  );
+}
+
+// An open prompt has no ranking to report
+{
+  const b = createBracket({ promptId: 'kopen', promptText: 'q', competitors: field(8) });
+  assert.deepEqual(rankBracket(b), [], 'nothing is placed before the prompt is decided');
+}
+
+// Retracting a prompt drops its votes and leaves the others alone
+{
+  const kept: Vote[] = [
+    {
+      promptId: 'other',
+      matchId: 'other:group',
+      round: 0,
+      aModelId: 'm1',
+      bModelId: 'm2',
+      winner: 'a',
+      winnerModelId: 'm1',
+      votedAt: '2026-01-01T00:00:00.000Z',
+    },
+  ];
+  const dropped: Vote[] = [{ ...kept[0]!, promptId: 'p1', matchId: 'p1:group' }];
+  const recast: Vote[] = [{ ...dropped[0]!, winnerModelId: 'm2', aModelId: 'm2', bModelId: 'm1' }];
+  const log: VoteLogEntry[] = [
+    ...dropped,
+    ...kept,
+    { kind: 'undo', promptId: 'p1', undoneAt: '2026-01-01T00:01:00.000Z' },
+    ...recast,
+  ];
+  const folded = foldVoteLog(log);
+  assert.equal(folded.length, 2, 'the retracted vote is gone and the new one stands');
+  assert.equal(folded.filter((v) => v.promptId === 'p1').length, 1);
+  assert.equal(folded.find((v) => v.promptId === 'p1')?.winnerModelId, 'm2');
+  assert.equal(folded.some((v) => v.promptId === 'other'), true, 'other prompts are untouched');
 }
 
 // A single competitor is champion by default

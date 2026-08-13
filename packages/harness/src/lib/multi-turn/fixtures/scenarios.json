@@ -1,0 +1,231 @@
+[
+  {
+    "id": "mt-en-suffix",
+    "language": "en",
+    "kind": "text",
+    "about": "An instruction given once, never repeated, and still owed three turns later.",
+    "turns": [
+      {
+        "user": "For the rest of this conversation, end every reply with the word DONE on its own line. Reply OK.",
+        "capability": "instruction_retention",
+        "expect": [{ "kind": "contains", "text": "DONE" }]
+      },
+      {
+        "user": "What is the capital of France?",
+        "capability": "instruction_retention",
+        "expect": [
+          { "kind": "contains", "text": "Paris" },
+          { "kind": "contains", "text": "DONE" }
+        ]
+      },
+      {
+        "user": "And of Japan?",
+        "capability": "context_recall",
+        "expect": [
+          { "kind": "contains", "text": "Tokyo" },
+          { "kind": "contains", "text": "DONE" }
+        ]
+      },
+      {
+        "user": "Name one river in that country.",
+        "capability": "context_recall",
+        "expect": [
+          { "kind": "regex", "pattern": "shinano|tone|ishikari|kiso|river" },
+          { "kind": "contains", "text": "DONE" }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "mt-en-booking",
+    "language": "en",
+    "kind": "text",
+    "about": "A detail stated, then corrected. The last turn asks for both back.",
+    "turns": [
+      {
+        "user": "I am booking a meeting room for 6 people on Tuesday at 3pm. Do not mention prices at any point.",
+        "capability": "instruction_retention",
+        "expect": [{ "kind": "absent", "text": "$" }]
+      },
+      {
+        "user": "Actually, move it to Thursday.",
+        "capability": "correction",
+        "expect": [{ "kind": "contains", "text": "Thursday" }]
+      },
+      {
+        "user": "Summarise the booking: how many people, which day, what time?",
+        "capability": "correction",
+        "expect": [
+          { "kind": "regex", "pattern": "\\b6\\b|six" },
+          { "kind": "contains", "text": "Thursday" },
+          { "kind": "regex", "pattern": "3\\s*(pm|p\\.m\\.)|15:00" },
+          { "kind": "absent", "text": "$" }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "mt-ko-language",
+    "language": "ko",
+    "kind": "text",
+    "about": "Korean asked for once, then an English question, then a fact from turn one.",
+    "turns": [
+      {
+        "user": "제 이름은 김도연입니다. 앞으로 답변은 반드시 한국어로만 해주세요. 알겠으면 짧게 답해주세요.",
+        "capability": "instruction_retention",
+        "expect": [{ "kind": "regex", "pattern": "[가-힣]" }]
+      },
+      {
+        "user": "What is the capital of South Korea?",
+        "capability": "instruction_retention",
+        "expect": [
+          { "kind": "contains", "text": "서울" },
+          { "kind": "regex", "pattern": "[가-힣]" }
+        ]
+      },
+      {
+        "user": "제 이름이 뭐라고 했죠?",
+        "capability": "context_recall",
+        "expect": [{ "kind": "contains", "text": "김도연" }]
+      }
+    ]
+  },
+  {
+    "id": "mt-ko-correction",
+    "language": "ko",
+    "kind": "text",
+    "about": "A time corrected mid-conversation, read back two turns later.",
+    "turns": [
+      {
+        "user": "다음 주 화요일 오후 3시에 팀 회의를 잡으려고 해요.",
+        "capability": "context_recall",
+        "expect": [{ "kind": "regex", "pattern": "화요일|3시" }]
+      },
+      {
+        "user": "아, 시간은 오후 5시로 바꿔주세요.",
+        "capability": "correction",
+        "expect": [{ "kind": "regex", "pattern": "5시|17" }]
+      },
+      {
+        "user": "정리해서 알려주세요. 무슨 요일 몇 시인가요?",
+        "capability": "correction",
+        "expect": [
+          { "kind": "contains", "text": "화요일" },
+          { "kind": "regex", "pattern": "5시|17" }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "mt-en-weather-email",
+    "language": "en",
+    "kind": "tool",
+    "about": "Call, read the result back, then carry the result into a second call.",
+    "toolNames": [
+      "get_weather",
+      "send_email",
+      "create_calendar_event",
+      "lookup_order",
+      "convert_currency",
+      "translate_text"
+    ],
+    "turns": [
+      {
+        "user": "What is the weather in Seoul tomorrow?",
+        "capability": "tool_call",
+        "expect": [{ "kind": "tool_call", "tool": "get_weather" }]
+      },
+      {
+        "toolResult": {
+          "tool": "get_weather",
+          "result": { "city": "Seoul", "day": "tomorrow", "tempC": 3, "condition": "snow" }
+        },
+        "capability": "tool_use_result",
+        "expect": [
+          { "kind": "no_tool_call" },
+          { "kind": "regex", "pattern": "snow" }
+        ]
+      },
+      {
+        "user": "Email that forecast to dana@example.com with the subject Weather.",
+        "capability": "tool_call",
+        "expect": [
+          { "kind": "tool_call", "tool": "send_email" },
+          { "kind": "regex", "pattern": "dana@example\\.com" },
+          { "kind": "regex", "pattern": "snow" }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "mt-en-no-tool",
+    "language": "en",
+    "kind": "tool",
+    "about": "Nothing on offer can do it; then something can. Declining must not be sticky.",
+    "toolNames": [
+      "get_weather",
+      "send_email",
+      "create_calendar_event",
+      "lookup_order",
+      "convert_currency",
+      "translate_text"
+    ],
+    "turns": [
+      {
+        "user": "Book me a taxi to the airport for 6am tomorrow.",
+        "capability": "tool_absence",
+        "expect": [{ "kind": "absence", "action": "BLOCK" }]
+      },
+      {
+        "user": "Fine. Put an event in my calendar instead, titled Taxi, on 2026-03-04 at 06:00.",
+        "capability": "tool_call",
+        "expect": [
+          { "kind": "tool_call", "tool": "create_calendar_event" },
+          { "kind": "regex", "pattern": "2026-03-04" }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "mt-ko-weather",
+    "language": "ko",
+    "kind": "tool",
+    "about": "The same tool loop in Korean, ending on a fact only the transcript holds.",
+    "toolNames": [
+      "get_weather",
+      "send_email",
+      "create_calendar_event",
+      "lookup_order",
+      "convert_currency",
+      "translate_text"
+    ],
+    "turns": [
+      {
+        "user": "내일 서울 날씨 알려줘.",
+        "capability": "tool_call",
+        "expect": [{ "kind": "tool_call", "tool": "get_weather" }]
+      },
+      {
+        "toolResult": {
+          "tool": "get_weather",
+          "result": { "city": "Seoul", "day": "tomorrow", "tempC": 3, "condition": "snow" }
+        },
+        "user": "이 결과를 한국어로 알려줘.",
+        "capability": "tool_use_result",
+        "expect": [
+          { "kind": "no_tool_call" },
+          { "kind": "regex", "pattern": "눈|snow" },
+          { "kind": "regex", "pattern": "3" }
+        ]
+      },
+      {
+        "user": "방금 어느 도시를 물어봤지? 도구는 다시 호출하지 마.",
+        "capability": "context_recall",
+        "expect": [
+          { "kind": "no_tool_call" },
+          { "kind": "regex", "pattern": "서울|Seoul" }
+        ]
+      }
+    ]
+  }
+]

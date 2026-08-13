@@ -14,13 +14,18 @@ export const dynamic = 'force-dynamic';
 const OPS = new Set<DeployOp>([
   'install',
   'measure',
+  'measure-all',
   'start',
   'stop',
   'health',
+  'health-all',
   'benchmark',
   'undeploy',
   'purge',
 ]);
+
+/** Ops that need a Hugging Face token because they pull weights. */
+const NEEDS_HF_TOKEN = new Set<DeployOp>(['install', 'measure', 'measure-all']);
 
 const HELPERS = new Set(['tail', 'gpu', 'interrupt'] as const);
 
@@ -55,6 +60,8 @@ export async function POST(
     hf?: string;
     /** Deploy slot index (0..MAX-1). Defaults to 0. */
     slot?: number;
+    /** Whole-host ops: every slot to cover, and the model each one serves. */
+    slots?: Array<{ slot?: number; modelKey?: string; hf?: string }>;
   };
   try {
     body = (await request.json()) as typeof body;
@@ -63,8 +70,16 @@ export async function POST(
   }
 
   let slot = 0;
+  let slots: Array<{ slot: number; modelKey?: string; hf?: string }> | undefined;
   try {
     slot = resolveSlotIndex(body.slot);
+    if (body.slots?.length) {
+      slots = body.slots.map((one) => ({
+        slot: resolveSlotIndex(one.slot),
+        modelKey: one.modelKey,
+        hf: one.hf,
+      }));
+    }
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Invalid slot' },
@@ -82,7 +97,7 @@ export async function POST(
     if (!op || !OPS.has(op)) {
       return NextResponse.json({ error: 'Provide op or helper' }, { status: 400 });
     }
-    if ((op === 'install' || op === 'measure') && !presence.HF_TOKEN) {
+    if (NEEDS_HF_TOKEN.has(op) && !presence.HF_TOKEN) {
       return NextResponse.json(
         {
           error:
@@ -98,6 +113,7 @@ export async function POST(
       modelKey: body.modelKey,
       hf: body.hf,
       slot,
+      slots,
     });
     return NextResponse.json({
       ok: true,
@@ -107,6 +123,12 @@ export async function POST(
       model: result.cfg.model,
       servedName: result.cfg.servedName,
       port: result.cfg.slot.port,
+      slots: result.fleet.map((one) => ({
+        slot: one.slot.index,
+        model: one.model,
+        servedName: one.servedName,
+        port: one.slot.port,
+      })),
     });
   } catch (error) {
     return NextResponse.json(

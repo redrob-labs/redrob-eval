@@ -246,12 +246,49 @@ export const en = {
 
   'compare.pref.title': 'Blind preference tournament',
   'compare.pref.explainer':
-    'Every prompt is decided on its own, with the model names hidden. Up to four answers are shown together and you pick the best one; beyond that they are paired off and the winner advances. Those per-prompt winners become the routing labels in the next stage.',
+    'Every prompt is decided on its own, with the model names hidden. Up to four answers are shown together, and you can pick the best, rank them, or knock them out one at a time; beyond four they are paired off and the winner advances. You can go back to any prompt and vote it again. Those per-prompt winners become the routing labels in the next stage.',
   'compare.pref.buildingBrackets': 'Building brackets…',
   'compare.pref.buildBrackets': 'Build brackets',
   'compare.pref.matchesDecided': '{voted} / {total} matches decided',
-  'compare.pref.promptRound': '· prompt {promptId}, round {round}',
-  'compare.pref.promptGroup': '· prompt {promptId}, {count} answers side by side',
+  'compare.pref.promptPosition': 'prompt {index} of {total}',
+  'compare.pref.round': 'round {round}',
+  'compare.pref.noPrompts': 'This tournament has no prompts to vote on.',
+  'compare.pref.nav.prev': '← Previous prompt',
+  'compare.pref.nav.next': 'Next prompt →',
+  'compare.pref.nav.pending': 'Back to the first open prompt',
+  'compare.pref.ballotMode': 'How to decide this prompt',
+  'compare.pref.mode.pick': 'Pick the winner',
+  'compare.pref.mode.rank': 'Rank them',
+  'compare.pref.mode.eliminate': 'Knock one out',
+  'compare.pref.modeHint.pick':
+    'One click settles the prompt. It records the winner beating each of the others, and nothing about how those place among themselves.',
+  'compare.pref.modeHint.rank':
+    'Click the answers best first. A ranking is a claim about every pair, so every pair is recorded.',
+  'compare.pref.modeHint.eliminate':
+    'Drop the weakest answer, then the next, until one is left. Each round records the survivors beating the answer that just went out.',
+  'compare.pref.eliminate': 'Knock out',
+  'compare.pref.place': '#{place}',
+  'compare.pref.placeNext': 'Place #{place}',
+  'compare.pref.rankSubmit': 'Save this ranking',
+  'compare.pref.rankReset': 'Start over',
+  'compare.pref.promptWonBy': 'Answer {side} won this prompt.',
+  'compare.pref.promptUnresolved': 'Nobody won this prompt.',
+  'compare.pref.tieRecorded': 'Recorded as too close to call, so this prompt crowns nobody.',
+  'compare.pref.erroredHere': 'no answer',
+  'compare.pref.revote': 'Vote this prompt again',
+  'compare.pref.byPrompt': 'Prompt by prompt',
+  'compare.pref.blindUntilDone':
+    'Answers keep their letter until every prompt is decided. Naming the winner of one prompt would name the model on the next.',
+  'compare.pref.lettersPerPrompt':
+    'Letters are per prompt: answer A on one prompt is not answer A on another.',
+  'compare.pref.statusOpen': 'Open',
+  'compare.pref.statusDecided': 'Decided',
+  'compare.pref.statusTie': 'Too close to call',
+  'compare.pref.goToPrompt': 'Open',
+  'compare.pref.table.prompt': 'Prompt',
+  'compare.pref.table.status': 'Status',
+  'compare.pref.table.winner': 'Winner',
+  'compare.pref.table.knockedOut': 'Beaten, best first',
   'compare.pref.walkovers':
     '{count} prompt(s) went to one model without a vote, because every other answer failed. Those are counted as prompts won, not as votes.',
   'compare.pref.prompt': 'Prompt',
@@ -336,6 +373,7 @@ export const en = {
   'deploy.notice.opInstall': 'Install queued on the host (shared once for all slots).',
   'deploy.notice.opSlot':
     '{op} queued for slot {slot} (:{port}, served as {served}). Watch the shell.',
+  'deploy.notice.opFleet': '{op} queued for slots {slots}. Watch the shell.',
   'deploy.error.cancelFailed': 'Could not stop the step',
   'deploy.staleOp':
     '{step} stopped before it finished, most likely because its shell was closed. Nothing is running on the host now, so you can start it again.',
@@ -364,6 +402,14 @@ export const en = {
   'deploy.slots.title': 'Slots',
   'deploy.slots.hint':
     'Install once per host. Then Measure / Start each slot. Add slots while free VRAM allows (ceiling {max}). Sharing one card trades context and VRAM; Undeploy removes that slot only.',
+  'deploy.slots.measureAll': 'Measure every slot ({count})',
+  'deploy.slots.measureAllHint':
+    'Measure and serve every slot below from one run, using the model each card is set to.',
+  'deploy.slots.measureAllWhy':
+    'Weights for every slot download at once, then each slot is sized one at a time: a slot is measured against the VRAM actually free, so two probes loading together would each read memory the other is about to take. A slot that fails is reported and the rest still run.',
+  'deploy.slots.healthAll': 'Check every serving slot ({count})',
+  'deploy.slots.healthAllHint':
+    'Readiness and a short completion on every running slot, all at once. These are independent HTTP calls, so they do run in parallel.',
   'deploy.slot.heading': 'Slot {slot}',
   'deploy.slot.add': 'Add slot',
   'deploy.slot.addHint': 'Allocate the next free slot index (limited by free VRAM at Measure)',

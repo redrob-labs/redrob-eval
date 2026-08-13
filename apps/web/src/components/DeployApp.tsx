@@ -12,12 +12,22 @@ import type { MessageKey } from '@/lib/i18n';
 type DeployOp =
   | 'install'
   | 'measure'
+  | 'measure-all'
   | 'start'
   | 'stop'
   | 'health'
+  | 'health-all'
   | 'benchmark'
   | 'undeploy'
   | 'purge';
+
+/** Ops that act on the host rather than on one slot. */
+const WHOLE_HOST_OPS = new Set<DeployOp>([
+  'install',
+  'purge',
+  'measure-all',
+  'health-all',
+]);
 type Helper = 'tail' | 'gpu' | 'interrupt';
 
 type SlotView = {
@@ -63,9 +73,11 @@ type Preset = { key: string; label: string; hfRepoId: string; tier?: 'small' | '
 const STEP_LABEL_KEYS: Record<DeployOp, MessageKey> = {
   install: 'deploy.step.install.title',
   measure: 'deploy.step.measure.title',
+  'measure-all': 'deploy.slots.measureAll',
   start: 'deploy.step.serve.title',
   stop: 'deploy.step.serve.stop',
   health: 'deploy.step.verify.health',
+  'health-all': 'deploy.slots.healthAll',
   benchmark: 'deploy.step.verify.benchmark',
   undeploy: 'deploy.slot.undeploy',
   purge: 'deploy.purge.title',
@@ -338,11 +350,28 @@ export function DeployApp() {
     return handle.sessionId;
   };
 
-  const injectOp = async (op: DeployOp, slotIndex = 0) => {
+  /** What each open slot is set to serve, for the ops that cover the whole host. */
+  const fleetBody = (indexes: number[]) =>
+    indexes.map((index) => {
+      const draft = drafts[index] ?? defaultDraft();
+      const entry: { slot: number; hf?: string; modelKey?: string } = { slot: index };
+      const repo = parseHfRepoId(draft.hf);
+      if (repo) entry.hf = repo;
+      if (draft.modelKey && !draft.modelKey.startsWith(CUSTOM_KEY)) {
+        entry.modelKey = draft.modelKey;
+      }
+      return entry;
+    });
+
+  const injectOp = async (op: DeployOp, slotIndex = 0, fleet?: number[]) => {
     const draft = drafts[slotIndex] ?? defaultDraft();
     const repo = parseHfRepoId(draft.hf);
     const needsRepo =
-      op !== 'install' && op !== 'undeploy' && op !== 'stop' && op !== 'purge';
+      op !== 'install' &&
+      op !== 'undeploy' &&
+      op !== 'stop' &&
+      op !== 'purge' &&
+      op !== 'health-all';
     if (needsRepo && !repo) {
       setNotice(t('deploy.error.pickValidRepos'));
       return;
@@ -351,11 +380,12 @@ export function DeployApp() {
     setNotice(null);
     try {
       const id = await ensureShell();
-      const body: Record<string, string | number> = { op, slot: slotIndex };
+      const body: Record<string, unknown> = { op, slot: slotIndex };
       if (repo) body.hf = repo;
       if (draft.modelKey && !draft.modelKey.startsWith(CUSTOM_KEY)) {
         body.modelKey = draft.modelKey;
       }
+      if (fleet?.length) body.slots = fleetBody(fleet);
       const res = await fetch(`/api/deploy/terminal/${id}/inject`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -370,13 +400,18 @@ export function DeployApp() {
       if (!res.ok) throw new Error(json.error || `HTTP ${res.status}`);
       if (pendingTimer.current) clearTimeout(pendingTimer.current);
       setPendingOp(op);
-      setPendingSlot(op === 'install' || op === 'purge' ? null : slotIndex);
+      setPendingSlot(WHOLE_HOST_OPS.has(op) ? null : slotIndex);
       pendingTimer.current = setTimeout(() => clearPendingOp(), 30_000);
       termRef.current?.focus();
       const slotHint =
-        op === 'install' || op === 'purge'
-          ? t('deploy.notice.opInstall')
-          : t('deploy.notice.opSlot', {
+        op === 'measure-all' || op === 'health-all'
+          ? t('deploy.notice.opFleet', {
+              op: json.label ?? op,
+              slots: (fleet ?? [slotIndex]).join(', '),
+            })
+          : WHOLE_HOST_OPS.has(op)
+            ? t('deploy.notice.opInstall')
+            : t('deploy.notice.opSlot', {
               op: json.label ?? op,
               slot: String(slotIndex),
               port: String(json.port ?? (status?.portBase ?? 8000) + slotIndex),
@@ -494,6 +529,8 @@ export function DeployApp() {
   const freeIndexes = Array.from({ length: MAX_DEPLOY_SLOTS }, (_, i) => i).filter(
     (i) => !openSlots.includes(i),
   );
+  /** Only a slot that is up can be health-checked; a stopped one not answering is not news. */
+  const servingSlots = slotViews.filter((s) => s.active).map((s) => s.index);
   const canAddSlot = freeIndexes.length > 0 && openSlots.length < MAX_DEPLOY_SLOTS;
 
   return (
@@ -664,6 +701,38 @@ export function DeployApp() {
             <p className="deploy-hint">
               {t('deploy.slots.hint', { max: String(MAX_DEPLOY_SLOTS) })}
             </p>
+
+            <div className="deploy-step-actions">
+              <button
+                type="button"
+                className="deploy-op-btn"
+                onClick={() => void injectOp('measure-all', openSlots[0] ?? 0, openSlots)}
+                disabled={
+                  !statusReady ||
+                  !sshReady ||
+                  !hasToken ||
+                  !installed ||
+                  busy ||
+                  activeOp !== null ||
+                  openSlots.length === 0
+                }
+                title={t('deploy.slots.measureAllHint')}
+              >
+                {t('deploy.slots.measureAll', { count: String(openSlots.length) })}
+              </button>
+              <button
+                type="button"
+                className="deploy-op-btn"
+                onClick={() => void injectOp('health-all', servingSlots[0] ?? 0, servingSlots)}
+                disabled={
+                  busy || activeOp !== null || !sshReady || servingSlots.length === 0
+                }
+                title={t('deploy.slots.healthAllHint')}
+              >
+                {t('deploy.slots.healthAll', { count: String(servingSlots.length) })}
+              </button>
+            </div>
+            <p className="deploy-hint">{t('deploy.slots.measureAllWhy')}</p>
 
             <div className="deploy-add-hf-row" style={{ marginBottom: 12 }}>
               <input

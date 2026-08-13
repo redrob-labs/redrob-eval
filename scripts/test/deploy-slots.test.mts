@@ -11,6 +11,7 @@ import {
   slotFor,
 } from '../../apps/web/src/lib/deploy/slots.ts';
 import {
+  healthAllScript,
   installScript,
   purgeAllScript,
   serveWrapper,
@@ -19,7 +20,10 @@ import {
   undeployScript,
   unitFile,
 } from '../../apps/web/src/lib/deploy/remote.ts';
-import { measureScript } from '../../apps/web/src/lib/deploy/remote-measure.ts';
+import {
+  measureAllScript,
+  measureScript,
+} from '../../apps/web/src/lib/deploy/remote-measure.ts';
 import { classifyReachFailure } from '../../apps/web/src/lib/deploy/reachability.ts';
 import { vllmSlotEndpoints } from '../../packages/harness/src/config/self-hosted.ts';
 
@@ -204,6 +208,90 @@ test('a probe that loses the memory race re-reads free VRAM instead of blaming t
   // The FP8 retry is for weights that do not fit, so the race must not spend it.
   assert.match(measure, /if \[\[ "\$\{QUANT\}" == "none" \]\]; then/);
   assert.match(measure, /\(\( LOADED == 1 \)\) \|\|/);
+});
+
+test('install provisions every slot, not only the one being set up', () => {
+  // A unit and a wrapper hold nothing model-specific, so laying them all down
+  // here is what makes adding slot 3 later a measurement rather than a reinstall.
+  const script = installScript();
+  for (const i of allSlotIndexes()) {
+    assert.match(script, new RegExp(`/etc/systemd/system/redrob-vllm-s${i}\\.service`));
+    assert.match(script, new RegExp(`/opt/redrob-vllm/bin/serve-${i}\\.sh`));
+  }
+  // Still nothing started: a unit without that slot's measured.env refuses to.
+  assert.doesNotMatch(script, /systemctl (start|enable) redrob-vllm-s/);
+});
+
+test('measuring every slot downloads in parallel and sizes one at a time', () => {
+  // Sizing reads the VRAM actually free at that moment, so two probes loading
+  // together would each claim memory the other was about to take. The download
+  // is where the wall time goes, and that is network-bound, so it overlaps.
+  const steps = [0, 1, 2].map((index) => ({
+    slot: slotFor(index),
+    model: `org/model-${index}`,
+    body: `echo "slot ${index} body"`,
+  }));
+  const script = measureAllScript(steps);
+
+  assert.match(script, /snapshot_download/);
+  assert.match(script, /PREFETCH_PIDS\+=\(\$!\)/);
+  assert.match(script, /for pid in \$\{PREFETCH_PIDS\[@\]\+"\$\{PREFETCH_PIDS\[@\]\}"\}; do wait/);
+  for (const step of steps) {
+    assert.match(script, new RegExp(`prefetch '${step.model}' &`));
+  }
+
+  // Every per-slot body runs in its own foreground bash, in slot order.
+  const runs = [...script.matchAll(/bash "\$\{WORK_DIR\}\/slot-(\d)\.sh"/g)].map((m) => m[1]);
+  assert.deepEqual(runs, ['0', '1', '2'], 'slots are measured in order, one at a time');
+  assert.doesNotMatch(script, /slot-\d\.sh" &/, 'no slot is measured in the background');
+
+  // One model that does not fit is not a reason to leave the rest unmeasured.
+  assert.match(script, /FAILED\+=\("1"\)/);
+  assert.match(script, /MEASURE_ALL_PARTIAL/);
+  assert.match(script, /MEASURE_ALL_OK/);
+});
+
+test('measuring every slot is nothing to do when no slot has a model', () => {
+  assert.match(measureAllScript([]), /No slot has a model to measure/);
+});
+
+test('health does run every slot at once, and prints them in order', () => {
+  // Unlike Measure, these are independent HTTP calls to ports already serving.
+  const script = healthAllScript(
+    [0, 2].map((index) => ({ slot: slotFor(index), servedName: `redrob-s${index}` })),
+  );
+  assert.match(script, /PIDS\+=\(\$!\)/);
+  assert.match(script, /slot-0\.sh" > "\$\{OUT_DIR\}\/slot-0\.log" 2>&1 &/);
+  assert.match(script, /slot-2\.sh" > "\$\{OUT_DIR\}\/slot-2\.log" 2>&1 &/);
+  assert.match(script, /for pid in \$\{PIDS\[@\]\+"\$\{PIDS\[@\]\}"\}; do wait/);
+  // Interleaved curl output from four ports is unreadable, so it is buffered.
+  const printed = [...script.matchAll(/---- slot (\d) \(:\d+\) ----/g)].map((m) => m[1]);
+  assert.deepEqual(printed, ['0', '2']);
+  assert.match(healthAllScript([]), /nothing to check/);
+});
+
+test('each slot in a whole-host measure keeps its own model and port', () => {
+  const script = measureAllScript(
+    [0, 1].map((index) => ({
+      slot: slotFor(index),
+      model: `org/model-${index}`,
+      body: measureScript({
+        model: `org/model-${index}`,
+        servedName: `redrob-s${index}`,
+        maxModelLen: 8192,
+        maxNumSeqs: 8,
+        slot: index,
+      }),
+    })),
+  );
+  const bodies = [...script.matchAll(/echo '([A-Za-z0-9+/=]+)' \| base64 -d/g)].map((m) =>
+    Buffer.from(m[1]!, 'base64').toString('utf8'),
+  );
+  assert.equal(bodies.length, 2, 'one measure body per slot');
+  assert.match(bodies[0]!, /MODEL='org\/model-0'/);
+  assert.match(bodies[0]!, /slots\/0\/measured\.env/);
+  assert.match(bodies[1]!, /MODEL='org\/model-1'/);
+  assert.match(bodies[1]!, /slots\/1\/measured\.env/);
 });
 
 test('purge clears every slot and the weight cache, keeps the venv', () => {

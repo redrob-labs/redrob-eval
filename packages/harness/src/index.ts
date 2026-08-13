@@ -334,19 +334,26 @@ export { containsCurrency } from './lib/reporting/no-currency';
 
 // Blind World Cup preference tournament
 export {
+  activeContenders,
   advance,
   advanceGroup,
   aggregateTournament,
   appendVote,
   appendVotes,
+  appendVoteUndo,
   assertSafeTournamentRunId,
   bracketIsSettled,
   championOf,
   createBracket,
+  eliminateFromGroup,
+  foldVoteLog,
   groupIsPending,
+  isVoteUndo,
   listTournaments,
   makeTournamentRunId,
   nextPendingMatch,
+  rankBracket,
+  rankGroup,
   readTournament,
   resolvedMatches,
   totalMatches,
@@ -364,6 +371,8 @@ export type {
   TournamentMeta,
   TournamentRun,
   Vote,
+  VoteLogEntry,
+  VoteUndo,
   VoteWinner,
 } from './lib/tournament';
 
@@ -472,6 +481,8 @@ export {
   normalizeToolRoutingLanguages,
   formatFertilityMarkdown,
   runToolRoutingHarness,
+  validateToolRoutingTasks,
+  verbatimArgNames,
   loadStubFertilityCorpus,
   loadStubToolRoutingTasks,
   loadStubToolsets,
@@ -483,4 +494,35 @@ export {
   type ToolRoutingExampleRecord,
   type ToolsetId,
   type FertilityCell,
+  type TaskProblem,
 } from './lib/tool-routing';
+
+// Multi-turn: the same models, asked to hold a conversation together
+export {
+  buildMultiTurnReport,
+  buildSystemPrompt as buildMultiTurnSystemPrompt,
+  calledTool,
+  formatToolResult,
+  loadMultiTurnScenarios,
+  multiTurnScenariosFor,
+  runCheck,
+  runChecks,
+  runMultiTurnHarness,
+  runScenario,
+  MULTI_TURN_MAX_TOKENS,
+} from './lib/multi-turn';
+export type {
+  CapabilitySlice,
+  DepthSlice,
+  LoadedScenario,
+  MultiTurnCaller,
+  MultiTurnCapability,
+  MultiTurnLanguage,
+  MultiTurnReport,
+  MultiTurnScenario,
+  ScenarioRecord,
+  ScriptedTurn,
+  TurnCheck,
+  TurnCheckResult,
+  TurnRecord,
+} from './lib/multi-turn';

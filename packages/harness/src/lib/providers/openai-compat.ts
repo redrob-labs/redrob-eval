@@ -94,6 +94,9 @@ export function createOpenAICompatAdapter(
       if (params.systemPrompt?.trim()) {
         messages.push({ role: 'system', content: params.systemPrompt.trim() });
       }
+      for (const turn of params.history ?? []) {
+        messages.push({ role: turn.role, content: turn.content });
+      }
       messages.push({ role: 'user', content: userContent });
 
       const body: Record<string, unknown> = {

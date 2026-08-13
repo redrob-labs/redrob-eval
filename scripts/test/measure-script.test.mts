@@ -11,8 +11,14 @@ import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-import { measureScript } from '../../apps/web/src/lib/deploy/remote-measure.ts';
-import { installScript, serveWrapper, serviceControl } from '../../apps/web/src/lib/deploy/remote.ts';
+import { measureAllScript, measureScript } from '../../apps/web/src/lib/deploy/remote-measure.ts';
+import {
+  healthAllScript,
+  installScript,
+  serveWrapper,
+  serviceControl,
+} from '../../apps/web/src/lib/deploy/remote.ts';
+import { slotFor } from '../../apps/web/src/lib/deploy/slots.ts';
 
 const script = measureScript({
   model: 'org/some-it',
@@ -46,6 +52,22 @@ test('the generated script is valid bash', () => {
   checkBash(script, 'measure');
   checkBash(serviceControl('start', 0), 'start');
   checkBash(serviceControl('stop', 0), 'stop');
+  checkBash(
+    measureAllScript(
+      [0, 1].map((index) => ({
+        slot: slotFor(index),
+        model: `org/model-${index}`,
+        body: script,
+      })),
+    ),
+    'measure-all',
+  );
+  checkBash(
+    healthAllScript(
+      [0, 1].map((index) => ({ slot: slotFor(index), servedName: `redrob-s${index}` })),
+    ),
+    'health-all',
+  );
 });
 
 test('there is a primary measure port, and slot 0 defaults to it', () => {

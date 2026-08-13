@@ -49,6 +49,17 @@ export interface GroupMatch {
   winnerModelId: string | null;
   /** The voter called it, rather than the match being undecided. */
   tie: boolean;
+  /**
+   * Knocked out one at a time, worst first. Empty until someone votes that way.
+   * Optional: ballots saved before elimination existed do not carry it.
+   */
+  eliminated?: string[];
+  /**
+   * Every contender in order, best first, once the ballot resolved by a full
+   * ranking or by eliminating down to one. Null when the voter only named a
+   * winner, which says nothing about how the rest place against each other.
+   */
+  ranking?: string[] | null;
 }
 
 export interface Bracket {
@@ -73,6 +84,27 @@ export interface Vote {
   /** Model the voter picked, or null for a tie. */
   winnerModelId: string | null;
   votedAt: string;
+}
+
+/**
+ * A prompt the voter went back to and cleared, so its bracket starts over.
+ *
+ * The vote log is append-only, and rewriting it to drop the retracted rows
+ * would lose the fact that someone changed their mind. This is appended
+ * instead, and reading the log applies it: every vote recorded for that prompt
+ * before this entry stops counting.
+ */
+export interface VoteUndo {
+  kind: 'undo';
+  promptId: string;
+  undoneAt: string;
+}
+
+/** A line of `votes.jsonl`: a vote, or a retraction of a prompt's votes. */
+export type VoteLogEntry = Vote | VoteUndo;
+
+export function isVoteUndo(entry: VoteLogEntry): entry is VoteUndo {
+  return (entry as VoteUndo).kind === 'undo';
 }
 
 export interface TournamentMeta {
@@ -111,6 +143,12 @@ export interface TournamentAggregate {
   standings: ModelStanding[];
   /** promptId -> winning model id (null while the bracket is unresolved) */
   winnerByPrompt: Record<string, string | null>;
+  /**
+   * promptId -> every competitor, best first. A knockout orders by how far each
+   * answer got; a group ballot uses the order the voter gave. Empty for a
+   * prompt nobody has finished voting on.
+   */
+  rankingByPrompt: Record<string, string[]>;
   /**
    * winMatrix[a][b] = how many times a beat b head to head.
    * Ties count for neither side.

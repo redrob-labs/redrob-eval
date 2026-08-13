@@ -22,8 +22,170 @@ import {
   TOOL_ROUTING_DEFAULT_LANGUAGES,
   TOOL_ROUTING_LANGUAGES,
   TOOL_ROUTING_MODELS,
+  validateToolRoutingTasks,
+  verbatimArgNames,
 } from '../../packages/harness/src/lib/tool-routing/index.ts';
+import type {
+  ToolRoutingTask,
+  ToolsetId,
+  ToolDefinition,
+} from '../../packages/harness/src/lib/tool-routing/types.ts';
 import { probeVllmEndpoint } from '../../packages/harness/src/lib/providers/vllm.ts';
+
+test('the shipped fixtures are balanced, large, and answerable', () => {
+  const tasks = loadStubToolRoutingTasks();
+  // A single-digit per-language cell cannot carry a confidence interval; the
+  // point of the expanded set is that it can.
+  assert.ok(tasks.length >= 300, `too few tasks: ${tasks.length}`);
+  const perLang = new Map<string, number>();
+  for (const t of tasks) perLang.set(t.language, (perLang.get(t.language) ?? 0) + 1);
+  const counts = [...perLang.values()];
+  assert.ok(counts.every((n) => n === counts[0]), 'languages must be balanced');
+  assert.ok(new Set(tasks.map((t) => t.id)).size === tasks.length, 'ids are unique');
+  assert.deepEqual(validateToolRoutingTasks(tasks, loadStubToolsets()), []);
+  // Enough absence cases that BLOCK and DEFER are each measurable per language.
+  const absence = tasks.filter((t) => t.expected.kind === 'absence');
+  assert.ok(absence.length >= 40, `too few absence cases: ${absence.length}`);
+});
+
+test('the validator points at the argument the schema says is copied verbatim', () => {
+  const catalog = loadStubToolCatalog();
+  const email = catalog.find((t) => t.name === 'send_email')!;
+  assert.deepEqual(verbatimArgNames(email).sort(), ['body', 'subject']);
+  const weather = catalog.find((t) => t.name === 'get_weather')!;
+  // City is normalized to English and the date to ISO, so neither is verbatim.
+  assert.deepEqual(verbatimArgNames(weather), []);
+});
+
+test('the validator refuses a task whose ground truth is not in the prompt', () => {
+  const toolsets = loadStubToolsets() as Record<ToolsetId, ToolDefinition[]>;
+  const answerable: ToolRoutingTask = {
+    id: 'x-ok',
+    language: 'en',
+    toolset: 'core',
+    tools: toolsets.core,
+    user: 'Send an email to a@b.co with the subject "Hi" and the body "There."',
+    expected: {
+      kind: 'call',
+      tool: 'send_email',
+      arguments: { to: 'a@b.co', subject: 'Hi', body: 'There.' },
+    },
+  };
+  assert.deepEqual(validateToolRoutingTasks([answerable], toolsets), []);
+
+  // The subject the model is expected to copy is nowhere in the request.
+  const unanswerable: ToolRoutingTask = {
+    ...answerable,
+    id: 'x-bad',
+    expected: {
+      kind: 'call',
+      tool: 'send_email',
+      arguments: { to: 'a@b.co', subject: 'Quarterly report', body: 'There.' },
+    },
+  };
+  const problems = validateToolRoutingTasks([unanswerable], toolsets);
+  assert.equal(problems.length, 1);
+  assert.match(problems[0]!.message, /subject.*Quarterly report.*does not appear/);
+});
+
+test('the validator catches a tool that is not on offer, and bad arguments', () => {
+  const toolsets = loadStubToolsets() as Record<ToolsetId, ToolDefinition[]>;
+  // convert_units only exists in wide/full, so offering it under core is a bug.
+  const offOffer: ToolRoutingTask = {
+    id: 'x-offer',
+    language: 'en',
+    toolset: 'core',
+    tools: toolsets.core,
+    user: 'Convert 5 kg to lb.',
+    expected: { kind: 'call', tool: 'convert_units', arguments: { amount: 5, from_unit: 'kg', to_unit: 'lb' } },
+  };
+  assert.match(
+    validateToolRoutingTasks([offOffer], toolsets)[0]!.message,
+    /not in the "core" toolset/,
+  );
+
+  const extraArg: ToolRoutingTask = {
+    id: 'x-extra',
+    language: 'en',
+    toolset: 'core',
+    tools: toolsets.core,
+    user: 'Weather in Seoul tomorrow?',
+    expected: {
+      kind: 'call',
+      tool: 'get_weather',
+      // `region` is not in get_weather's schema.
+      arguments: { city: 'Seoul', day: 'tomorrow', region: 'KR' } as Record<string, unknown>,
+    },
+  };
+  assert.match(validateToolRoutingTasks([extraArg], toolsets)[0]!.message, /not in get_weather's schema/);
+});
+
+test('JSON annotated the way a person writes it still parses', () => {
+  // Observed from Ministral 3B/8B: a fenced block with a comment explaining the
+  // value it made up. Rejecting the reply is right, but "unparseable" was the
+  // wrong reason - the model chose a tool and filled the arguments in.
+  const reply = [
+    '```json',
+    '{',
+    '  "tool": "send_payment",',
+    '  "arguments": {',
+    '    "recipient": "KR-8821-0044",',
+    '    "amount": 0,  // missing amount, cannot proceed',
+    '    "currency": "KRW"',
+    '  }',
+    '}',
+    '```',
+  ].join('\n');
+  const parsed = parseToolRoutingPrediction(reply);
+  assert.equal(parsed.kind, 'call');
+  if (parsed.kind === 'call') {
+    assert.equal(parsed.tool, 'send_payment');
+    assert.equal(parsed.arguments.recipient, 'KR-8821-0044');
+  }
+});
+
+test('a URL inside an argument is not mistaken for a comment', () => {
+  const parsed = parseToolRoutingPrediction(
+    '{"tool":"search_documents","arguments":{"query":"https://example.com/a//b"}}',
+  );
+  assert.equal(parsed.kind, 'call');
+  if (parsed.kind === 'call') {
+    assert.equal(parsed.arguments.query, 'https://example.com/a//b');
+  }
+});
+
+test('a block comment and a trailing comma do not sink an otherwise good call', () => {
+  const parsed = parseToolRoutingPrediction(
+    '{"tool":"get_weather",/* picked */"arguments":{"city":"Seoul","day":"today",}}',
+  );
+  assert.equal(parsed.kind, 'call');
+  if (parsed.kind === 'call') assert.equal(parsed.tool, 'get_weather');
+});
+
+test('the tool name in "action" is reported as the wrapper failure it is', () => {
+  // LFM2.5 and Llama-3.2-3B both do this: routed correctly, wrong key.
+  const nested = parseToolRoutingPrediction(
+    '{"action":"send_sms","arguments":{"phone":"010-2233-4455","message":"late"}}',
+  );
+  assert.equal(nested.kind, 'parse_error');
+  if (nested.kind === 'parse_error') {
+    assert.equal(nested.envelope?.tool, 'send_sms');
+    assert.equal(nested.envelope?.arguments.phone, '010-2233-4455');
+  }
+
+  // Granite 4.0 H Micro goes one further and flattens the arguments too.
+  const flat = parseToolRoutingPrediction('{"action":"lookup_contact","name":"Min-jun Park"}');
+  assert.equal(flat.kind, 'parse_error');
+  if (flat.kind === 'parse_error') {
+    assert.equal(flat.envelope?.tool, 'lookup_contact');
+    assert.deepEqual(flat.envelope?.arguments, { name: 'Min-jun Park' });
+  }
+
+  // An action with nothing else attached is still just an unknown action.
+  const bare = parseToolRoutingPrediction('{"action":"WAIT"}');
+  assert.equal(bare.kind, 'parse_error');
+  if (bare.kind === 'parse_error') assert.equal(bare.envelope, undefined);
+});
 
 test('default run set excludes eval_only models', () => {
   const defaults = listDefaultToolRoutingModels();
@@ -105,21 +267,26 @@ test('fixtures exercise both absence actions and every core tool', () => {
   for (const tool of loadStubToolsets().core) {
     assert.ok(calledTools.has(tool.name), `${tool.name} is never the right answer`);
   }
-  // The wide set exists to be distracting, so most of its extras must never win.
-  const wideOnly = loadStubToolsets()
-    .wide.filter((t) => !loadStubToolsets().core.some((c) => c.name === t.name))
-    .map((t) => t.name);
-  assert.ok(
-    wideOnly.some((name) => !calledTools.has(name)),
-    'every extra tool is an answer, so nothing is a distractor',
-  );
-  // The full set adds many domains; most of its extras must stay distractors too.
+  // Distraction is per task: every task is offered the whole toolset and only
+  // one tool is right, so a wide task hands the model 18 tools to reject and a
+  // full task 48. That structural property, not "some tool is never an answer",
+  // is what makes the set hard - the expanded set covers every wide tool on
+  // purpose, so the field is exercised rather than left with dead entries.
+  const wideSize = loadStubToolsets().wide.length;
+  const fullSize = loadStubToolsets().full.length;
+  const wideTask = tasks.find((t) => t.toolset === 'wide')!;
+  const fullTask = tasks.find((t) => t.toolset === 'full')!;
+  assert.equal(wideTask.tools.length, wideSize, 'a wide task is offered every wide tool');
+  assert.equal(fullTask.tools.length, fullSize, 'a full task is offered every full tool');
+  assert.ok(wideSize >= 12 && fullSize >= 40, 'the toolsets are wide enough to be hard');
+  // The full set still keeps at least one domain that is never the right answer,
+  // so a model cannot assume every offered tool eventually gets used.
   const fullOnly = loadStubToolsets()
     .full.filter((t) => !loadStubToolsets().wide.some((w) => w.name === t.name))
     .map((t) => t.name);
   assert.ok(
     fullOnly.some((name) => !calledTools.has(name)),
-    'every full-only tool is an answer, so nothing is a distractor',
+    'no full-only tool is a pure distractor',
   );
 
   const actions = new Set(

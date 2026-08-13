@@ -145,7 +145,11 @@ Checklist / 비디오 스킬 채점(커스텀 goal `mode: "checklist"` 또는 `d
 - [Contributing](CONTRIBUTING.md) - 설정, 그리고 브랜칭 모델: `main`은 프로덕션이고 릴리스만 받고, `develop`에서 분기하고 대상으로 삼습니다
 - [Security](SECURITY.md)
 - [Methodology](docs/methodology.md) - 라우팅 라벨, 피처, 내보내기
-- [Preference](docs/preference.md) - 블라인드 브래킷, 그리고 투표가 라우팅 라벨이 되는 방식
+- [Preference](docs/preference.md) - 블라인드 브래킷, 순위·탈락 투표, 그리고 투표가 라우팅 라벨이 되는 방식
+- [Multi-turn](docs/multi-turn.md) - 텍스트와 도구를 함께 다루는 대본형 대화 평가. 능력별로,
+  그리고 대화가 깊어질수록 어떻게 되는지로 나눠서 봅니다
+- [Tool routing](docs/tool-routing.md) - 10B 이하 툴 콜링 데이터셋: 4개 언어에 균형 잡힌 324개 과제,
+  정답이 요청 안에 반드시 있는지 검사하는 무결성 게이트, 그리고 모델 레지스트리
 - [Learnings](docs/learnings.md) - 살아 있는 설계 로그
 - [Decision records](docs/decisions/) - 설계가 그렇게 된 이유, 결정당 한 파일, 번호가 매겨지며 제자리에서 다시 쓰지 않습니다. 시작은
   [0001 Generate module foundation](docs/decisions/0001-generate-foundation.md), 이어서

@@ -19,7 +19,17 @@ export interface RegistryMatrixParams<TSummary = Json> {
   store: RunStore;
   /** Registry `kind` for the run, e.g. `tool-routing-matrix`. */
   kind: string;
-  dimensions: Record<string, Json[]>;
+  /**
+   * The grid, as named dimensions to take the product of. Mutually exclusive
+   * with `cells`.
+   */
+  dimensions?: Record<string, Json[]>;
+  /**
+   * An explicit list of cells, for work that is not a product - re-running a
+   * cohort of failures is a set of specific items, not every combination of
+   * them. Mutually exclusive with `dimensions`.
+   */
+  cells?: Cell[];
   /** Dimension whose value caps a group's concurrency, usually a provider. */
   groupBy?: string;
   /**
@@ -59,8 +69,17 @@ export interface RegistryMatrixResult<TSummary = Json> {
 export async function runRegistryMatrix<TSummary = Json>(
   params: RegistryMatrixParams<TSummary>,
 ): Promise<RegistryMatrixResult<TSummary>> {
-  const runParams: Json = { dimensions: params.dimensions, ...(params.extraParams ?? {}) };
-  const cells = expandMatrix({ dimensions: params.dimensions, groupBy: params.groupBy });
+  if (!params.dimensions === !params.cells) {
+    throw new Error('give either dimensions or cells, not both and not neither');
+  }
+  const cells = params.dimensions
+    ? expandMatrix({ dimensions: params.dimensions, groupBy: params.groupBy })
+    : params.cells!;
+  // The params are what the run is *of*, and they decide the hash a resume is
+  // checked against, so an explicit cell list has to be part of them.
+  const runParams: Json = params.dimensions
+    ? { dimensions: params.dimensions, ...(params.extraParams ?? {}) }
+    : { cells: cells.map((c) => ({ key: c.key, params: c.params })), ...(params.extraParams ?? {}) };
 
   let run: RunRecord;
   if (params.resume) {

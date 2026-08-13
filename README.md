@@ -172,6 +172,8 @@ On **Evolve**, pick a catalog dataset or **Custom goal** (goal + rubric + input-
   concurrency budget, respect per-provider rate limits, and resume where an interrupted run left off
 - [Failure analysis](docs/failure-analysis.md) - why a model was wrong rather than how often: the
   shared taxonomy, what `yarn failures` shows, and which failures a prompt fix would clear
+- [Statistics](docs/statistics.md) - whether a difference between two models is real: paired tests,
+  intervals that behave at small denominators, and a warning when a comparison cannot carry a claim
 - [Preference](docs/preference.md) - blind brackets, ranking and elimination, and how votes become
   routing labels
 - [Multi-turn](docs/multi-turn.md) - scripted conversations for text and tools, scored by

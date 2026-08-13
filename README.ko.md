@@ -151,6 +151,8 @@ Checklist / 비디오 스킬 채점(커스텀 goal `mode: "checklist"` 또는 `d
   프로바이더별 rate limit을 지키며, 중단된 지점부터 이어서 재개
 - [Failure analysis](docs/failure-analysis.md) - 얼마나 틀렸는지가 아니라 왜 틀렸는지: 공통 실패 분류,
   `yarn failures`가 보여주는 것, 그리고 프롬프트 수정으로 해결될 실패가 무엇인지
+- [Statistics](docs/statistics.md) - 두 모델의 차이가 실제인지 판단하기: 짝지은 검정, 표본이 작을 때도
+  무너지지 않는 신뢰구간, 그리고 비교가 주장을 뒷받침할 수 없을 때의 경고
 - [Preference](docs/preference.md) - 블라인드 브래킷, 순위·탈락 투표, 그리고 투표가 라우팅 라벨이 되는 방식
 - [Multi-turn](docs/multi-turn.md) - 텍스트와 도구를 함께 다루는 대본형 대화 평가. 능력별로,
   그리고 대화가 깊어질수록 어떻게 되는지로 나눠서 봅니다

@@ -29,11 +29,13 @@ function flag(name: string): boolean {
 /** `2026-08-13T01:42:10.000Z` is not what anyone wants in a list. */
 function ago(iso: string): string {
   const seconds = Math.max(0, (Date.now() - Date.parse(iso)) / 1000);
+  // Each pair is "divide by this, and the unit becomes that": seconds over 60
+  // are minutes, not seconds. Getting this off by one printed a two-minute-old
+  // run as "2s ago".
   const units: Array<[number, string]> = [
-    [60, 's'],
     [60, 'm'],
-    [24, 'h'],
-    [365, 'd'],
+    [60, 'h'],
+    [24, 'd'],
   ];
   let value = seconds;
   let unit = 's';

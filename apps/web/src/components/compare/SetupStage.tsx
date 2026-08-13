@@ -3,6 +3,7 @@
 import { useMemo, useRef, type ReactNode } from "react";
 import { useT } from "@/components/LocaleProvider";
 import { ModelPicker, type CatalogModel } from "@/components/ModelPicker";
+import { COMPARE_IMAGE_UI_ENABLED } from "@/lib/compare/features";
 import type { MessageKey } from "@/lib/i18n";
 import { ToolRoutingTaskCard } from "./ToolRoutingTaskCard";
 import {
@@ -24,7 +25,7 @@ const SAMPLE_IMAGE_PROMPTS = `A rain-slick Seoul side street at dusk, neon signs
 Studio portrait of a ceramicist holding a half-finished bowl, soft window light.
 An isometric illustration of a small greenhouse powered by solar panels.`;
 
-const MODALITIES: Array<{
+const ALL_MODALITIES: Array<{
   id: Modality;
   labelKey: MessageKey;
   hintKey: MessageKey;
@@ -40,6 +41,11 @@ const MODALITIES: Array<{
     hintKey: "compare.modality.imageHint",
   },
 ];
+
+/** Text is the product workflow for now; the image stack remains dormant. */
+const MODALITIES = ALL_MODALITIES.filter(
+  (modality) => modality.id !== "image" || COMPARE_IMAGE_UI_ENABLED,
+);
 
 export function SetupStage(props: {
   setup: CompareSetup;
@@ -81,7 +87,7 @@ export function SetupStage(props: {
   const autoScored =
     AUTO_SCORABLE[setup.modality] &&
     (setup.taskSource === "dataset" ||
-      (parsed.prompts.length > 0 && parsed.prompts.every((p) => p.gold)));
+      (parsed.prompts.length > 0 && parsed.prompts.every((p) => p.gold || p.verifier)));
 
   // One model is a valid run: speed and (when gold exists) quality still
   // measure something. Preference waits until a second answer shows up.
@@ -118,26 +124,24 @@ export function SetupStage(props: {
   return (
     <div className="cmp-workspace">
       <div className="cmp-setup">
-        <section className="cmp-card">
-          <div className="pane-label">{t("compare.modality.label")}</div>
-          <div className="cmp-modality-row">
-            {MODALITIES.map((m) => (
-              <button
-                key={m.id}
-                type="button"
-                className={`cmp-modality${setup.modality === m.id ? " on" : ""}`}
-                onClick={() => onChange({ modality: m.id })}
-              >
-                <strong>{t(m.labelKey)}</strong>
-                <span>{t(m.hintKey)}</span>
-              </button>
-            ))}
-            <div className="cmp-modality is-planned" aria-disabled>
-              <strong>{t("compare.modality.audio")}</strong>
-              <span>{t("compare.modality.audioHint")}</span>
+        {MODALITIES.length > 1 ? (
+          <section className="cmp-card">
+            <div className="pane-label">{t("compare.modality.label")}</div>
+            <div className="cmp-modality-row">
+              {MODALITIES.map((m) => (
+                <button
+                  key={m.id}
+                  type="button"
+                  className={`cmp-modality${setup.modality === m.id ? " on" : ""}`}
+                  onClick={() => onChange({ modality: m.id })}
+                >
+                  <strong>{t(m.labelKey)}</strong>
+                  <span>{t(m.hintKey)}</span>
+                </button>
+              ))}
             </div>
-          </div>
-        </section>
+          </section>
+        ) : null}
 
         <div className="cmp-setup-grid">
           <section className="cmp-card cmp-card-task">

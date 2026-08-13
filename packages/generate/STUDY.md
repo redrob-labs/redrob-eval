@@ -201,8 +201,10 @@ before showing you a prompt that is going to be in English.
 
 Both stages hand their output onward. Templates offers the sampled set as a download, the prompts
 on the clipboard, the `emit` command that reproduces the same sampling on disk, and a hand-off that
-opens Compare with the prompts loaded as a custom set, unscored, because a verifier is not a
-reference string, so quality there comes from the preference tournament rather than a metric. Study
+opens Compare with the prompts loaded as a custom set. Exact and numeric-tolerance verifiers carry a
+single deterministic reference, so those sets are scored automatically with their bound verifier;
+format-only verifiers describe many valid answers and remain unscored rather than inventing one gold
+string. Study
 offers the result artifact and the rendered table. Neither writes into the repository, so those
 downloads are the only copy; `redrob-generate study --out` is the way to keep one on disk.
 

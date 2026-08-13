@@ -1,8 +1,8 @@
 # Blind preference in Compare
 
-Some tasks have no reference answer. Open-ended writing, summarization, and every
-image prompt fall in that bucket: there is nothing to score against, so the
-ranking has to come from a human. Compare's preference stage is where that
+Some text tasks have no reference answer. Open-ended writing and summarization
+fall in that bucket: there is nothing to score against, so the ranking has to
+come from a human. Compare's preference stage is where that
 happens, and its output feeds routing.
 
 ## Why a bracket instead of a rating scale
@@ -87,10 +87,9 @@ the standings as "which of these carried my prompts", not as a rating.
 
 ## Model judges
 
-For image, a match can be handed to a vision judge (`Let the judge decide`),
-which records the verdict as an ordinary vote. Use it to get through a long
-bracket, and override it by voting the rest yourself - the vote log keeps every
-decision either way. Text is human-only today.
+Text is human-voted today. The image/vision judge adapters remain in the backend,
+but image comparison is intentionally out of the product surface until that
+workflow is wired back in.
 
 ## Storage
 

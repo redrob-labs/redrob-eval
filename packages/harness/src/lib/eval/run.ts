@@ -8,6 +8,8 @@ import { scorePair } from '../metrics/index';
 import { callModel, ProviderError } from '../providers/index';
 import { routeSample, type RouteDecision } from '../router/index';
 import { stripReasoning } from '../tool-routing/parse';
+import { runVerifier } from '../../generate/registry';
+import type { Verifier } from '../../generate/spec-types.generated';
 import { enrichSummaries, pickLargeBaseline, summarizeTarget } from './aggregate';
 import { buildEvalPrompt, maxTokensForTask } from './prompts';
 import { ensureResultCaveats, withMandatoryCaveat } from './results';
@@ -25,6 +27,8 @@ export interface CustomPrompt {
   input: string;
   /** Reference answer. Without it the prompt is generated but not scored. */
   gold?: string;
+  /** Bound Generate verifier. When present, it is authoritative for scoring. */
+  verifier?: Verifier | readonly Verifier[];
 }
 
 export const CUSTOM_DATASET_ID = 'custom';
@@ -88,6 +92,7 @@ async function evalOneSample(params: {
   maxTokens: number;
   sampleId: string;
   route?: RouteDecision;
+  verifier?: Verifier | readonly Verifier[];
   /** When false there is no gold answer, so we generate without scoring. */
   scored: boolean;
 }): Promise<EvalSampleResult & { timeToFirstTokenMs?: number }> {
@@ -113,7 +118,13 @@ async function evalOneSample(params: {
         timeToFirstTokenMs: result.timeToFirstTokenMs,
       };
     }
-    const score = params.scored ? scorePair(params.metric, params.gold, answer).score : 0;
+    const score = params.scored
+      ? params.verifier
+        ? runVerifier(params.verifier, answer).passed
+          ? 1
+          : 0
+        : scorePair(params.metric, params.gold, answer).score
+      : 0;
     return {
       sampleId: params.sampleId,
       score,
@@ -172,7 +183,9 @@ export async function* runEval(
 
   // Custom prompts are only scored when the user supplied reference answers;
   // otherwise Compare ranks them through the preference bracket instead.
-  const scored = useCustomPrompts ? customPrompts.every((p) => Boolean(p.gold?.trim())) : true;
+  const scored = useCustomPrompts
+    ? customPrompts.every((p) => Boolean(p.gold?.trim()) || Boolean(p.verifier))
+    : true;
 
   const datasetRef = useCustomPrompts
     ? customDatasetRef(req, req.promptMetric ?? 'chrf', customPrompts.length)
@@ -237,13 +250,18 @@ export async function* runEval(
   const largeBaselineWeight = resolveModelCostWeight(largeBaseline, largeBaseline).weight;
 
   let samples: EvalSample[];
+  const verifierBySample = new Map<string, Verifier | readonly Verifier[]>();
   let seed = datasetRef.seed;
   if (useCustomPrompts) {
-    samples = customPrompts.slice(0, sampleCount).map((p, i) => ({
-      id: p.id?.trim() || `p${i + 1}`,
-      input: p.input.trim(),
-      gold: p.gold?.trim() ?? '',
-    }));
+    samples = customPrompts.slice(0, sampleCount).map((p, i) => {
+      const id = p.id?.trim() || `p${i + 1}`;
+      if (p.verifier) verifierBySample.set(id, p.verifier);
+      return {
+        id,
+        input: p.input.trim(),
+        gold: p.gold?.trim() ?? '',
+      };
+    });
   } else {
     try {
       const loaded = await loadDataset(datasetRef.id, { maxSamples: sampleCount });
@@ -316,6 +334,7 @@ export async function* runEval(
         sampleId: sample.id,
         route,
         scored,
+        verifier: verifierBySample.get(sample.id),
       });
       sampleResults.push(result);
       costWeights.push(resolveModelCostWeight(model, largeBaseline).weight);
@@ -431,7 +450,11 @@ export async function* runEval(
         largeBaselineId: largeBaseline.id,
         finishedAt: new Date().toISOString(),
         scored,
-        prompts: samples.map((s) => ({ id: s.id, input: s.input })),
+        prompts: samples.map((s) => ({
+          id: s.id,
+          input: s.input,
+          ...(s.gold ? { gold: s.gold } : {}),
+        })),
       },
       targets: enriched,
       routingLog,

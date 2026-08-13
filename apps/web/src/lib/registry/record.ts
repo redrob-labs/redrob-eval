@@ -26,12 +26,14 @@ function warnOnce(error: unknown): void {
 export interface RunRecorder {
   readonly id: string | null;
   event(event: NewRunEvent): Promise<void>;
+  artifact(name: string, data: RunJson): Promise<void>;
   finish(patch: RunPatch): Promise<void>;
 }
 
 const NOOP: RunRecorder = {
   id: null,
   async event() {},
+  async artifact() {},
   async finish() {},
 };
 
@@ -52,6 +54,13 @@ export async function startRun(input: NewRun): Promise<RunRecorder> {
     async event(event) {
       try {
         await store.appendEvents(run.id, [event]);
+      } catch (error) {
+        warnOnce(error);
+      }
+    },
+    async artifact(name, data) {
+      try {
+        await store.putArtifact(run.id, name, data);
       } catch (error) {
         warnOnce(error);
       }

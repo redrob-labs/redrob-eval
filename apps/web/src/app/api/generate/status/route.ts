@@ -1,4 +1,5 @@
-import { findRepoRoot, probePythonBridge, UNICODE_VERSION } from '@redrob/harness/generate';
+import { findRepoRoot, UNICODE_VERSION } from '@redrob/harness/generate';
+import { generateBridgeOptions } from '@/lib/generate/bridge';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -15,10 +16,15 @@ export const dynamic = 'force-dynamic';
  * make the page render an error where the honest answer is "install this if you want it".
  */
 export async function GET() {
-  const [python, root] = await Promise.all([
-    probePythonBridge(),
-    findRepoRoot().catch(() => null),
-  ]);
+  const root = await findRepoRoot().catch(() => null);
+  const python = root
+    ? (await generateBridgeOptions(root)).probe
+    : {
+        available: false as const,
+        reason: 'Repository root was not found.',
+        reasonCode: 'not-found' as const,
+        command: 'redrob-generate',
+      };
 
   return Response.json({
     python: python.available

@@ -45,6 +45,12 @@ export type FailureKind =
   | 'desynced'
   /** The provider call itself failed. Not the model's answer, and not its fault. */
   | 'call_error'
+  /** Deterministic reference answer did not match. */
+  | 'wrong_answer'
+  /** Continuous text metric gave some credit, but the answer did not fully match. */
+  | 'partial_answer'
+  /** Provider answered successfully but produced no visible text. */
+  | 'empty_response'
   | 'other';
 
 export const FAILURE_KINDS: FailureKind[] = [
@@ -60,6 +66,9 @@ export const FAILURE_KINDS: FailureKind[] = [
   'correction_ignored',
   'desynced',
   'call_error',
+  'wrong_answer',
+  'partial_answer',
+  'empty_response',
   'other',
 ];
 

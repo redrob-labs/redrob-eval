@@ -60,6 +60,17 @@ export interface CompareSetup {
   /** JSONL or JSON array of `{ id?, input, gold? }` */
   customPromptsRaw: string;
   promptSetLabel: string;
+  /** Deterministic metric handed over with a generated reference set. */
+  promptMetric?: 'accuracy' | 'gsm8k_exact';
+  /** Opaque source facts stored with the registry run. */
+  promptProvenance?: {
+    source: 'generate';
+    templateId: string;
+    templateVersion: string;
+    templatePath: string;
+    locale: string;
+    seeds: string[];
+  };
   /** Registered vLLM host id to call for self-hosted models. */
   vllmHostId: string;
   /** Tool-routing fixture languages. Hindi + romanized Hindi by default. */
@@ -109,7 +120,7 @@ export interface EvalRunMeta {
   largeBaselineId: string | null;
   finishedAt: string;
   scored?: boolean;
-  prompts?: Array<{ id: string; input: string }>;
+  prompts?: Array<{ id: string; input: string; gold?: string }>;
 }
 
 export interface EvalRunResult {
@@ -126,6 +137,7 @@ export type EvalStreamEvent =
       targets: Array<{ targetId: string; label: string; kind: 'model' | 'router' }>;
       totalCalls: number;
       scored?: boolean;
+      registryRunId?: string;
     }
   | {
       type: 'progress';
@@ -140,7 +152,7 @@ export type EvalStreamEvent =
       error?: string;
     }
   | { type: 'target_done'; target: EvalTargetSummary }
-  | { type: 'done'; result: EvalRunResult }
+  | { type: 'done'; result: EvalRunResult; registryRunId?: string }
   | { type: 'cancelled'; message?: string }
   | { type: 'error'; message: string };
 
@@ -260,6 +272,7 @@ export interface ParsedPrompt {
   id?: string;
   input: string;
   gold?: string;
+  verifier?: unknown;
 }
 
 /**
@@ -282,6 +295,10 @@ export function parsePrompts(raw: string): { prompts: ParsedPrompt[]; error: str
         id: typeof r.id === 'string' && r.id.trim() ? r.id.trim() : `p${index + 1}`,
         input: input.trim(),
         gold: typeof r.gold === 'string' && r.gold.trim() ? r.gold.trim() : undefined,
+        verifier:
+          r.verifier && (typeof r.verifier === 'object' || Array.isArray(r.verifier))
+            ? r.verifier
+            : undefined,
       };
     }
     return null;

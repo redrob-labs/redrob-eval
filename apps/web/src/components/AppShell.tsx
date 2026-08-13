@@ -12,6 +12,7 @@ const MODULE_LABEL_KEYS: Record<Exclude<ModuleId, 'settings'>, MessageKey> = {
   evolve: 'nav.evolve',
   deploy: 'nav.deploy',
   generate: 'nav.generate',
+  analyze: 'nav.analyze',
 };
 
 export function ModuleNav({ current }: { current: ModuleId }) {

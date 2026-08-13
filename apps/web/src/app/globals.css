@@ -2857,7 +2857,8 @@ body.is-pane-resizing * {
 }
 
 .cmp-page {
-  padding: 1rem 1.1rem 2rem;
+  /* Dense tables made the old 16px edge read as no gutter at all on desktop. */
+  padding: clamp(1rem, 2.2vw, 2rem) clamp(1rem, 2.8vw, 2.5rem) 2.5rem;
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
@@ -2870,7 +2871,7 @@ body.is-pane-resizing * {
   border: 1px solid var(--line);
   border-radius: 12px;
   background: var(--panel);
-  padding: 0.85rem 0.95rem;
+  padding: 1rem 1.15rem;
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
@@ -4342,4 +4343,213 @@ body.is-pane-resizing * {
   line-height: 1.5;
   color: var(--muted);
   font-variant-numeric: tabular-nums;
+}
+
+/* Analyze workspace */
+
+.az-page {
+  --az-gap: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--az-gap);
+}
+
+/* Run detail nests two levels of containers between the page and its cards, so
+   each one has to carry the page's rhythm or the cards inside it stack flush. */
+.az-detail-page,
+.az-failures,
+.az-compare {
+  display: flex;
+  flex-direction: column;
+  gap: var(--az-gap, 0.85rem);
+  min-width: 0;
+}
+
+.az-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.az-input,
+.az-filters select {
+  border: 1px solid var(--line);
+  background: var(--surface-sunken);
+  color: var(--fg);
+  border-radius: 8px;
+  padding: 0.3rem 0.55rem;
+  font-size: 0.75rem;
+}
+
+.az-input {
+  min-width: 12rem;
+}
+
+.az-runs-table code {
+  font-size: 0.72rem;
+}
+
+.az-run-row,
+.az-fail-row {
+  cursor: pointer;
+}
+
+.az-run-row:hover > td,
+.az-fail-row:hover > td {
+  background: var(--surface-sunken);
+}
+
+.az-status {
+  font-weight: 700;
+  font-size: 0.7rem;
+}
+.az-status-done { color: var(--ok); }
+.az-status-failed { color: var(--danger); }
+.az-status-running { color: var(--brand); }
+.az-status-cancelled,
+.az-status-queued { color: var(--muted); }
+
+/* Tabs have no bottom edge and top-only corners, so they are meant to sit on the
+   panel they open. The page gap under them is cancelled, not inherited. */
+.az-tabs {
+  display: flex;
+  gap: 0.35rem;
+  margin-bottom: calc(var(--az-gap, 0.85rem) * -1);
+}
+
+.az-tab {
+  border: 1px solid var(--line);
+  border-bottom: none;
+  background: var(--surface-sunken);
+  color: var(--fg);
+  border-radius: 8px 8px 0 0;
+  padding: 0.4rem 0.9rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.az-tab.on {
+  background: var(--brand-solid);
+  color: var(--on-solid);
+  border-color: var(--brand);
+}
+
+.az-tally {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.az-chip {
+  border: 1px solid var(--line);
+  background: var(--surface-sunken);
+  color: var(--fg);
+  border-radius: 999px;
+  padding: 0.25rem 0.6rem;
+  font-size: 0.72rem;
+  cursor: pointer;
+}
+.az-chip.on {
+  border-color: var(--brand);
+  background: var(--brand-solid);
+  color: var(--on-solid);
+}
+.az-chip-recoverable {
+  border-style: dashed;
+}
+.az-chip-n {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.az-kind {
+  font-weight: 700;
+  font-size: 0.7rem;
+}
+.az-annot,
+.az-was {
+  color: var(--muted);
+  font-size: 0.68rem;
+  margin-left: 0.3rem;
+}
+.az-lang {
+  color: var(--muted);
+  font-size: 0.66rem;
+  margin-left: 0.35rem;
+}
+.az-detail-cell {
+  color: var(--muted);
+  max-width: 30rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.az-kv {
+  display: grid;
+  grid-template-columns: 6rem 1fr;
+  gap: 0.5rem;
+  font-size: 0.78rem;
+  align-items: start;
+}
+.az-kv-key {
+  color: var(--muted);
+  text-transform: uppercase;
+  font-size: 0.64rem;
+  padding-top: 0.15rem;
+}
+.az-pre {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 0.76rem;
+  line-height: 1.5;
+  background: var(--surface-sunken);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.45rem 0.6rem;
+  max-height: 18rem;
+  overflow: auto;
+}
+.az-pre-got {
+  border-color: var(--brand);
+}
+.az-summary {
+  max-height: 12rem;
+}
+
+.az-reclassify {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+}
+.az-reclassify select {
+  border: 1px solid var(--line);
+  background: var(--surface-sunken);
+  color: var(--fg);
+  border-radius: 8px;
+  padding: 0.3rem 0.55rem;
+  font-size: 0.75rem;
+}
+
+.az-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: 0.5rem 1rem;
+  margin: 0;
+}
+.az-facts dt {
+  color: var(--muted);
+  text-transform: uppercase;
+  font-size: 0.62rem;
+}
+.az-facts dd {
+  margin: 0;
+  font-size: 0.8rem;
+}
+
+.az-warn {
+  color: var(--muted);
 }

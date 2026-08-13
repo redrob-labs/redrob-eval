@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { useT } from "@/components/LocaleProvider";
 import {
   PromptResultTable,
@@ -33,6 +34,7 @@ export function RunStage(props: {
   onStop: () => void;
   onStartPreference: () => void;
   preferenceReady: boolean;
+  registryRunId: string | null;
 }) {
   const {
     running,
@@ -44,6 +46,7 @@ export function RunStage(props: {
     onStop,
     onStartPreference,
     preferenceReady,
+    registryRunId,
   } = props;
   const t = useT();
   const [openTarget, setOpenTarget] = useState<string | null>(null);
@@ -230,19 +233,31 @@ export function RunStage(props: {
         <section className="cmp-card cmp-next">
           <div>
             <div className="pane-label">{t("compare.run.next")}</div>
-            <p className="field-hint">{t("compare.run.nextHint")}</p>
+            <p className="field-hint">
+              {t(scored ? "compare.run.analyzeHint" : "compare.run.nextHint")}
+            </p>
           </div>
-          <button
-            type="button"
-            className="app-run-btn"
-            disabled={!preferenceReady}
-            title={
-              preferenceReady ? undefined : t("compare.run.preferenceNeedsTwo")
-            }
-            onClick={onStartPreference}
-          >
-            {t("compare.run.startPreference")}
-          </button>
+          <div className="cmp-actions">
+            {scored && registryRunId ? (
+              <Link
+                className="app-run-btn"
+                href={`/analyze?run=${encodeURIComponent(registryRunId)}`}
+              >
+                {t("compare.run.analyze")}
+              </Link>
+            ) : null}
+            <button
+              type="button"
+              className="app-ghost-btn"
+              disabled={!preferenceReady}
+              title={
+                preferenceReady ? undefined : t("compare.run.preferenceNeedsTwo")
+              }
+              onClick={onStartPreference}
+            >
+              {t("compare.run.startPreference")}
+            </button>
+          </div>
         </section>
       ) : null}
     </div>

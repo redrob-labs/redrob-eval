@@ -46,15 +46,31 @@ Compare does not read the registries. It derives every slot endpoint from `VLLM_
 
 ## Steps on `/deploy`
 
-1. **Install** (once per host) - creates user `redrob-vllm`, the venv at `/opt/redrob-vllm`, log dir, `/etc/redrob-vllm/secrets.env`, and `/etc/redrob-vllm/slots/`. Migrates a legacy `/etc/redrob-vllm/measured.env` into `slots/0` when present. Seeds slot-0 unit templates. Not enabled until Measure has written that slot's `measured.env`. Safe to re-run.
-2. **Add slot** - allocates the next free local slot index (max 2). Each slot card has its own model picker.
+1. **Install** (once per host) - creates user `redrob-vllm`, the venv at `/opt/redrob-vllm`, log dir, `/etc/redrob-vllm/secrets.env`, and `/etc/redrob-vllm/slots/`. Migrates a legacy `/etc/redrob-vllm/measured.env` into `slots/0` when present. Writes the unit and serve wrapper for **every** slot, and opens every slot port on the host firewall, so adding a slot later is a measurement rather than another install. Nothing is enabled until Measure has written that slot's `measured.env`. Safe to re-run.
+2. **Add slot** - allocates the next free local slot index (max 8). Each slot card has its own model picker.
 3. **Measure** (per slot) - stops only that slot's unit, sizes util from free VRAM, loads the model once, writes `slots/<n>/measured.env`. FP8 is tried once if bfloat16 will not come up.
-4. **Serve** (per slot) - `systemctl` start/stop for `redrob-vllm-s<n>.service`. Start enables the unit and rewrites the generated wrapper. On Start, the workbench upserts a vLLM host entry `http://$GPU_HOST:($VLLM_PORT+n)/v1`.
-5. **Verify** (per slot) - Health and Benchmark against that slot's port; Benchmark writes tok/s into that slot's `measured.env`.
-6. **Undeploy** (per slot) - stop/disable the unit, remove unit file + serve script + that slot's measured.env directory. Does **not** delete the shared venv or HF cache. Clears the local slot record and matching auto-added vLLM host entry.
-7. **Remove all models** - Undeploy for every slot in one pass, plus the downloaded weights in `/opt/redrob-vllm/hf-cache`. Keeps the venv and `secrets.env`, so the next Measure only pays for the download.
+4. **Measure every slot** - the same thing for every open slot from one action. See [What runs in parallel](#what-runs-in-parallel).
+5. **Serve** (per slot) - `systemctl` start/stop for `redrob-vllm-s<n>.service`. Start enables the unit and rewrites the generated wrapper. On Start, the workbench upserts a vLLM host entry `http://$GPU_HOST:($VLLM_PORT+n)/v1`.
+6. **Verify** (per slot) - Health and Benchmark against that slot's port; Benchmark writes tok/s into that slot's `measured.env`. **Check every serving slot** runs Health on all of them at once.
+7. **Undeploy** (per slot) - stop/disable the unit, remove unit file + serve script + that slot's measured.env directory. Does **not** delete the shared venv or HF cache. Clears the local slot record and matching auto-added vLLM host entry.
+8. **Remove all models** - Undeploy for every slot in one pass, plus the downloaded weights in `/opt/redrob-vllm/hf-cache`. Keeps the venv and `secrets.env`, so the next Measure only pays for the download.
 
 The left column shows the remote host banner (GPU_HOST, install root, ports) and per-slot status, refreshed every 8 seconds.
+
+## What runs in parallel
+
+One action can cover every slot; whether the work inside it overlaps depends on what the work contends for.
+
+| Step | Runs at once? | Why |
+| --- | --- | --- |
+| Install | Yes, one pass | Shared venv, secrets and HF cache, plus a unit and wrapper per slot. There is nothing per-slot to serialize. |
+| Weight download | Yes, all repos | Network and disk, not GPU. This is where the wall time goes, so every slot's weights are fetched concurrently before any sizing starts. |
+| Measure (sizing) | No, one slot at a time | A slot is sized from the VRAM **actually free** at that moment. Two probes loading together would each read memory the other is about to take, and vLLM would refuse one of them with "Free memory on device is less than desired GPU memory utilization" — the race the single-slot path already has to retry for. |
+| Serve | Sequential per slot | Each measured slot starts as soon as its own measurement is written. |
+| Health | Yes | Independent HTTP calls to ports that are already up. Output is buffered per slot and printed in slot order. |
+| Benchmark | No | Concurrent generation on one card measures contention rather than throughput, and tok/s is what the relative cost weight is built from. |
+
+A slot that fails to measure is reported and the run continues with the next one: one model that does not fit is not a reason to leave the rest unmeasured. The run exits non-zero and prints `MEASURE_ALL_PARTIAL` when any slot failed.
 
 ## Steps keep running if you disconnect
 

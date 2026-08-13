@@ -1,4 +1,4 @@
-import { championOf, resolvedMatches, totalMatches } from './bracket';
+import { championOf, rankBracket, resolvedMatches, totalMatches } from './bracket';
 import type {
   Bracket,
   ModelStanding,
@@ -56,10 +56,12 @@ export function aggregateTournament(params: {
   }
 
   const winnerByPrompt: Record<string, string | null> = {};
+  const rankingByPrompt: Record<string, string[]> = {};
   const championCounts: Record<string, number> = {};
   for (const bracket of brackets) {
     const champion = championOf(bracket);
     winnerByPrompt[bracket.promptId] = champion;
+    rankingByPrompt[bracket.promptId] = rankBracket(bracket);
     if (champion) championCounts[champion] = (championCounts[champion] ?? 0) + 1;
   }
 
@@ -94,6 +96,7 @@ export function aggregateTournament(params: {
     overallChampionModelId: top && top.championOf > 0 ? top.modelId : null,
     standings,
     winnerByPrompt,
+    rankingByPrompt,
     winMatrix,
     matchesTotal: brackets.reduce((sum, b) => sum + totalMatches(b), 0),
     matchesVoted: brackets.reduce((sum, b) => sum + resolvedMatches(b), 0),

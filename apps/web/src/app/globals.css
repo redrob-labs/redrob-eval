@@ -3380,9 +3380,125 @@ body.is-pane-resizing * {
   cursor: pointer;
 }
 
-.vote-card-pick:disabled {
+.vote-card-pick:disabled,
+.vote-card-out:disabled {
   opacity: 0.55;
   cursor: not-allowed;
+}
+
+.vote-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.vote-card-actions .vote-card-pick {
+  flex: 1;
+}
+
+.vote-card-out {
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--muted);
+  border-radius: 8px;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Knocked out, but still readable: the ballot is easier to judge when what
+   already went out is on screen next to what is left. */
+.vote-card.is-out {
+  opacity: 0.5;
+}
+
+.vote-card-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--brand);
+}
+
+.cmp-pref-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.cmp-pref-modes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0.5rem 0 0.35rem;
+}
+
+.cmp-pref-mode {
+  border: 1px solid var(--line);
+  background: var(--surface-sunken);
+  color: var(--fg);
+  border-radius: 999px;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.73rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cmp-pref-mode.on {
+  border-color: var(--brand);
+  background: var(--brand-solid);
+  color: var(--on-solid);
+}
+
+.cmp-pref-decided {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.cmp-pref-order {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: pref-order;
+}
+
+.cmp-pref-order li {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.76rem;
+}
+
+.cmp-pref-order li::before {
+  counter-increment: pref-order;
+  content: counter(pref-order) '.';
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.cmp-pref-order-side {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.3rem;
+  height: 1.3rem;
+  border-radius: 999px;
+  background: var(--surface-sunken);
+  border: 1px solid var(--line);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.cmp-pref-order-note {
+  color: var(--muted);
+  font-size: 0.7rem;
+}
+
+.data-table tr.is-current > td {
+  background: var(--surface-sunken);
 }
 
 /* Optimize route */

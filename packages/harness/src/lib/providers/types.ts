@@ -13,11 +13,26 @@ export interface VisionTokenControls {
   max_pixels?: number;
 }
 
+/** One earlier turn of a conversation. */
+export interface ChatTurn {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
 export interface CallModelParams {
   providerId: ProviderId;
   modelId: string;
   prompt: string;
   systemPrompt?: string;
+  /**
+   * Turns that came before, oldest first; `prompt` is the latest user turn.
+   *
+   * A conversation rather than a second prompt field: what a multi-turn eval
+   * measures is whether the model still holds what was said three turns ago,
+   * and flattening the history into one string would answer a different
+   * question, since every provider renders roles its own way.
+   */
+  history?: ChatTurn[];
   maxTokens?: number | null;
   temperature?: number;
   /**

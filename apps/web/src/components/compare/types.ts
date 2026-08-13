@@ -173,6 +173,10 @@ export interface GroupMatch {
   contenders: string[];
   winnerModelId: string | null;
   tie: boolean;
+  /** Knocked out one at a time, worst first. */
+  eliminated?: string[];
+  /** Every answer placed, best first, when the ballot was ranked or eliminated down. */
+  ranking?: string[] | null;
 }
 
 export interface Bracket {
@@ -199,6 +203,8 @@ export interface TournamentAggregate {
   overallChampionModelId: string | null;
   standings: ModelStanding[];
   winnerByPrompt: Record<string, string | null>;
+  /** promptId -> every competitor, best first. Empty while the prompt is open. */
+  rankingByPrompt: Record<string, string[]>;
   winMatrix: Record<string, Record<string, number>>;
   matchesTotal: number;
   matchesVoted: number;

@@ -3,6 +3,7 @@ import path from 'node:path';
 
 import { applyFilter } from './filter';
 import { assertSafeRunId, captureProvenance, makeRunId } from './provenance';
+import { assertSafeArtifactName } from './types';
 import type {
   Json,
   NewRun,
@@ -65,6 +66,12 @@ CREATE TABLE IF NOT EXISTS run_events (
   message  TEXT NOT NULL,
   data     TEXT,
   PRIMARY KEY (run_id, seq)
+);
+CREATE TABLE IF NOT EXISTS run_artifacts (
+  run_id  TEXT NOT NULL,
+  name    TEXT NOT NULL,
+  data    TEXT NOT NULL,
+  PRIMARY KEY (run_id, name)
 );
 `;
 
@@ -298,6 +305,29 @@ export class SqliteRunStore implements RunStore {
       message: r.message,
       ...(r.data == null ? {} : { data: JSON.parse(r.data) as Json }),
     }));
+  }
+
+  async putArtifact(id: string, name: string, data: Json): Promise<void> {
+    this.db
+      .prepare(
+        `INSERT INTO run_artifacts (run_id, name, data) VALUES (?, ?, ?)
+         ON CONFLICT (run_id, name) DO UPDATE SET data = excluded.data`,
+      )
+      .run(id, assertSafeArtifactName(name), JSON.stringify(data));
+  }
+
+  async readArtifact(id: string, name: string): Promise<Json | null> {
+    const row = this.db
+      .prepare('SELECT data FROM run_artifacts WHERE run_id = ? AND name = ?')
+      .get(id, assertSafeArtifactName(name)) as { data: string } | undefined;
+    return row ? (JSON.parse(row.data) as Json) : null;
+  }
+
+  async listArtifacts(id: string): Promise<string[]> {
+    const rows = this.db
+      .prepare('SELECT name FROM run_artifacts WHERE run_id = ? ORDER BY name')
+      .all(id) as Array<{ name: string }>;
+    return rows.map((r) => r.name);
   }
 
   async close(): Promise<void> {

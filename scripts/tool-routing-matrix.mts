@@ -132,7 +132,7 @@ const { runId, result } = await runRegistryMatrix({
       );
     }
   },
-  async worker(cell, { signal }) {
+  async worker(cell, { signal, runId }) {
     const { model, language } = cell.params as { model: string; language: ToolRoutingLanguage };
     const tasks = sample(stubTasksForLanguage(language), limit);
     const report = await runToolRoutingHarness({
@@ -144,6 +144,10 @@ const { runId, result } = await runRegistryMatrix({
       conditions: ['contract'],
     });
     if (signal.aborted) throw new Error('aborted');
+    // The full report, every prompt and reply, kept beside the run. The cell
+    // summary carries the rates; this is the evidence behind them, and what
+    // `yarn failures` reads to say which items failed and why.
+    await store.putArtifact(runId, `cell-${cell.key}`, report as unknown as Json);
     const slice = report.slices[0]!;
     return {
       model,

@@ -22,7 +22,15 @@ export interface RegistryMatrixParams<TSummary = Json> {
   dimensions: Record<string, Json[]>;
   /** Dimension whose value caps a group's concurrency, usually a provider. */
   groupBy?: string;
-  worker: (cell: Cell, ctx: { attempt: number; signal: AbortSignal }) => Promise<TSummary>;
+  /**
+   * The work for one cell. `runId` is handed over because a worker usually
+   * wants to attach its own evidence - a full report, a transcript - to the run
+   * it is part of, and it cannot know the id any other way while still running.
+   */
+  worker: (
+    cell: Cell,
+    ctx: { attempt: number; signal: AbortSignal; runId: string },
+  ) => Promise<TSummary>;
   label?: string;
   tags?: string[];
   models?: string[];
@@ -84,7 +92,7 @@ export async function runRegistryMatrix<TSummary = Json>(
   try {
     result = await runMatrix<TSummary>({
       cells,
-      worker: params.worker,
+      worker: (cell, ctx) => params.worker(cell, { ...ctx, runId: run.id }),
       checkpoint,
       ...(params.concurrency !== undefined ? { concurrency: params.concurrency } : {}),
       ...(params.perGroupConcurrency !== undefined

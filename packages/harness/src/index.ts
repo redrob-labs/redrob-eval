@@ -380,6 +380,23 @@ export type {
   RunMatrixParams,
 } from './lib/queue';
 
+// Failure analysis: why a model was wrong, not just how often
+export {
+  classifyToolRoutingExample,
+  failuresFromMultiTurn,
+  failuresFromToolRouting,
+  filterFailures,
+  tallyFailures,
+  FAILURE_KINDS,
+  RECOVERABLE_KINDS,
+} from './lib/failures';
+export type {
+  FailureFilter,
+  FailureKind,
+  FailureRecord,
+  FailureTally,
+} from './lib/failures';
+
 // The verb that binds the two: run a grid, checkpoint it, resume where it stopped
 export { runRegistryMatrix, readMatrixCells } from './lib/matrix-run';
 export type {

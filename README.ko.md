@@ -149,6 +149,8 @@ Checklist / 비디오 스킬 채점(커스텀 goal `mode: "checklist"` 또는 `d
   할 수 있는지, 그리고 저장 방식이 왜 설정값인지
 - [Resumable job queue](docs/job-queue.md) - 모델 x 데이터셋 x 조건 그리드를 동시성 예산 안에서 실행하고,
   프로바이더별 rate limit을 지키며, 중단된 지점부터 이어서 재개
+- [Failure analysis](docs/failure-analysis.md) - 얼마나 틀렸는지가 아니라 왜 틀렸는지: 공통 실패 분류,
+  `yarn failures`가 보여주는 것, 그리고 프롬프트 수정으로 해결될 실패가 무엇인지
 - [Preference](docs/preference.md) - 블라인드 브래킷, 순위·탈락 투표, 그리고 투표가 라우팅 라벨이 되는 방식
 - [Multi-turn](docs/multi-turn.md) - 텍스트와 도구를 함께 다루는 대본형 대화 평가. 능력별로,
   그리고 대화가 깊어질수록 어떻게 되는지로 나눠서 봅니다

@@ -133,6 +133,7 @@ export async function runToolRoutingHarness(
         condition,
         toolset: task.toolset,
         prompt,
+        expected: task.expected,
         raw: prediction.raw,
         parsed: prediction,
         score,

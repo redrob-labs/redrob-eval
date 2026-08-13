@@ -166,6 +166,7 @@ On **Evolve**, pick a catalog dataset or **Custom goal** (goal + rubric + input-
   deterministic reference scoring, and the evidence retained between modules
 - [Contributing](CONTRIBUTING.md) - setup, and the branching model: `main` is production and only
   takes releases, `develop` is what you branch from and target
+- [Changelog](CHANGELOG.md) - what each tagged release changed, and why
 - [Security](SECURITY.md)
 - [Methodology](docs/methodology.md) - routing labels, features, export
 - [Experiment registry](docs/registry.md) - one record every kind of run shares, what

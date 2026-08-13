@@ -25,8 +25,27 @@ export function assertSafeOptimizeRunId(runId: string): string {
  * event streams all reporting the same run, so the comparison table showed three
  * identical rows and read as merely suspicious rather than broken.
  *
- * Four random characters, after the dataset so the leading timestamp still sorts.
+ * Four characters, after the dataset so the leading timestamp still sorts.
  */
+const SUFFIX_SPACE = 36 ** 4;
+
+/**
+ * Random start, then count.
+ *
+ * Drawing all four characters at random left the collision it was added to close:
+ * 200 ids out of 36^4 agree about 1% of the time by the birthday bound, which is
+ * two runs sharing a directory now and then rather than never. Counting makes a
+ * burst inside one process collision-free outright, and the random start is what
+ * keeps two processes minting in the same second apart.
+ */
+let nextSuffix = Math.floor(Math.random() * SUFFIX_SPACE);
+
+function mintSuffix(): string {
+  const value = nextSuffix;
+  nextSuffix = (nextSuffix + 1) % SUFFIX_SPACE;
+  return value.toString(36).padStart(4, '0');
+}
+
 export function makeOptimizeRunId(datasetId: string): string {
   const now = new Date();
   const pad = (n: number) => String(n).padStart(2, '0');
@@ -37,8 +56,7 @@ export function makeOptimizeRunId(datasetId: string): string {
     .replace(/[^a-z0-9-]+/g, '-')
     .replace(/^-+|-+$/g, '')
     .slice(0, 40);
-  const suffix = Math.random().toString(36).slice(2, 6).padEnd(4, '0');
-  return `${date}_${time}_${safe || 'opt'}-${suffix}`;
+  return `${date}_${time}_${safe || 'opt'}-${mintSuffix()}`;
 }
 
 export function optimizeRunDir(runId: string): string {

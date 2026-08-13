@@ -147,6 +147,8 @@ Checklist / 비디오 스킬 채점(커스텀 goal `mode: "checklist"` 또는 `d
 - [Methodology](docs/methodology.md) - 라우팅 라벨, 피처, 내보내기
 - [Experiment registry](docs/registry.md) - 모든 종류의 실행이 공유하는 하나의 기록, `yarn runs`로 무엇을
   할 수 있는지, 그리고 저장 방식이 왜 설정값인지
+- [Resumable job queue](docs/job-queue.md) - 모델 x 데이터셋 x 조건 그리드를 동시성 예산 안에서 실행하고,
+  프로바이더별 rate limit을 지키며, 중단된 지점부터 이어서 재개
 - [Preference](docs/preference.md) - 블라인드 브래킷, 순위·탈락 투표, 그리고 투표가 라우팅 라벨이 되는 방식
 - [Multi-turn](docs/multi-turn.md) - 텍스트와 도구를 함께 다루는 대본형 대화 평가. 능력별로,
   그리고 대화가 깊어질수록 어떻게 되는지로 나눠서 봅니다

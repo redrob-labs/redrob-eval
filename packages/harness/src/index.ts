@@ -361,6 +361,18 @@ export type {
   RunStore,
 } from './lib/registry';
 
+// Resumable job queue: run a matrix of cells under a concurrency budget
+export { expandMatrix, runMatrix, MemoryCheckpoint, runStoreCheckpoint } from './lib/queue';
+export type {
+  Cell as QueueCell,
+  CellOutcome,
+  CellStatus as QueueCellStatus,
+  Checkpoint,
+  MatrixResult,
+  QueueProgress,
+  RunMatrixParams,
+} from './lib/queue';
+
 // Blind World Cup preference tournament
 export {
   activeContenders,

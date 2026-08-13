@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useT } from '@/components/LocaleProvider';
 import type { Failure, FailuresResponse } from './types';
 import { RECOVERABLE } from './types';
@@ -165,6 +165,15 @@ export function FailuresView(props: { runId: string }) {
         {notice ? <div className="app-banner">{notice}</div> : null}
       </section>
 
+      {open ? (
+        <FailureDetail
+          runId={props.runId}
+          failure={open}
+          onClose={() => setOpenId(null)}
+          onAnnotated={reload}
+        />
+      ) : null}
+
       <section className="cmp-card">
         <div className="table-scroll">
           <table className="data-table text-xs">
@@ -200,15 +209,6 @@ export function FailuresView(props: { runId: string }) {
           </table>
         </div>
       </section>
-
-      {open ? (
-        <FailureDetail
-          runId={props.runId}
-          failure={open}
-          onClose={() => setOpenId(null)}
-          onAnnotated={reload}
-        />
-      ) : null}
     </div>
   );
 }
@@ -226,6 +226,14 @@ function FailureDetail(props: {
   const [asKind, setAsKind] = useState(failure.kind);
   const [note, setNote] = useState(failure.note ?? '');
   const [saving, setSaving] = useState(false);
+  const ref = useRef<HTMLElement | null>(null);
+
+  // The panel opens above a long table, so pull it into view on open and when
+  // the selection changes: the whole point is that a click shows the evidence,
+  // not that you scroll to find it.
+  useEffect(() => {
+    ref.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, [failure.id]);
 
   const save = useCallback(async () => {
     setSaving(true);
@@ -244,7 +252,7 @@ function FailureDetail(props: {
   }, [asKind, failure.id, note, props]);
 
   return (
-    <section className="cmp-card az-detail">
+    <section className="cmp-card az-detail" ref={ref}>
       <div className="cmp-run-head">
         <div className="pane-label">
           <span className={`az-kind az-kind-${failure.kind}`}>{failure.kind}</span>

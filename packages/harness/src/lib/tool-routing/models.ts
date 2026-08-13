@@ -77,6 +77,29 @@ export const TOOL_ROUTING_MODELS: ToolRoutingModel[] = [
     usable: true,
   },
   {
+    id: 'qwen35-9b',
+    hfRepoId: 'Qwen/Qwen3.5-9B',
+    label: 'Qwen3.5 9B',
+    license: 'apache-2.0',
+    usable: true,
+    notes: 'Largest size still under the 10B ceiling this registry is for.',
+  },
+  // Gemma 4 E-series: the effective-parameter sizes small enough to serve here.
+  {
+    id: 'gemma4-e2b',
+    hfRepoId: 'google/gemma-4-E2B-it',
+    label: 'Gemma 4 E2B IT',
+    license: 'apache-2.0',
+    usable: true,
+  },
+  {
+    id: 'gemma4-e4b',
+    hfRepoId: 'google/gemma-4-E4B-it',
+    label: 'Gemma 4 E4B IT',
+    license: 'apache-2.0',
+    usable: true,
+  },
+  {
     id: 'granite-4.0-1b',
     hfRepoId: 'ibm-granite/granite-4.0-1b',
     label: 'Granite 4.0 1B',
@@ -112,6 +135,24 @@ export const TOOL_ROUTING_MODELS: ToolRoutingModel[] = [
     id: 'granite-4.0-micro',
     hfRepoId: 'ibm-granite/granite-4.0-micro',
     label: 'Granite 4.0 Micro',
+    license: 'apache-2.0',
+    usable: true,
+  },
+  // Granite 4.1 (April 2026): dense 3B/8B/30B, all Apache-2.0. IBM's own
+  // numbers put the 8B dense at or above the 4.0 32B MoE on tool calling, so
+  // the small sizes are the ones worth carrying here. The 30B is over the
+  // 10B ceiling this registry is for and is left out.
+  {
+    id: 'granite-4.1-3b',
+    hfRepoId: 'ibm-granite/granite-4.1-3b',
+    label: 'Granite 4.1 3B',
+    license: 'apache-2.0',
+    usable: true,
+  },
+  {
+    id: 'granite-4.1-8b',
+    hfRepoId: 'ibm-granite/granite-4.1-8b',
+    label: 'Granite 4.1 8B',
     license: 'apache-2.0',
     usable: true,
   },

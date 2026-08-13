@@ -120,6 +120,73 @@ test('the validator catches a tool that is not on offer, and bad arguments', () 
   assert.match(validateToolRoutingTasks([extraArg], toolsets)[0]!.message, /not in get_weather's schema/);
 });
 
+test('JSON annotated the way a person writes it still parses', () => {
+  // Observed from Ministral 3B/8B: a fenced block with a comment explaining the
+  // value it made up. Rejecting the reply is right, but "unparseable" was the
+  // wrong reason - the model chose a tool and filled the arguments in.
+  const reply = [
+    '```json',
+    '{',
+    '  "tool": "send_payment",',
+    '  "arguments": {',
+    '    "recipient": "KR-8821-0044",',
+    '    "amount": 0,  // missing amount, cannot proceed',
+    '    "currency": "KRW"',
+    '  }',
+    '}',
+    '```',
+  ].join('\n');
+  const parsed = parseToolRoutingPrediction(reply);
+  assert.equal(parsed.kind, 'call');
+  if (parsed.kind === 'call') {
+    assert.equal(parsed.tool, 'send_payment');
+    assert.equal(parsed.arguments.recipient, 'KR-8821-0044');
+  }
+});
+
+test('a URL inside an argument is not mistaken for a comment', () => {
+  const parsed = parseToolRoutingPrediction(
+    '{"tool":"search_documents","arguments":{"query":"https://example.com/a//b"}}',
+  );
+  assert.equal(parsed.kind, 'call');
+  if (parsed.kind === 'call') {
+    assert.equal(parsed.arguments.query, 'https://example.com/a//b');
+  }
+});
+
+test('a block comment and a trailing comma do not sink an otherwise good call', () => {
+  const parsed = parseToolRoutingPrediction(
+    '{"tool":"get_weather",/* picked */"arguments":{"city":"Seoul","day":"today",}}',
+  );
+  assert.equal(parsed.kind, 'call');
+  if (parsed.kind === 'call') assert.equal(parsed.tool, 'get_weather');
+});
+
+test('the tool name in "action" is reported as the wrapper failure it is', () => {
+  // LFM2.5 and Llama-3.2-3B both do this: routed correctly, wrong key.
+  const nested = parseToolRoutingPrediction(
+    '{"action":"send_sms","arguments":{"phone":"010-2233-4455","message":"late"}}',
+  );
+  assert.equal(nested.kind, 'parse_error');
+  if (nested.kind === 'parse_error') {
+    assert.equal(nested.envelope?.tool, 'send_sms');
+    assert.equal(nested.envelope?.arguments.phone, '010-2233-4455');
+  }
+
+  // Granite 4.0 H Micro goes one further and flattens the arguments too.
+  const flat = parseToolRoutingPrediction('{"action":"lookup_contact","name":"Min-jun Park"}');
+  assert.equal(flat.kind, 'parse_error');
+  if (flat.kind === 'parse_error') {
+    assert.equal(flat.envelope?.tool, 'lookup_contact');
+    assert.deepEqual(flat.envelope?.arguments, { name: 'Min-jun Park' });
+  }
+
+  // An action with nothing else attached is still just an unknown action.
+  const bare = parseToolRoutingPrediction('{"action":"WAIT"}');
+  assert.equal(bare.kind, 'parse_error');
+  if (bare.kind === 'parse_error') assert.equal(bare.envelope, undefined);
+});
+
 test('default run set excludes eval_only models', () => {
   const defaults = listDefaultToolRoutingModels();
   assert.ok(defaults.every((m) => m.usable === true));

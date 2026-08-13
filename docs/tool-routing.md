@@ -59,20 +59,62 @@ always recoverable.
 ## Models
 
 `models.ts` is the sub-10B registry, all with a recorded licence. The default
-run set is the commercially usable rows — Qwen3, Qwen3.5, Qwen2.5 (the
-Apache-licensed sizes), Granite 4.0, SmolLM2, LFM2.5, Midm. The non-commercial
-rows — Hammer2.1 and the xLAM function-calling specialists — are `eval_only`
-and never in the default set or the deploy catalog.
+run set is the commercially usable rows — Qwen3, Qwen3.5 (to 9B), Qwen2.5 (the
+Apache-licensed sizes), Granite 4.0 **and 4.1**, Gemma 4 E2B/E4B, SmolLM2,
+LFM2.5, Midm. The non-commercial rows — Hammer2.1 and the xLAM function-calling
+specialists — are `eval_only` and never in the default set or the deploy
+catalog. Granite 4.1's 30B and the larger Qwen3.5 sizes are deliberately absent:
+this registry is for what fits under 10B.
 
 ## Running it
 
 ```bash
 yarn verify:tool-routing          # offline: integrity, balance, parse/score
 yarn tool-routing:fertility       # tokens-per-word per model (tokenizer only)
+yarn tool-routing:live --models liquid/lfm-2.5-2.6b:free,ibm-granite/granite-4.1-8b
+yarn tool-routing:live --models qwen/qwen3.5-9b --languages en,ko --limit 30 --json out.json
 ```
 
-Live evaluation runs through Compare (modality **Tool routing**) against
-selected models, or a self-hosted served id via `/api/tool-routing/run`.
+`tool-routing:live` runs the set against real models and prints an overall table
+plus a per-language one. Live evaluation also runs through Compare (modality
+**Tool routing**), or against a self-hosted served id via `/api/tool-routing/run`.
+
+## What the failures actually are
+
+Running the current sub-10B field turned up something worth stating before
+anyone reads an accuracy column: **for the smallest models, format compliance
+fails far more often than routing does.** LFM2.5-2.6B picked the right tool with
+the right arguments on every reply that parsed, and half its replies did not
+parse — it puts the tool name in `action`, the key the contract reserves for
+`BLOCK` and `DEFER`. Llama-3.2-3B does the same thing on about three quarters of
+replies. A report that collapses that into one accuracy number says these models
+cannot route, and they can.
+
+So the report separates them. A reply that names the right tool through the
+wrong wrapper is still scored strictly as a parse failure — the contract asked
+for one shape and got another — but it is also counted as an `envelope` error,
+with the tool it meant recorded. Two models with the same parse failure rate and
+very different envelope counts are failing at different things.
+
+Two observed output styles are the harness's problem rather than the model's,
+and both are now handled:
+
+- **Commented JSON.** Ministral 3B/8B answer with a fenced block annotated the
+  way a person writes one (`"amount": 0, // missing, cannot proceed`). That is
+  not JSON, so it threw, and the model was recorded as unparseable when it had
+  in fact chosen a tool and invented a placeholder argument. Comments and
+  trailing commas are now stripped **after** strict parsing has already failed,
+  so a well-formed reply never takes that path. The failures moved out of
+  "unparseable" and into the absence column, where they belong: the real mistake
+  was making a call instead of deferring.
+- **Flattened arguments.** Granite 4.0 H Micro emits
+  `{"action":"lookup_contact","name":"…"}` — tool name in `action` *and*
+  arguments spread across the top level. Still a parse failure; now recorded
+  with the call it meant, so it reads as the wrapper mistake it is.
+
+The general rule: strictness decides the score, diagnostics decide what the
+score means. Loosening the first would flatter the models; leaving out the
+second invites the wrong conclusion about them.
 
 ## Related
 

@@ -7,6 +7,15 @@ This file starts at 0.2.0. Everything before it is readable in the history but w
 here, and 0.1.0 shipped without a tag, so `v0.2.0` is the first release a reader can obtain by
 name.
 
+## 0.2.2 - 2026-08-13
+
+### Fixed
+
+- **A QA screenshot reached `v0.2.1`.** `.artifacts/` was not ignored, so a `git add -A` on the
+  hotfix branch swept a 54 kB PNG into the release. The file is removed and the directory is now
+  ignored: screenshots taken while checking a change by hand are evidence for a review, not
+  repository history.
+
 ## 0.2.1 - 2026-08-13
 
 ### Fixed

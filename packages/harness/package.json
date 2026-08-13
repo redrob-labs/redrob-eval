@@ -1,6 +1,6 @@
 {
   "name": "@redrob/harness",
-  "version": "0.2.0",
+  "version": "0.2.2",
   "private": true,
   "license": "Apache-2.0",
   "author": "Janghoon Lee",
@@ -15,7 +15,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@redrob/tokenizers": "0.1.0"
+    "@redrob/tokenizers": "*"
   },
   "devDependencies": {
     "@types/node": "^20",

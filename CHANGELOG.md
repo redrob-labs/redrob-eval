@@ -7,6 +7,28 @@ This file starts at 0.2.0. Everything before it is readable in the history but w
 here, and 0.1.0 shipped without a tag, so `v0.2.0` is the first release a reader can obtain by
 name.
 
+## 0.2.2 - 2026-08-13
+
+### Fixed
+
+- **A QA screenshot reached `v0.2.1`.** `.artifacts/` was not ignored, so a `git add -A` on the
+  hotfix branch swept a 54 kB PNG into the release. The file is removed and the directory is now
+  ignored: screenshots taken while checking a change by hand are evidence for a review, not
+  repository history.
+
+## 0.2.1 - 2026-08-13
+
+### Fixed
+
+- **`yarn install --frozen-lockfile` failed on a clean checkout of 0.2.0.** The version bump moved
+  the four packages to `0.2.0` but left `apps/web` asking for `@redrob/harness@0.1.0` and
+  `@redrob/harness` asking for `@redrob/tokenizers@0.1.0`, so yarn stopped resolving them from the
+  workspace and looked for private packages on npm. Every CI job that installs failed, while a
+  local install kept working because `node_modules` was already linked. The workspaces now depend
+  on each other by `"*"`, which resolves to the workspace whatever the version, so a future bump
+  cannot reintroduce this. `CONTRIBUTING.md` says so, and says to run a frozen-lockfile install on
+  the release branch, which is the check that would have caught it.
+
 ## 0.2.0 - 2026-08-13
 
 0.1.0 could compare models and settle quality by human preference. 0.2.0 is about what happens

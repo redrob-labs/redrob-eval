@@ -12,7 +12,7 @@ authors:
   - family-names: Lee
     given-names: Janghoon
     alias: "이장훈"
-version: 0.2.0
+version: 0.2.2
 date-released: "2026-08-13"
 license: Apache-2.0
 repository-code: "https://github.com/redrob-labs/redrob-eval"

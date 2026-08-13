@@ -116,6 +116,45 @@ The general rule: strictness decides the score, diagnostics decide what the
 score means. Loosening the first would flatter the models; leaving out the
 second invites the wrong conclusion about them.
 
+## A recorded run
+
+Full English set (81 tasks), contract condition, through OpenRouter, 2026-08-12.
+Denominators in brackets: each metric is taken only over the examples it applies
+to, so absence is over the absence tasks and arguments over the calls that
+parsed.
+
+| model | tool select | args exact | absence | parse fail | envelope |
+| --- | --- | --- | --- | --- | --- |
+| qwen/qwen3.5-9b | 100% (68) | 100% (68) | 100% (13) | 0% | 0 |
+| ibm-granite/granite-4.1-8b | 99% (67) | 97% (67) | 50% (10) | 5% | 2 |
+| mistralai/ministral-8b-2512 | 99% (68) | 90% (68) | 31% (13) | 0% | 0 |
+| ibm-granite/granite-4.0-h-micro | 98% (63) | 97% (63) | 38% (13) | 6% | 5 |
+| qwen/qwen-2.5-7b-instruct | 97% (67) | 96% (67) | 31% (13) | 1% | 1 |
+| google/gemma-3-4b-it | 94% (68) | 94% (68) | 23% (13) | 0% | 0 |
+| liquid/lfm-2.5-2.6b | 89% (19) | 89% (19) | 100% (11) | 63% | 10 |
+| meta-llama/llama-3.2-3b-instruct | 81% (16) | 81% (16) | 86% (7) | 72% | 29 |
+
+Three things this set is for, and what it showed:
+
+1. **Picking the tool is close to solved; knowing when not to call is not.**
+   Six of the eight models select the right tool 94-100% of the time, and then
+   range from 23% to 100% on absence. Absence is the axis that still separates
+   this field, which is why it is 52 of the 324 tasks rather than the 20 it was.
+2. **Format compliance is a separate failure, and it dominates for the smallest
+   models.** LFM2.5-2.6B and Llama-3.2-3B fail the contract on 63% and 72% of
+   replies, with 10 and 29 of those being the tool name in `action` — routing
+   they got right, through a wrapper they got wrong. Their tool-select columns
+   are over 19 and 16 examples for that reason, and should not be read beside a
+   column over 68.
+3. **Granite 4.1 over 4.0 shows up where IBM said it would.** Absence 38% → 50%
+   and parse failures 6% → 5% on the same tasks, with the 4.1 8B also cutting
+   envelope errors from 5 to 2.
+
+A four-language smoke test (stride-free prefix sampling, so not citable as a
+result) suggested tool selection holds across en/hi/hi-Latn/ko for the 8B-class
+models while LFM2.5-2.6B drops to 89% Hindi and 86% Korean against 100% English.
+Worth a full-set run before it goes in a paper.
+
 ## Reading the numbers
 
 Each metric skips the examples it does not apply to — absence accuracy is over

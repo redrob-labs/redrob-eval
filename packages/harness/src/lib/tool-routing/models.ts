@@ -77,6 +77,29 @@ export const TOOL_ROUTING_MODELS: ToolRoutingModel[] = [
     usable: true,
   },
   {
+    id: 'qwen35-9b',
+    hfRepoId: 'Qwen/Qwen3.5-9B',
+    label: 'Qwen3.5 9B',
+    license: 'apache-2.0',
+    usable: true,
+    notes: 'Largest size still under the 10B ceiling this registry is for.',
+  },
+  // Gemma 4 E-series: the effective-parameter sizes small enough to serve here.
+  {
+    id: 'gemma4-e2b',
+    hfRepoId: 'google/gemma-4-E2B-it',
+    label: 'Gemma 4 E2B IT',
+    license: 'apache-2.0',
+    usable: true,
+  },
+  {
+    id: 'gemma4-e4b',
+    hfRepoId: 'google/gemma-4-E4B-it',
+    label: 'Gemma 4 E4B IT',
+    license: 'apache-2.0',
+    usable: true,
+  },
+  {
     id: 'granite-4.0-1b',
     hfRepoId: 'ibm-granite/granite-4.0-1b',
     label: 'Granite 4.0 1B',
@@ -112,6 +135,24 @@ export const TOOL_ROUTING_MODELS: ToolRoutingModel[] = [
     id: 'granite-4.0-micro',
     hfRepoId: 'ibm-granite/granite-4.0-micro',
     label: 'Granite 4.0 Micro',
+    license: 'apache-2.0',
+    usable: true,
+  },
+  // Granite 4.1 (April 2026): dense 3B/8B/30B, all Apache-2.0. IBM's own
+  // numbers put the 8B dense at or above the 4.0 32B MoE on tool calling, so
+  // the small sizes are the ones worth carrying here. The 30B is over the
+  // 10B ceiling this registry is for and is left out.
+  {
+    id: 'granite-4.1-3b',
+    hfRepoId: 'ibm-granite/granite-4.1-3b',
+    label: 'Granite 4.1 3B',
+    license: 'apache-2.0',
+    usable: true,
+  },
+  {
+    id: 'granite-4.1-8b',
+    hfRepoId: 'ibm-granite/granite-4.1-8b',
+    label: 'Granite 4.1 8B',
     license: 'apache-2.0',
     usable: true,
   },
@@ -187,6 +228,55 @@ export const TOOL_ROUTING_MODELS: ToolRoutingModel[] = [
     license: 'cc-by-nc-4.0',
     usable: 'eval_only',
     notes: 'Non-commercial - eval_only; never in the default run set.',
+  },
+  // Qwen2.5 instruct: the sub-10B sizes Alibaba ships under Apache-2.0. The 3B
+  // and 72B are under a research licence and are deliberately left out - only
+  // the commercially usable sizes belong in the default run set.
+  {
+    id: 'qwen25-0.5b',
+    hfRepoId: 'Qwen/Qwen2.5-0.5B-Instruct',
+    label: 'Qwen2.5 0.5B Instruct',
+    license: 'apache-2.0',
+    usable: true,
+  },
+  {
+    id: 'qwen25-1.5b',
+    hfRepoId: 'Qwen/Qwen2.5-1.5B-Instruct',
+    label: 'Qwen2.5 1.5B Instruct',
+    license: 'apache-2.0',
+    usable: true,
+  },
+  {
+    id: 'qwen25-7b',
+    hfRepoId: 'Qwen/Qwen2.5-7B-Instruct',
+    label: 'Qwen2.5 7B Instruct',
+    license: 'apache-2.0',
+    usable: true,
+  },
+  {
+    id: 'smollm2-1.7b',
+    hfRepoId: 'HuggingFaceTB/SmolLM2-1.7B-Instruct',
+    label: 'SmolLM2 1.7B Instruct',
+    license: 'apache-2.0',
+    usable: true,
+  },
+  // xLAM function-calling specialists: the point of comparison for a paper on
+  // small-model tool calling. Non-commercial, so eval_only.
+  {
+    id: 'xlam-1b-fc',
+    hfRepoId: 'Salesforce/xLAM-1b-fc-r',
+    label: 'xLAM 1B FC',
+    license: 'cc-by-nc-4.0',
+    usable: 'eval_only',
+    notes: 'Function-calling specialist. Non-commercial - eval_only.',
+  },
+  {
+    id: 'xlam-7b-fc',
+    hfRepoId: 'Salesforce/xLAM-7b-fc-r',
+    label: 'xLAM 7B FC',
+    license: 'cc-by-nc-4.0',
+    usable: 'eval_only',
+    notes: 'Function-calling specialist. Non-commercial - eval_only.',
   },
 ];
 

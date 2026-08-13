@@ -73,7 +73,7 @@ Validated against `spec/study-v1.schema.json` before anything runs.
 | `harness` | Shells out to the harness's `callModel`, the same path Compare uses | yes |
 
 A `harness` model's `id` is the canonical `provider/model` id that Compare resolves, for example
-`openai/gpt-4o-mini` or `vllm/redrob`. There is no second model client here: the bridge at
+`openai/gpt-4o-mini` or `vllm/redrob-s`. There is no second model client here: the bridge at
 `scripts/study-model-call.mts` is about sixty lines and every decision it could make (resolving
 the id, picking the adapter, retrying, reading keys) is `resolveModel` and `callModel` making it.
 
@@ -201,8 +201,10 @@ before showing you a prompt that is going to be in English.
 
 Both stages hand their output onward. Templates offers the sampled set as a download, the prompts
 on the clipboard, the `emit` command that reproduces the same sampling on disk, and a hand-off that
-opens Compare with the prompts loaded as a custom set, unscored, because a verifier is not a
-reference string, so quality there comes from the preference tournament rather than a metric. Study
+opens Compare with the prompts loaded as a custom set. Exact and numeric-tolerance verifiers carry a
+single deterministic reference, so those sets are scored automatically with their bound verifier;
+format-only verifiers describe many valid answers and remain unscored rather than inventing one gold
+string. Study
 offers the result artifact and the rendered table. Neither writes into the repository, so those
 downloads are the only copy; `redrob-generate study --out` is the way to keep one on disk.
 

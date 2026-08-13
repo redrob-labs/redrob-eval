@@ -4,7 +4,12 @@ import { anthropicAdapter } from './anthropic';
 import { googleAdapter } from './google';
 import { createOpenAICompatAdapter } from './openai-compat';
 import { probeVllmEndpoint, vllmAdapter, type VllmProbeResult } from './vllm';
-import type { CallModelParams, CallModelResult, ProviderAdapter } from './types';
+import type {
+  CallModelParams,
+  CallModelResult,
+  ChatTurn,
+  ProviderAdapter,
+} from './types';
 import { ProviderError } from './types';
 
 /** Patch EVAL_MODELS from MEASURED_* env on first provider load. */
@@ -52,6 +57,7 @@ export async function callModel(
     modelId,
     prompt,
     systemPrompt: options?.systemPrompt,
+    history: options?.history,
     maxTokens: options?.maxTokens,
     temperature: options?.temperature,
     images: options?.images,
@@ -62,4 +68,10 @@ export async function callModel(
 }
 
 export { ProviderError, probeVllmEndpoint };
-export type { CallModelParams, CallModelResult, ProviderAdapter, VllmProbeResult };
+export type {
+  CallModelParams,
+  CallModelResult,
+  ChatTurn,
+  ProviderAdapter,
+  VllmProbeResult,
+};

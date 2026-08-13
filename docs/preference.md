@@ -1,8 +1,8 @@
 # Blind preference in Compare
 
-Some tasks have no reference answer. Open-ended writing, summarization, and every
-image prompt fall in that bucket: there is nothing to score against, so the
-ranking has to come from a human. Compare's preference stage is where that
+Some text tasks have no reference answer. Open-ended writing and summarization
+fall in that bucket: there is nothing to score against, so the ranking has to
+come from a human. Compare's preference stage is where that
 happens, and its output feeds routing.
 
 ## Why a bracket instead of a rating scale
@@ -16,8 +16,9 @@ choices into a ranking - `n` models need `n - 1` votes per prompt instead of the
 The tradeoff is honest to state: a bracket finds a winner, not a full ordering.
 Two strong models that meet in round one produce one loss for a model that might
 be second best overall. That is why the standings report head-to-head wins and
-prompts-won separately, and why the routing labels below look at the direct
-matchup rather than only the champion.
+prompts-won separately, why a small field can be ranked outright instead
+(see below), and why the routing labels below look at the direct matchup rather
+than only the champion.
 
 ## How a bracket is built
 
@@ -32,9 +33,50 @@ so a match is two answers to the same question side by side.
 - A tie is recorded as a tie in the vote log and advances side A, so the bracket
   can still finish.
 
-Model identity is hidden on the vote cards until the round resolves. The voter
-sees "A" and "B" and the answer, which is the point: the vote should measure the
-output, not the brand.
+A field of four or fewer skips the bracket entirely and goes on one ballot, with
+every answer side by side. Padding three answers to four would walk one of them
+into the next round without anyone reading it.
+
+Model identity is hidden on the vote cards, and stays hidden until every prompt
+is decided. The voter sees a letter and the answer, which is the point: the vote
+should measure the output, not the brand. Letters are per prompt - answer A on
+one prompt is not answer A on the next - because a letter that meant the same
+model everywhere would leak the identity it is there to hide.
+
+## Deciding one prompt
+
+A group ballot can be settled three ways, and each records a different claim:
+
+| Decision | What it records |
+| --- | --- |
+| Pick the winner | The winner beat each of the others. Nothing about how those place among themselves. |
+| Rank them | Every pair, in the order given. A ranking is a claim about the whole field. |
+| Knock one out | The answers still standing beat the one just dropped. Repeat until one is left; the order they went out is the ranking. |
+
+Eliminating is there for the ballot where naming the best of four is hard but
+naming the worst is easy. Ranking is there when the voter can see the whole
+order and the extra pairs are worth having - `n(n-1)/2` votes from one screen
+costs nothing extra to collect.
+
+A knockout bracket has no such choice: winning a match is what advances, and
+losing it is the elimination. Its per-prompt order is read back from how far
+each answer got, which is all the votes establish - two answers knocked out in
+the same round were never compared with each other.
+
+## Going back
+
+The voter can move to any prompt, before or after the one the queue offers, and
+re-open one that is already decided. Re-voting clears that prompt: its bracket
+is rebuilt from the answers, and its votes stop counting.
+
+This is done a whole prompt at a time. Undoing a single match of a knockout
+would leave the rounds after it holding a winner nobody voted for, and rebuilding
+from the answers is the one state that is always consistent. Byes and errored
+competitors resolve again on their own.
+
+`votes.jsonl` stays append-only through all of this. Re-voting appends
+`{"kind":"undo","promptId":…}` rather than rewriting the retracted lines, so the
+log still says what the voter thought before they changed their mind.
 
 ## Scale
 
@@ -45,10 +87,9 @@ the standings as "which of these carried my prompts", not as a rating.
 
 ## Model judges
 
-For image, a match can be handed to a vision judge (`Let the judge decide`),
-which records the verdict as an ordinary vote. Use it to get through a long
-bracket, and override it by voting the rest yourself - the vote log keeps every
-decision either way. Text is human-only today.
+Text is human-voted today. The image/vision judge adapters remain in the backend,
+but image comparison is intentionally out of the product surface until that
+workflow is wired back in.
 
 ## Storage
 
@@ -77,7 +118,10 @@ The reported **save rate** is the fraction of prompts the fast model can carry.
 
 - `POST /api/compare/tournament` - build brackets from a Compare run's answers
 - `GET /api/compare/tournament/:id` - meta, brackets, votes, standings
-- `POST /api/compare/tournament/:id/vote` - `{ promptId, matchId, winner }`
+- `POST /api/compare/tournament/:id/vote` - one of `{ winner }` (head to head),
+  `{ winnerModelId }`, `{ eliminateModelId }` or `{ ranking }` (group ballot),
+  alongside `{ promptId, matchId }`
+- `POST /api/compare/tournament/:id/undo` - `{ promptId }`, clearing that prompt
 - `POST /api/compare/tournament/:id/judge` - model judge decides one match
 - `POST /api/compare/tournament/:id/route-policy` - `{ smallModelId, largeModelId, save }`
 

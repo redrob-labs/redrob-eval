@@ -87,6 +87,8 @@ export function createBracket(params: {
       contenders,
       winnerModelId: sole,
       tie: false,
+      eliminated: [],
+      ranking: null,
     };
     return {
       promptId,
@@ -226,6 +228,161 @@ export function groupIsPending(bracket: Bracket): boolean {
   return Boolean(group && !group.winnerModelId && !group.tie && group.contenders.length > 1);
 }
 
+/** Answers still on a group ballot: everything nobody has knocked out yet. */
+export function activeContenders(group: GroupMatch): string[] {
+  const out = new Set(group.eliminated ?? []);
+  return group.contenders.filter((id) => !out.has(id));
+}
+
+function assertGroupOpen(bracket: Bracket, matchId: string): GroupMatch {
+  const group = bracket.group;
+  if (!group) throw new Error(`${bracket.promptId} is not decided by a group vote`);
+  if (group.matchId !== matchId) throw new Error(`Unknown match: ${matchId}`);
+  if (group.winnerModelId || group.tie) {
+    throw new Error(`Match ${matchId} is already resolved`);
+  }
+  return group;
+}
+
+function groupVote(
+  bracket: Bracket,
+  group: GroupMatch,
+  winnerModelId: string,
+  loserModelId: string,
+  votedAt: string,
+): Vote {
+  return {
+    promptId: bracket.promptId,
+    matchId: group.matchId,
+    round: 0,
+    aModelId: winnerModelId,
+    bModelId: loserModelId,
+    winner: 'a',
+    winnerModelId,
+    votedAt,
+  };
+}
+
+/**
+ * Knock one answer off a group ballot.
+ *
+ * Naming the best of four is the harder question, and a voter who cannot answer
+ * it can usually still say which one is out. Each elimination is evidence that
+ * every answer still standing beat the one just dropped, and nothing about how
+ * those survivors compare, so that is exactly what gets logged. When one is
+ * left it wins the prompt, and the order they went out is the ranking.
+ */
+export function eliminateFromGroup(
+  bracket: Bracket,
+  matchId: string,
+  modelId: string,
+): { bracket: Bracket; votes: Vote[] } {
+  const group = assertGroupOpen(bracket, matchId);
+  const active = activeContenders(group);
+  if (active.length < 2) throw new Error(`Match ${matchId} has nothing left to eliminate`);
+  if (!active.includes(modelId)) throw new Error(`${modelId} is not on this ballot`);
+
+  const votedAt = new Date().toISOString();
+  const survivors = active.filter((id) => id !== modelId);
+  const votes = survivors.map((survivor) =>
+    groupVote(bracket, group, survivor, modelId, votedAt),
+  );
+
+  group.eliminated = [...(group.eliminated ?? []), modelId];
+  if (survivors.length === 1) {
+    group.winnerModelId = survivors[0]!;
+    group.ranking = [survivors[0]!, ...[...group.eliminated].reverse()];
+  }
+
+  bracket.championModelId = championOf(bracket);
+  return { bracket, votes };
+}
+
+/**
+ * Record a full order over a group ballot, best first.
+ *
+ * A ranking is a claim about every pair at once, so it logs every pair. That is
+ * the difference from picking a winner, which only says the winner beat the
+ * others and leaves the rest of the field unjudged.
+ */
+export function rankGroup(
+  bracket: Bracket,
+  matchId: string,
+  order: string[],
+): { bracket: Bracket; votes: Vote[] } {
+  const group = assertGroupOpen(bracket, matchId);
+  const active = activeContenders(group);
+  const unique = new Set(order);
+  if (unique.size !== order.length) throw new Error('A ranking cannot list an answer twice');
+  if (order.length !== active.length || order.some((id) => !active.includes(id))) {
+    throw new Error('A ranking has to place every answer on the ballot');
+  }
+
+  const votedAt = new Date().toISOString();
+  const votes: Vote[] = [];
+  for (let i = 0; i < order.length; i += 1) {
+    for (let j = i + 1; j < order.length; j += 1) {
+      votes.push(groupVote(bracket, group, order[i]!, order[j]!, votedAt));
+    }
+  }
+
+  group.winnerModelId = order[0]!;
+  group.ranking = [...order];
+  // Worst first, matching what eliminating down to one would have produced.
+  group.eliminated = [...order.slice(1)].reverse();
+
+  bracket.championModelId = championOf(bracket);
+  return { bracket, votes };
+}
+
+/**
+ * Every competitor for one prompt, best first.
+ *
+ * A knockout is ranked by how far each answer got, because that is all the
+ * votes establish: two answers knocked out in the same round were never
+ * compared. A group ballot uses the order the voter gave when there is one.
+ * Answers that errored place last — they were never on the ballot at all.
+ */
+export function rankBracket(bracket: Bracket): string[] {
+  const errored = new Set(
+    bracket.competitors.filter((c) => c.error).map((c) => c.modelId),
+  );
+  const seedOrder = bracket.competitors.map((c) => c.modelId);
+  const bySeed = (a: string, b: string) => seedOrder.indexOf(a) - seedOrder.indexOf(b);
+
+  const group = bracket.group;
+  if (group) {
+    // Without a ranking all that is established is the winner, then whoever was
+    // still standing when it was named, then the knocked-out in reverse order:
+    // the last one out placed highest of them.
+    const survivors = activeContenders(group).filter((id) => id !== group.winnerModelId);
+    const placed = group.ranking?.length
+      ? [...group.ranking]
+      : group.winnerModelId
+        ? [group.winnerModelId, ...survivors, ...[...(group.eliminated ?? [])].reverse()]
+        : [];
+    if (!placed.length) return [];
+    const rest = seedOrder.filter((id) => !placed.includes(id));
+    return [...placed, ...rest.sort(bySeed)];
+  }
+
+  if (!bracket.rounds.length) return bracket.championModelId ? [bracket.championModelId] : [];
+  if (!bracket.championModelId) return [];
+
+  // Round a model was last seen winning: the further it got, the better it did.
+  const survivedTo = new Map<string, number>();
+  for (const id of seedOrder) survivedTo.set(id, errored.has(id) ? -1 : 0);
+  bracket.rounds.forEach((round, index) => {
+    for (const match of round) {
+      if (match.winnerModelId) survivedTo.set(match.winnerModelId, index + 1);
+    }
+  });
+
+  return seedOrder
+    .slice()
+    .sort((a, b) => (survivedTo.get(b) ?? 0) - (survivedTo.get(a) ?? 0) || bySeed(a, b));
+}
+
 /**
  * Record a group vote: one winner out of everything on screen, or a tie.
  *
@@ -238,13 +395,12 @@ export function advanceGroup(
   matchId: string,
   winnerModelId: string | null,
 ): { bracket: Bracket; votes: Vote[] } {
-  const group = bracket.group;
-  if (!group) throw new Error(`${bracket.promptId} is not decided by a group vote`);
-  if (group.matchId !== matchId) throw new Error(`Unknown match: ${matchId}`);
-  if (group.winnerModelId || group.tie) {
-    throw new Error(`Match ${matchId} is already resolved`);
-  }
-  if (winnerModelId && !group.contenders.includes(winnerModelId)) {
+  const group = assertGroupOpen(bracket, matchId);
+  // Only what is still standing can win, and only that is judged against it: an
+  // answer already knocked out has been beaten, and beating it again is not a
+  // fact about the winner.
+  const active = activeContenders(group);
+  if (winnerModelId && !active.includes(winnerModelId)) {
     throw new Error(`${winnerModelId} is not on this ballot`);
   }
 
@@ -253,7 +409,7 @@ export function advanceGroup(
 
   if (winnerModelId) {
     group.winnerModelId = winnerModelId;
-    for (const loser of group.contenders) {
+    for (const loser of active) {
       if (loser === winnerModelId) continue;
       votes.push({
         promptId: bracket.promptId,
@@ -267,16 +423,17 @@ export function advanceGroup(
       });
     }
   } else {
-    // Too close to call applies to the whole ballot, so every pair is a tie.
+    // Too close to call applies to what is still on screen, so every remaining
+    // pair is a tie. Anything already knocked out stays knocked out.
     group.tie = true;
-    for (let i = 0; i < group.contenders.length; i += 1) {
-      for (let j = i + 1; j < group.contenders.length; j += 1) {
+    for (let i = 0; i < active.length; i += 1) {
+      for (let j = i + 1; j < active.length; j += 1) {
         votes.push({
           promptId: bracket.promptId,
           matchId: group.matchId,
           round: 0,
-          aModelId: group.contenders[i]!,
-          bModelId: group.contenders[j]!,
+          aModelId: active[i]!,
+          bModelId: active[j]!,
           winner: 'tie',
           winnerModelId: null,
           votedAt,

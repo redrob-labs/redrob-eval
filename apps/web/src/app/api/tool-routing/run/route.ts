@@ -12,6 +12,7 @@ import {
 } from '@redrob/harness';
 
 import { BUILTIN_HOST_ID, resolveVllmHost } from '@/lib/settings/vllm-hosts';
+import { asJson, startRun } from '@/lib/registry/record';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -192,6 +193,18 @@ export async function POST(request: Request) {
         tasks: tasks.map((t) => ({ id: t.id, text: toolRoutingBallotText(t) })),
       });
 
+      // Recorded so this sweep is findable tomorrow. Never awaited on the hot
+      // path in a way that could stall the stream, and never able to fail it.
+      const recorder = await startRun({
+        kind: 'tool-routing',
+        label: plans.map((p) => p.label).join(', ').slice(0, 80),
+        params: asJson({ modelIds: plans.map((p) => p.catalogId), languages, hostId }),
+        models: plans.map((p) => p.catalogId),
+        datasetId: 'tool-routing-fixtures',
+      });
+      const finished: Array<{ modelId: string; report: ToolRoutingReport }> = [];
+      const failed: Array<{ modelId: string; message: string }> = [];
+
       let done = 0;
       try {
         for (const plan of plans) {
@@ -202,6 +215,11 @@ export async function POST(request: Request) {
               modelId: plan.catalogId,
               label: plan.label,
               message: plan.blocked,
+            });
+            failed.push({ modelId: plan.catalogId, message: plan.blocked });
+            await recorder.event({
+              level: 'warn',
+              message: `${plan.label} could not be run: ${plan.blocked}`,
             });
             continue;
           }
@@ -237,22 +255,51 @@ export async function POST(request: Request) {
                 report,
               });
             }
+            finished.push({ modelId: plan.catalogId, report });
+            await recorder.event({ level: 'info', message: `${plan.label} finished` });
           } catch (error) {
             done = offset + callsPerModel;
+            const message = error instanceof Error ? error.message : 'run failed';
             send({
               type: 'model_error',
               modelId: plan.catalogId,
               label: plan.label,
-              message: error instanceof Error ? error.message : 'run failed',
+              message,
             });
+            failed.push({ modelId: plan.catalogId, message });
+            await recorder.event({ level: 'error', message: `${plan.label}: ${message}` });
           }
         }
         if (!runAbort.signal.aborted) send({ type: 'done' });
-      } catch (error) {
-        send({
-          type: 'error',
-          message: error instanceof Error ? error.message : 'tool-routing run failed',
+        // A sweep the client walked away from is cancelled, not finished: the
+        // numbers it did produce are real but the run is not the one that was asked for.
+        await recorder.finish({
+          status: runAbort.signal.aborted ? 'cancelled' : 'done',
+          summary: asJson({
+            models: finished.length,
+            failedModels: failed.length,
+            tasks: tasks.length,
+            languages,
+            perModel: finished.map(({ modelId, report }) => ({
+              modelId,
+              slices: report.slices.map((s) => ({
+                language: s.language,
+                condition: s.condition,
+                n: s.n,
+                toolSelectAccuracy: s.toolSelectAccuracy,
+                argExactMatchAccuracy: s.argExactMatchAccuracy,
+                absenceAccuracy: s.absenceAccuracy,
+                parseFailureRate: s.parseFailureRate,
+                denominators: s.denominators,
+              })),
+            })),
+            failures: failed,
+          }),
         });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'tool-routing run failed';
+        send({ type: 'error', message });
+        await recorder.finish({ status: 'failed', error: message });
       } finally {
         request.signal.removeEventListener('abort', onClientAbort);
         try {

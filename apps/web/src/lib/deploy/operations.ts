@@ -19,13 +19,14 @@ import { ensureTerminal, writeTerminal, terminalExists } from './sessions';
 import {
   RUNNING_MARKER,
   benchmarkScript,
+  healthAllScript,
   healthScript,
   installScript,
   purgeAllScript,
   serviceControl,
   undeployScript,
 } from './remote';
-import { measureScript } from './remote-measure';
+import { measureAllScript, measureScript, type MeasureAllStep } from './remote-measure';
 import { deployPort } from './port';
 import { classifyReachFailure, type SlotReachKind } from './reachability';
 import {
@@ -44,13 +45,25 @@ const SLOT_REACH_TIMEOUT_MS = 4_000;
 export type DeployOp =
   | 'install'
   | 'measure'
+  /** Measure and serve every configured slot in one run. */
+  | 'measure-all'
   | 'start'
   | 'stop'
   | 'health'
+  /** Check every serving slot, in parallel. */
+  | 'health-all'
   | 'benchmark'
   | 'undeploy'
   /** Every slot at once, weights included. */
   | 'purge';
+
+/** Ops that act on the whole host rather than on the slot they were given. */
+export const WHOLE_HOST_OPS = new Set<DeployOp>([
+  'install',
+  'purge',
+  'measure-all',
+  'health-all',
+]);
 
 type CandidateKey = keyof typeof SELF_HOSTED_CANDIDATES;
 
@@ -91,6 +104,8 @@ export interface OpParams {
   hf?: string;
   /** Deploy slot index; defaults to 0. */
   slot?: number;
+  /** Which slots a whole-host op covers, and the model each one serves. */
+  slots?: Array<{ slot: number; modelKey?: string; hf?: string }>;
 }
 
 async function secretEnv(): Promise<Record<string, string>> {
@@ -101,9 +116,19 @@ async function secretEnv(): Promise<Record<string, string>> {
   return out;
 }
 
+/** Measure sizes VRAM and writes measured.env; serving is the point of having done so. */
+function measureAndServe(cfg: ServeConfig): string {
+  return [
+    measureScript({ ...cfg, slot: cfg.slot }),
+    `echo "==> serving slot ${cfg.slot.index} with the measurement just written"`,
+    serviceControl('start', cfg.slot),
+  ].join('\n');
+}
+
 function buildOpBody(
   op: DeployOp,
   cfg: ServeConfig,
+  fleet: ServeConfig[],
 ): { body: string; sudo: boolean; label: string } {
   const slot = cfg.slot;
   switch (op) {
@@ -115,9 +140,29 @@ function buildOpBody(
       // the two-button flow. The probe is torn down inside measureScript, so the
       // systemd unit does a clean second load with the util it just recorded.
       return {
-        body: `${measureScript({ ...cfg, slot })}\necho "==> serving slot ${slot.index} with the measurement just written"\n${serviceControl('start', slot)}`,
+        body: measureAndServe(cfg),
         sudo: true,
         label: `Measure & serve (slot ${slot.index})`,
+      };
+    case 'measure-all':
+      return {
+        body: measureAllScript(
+          fleet.map<MeasureAllStep>((one) => ({
+            slot: one.slot,
+            model: one.model,
+            body: measureAndServe(one),
+          })),
+        ),
+        sudo: true,
+        label: `Measure & serve (${fleet.length} slots)`,
+      };
+    case 'health-all':
+      return {
+        body: healthAllScript(
+          fleet.map((one) => ({ slot: one.slot, servedName: one.servedName })),
+        ),
+        sudo: false,
+        label: `Health (${fleet.length} slots)`,
       };
     case 'start':
     case 'stop':
@@ -159,9 +204,25 @@ function buildOpBody(
 export async function buildOpScriptFile(
   op: DeployOp,
   params: OpParams = {},
-): Promise<{ content: string; sudo: boolean; label: string; cfg: ServeConfig }> {
+): Promise<{
+  content: string;
+  sudo: boolean;
+  label: string;
+  cfg: ServeConfig;
+  fleet: ServeConfig[];
+}> {
   const cfg = resolveServeConfig(params);
-  const { body, sudo, label } = buildOpBody(op, cfg);
+  // A whole-host op with no slot list still has the one it was given to work
+  // with, so the button does something sensible rather than nothing.
+  const fleet = (params.slots?.length ? params.slots : [{ slot: cfg.slot.index }]).map(
+    (one) =>
+      resolveServeConfig({
+        slot: one.slot,
+        modelKey: one.modelKey ?? (one.slot === cfg.slot.index ? params.modelKey : undefined),
+        hf: one.hf ?? (one.slot === cfg.slot.index ? params.hf : undefined),
+      }),
+  );
+  const { body, sudo, label } = buildOpBody(op, cfg, fleet);
   const secrets = await secretEnv();
   const exports = Object.entries(secrets)
     .map(([k, v]) => `export ${k}=${shellQuote(v)}`)
@@ -176,11 +237,16 @@ export async function buildOpScriptFile(
     body,
     '',
   ].join('\n');
-  return { content, sudo, label, cfg };
+  return { content, sudo, label, cfg, fleet };
 }
 
 async function syncLocalAfterOp(op: DeployOp, cfg: ServeConfig): Promise<void> {
   const slot = cfg.slot;
+  // Measuring every slot registers every slot, so Compare can offer them all.
+  if (op === 'measure-all') {
+    await syncLocalAfterOp('measure', cfg);
+    return;
+  }
   if (op === 'measure' || op === 'start') {
     const short = cfg.model.includes('/') ? cfg.model.split('/').pop()! : cfg.model;
     await upsertSlot({
@@ -221,12 +287,17 @@ export async function injectOpIntoTerminal(
   sessionId: string,
   op: DeployOp,
   params: OpParams = {},
-): Promise<{ remotePath: string; label: string; cfg: ServeConfig }> {
+): Promise<{
+  remotePath: string;
+  label: string;
+  cfg: ServeConfig;
+  fleet: ServeConfig[];
+}> {
   // Reconnect rather than fail if the channel dropped — tmux still has the pane.
   if (!terminalExists(sessionId)) {
     await ensureTerminal();
   }
-  const { content, sudo, label, cfg } = await buildOpScriptFile(op, params);
+  const { content, sudo, label, cfg, fleet } = await buildOpScriptFile(op, params);
   const remotePath = `/tmp/redrob-op-${op}-${randomUUID().slice(0, 8)}.sh`;
   await sshWriteFile(remotePath, content);
   // chmod +x via the shell so the user sees the run line; secrets not shown
@@ -240,9 +311,14 @@ export async function injectOpIntoTerminal(
     `${sudo ? 'sudo ' : ''}bash ${shellQuote(remotePath)}; ec=$?; ` +
     `${rm} ${shellQuote(remotePath)}; rm -f ${RUNNING_MARKER}; ` +
     `echo \"[redrob] ${label} exit $ec\"`;
+  const banner = WHOLE_HOST_OPS.has(op)
+    ? `[redrob] ▶ ${label}  ${fleet
+        .map((one) => `slot ${one.slot.index}=${one.model}`)
+        .join(', ')}`
+    : `[redrob] ▶ ${label}  ${cfg.model} as ${cfg.servedName} (slot ${cfg.slot.index}, :${cfg.slot.port})`;
   const typed = [
     '',
-    `echo \"[redrob] ▶ ${label}  ${cfg.model} as ${cfg.servedName} (slot ${cfg.slot.index}, :${cfg.slot.port})\"`,
+    `echo \"${banner}\"`,
     `chmod 700 ${shellQuote(remotePath)}`,
     run,
     '',
@@ -250,8 +326,10 @@ export async function injectOpIntoTerminal(
   if (!writeTerminal(sessionId, typed)) {
     throw new Error('Failed to write to remote shell');
   }
-  await syncLocalAfterOp(op, cfg);
-  return { remotePath, label, cfg };
+  for (const one of WHOLE_HOST_OPS.has(op) ? fleet : [cfg]) {
+    await syncLocalAfterOp(op, one);
+  }
+  return { remotePath, label, cfg, fleet };
 }
 
 /** Quick helpers the user can also inject (logs / GPU watch). */

@@ -155,6 +155,8 @@ export type {
   EvalRunMeta,
 } from './lib/eval/types';
 export { ROUTER_TARGET_ID } from './lib/eval/types';
+export { buildTextEvalReport } from './lib/eval/artifact';
+export type { TextEvalReport } from './lib/eval/artifact';
 export { summarizeTarget, enrichSummaries, pickLargeBaseline, mean } from './lib/eval/aggregate';
 export { buildEvalPrompt, maxTokensForTask } from './lib/eval/prompts';
 export {
@@ -332,21 +334,131 @@ export { assertSplitIsolation, splitExamples } from './lib/splits';
 // Reporting guards — absolute currency must never reach UI or exports
 export { containsCurrency } from './lib/reporting/no-currency';
 
+// Experiment registry: the one record every kind of run shares
+export {
+  createRunStore,
+  defaultRegistryPath,
+  registryConfigFromEnv,
+  FsRunStore,
+  SqliteRunStore,
+  applyFilter,
+  matchesFilter,
+  captureProvenance,
+  hashParams,
+  makeRunId,
+  isTerminal,
+} from './lib/registry';
+export type {
+  Json as RunJson,
+  NewRun,
+  NewRunEvent,
+  Provenance,
+  RegistryConfig,
+  RegistryDriver,
+  RunEvent,
+  RunFilter,
+  RunPatch,
+  RunRecord,
+  RunStatus,
+  RunStore,
+} from './lib/registry';
+
+// Resumable job queue: run a matrix of cells under a concurrency budget
+export {
+  expandMatrix,
+  runMatrix,
+  MemoryCheckpoint,
+  readCheckpointedCells,
+  runStoreCheckpoint,
+} from './lib/queue';
+export type {
+  Cell as QueueCell,
+  CellOutcome,
+  CellStatus as QueueCellStatus,
+  Checkpoint,
+  CheckpointedCell,
+  MatrixResult,
+  QueueProgress,
+  RunMatrixParams,
+} from './lib/queue';
+
+// Failure analysis: why a model was wrong, not just how often
+export {
+  annotateFailure,
+  applyAnnotations,
+  classifyToolRoutingExample,
+  failuresFromMultiTurn,
+  failuresFromTextEval,
+  failuresFromToolRouting,
+  filterFailures,
+  promptRequest,
+  readAnnotations,
+  readCohort,
+  saveCohort,
+  tallyFailures,
+  ANNOTATIONS_ARTIFACT,
+  COHORT_KIND,
+  FAILURE_KINDS,
+  RECOVERABLE_KINDS,
+} from './lib/failures';
+export type {
+  Annotation,
+  Cohort,
+  CohortMember,
+  FailureFilter,
+  FailureKind,
+  FailureRecord,
+  FailureTally,
+} from './lib/failures';
+
+// Statistics: whether a difference between two models is real
+export {
+  compareModels,
+  outcomesByItem,
+  holmAdjust,
+  mcnemar,
+  pairedBootstrapDiff,
+  powerWarnings,
+  wilsonInterval,
+} from './lib/stats/compare-runs';
+export { compareTextEvalModels } from './lib/stats/compare-text';
+export type {
+  CompareModelsResult,
+  ModelRate,
+  PairComparison,
+  ToolRoutingMetric,
+} from './lib/stats/compare-runs';
+export type { Interval, McNemarResult, PairedDiffResult } from './lib/stats';
+
+// The verb that binds the two: run a grid, checkpoint it, resume where it stopped
+export { runRegistryMatrix, readMatrixCells } from './lib/matrix-run';
+export type {
+  RegistryMatrixParams,
+  RegistryMatrixResult,
+} from './lib/matrix-run';
+
 // Blind World Cup preference tournament
 export {
+  activeContenders,
   advance,
   advanceGroup,
   aggregateTournament,
   appendVote,
   appendVotes,
+  appendVoteUndo,
   assertSafeTournamentRunId,
   bracketIsSettled,
   championOf,
   createBracket,
+  eliminateFromGroup,
+  foldVoteLog,
   groupIsPending,
+  isVoteUndo,
   listTournaments,
   makeTournamentRunId,
   nextPendingMatch,
+  rankBracket,
+  rankGroup,
   readTournament,
   resolvedMatches,
   totalMatches,
@@ -364,6 +476,8 @@ export type {
   TournamentMeta,
   TournamentRun,
   Vote,
+  VoteLogEntry,
+  VoteUndo,
   VoteWinner,
 } from './lib/tournament';
 
@@ -472,6 +586,8 @@ export {
   normalizeToolRoutingLanguages,
   formatFertilityMarkdown,
   runToolRoutingHarness,
+  validateToolRoutingTasks,
+  verbatimArgNames,
   loadStubFertilityCorpus,
   loadStubToolRoutingTasks,
   loadStubToolsets,
@@ -483,4 +599,35 @@ export {
   type ToolRoutingExampleRecord,
   type ToolsetId,
   type FertilityCell,
+  type TaskProblem,
 } from './lib/tool-routing';
+
+// Multi-turn: the same models, asked to hold a conversation together
+export {
+  buildMultiTurnReport,
+  buildSystemPrompt as buildMultiTurnSystemPrompt,
+  calledTool,
+  formatToolResult,
+  loadMultiTurnScenarios,
+  multiTurnScenariosFor,
+  runCheck,
+  runChecks,
+  runMultiTurnHarness,
+  runScenario,
+  MULTI_TURN_MAX_TOKENS,
+} from './lib/multi-turn';
+export type {
+  CapabilitySlice,
+  DepthSlice,
+  LoadedScenario,
+  MultiTurnCaller,
+  MultiTurnCapability,
+  MultiTurnLanguage,
+  MultiTurnReport,
+  MultiTurnScenario,
+  ScenarioRecord,
+  ScriptedTurn,
+  TurnCheck,
+  TurnCheckResult,
+  TurnRecord,
+} from './lib/multi-turn';

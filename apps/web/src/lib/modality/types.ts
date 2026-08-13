@@ -1,4 +1,4 @@
-import type { EvalStreamEvent } from '@redrob/harness';
+import type { CustomPrompt, EvalStreamEvent, MetricId } from '@redrob/harness';
 
 /**
  * A modality is everything Compare needs to know about a kind of output.
@@ -8,11 +8,8 @@ import type { EvalStreamEvent } from '@redrob/harness';
  */
 export type ModalityId = 'text' | 'image';
 
-export interface ModalityPrompt {
+export interface ModalityPrompt extends CustomPrompt {
   id: string;
-  input: string;
-  /** Reference answer, when the task has one. */
-  gold?: string;
 }
 
 export interface ModalityRunRequest {
@@ -21,6 +18,8 @@ export interface ModalityRunRequest {
   datasetId?: string;
   prompts?: ModalityPrompt[];
   promptSetLabel?: string;
+  promptMetric?: MetricId;
+  promptProvenance?: Record<string, unknown>;
   sampleCount: number;
   /** Image only: which prompt suite to draw from when no prompts are given. */
   suiteId?: string;

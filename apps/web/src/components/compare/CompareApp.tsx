@@ -6,6 +6,7 @@ import { useT } from "@/components/LocaleProvider";
 import type { CatalogModel } from "@/components/ModelPicker";
 import type { MessageKey } from "@/lib/i18n";
 import { takeComparePrompts } from "@/lib/handoff";
+import { COMPARE_IMAGE_UI_ENABLED } from "@/lib/compare/features";
 import { readSseJson } from "@/lib/sse";
 import { CompareReports } from "./CompareReports";
 import { PreferenceStage } from "./PreferenceStage";
@@ -98,6 +99,7 @@ export function CompareApp() {
     >
   >({});
   const [result, setResult] = useState<EvalRunResult | null>(null);
+  const [registryRunId, setRegistryRunId] = useState<string | null>(null);
   const [scored, setScored] = useState(true);
   const [runError, setRunError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -141,6 +143,16 @@ export function CompareApp() {
             next.taskSource = "dataset";
           }
         }
+        // A generated handoff's metric and provenance describe those exact
+        // prompts. Once the reader edits the prompt box, keeping either would
+        // attach the old template to a different benchmark.
+        if (
+          patch.customPromptsRaw !== undefined &&
+          patch.customPromptsRaw !== prev.customPromptsRaw
+        ) {
+          next.promptMetric = undefined;
+          next.promptProvenance = undefined;
+        }
         return next;
       });
       const switchedTask =
@@ -152,6 +164,7 @@ export function CompareApp() {
         setStage("setup");
         setToolResults([]);
         setResult(null);
+        setRegistryRunId(null);
         setRunError(null);
       }
     },
@@ -175,6 +188,8 @@ export function CompareApp() {
               taskSource: "custom",
               customPromptsRaw: JSON.stringify(handoff.prompts, null, 2),
               promptSetLabel: handoff.label,
+              promptMetric: handoff.metric,
+              promptProvenance: handoff.provenance,
             },
       );
     });
@@ -187,7 +202,9 @@ export function CompareApp() {
       try {
         const [dRes, sRes, mRes] = await Promise.all([
           fetch("/api/datasets"),
-          fetch("/api/image/suites"),
+          COMPARE_IMAGE_UI_ENABLED
+            ? fetch("/api/image/suites")
+            : Promise.resolve(new Response(JSON.stringify({ suites: [] }))),
           fetch("/api/models?source=curated&limit=100"),
         ]);
         const dJson = (await dRes.json()) as { datasets?: DatasetInfo[] };
@@ -360,6 +377,7 @@ export function CompareApp() {
     setTargets([]);
     setLiveByTarget({});
     setResult(null);
+    setRegistryRunId(null);
     setToolResults([]);
     setProgress(null);
 
@@ -373,6 +391,8 @@ export function CompareApp() {
             modality: setup.modality,
             prompts: custom.prompts,
             promptSetLabel: setup.promptSetLabel || "Custom prompts",
+            promptMetric: setup.promptMetric,
+            promptProvenance: setup.promptProvenance,
             sampleCount: custom.prompts.length,
             modelIds: setup.modelIds,
           }
@@ -414,6 +434,7 @@ export function CompareApp() {
           if (!line) continue;
           const event = JSON.parse(line.slice(5).trim()) as EvalStreamEvent;
           if (event.type === "start") {
+            setRegistryRunId(event.registryRunId ?? null);
             setProgress({ done: 0, total: event.totalCalls });
             setScored(event.scored !== false);
             const seed: typeof liveByTarget = {};
@@ -457,6 +478,7 @@ export function CompareApp() {
             });
           } else if (event.type === "done") {
             setResult(event.result);
+            setRegistryRunId(event.registryRunId ?? null);
             setScored(event.result.meta.scored !== false);
             upsertReport(buildEvalReport(event.result));
           } else if (event.type === "error") {
@@ -637,8 +659,17 @@ export function CompareApp() {
     [tournament],
   );
 
-  const castGroupVote = useCallback(
-    async (promptId: string, matchId: string, winnerModelId: string | null) => {
+  /**
+   * Every way of settling a group ballot posts to the same endpoint; what is in
+   * the body is what the voter actually said, and the harness turns each into
+   * the pairwise votes it justifies.
+   */
+  const postGroupBallot = useCallback(
+    async (
+      promptId: string,
+      matchId: string,
+      decision: Record<string, unknown>,
+    ) => {
       if (!tournament) return;
       setTournamentError(null);
       try {
@@ -647,7 +678,7 @@ export function CompareApp() {
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ promptId, matchId, winnerModelId }),
+            body: JSON.stringify({ promptId, matchId, ...decision }),
           },
         );
         const json = (await res.json()) as TournamentState & { error?: string };
@@ -655,6 +686,50 @@ export function CompareApp() {
         setTournament(json);
       } catch (e) {
         setTournamentError(e instanceof Error ? e.message : "Vote failed");
+      }
+    },
+    [tournament],
+  );
+
+  const castGroupVote = useCallback(
+    (promptId: string, matchId: string, winnerModelId: string | null) =>
+      postGroupBallot(promptId, matchId, { winnerModelId }),
+    [postGroupBallot],
+  );
+
+  const eliminateFromBallot = useCallback(
+    (promptId: string, matchId: string, modelId: string) =>
+      postGroupBallot(promptId, matchId, { eliminateModelId: modelId }),
+    [postGroupBallot],
+  );
+
+  const rankBallot = useCallback(
+    (promptId: string, matchId: string, ranking: string[]) =>
+      postGroupBallot(promptId, matchId, { ranking }),
+    [postGroupBallot],
+  );
+
+  /** Clear one prompt so it can be voted again; the rest of the run is untouched. */
+  const revotePrompt = useCallback(
+    async (promptId: string) => {
+      if (!tournament) return;
+      setTournamentError(null);
+      try {
+        const res = await fetch(
+          `/api/compare/tournament/${encodeURIComponent(tournament.meta.runId)}/undo`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ promptId }),
+          },
+        );
+        const json = (await res.json()) as TournamentState & { error?: string };
+        if (!res.ok) throw new Error(json.error || `HTTP ${res.status}`);
+        setTournament(json);
+      } catch (e) {
+        setTournamentError(
+          e instanceof Error ? e.message : "Could not clear that prompt",
+        );
       }
     },
     [tournament],
@@ -774,6 +849,7 @@ export function CompareApp() {
                   onStop={stopRun}
                   onStartPreference={() => setStage("preference")}
                   preferenceReady={(result?.targets.length ?? 0) >= 2}
+                  registryRunId={registryRunId}
                 />
               )
             }
@@ -793,6 +869,9 @@ export function CompareApp() {
             }
             onVote={castVote}
             onGroupVote={castGroupVote}
+            onEliminate={eliminateFromBallot}
+            onRank={rankBallot}
+            onRevote={revotePrompt}
             onJudge={setup.modality === "image" ? judgeMatch : undefined}
             hint={isTool ? t("compare.tool.pref.condition") : undefined}
             onOptimizeRoute={() => setStage("route")}

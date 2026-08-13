@@ -133,6 +133,12 @@ export interface ToolRoutingExampleRecord {
   raw: string;
   /** Exact prompt sent to the model. Optional on legacy reports. */
   prompt?: string;
+  /**
+   * What the task wanted. Kept alongside the reply so a failure can be read
+   * without the fixtures to hand: "wrong arguments" is not a finding until you
+   * can see which ones were wanted. Optional on reports written before this.
+   */
+  expected?: ExpectedOutcome;
   parsed: ParsedPrediction;
   score: ToolRoutingExampleScore;
   /** Set when the provider call threw, as opposed to answering something unusable. */

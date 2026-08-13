@@ -1,5 +1,7 @@
+import { buildTextEvalReport } from '@redrob/harness';
 import type { EvalStreamEvent } from '@redrob/harness';
 import { getModality, type ModalityRunRequest } from '@/lib/modality';
+import { asJson, startRun } from '@/lib/registry/record';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -58,6 +60,30 @@ export async function POST(request: Request) {
         }
       };
 
+      const recorder =
+        modality.id === 'text'
+          ? await startRun({
+              kind: 'compare-text',
+              label: `${body.promptSetLabel ?? body.datasetId ?? 'text'} · ${body.modelIds.join(', ')}`.slice(
+                0,
+                120,
+              ),
+              params: asJson({
+                modality: 'text',
+                modelIds: body.modelIds,
+                datasetId: body.datasetId,
+                promptSetLabel: body.promptSetLabel,
+                promptMetric: body.promptMetric,
+                promptProvenance: body.promptProvenance,
+                prompts: hasPrompts ? prompts : undefined,
+                sampleCount: body.sampleCount,
+              }),
+              models: body.modelIds,
+              datasetId: body.promptSetLabel ?? body.datasetId ?? 'custom',
+              tags: body.promptProvenance ? ['generated', 'compare'] : ['compare'],
+            })
+          : null;
+
       try {
         for await (const event of modality.run(
           {
@@ -65,6 +91,8 @@ export async function POST(request: Request) {
             datasetId: body.datasetId,
             prompts: hasPrompts ? prompts : undefined,
             promptSetLabel: body.promptSetLabel,
+            promptMetric: body.promptMetric,
+            promptProvenance: body.promptProvenance,
             sampleCount: Number.isFinite(body.sampleCount)
               ? Number(body.sampleCount)
               : Math.max(1, prompts.length),
@@ -75,19 +103,55 @@ export async function POST(request: Request) {
         )) {
           if (runAbort.signal.aborted) {
             send({ type: 'cancelled', message: 'Stopped' });
+            await recorder?.finish({ status: 'cancelled' });
             break;
           }
-          send(event);
+          if (event.type === 'start') {
+            send({ ...event, ...(recorder?.id ? { registryRunId: recorder.id } : {}) });
+          } else if (event.type === 'done') {
+            const report = buildTextEvalReport({
+              meta: event.result.meta,
+              targets: event.result.targets,
+            });
+            await recorder?.artifact('report', asJson(report));
+            await recorder?.finish({
+              status: 'done',
+              summary: asJson({
+                scored: event.result.meta.scored !== false,
+                metric: event.result.meta.metric,
+                sampleCount: event.result.meta.sampleCount,
+                targets: event.result.targets.map((target) => ({
+                  modelId: target.targetId,
+                  label: target.label,
+                  quality: target.quality,
+                  n: target.n,
+                  meanLatencyMs: target.meanLatencyMs,
+                })),
+              }),
+            });
+            send({ ...event, ...(recorder?.id ? { registryRunId: recorder.id } : {}) });
+          } else {
+            send(event);
+          }
+          if (event.type === 'error') {
+            await recorder?.finish({ status: 'failed', error: event.message });
+          }
+          if (event.type === 'cancelled') {
+            await recorder?.finish({ status: 'cancelled' });
+          }
           if (event.type === 'error' || event.type === 'cancelled') break;
         }
       } catch (error) {
         if (error instanceof Error && error.name === 'AbortError') {
           send({ type: 'cancelled', message: 'Stopped' });
+          await recorder?.finish({ status: 'cancelled' });
         } else {
+          const message = error instanceof Error ? error.message : 'Run failed';
           send({
             type: 'error',
-            message: error instanceof Error ? error.message : 'Run failed',
+            message,
           });
+          await recorder?.finish({ status: 'failed', error: message });
         }
       } finally {
         request.signal.removeEventListener('abort', onClientAbort);

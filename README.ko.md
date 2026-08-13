@@ -7,7 +7,7 @@
 
 오픈소스 **LLM 평가 워크벤치**(Next.js App Router, Apache 2.0): 파라메트릭 템플릿에서 검증 가능한 평가 프롬프트를 만들고, 어떤 소스의 모델이든 *당신의* 과제 위에서 직접 비교하고, 정답이 없는 과제는 블라인드 사람 선호로 순위를 정하고, 품질 하한(quality floor) 아래에서 설정을 진화시키고, 자체 호스팅 모델을 GPU에 올립니다.
 
-제품은 네 모듈과 설정입니다: **Compare · Evolve · Deploy · Generate**. Compare가 정문이고, 프론티어 API·OpenRouter·직접 띄운 vLLM이 텍스트든 이미지든 같은 목록에 나란히 놓입니다. 오디오는 모달리티 하나만 더 붙이면 됩니다. Generate는 나머지 세 모듈이 돌릴 아이템을 만듭니다. 비용을 표시하는 곳에서는 항상 기준선 대비 **%**이며 절대 통화 금액은 쓰지 않습니다. 프로바이더 키는 서버 측에만 둡니다.
+제품은 다섯 모듈과 설정입니다: **Generate · Compare · Analyze · Evolve · Deploy**. 기본 흐름은 결정론적 텍스트 벤치마크를 생성하고, 호스팅 API나 자체 vLLM을 비교한 뒤, 근거를 분석하는 것입니다. Deploy는 선택적인 모델 소스이고 Evolve는 개선 루프를 시작합니다. 이미지 비교는 지금 제품 화면에서 의도적으로 제외했으며, 백엔드 어댑터는 나중에 다시 연결할 수 있도록 남겨 둡니다. 비용을 표시하는 곳에서는 항상 기준선 대비 **%**이며 절대 통화 금액은 쓰지 않습니다. 프로바이더 키는 서버 측에만 둡니다.
 
 ## 발견한 점
 
@@ -67,7 +67,7 @@ yarn dev
 
 | 모듈 | 경로 | 목적 |
 |------|------|------|
-| **Compare** | `/` 또는 `/compare` | 어떤 소스의 모델이든 카탈로그 데이터셋이나 직접 넣은 프롬프트 위에서 텍스트·이미지로 실행하고, 측정된 품질·지연·TTFT·처리량으로 순위를 매기고, 정답이 없으면 블라인드 선호 토너먼트로 정리한 뒤 그 투표를 라우팅 정책으로 바꿉니다. 작업 **툴 라우팅**은 모든 모델에 같은 JSON contract를 주고, 선택한 언어에서 툴 6개·18개·50개짜리 시나리오를 평가합니다 (fertility 선택). |
+| **Compare** | `/` 또는 `/compare` | 어떤 소스의 텍스트 모델이든 카탈로그 데이터셋이나 생성/커스텀 참조 세트 위에서 실행하고, 측정된 품질·지연·TTFT·처리량으로 순위를 매기며, 모든 샘플 근거를 Analyze에 보존합니다. 작업 **툴 라우팅**은 모든 모델에 같은 JSON contract를 주고, 선택한 언어에서 툴 6개·18개·50개짜리 시나리오를 평가합니다 (fertility 선택). |
 | **Evolve** | `/evolve` | 품질 하한 아래 instruction / demos / model / `script_policy` / `frame_policy` GEPA 탐색; 카탈로그 데이터셋 또는 커스텀 goal+rubric(LLM 판정 또는 checklist QWK); 기준선 대비 진화 리포트 내보내기 |
 | **Deploy** | `/deploy` | SSH로 GPU 호스트에 자체 호스팅 S+L 서빙 - 측정, 기동, 헬스, 벤치마크, 재접속 가능한 터미널 |
 | **Generate** | `/generate` | 파라메트릭 과제 템플릿과 로케일을 보고, content-derived seed로 인스턴스를 샘플링하고, 교차 로케일 스터디를 검증된 결과 아티팩트로 돌립니다. 둘 다 내보내거나 프롬프트를 Compare로 바로 넘길 수 있습니다 |
@@ -101,9 +101,9 @@ yarn test                                            # Generate 스펙 TypeScrip
 
 ### Compare의 네 단계
 
-1. **Setup** - 모달리티(텍스트, 이미지, 툴 라우팅)를 고르고, 모든 소스(curated, OpenRouter, 직접 프론티어, 자체 호스팅 vLLM)에서 모델을 고른 뒤, 카탈로그 데이터셋·이미지 프롬프트 스위트·직접 붙여넣거나 JSONL로 올린 프롬프트 중 하나를 선택합니다. 툴 라우팅은 SLM 레지스트리·served model id·스텁 픽스처를 씁니다.
+1. **Setup** - 텍스트 벤치마크(카탈로그, Generate 전달, 커스텀 JSONL, 툴 라우팅)와 모든 소스(curated, OpenRouter, 직접 프론티어, 자체 호스팅 vLLM)의 모델을 고릅니다. 결정론적 참조가 있는 생성 세트는 미리 채워지고 자동으로 채점됩니다.
 2. **Run** - SSE로 실시간 스트리밍합니다. 품질 점수는 정답이 있는 과제에서만 매기고, 지연·TTFT·처리량은 항상 이번 실행에서 측정합니다. 공개 가격은 실시간이 아니므로 비용 열은 없습니다.
-3. **Preference** - 프롬프트마다 싱글 엘리미네이션 브래킷 하나. 모델 이름을 가린 채 답 두 개를 보여주고, 이긴 쪽이 올라가고, 챔피언이 그 프롬프트를 가져갑니다. 2의 거듭제곱이 아닌 참가 수는 부전승으로 채우고, 해당 프롬프트에서 에러가 난 모델은 부전패합니다. 이미지에서는 "판정 모델에게 맡기기"로 한 매치를 비전 모델에 넘기고 나머지는 직접 투표할 수 있습니다. 투표는 `eval/tournaments/{runId}/votes.jsonl`에 append됩니다.
+3. **Preference** - 프롬프트마다 싱글 엘리미네이션 브래킷 하나. 모델 이름을 가린 채 답 두 개를 보여주고, 이긴 쪽이 올라가고, 챔피언이 그 프롬프트를 가져갑니다. 2의 거듭제곱이 아닌 참가 수는 부전승으로 채우고, 해당 프롬프트에서 에러가 난 모델은 부전패합니다. 투표는 `eval/tournaments/{runId}/votes.jsonl`에 append됩니다.
 4. **Optimize route** - 빠른 모델과 폴백을 지정합니다. 빠른 모델이 이기거나 비긴 프롬프트는 `small` 라벨, 나머지는 에스컬레이션. 지표 기반 수집기가 채우던 것과 같은 `RoutingExample` 코퍼스로 들어가므로 `/api/routing/export`와 학습 경로는 그대로입니다. 지도 신호만 지표에서 사람 선호로 바뀝니다.
 
 브래킷과 라벨 로직 오프라인 검증: `yarn verify:tournament`.
@@ -142,10 +142,25 @@ Checklist / 비디오 스킬 채점(커스텀 goal `mode: "checklist"` 또는 `d
 
 ## 문서
 
+- [기본 워크플로](docs/workflow.md) - Generate → Compare → Analyze, 선택적 Deploy,
+  결정론적 참조 채점, 모듈 사이에 보존되는 근거
 - [Contributing](CONTRIBUTING.md) - 설정, 그리고 브랜칭 모델: `main`은 프로덕션이고 릴리스만 받고, `develop`에서 분기하고 대상으로 삼습니다
+- [Changelog](CHANGELOG.md) - 태그가 붙은 릴리스마다 무엇이 바뀌었고 왜 바뀌었는지
 - [Security](SECURITY.md)
 - [Methodology](docs/methodology.md) - 라우팅 라벨, 피처, 내보내기
-- [Preference](docs/preference.md) - 블라인드 브래킷, 그리고 투표가 라우팅 라벨이 되는 방식
+- [Experiment registry](docs/registry.md) - 모든 종류의 실행이 공유하는 하나의 기록, `yarn runs`로 무엇을
+  할 수 있는지, 그리고 저장 방식이 왜 설정값인지
+- [Resumable job queue](docs/job-queue.md) - 모델 x 데이터셋 x 조건 그리드를 동시성 예산 안에서 실행하고,
+  프로바이더별 rate limit을 지키며, 중단된 지점부터 이어서 재개
+- [Failure analysis](docs/failure-analysis.md) - 얼마나 틀렸는지가 아니라 왜 틀렸는지: 공통 실패 분류,
+  `yarn failures`가 보여주는 것, 그리고 프롬프트 수정으로 해결될 실패가 무엇인지
+- [Statistics](docs/statistics.md) - 두 모델의 차이가 실제인지 판단하기: 짝지은 검정, 표본이 작을 때도
+  무너지지 않는 신뢰구간, 그리고 비교가 주장을 뒷받침할 수 없을 때의 경고
+- [Preference](docs/preference.md) - 블라인드 브래킷, 순위·탈락 투표, 그리고 투표가 라우팅 라벨이 되는 방식
+- [Multi-turn](docs/multi-turn.md) - 텍스트와 도구를 함께 다루는 대본형 대화 평가. 능력별로,
+  그리고 대화가 깊어질수록 어떻게 되는지로 나눠서 봅니다
+- [Tool routing](docs/tool-routing.md) - 10B 이하 툴 콜링 데이터셋: 4개 언어에 균형 잡힌 324개 과제,
+  정답이 요청 안에 반드시 있는지 검사하는 무결성 게이트, 그리고 모델 레지스트리
 - [Learnings](docs/learnings.md) - 살아 있는 설계 로그
 - [Decision records](docs/decisions/) - 설계가 그렇게 된 이유, 결정당 한 파일, 번호가 매겨지며 제자리에서 다시 쓰지 않습니다. 시작은
   [0001 Generate module foundation](docs/decisions/0001-generate-foundation.md), 이어서

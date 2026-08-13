@@ -12,8 +12,19 @@ export const COMPARE_PROMPTS_KEY = 'redrob:compare-prompts';
 export interface ComparePromptHandoff {
   /** Shown on the run as the prompt set name, e.g. "Linear equation (en)". */
   label: string;
+  /** Deterministic metric to use when every prompt carries a reference. */
+  metric?: 'accuracy' | 'gsm8k_exact';
+  /** Where Generate made the set, preserved into the registry run. */
+  provenance?: {
+    source: 'generate';
+    templateId: string;
+    templateVersion: string;
+    templatePath: string;
+    locale: string;
+    seeds: string[];
+  };
   /** Shape accepted by Compare's custom prompt box: `gold` is optional. */
-  prompts: { id: string; input: string; gold?: string }[];
+  prompts: { id: string; input: string; gold?: string; verifier?: unknown }[];
 }
 
 export function stashComparePrompts(handoff: ComparePromptHandoff): boolean {

@@ -7,6 +7,7 @@ import { useT } from '@/components/LocaleProvider';
 import type { MessageKey } from '@/lib/i18n';
 import { copyText, downloadJson } from '@/lib/download';
 import { stashComparePrompts } from '@/lib/handoff';
+import { referencesForInstances } from '@/lib/generate/reference';
 
 import {
   type CatalogLocale,
@@ -85,6 +86,7 @@ export function TemplatesStage({
   const [result, setResult] = useState<{ key: string; instances: PreviewInstance[] } | null>(null);
   const [failure, setFailure] = useState<{ key: string; message: string } | null>(null);
   const instances = result?.key === key ? result.instances : null;
+  const referenceSet = instances ? referencesForInstances(instances) : null;
   const error = failure?.key === key ? failure.message : null;
   const loading = pythonAvailable && path !== undefined && instances === null && error === null;
 
@@ -237,9 +239,20 @@ export function TemplatesStage({
                     onClick={() => {
                       const ok = stashComparePrompts({
                         label: `${template.title} (${locale})`,
-                        prompts: instances.map((instance) => ({
+                        metric: referenceSet?.metric,
+                        provenance: {
+                          source: 'generate',
+                          templateId: template.id,
+                          templateVersion: template.version,
+                          templatePath: template.path,
+                          locale,
+                          seeds: instances.map((instance) => instance.seed),
+                        },
+                        prompts: instances.map((instance, index) => ({
                           id: `${template.id}#${instance.instance_index}`,
                           input: instance.prompt,
+                          gold: referenceSet?.references[index]?.gold,
+                          verifier: referenceSet ? instance.verifier : undefined,
                         })),
                       });
                       if (ok) router.push('/compare');
@@ -270,9 +283,11 @@ export function TemplatesStage({
                     onClick={() => {
                       void copyText(
                         JSON.stringify(
-                          instances.map((instance) => ({
+                          instances.map((instance, index) => ({
                             id: `${template.id}#${instance.instance_index}`,
                             input: instance.prompt,
+                            gold: referenceSet?.references[index]?.gold,
+                            verifier: referenceSet ? instance.verifier : undefined,
                           })),
                           null,
                           2,
@@ -305,7 +320,13 @@ export function TemplatesStage({
                     {t('generate.templates.copyCliCommand')}
                   </button>
                 </div>
-                <p className="gen-export-hint">{t('generate.templates.sendToCompareHint')}</p>
+                <p className="gen-export-hint">
+                  {t(
+                    referenceSet
+                      ? 'generate.templates.sendToCompareScoredHint'
+                      : 'generate.templates.sendToCompareHint',
+                  )}
+                </p>
               </div>
             ) : null}
 

@@ -14,6 +14,7 @@ export const textModality: ModalityAdapter = {
         datasetId: req.datasetId,
         prompts: req.prompts,
         promptSetLabel: req.promptSetLabel,
+        promptMetric: req.promptMetric,
         sampleCount: req.sampleCount,
         modelIds: req.modelIds,
       },

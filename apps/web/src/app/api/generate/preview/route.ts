@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os';
 import { join, resolve, sep } from 'node:path';
 
 import { emitWithPython, findRepoRoot } from '@redrob/harness/generate';
+import { generateBridgeOptions } from '@/lib/generate/bridge';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -62,9 +63,10 @@ export async function POST(request: Request) {
 
   const outDirectory = await mkdtemp(join(tmpdir(), 'redrob-preview-'));
   try {
+    const bridge = await generateBridgeOptions(root);
     const outcome = await emitWithPython(
       { templatePath: absolute, count, outDirectory, locale, createdAt: PINNED_CREATED_AT },
-      { cwd: root },
+      bridge.options,
     );
     if (!outcome.available) {
       // 503 rather than 500: the request was fine, the capability is absent.

@@ -62,9 +62,17 @@ const MARK: Record<RunStatus, string> = {
   cancelled: 'x',
 };
 
+/** Pad to a width but never truncate: a clipped id is one you cannot copy. */
 function pad(text: string, width: number): string {
-  return text.length >= width ? text.slice(0, width) : text.padEnd(width);
+  return text.length >= width ? text : text.padEnd(width);
 }
+
+// Piping `yarn runs` into `head` closes stdout early; that is a normal way to
+// use a listing, not a crash. Exit quietly when the reader hangs up.
+process.stdout.on('error', (err: NodeJS.ErrnoException) => {
+  if (err.code === 'EPIPE') process.exit(0);
+  throw err;
+});
 
 const store = await createRunStore();
 try {

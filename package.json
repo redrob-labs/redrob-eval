@@ -37,6 +37,7 @@
     "verify:preference-gen": "tsx scripts/verify-preference-gen.mts",
     "tool-routing:fertility": "tsx scripts/tool-routing-fertility.mts",
     "tool-routing:live": "tsx scripts/tool-routing-live.mts",
+    "tool-routing:matrix": "tsx scripts/tool-routing-matrix.mts",
     "export:samples": "tsx scripts/export-samples.mts",
     "export:routing": "tsx scripts/export-routing.mts",
     "datasets:fetch": "tsx scripts/datasets/fetch.mts",

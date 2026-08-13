@@ -362,16 +362,30 @@ export type {
 } from './lib/registry';
 
 // Resumable job queue: run a matrix of cells under a concurrency budget
-export { expandMatrix, runMatrix, MemoryCheckpoint, runStoreCheckpoint } from './lib/queue';
+export {
+  expandMatrix,
+  runMatrix,
+  MemoryCheckpoint,
+  readCheckpointedCells,
+  runStoreCheckpoint,
+} from './lib/queue';
 export type {
   Cell as QueueCell,
   CellOutcome,
   CellStatus as QueueCellStatus,
   Checkpoint,
+  CheckpointedCell,
   MatrixResult,
   QueueProgress,
   RunMatrixParams,
 } from './lib/queue';
+
+// The verb that binds the two: run a grid, checkpoint it, resume where it stopped
+export { runRegistryMatrix, readMatrixCells } from './lib/matrix-run';
+export type {
+  RegistryMatrixParams,
+  RegistryMatrixResult,
+} from './lib/matrix-run';
 
 // Blind World Cup preference tournament
 export {

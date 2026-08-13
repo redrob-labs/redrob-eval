@@ -1,6 +1,6 @@
-import type { RunStore } from '../registry/types';
+import type { Json, RunStore } from '../registry/types';
 
-import type { Checkpoint, CellOutcome } from './types';
+import type { Checkpoint, CellOutcome, CellStatus } from './types';
 
 /**
  * A checkpoint kept in memory. For tests, and for a matrix nobody needs to
@@ -32,6 +32,46 @@ const CELL_EVENT = 'cell';
  * a table is the point: the registry already promises append-only durability,
  * and a matrix is just a run with a lot of small events.
  */
+/** One cell's last recorded outcome, read back from a run's event log. */
+export interface CheckpointedCell {
+  key: string;
+  status: CellStatus;
+  attempts: number;
+  error?: string;
+  summary?: Json;
+}
+
+/**
+ * Every cell's last word, folded from a run's events.
+ *
+ * Lets a results table be rebuilt from the registry without re-running
+ * anything - the numbers a cancelled-then-resumed matrix produced are all here,
+ * whichever process produced them.
+ */
+export async function readCheckpointedCells(
+  store: RunStore,
+  runId: string,
+): Promise<CheckpointedCell[]> {
+  const events = await store.readEvents(runId);
+  const byKey = new Map<string, CheckpointedCell>();
+  for (const event of events) {
+    if (event.message !== CELL_EVENT) continue;
+    const data = event.data as
+      | { cell?: string; status?: string; attempts?: number; error?: string; summary?: Json }
+      | undefined;
+    if (!data?.cell || (data.status !== 'done' && data.status !== 'failed')) continue;
+    const cell: CheckpointedCell = {
+      key: data.cell,
+      status: data.status,
+      attempts: Number(data.attempts ?? 0),
+    };
+    if (data.error !== undefined) cell.error = data.error;
+    if (data.summary !== undefined) cell.summary = data.summary;
+    byKey.set(data.cell, cell);
+  }
+  return [...byKey.values()];
+}
+
 export function runStoreCheckpoint(store: RunStore, runId: string): Checkpoint {
   return {
     async completedKeys(): Promise<Set<string>> {
@@ -52,6 +92,9 @@ export function runStoreCheckpoint(store: RunStore, runId: string): Checkpoint {
     },
 
     async record(outcome: CellOutcome): Promise<void> {
+      // The summary rides along, so a results table can be rebuilt from the run
+      // even after a resume: the cells that finished in an earlier process left
+      // their numbers here, not only in that process's memory.
       await store.appendEvents(runId, [
         {
           level: outcome.status === 'done' ? 'info' : 'error',
@@ -61,6 +104,7 @@ export function runStoreCheckpoint(store: RunStore, runId: string): Checkpoint {
             status: outcome.status,
             attempts: outcome.attempts,
             ...(outcome.error ? { error: outcome.error } : {}),
+            ...(outcome.summary === undefined ? {} : { summary: outcome.summary }),
           },
         },
       ]);

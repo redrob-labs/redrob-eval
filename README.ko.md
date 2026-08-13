@@ -145,6 +145,8 @@ Checklist / 비디오 스킬 채점(커스텀 goal `mode: "checklist"` 또는 `d
 - [Contributing](CONTRIBUTING.md) - 설정, 그리고 브랜칭 모델: `main`은 프로덕션이고 릴리스만 받고, `develop`에서 분기하고 대상으로 삼습니다
 - [Security](SECURITY.md)
 - [Methodology](docs/methodology.md) - 라우팅 라벨, 피처, 내보내기
+- [Experiment registry](docs/registry.md) - 모든 종류의 실행이 공유하는 하나의 기록, `yarn runs`로 무엇을
+  할 수 있는지, 그리고 저장 방식이 왜 설정값인지
 - [Preference](docs/preference.md) - 블라인드 브래킷, 순위·탈락 투표, 그리고 투표가 라우팅 라벨이 되는 방식
 - [Multi-turn](docs/multi-turn.md) - 텍스트와 도구를 함께 다루는 대본형 대화 평가. 능력별로,
   그리고 대화가 깊어질수록 어떻게 되는지로 나눠서 봅니다

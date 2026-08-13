@@ -166,6 +166,8 @@ On **Evolve**, pick a catalog dataset or **Custom goal** (goal + rubric + input-
   takes releases, `develop` is what you branch from and target
 - [Security](SECURITY.md)
 - [Methodology](docs/methodology.md) - routing labels, features, export
+- [Experiment registry](docs/registry.md) - one record every kind of run shares, what
+  `yarn runs` gives you, and why storage is a configuration value
 - [Preference](docs/preference.md) - blind brackets, ranking and elimination, and how votes become
   routing labels
 - [Multi-turn](docs/multi-turn.md) - scripted conversations for text and tools, scored by

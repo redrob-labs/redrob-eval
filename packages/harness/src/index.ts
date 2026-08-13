@@ -332,6 +332,35 @@ export { assertSplitIsolation, splitExamples } from './lib/splits';
 // Reporting guards — absolute currency must never reach UI or exports
 export { containsCurrency } from './lib/reporting/no-currency';
 
+// Experiment registry: the one record every kind of run shares
+export {
+  createRunStore,
+  defaultRegistryPath,
+  registryConfigFromEnv,
+  FsRunStore,
+  SqliteRunStore,
+  applyFilter,
+  matchesFilter,
+  captureProvenance,
+  hashParams,
+  makeRunId,
+  isTerminal,
+} from './lib/registry';
+export type {
+  Json as RunJson,
+  NewRun,
+  NewRunEvent,
+  Provenance,
+  RegistryConfig,
+  RegistryDriver,
+  RunEvent,
+  RunFilter,
+  RunPatch,
+  RunRecord,
+  RunStatus,
+  RunStore,
+} from './lib/registry';
+
 // Blind World Cup preference tournament
 export {
   activeContenders,

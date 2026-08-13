@@ -43,17 +43,19 @@ export function CompareView(props: { runId: string }) {
   }, [metric, props.runId]);
 
   const separated = (data?.pairs ?? []).filter((p) => p.adjustedP < 0.05);
+  const metrics = data?.availableMetrics ?? [...COMPARE_METRICS];
+  const activeMetric = data?.metric ?? metric;
 
   return (
     <div className="az-compare">
       <section className="cmp-card">
         <div className="az-filters">
           <span className="pane-label">{t('analyze.compare.metric')}</span>
-          {COMPARE_METRICS.map((m) => (
+          {metrics.map((m) => (
             <button
               key={m}
               type="button"
-              className={`cmp-pref-mode${metric === m ? ' on' : ''}`}
+              className={`cmp-pref-mode${activeMetric === m ? ' on' : ''}`}
               onClick={() => setMetric(m)}
             >
               {m}

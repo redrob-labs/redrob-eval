@@ -1,6 +1,11 @@
 import { NextResponse } from 'next/server';
-import { compareModels, createRunStore, type ToolRoutingMetric } from '@redrob/harness';
-import { collectToolRoutingReports } from '@/lib/analyze/collect';
+import {
+  compareModels,
+  compareTextEvalModels,
+  createRunStore,
+  type ToolRoutingMetric,
+} from '@redrob/harness';
+import { collectTextEvalReports, collectToolRoutingReports } from '@/lib/analyze/collect';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -20,14 +25,26 @@ export async function GET(request: Request, context: Ctx) {
 
   const store = await createRunStore();
   try {
-    const reports = await collectToolRoutingReports(store, runId);
-    if (reports.length < 2) {
+    const [toolReports, textReports] = await Promise.all([
+      collectToolRoutingReports(store, runId),
+      collectTextEvalReports(store, runId),
+    ]);
+    if (textReports.length >= 2) {
+      return NextResponse.json({
+        ...compareTextEvalModels({ reports: textReports }),
+        availableMetrics: ['pass'],
+      });
+    }
+    if (toolReports.length < 2) {
       return NextResponse.json(
         { error: 'Need at least two models with stored reports to compare.' },
         { status: 400 },
       );
     }
-    return NextResponse.json(compareModels({ reports, metric }));
+    return NextResponse.json({
+      ...compareModels({ reports: toolReports, metric }),
+      availableMetrics: [...METRICS],
+    });
   } catch (e) {
     return NextResponse.json(
       { error: e instanceof Error ? e.message : 'Could not compare' },

@@ -14,9 +14,9 @@ import { RunsList } from './RunsList';
  * whether a difference between models is real. Read-mostly; the only writes are
  * a saved cohort and a hand correction, both of which the CLI can also make.
  */
-export function AnalyzeApp() {
+export function AnalyzeApp(props: { initialRunId?: string | null }) {
   const t = useT();
-  const [runId, setRunId] = useState<string | null>(null);
+  const [runId, setRunId] = useState<string | null>(props.initialRunId ?? null);
 
   return (
     <AppShell module="analyze">

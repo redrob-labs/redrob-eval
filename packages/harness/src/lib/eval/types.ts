@@ -68,8 +68,11 @@ export interface EvalRunMeta {
    * and the ranking has to come from human preference instead.
    */
   scored?: boolean;
-  /** The prompts that were run, so a preference bracket can replay them. */
-  prompts?: Array<{ id: string; input: string }>;
+  /**
+   * The prompts that were run. `gold` is kept when one existed so the registry
+   * artifact can show expected vs predicted without reconstructing the dataset.
+   */
+  prompts?: Array<{ id: string; input: string; gold?: string }>;
 }
 
 export interface EvalRunResult {
@@ -87,6 +90,8 @@ export type EvalStreamEvent =
       targets: Array<{ targetId: string; label: string; kind: 'model' | 'router' }>;
       totalCalls: number;
       scored?: boolean;
+      /** Registry run that will retain the completed evidence, when recording is available. */
+      registryRunId?: string;
     }
   | {
       type: 'progress';
@@ -103,6 +108,6 @@ export type EvalStreamEvent =
       route?: RouteDecision;
     }
   | { type: 'target_done'; target: EvalTargetSummary }
-  | { type: 'done'; result: EvalRunResult }
+  | { type: 'done'; result: EvalRunResult; registryRunId?: string }
   | { type: 'cancelled'; message?: string }
   | { type: 'error'; message: string };

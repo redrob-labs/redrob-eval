@@ -1,6 +1,7 @@
 export {
   classifyToolRoutingExample,
   failuresFromMultiTurn,
+  failuresFromTextEval,
   failuresFromToolRouting,
   filterFailures,
   promptRequest,

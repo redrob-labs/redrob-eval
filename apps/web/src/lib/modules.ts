@@ -18,9 +18,9 @@ export type ModuleDef = {
  * Labels come from i18n (`nav.*`).
  */
 export const MODULES: ModuleDef[] = [
+  { id: 'generate', href: '/generate' },
   { id: 'compare', href: '/compare' },
+  { id: 'analyze', href: '/analyze' },
   { id: 'evolve', href: '/evolve' },
   { id: 'deploy', href: '/deploy' },
-  { id: 'generate', href: '/generate' },
-  { id: 'analyze', href: '/analyze' },
 ];

@@ -1,5 +1,6 @@
 import {
   applyAnnotations,
+  failuresFromTextEval,
   failuresFromMultiTurn,
   failuresFromToolRouting,
   readAnnotations,
@@ -8,6 +9,7 @@ import {
   type MultiTurnReport,
   type RunStore,
   type ToolRoutingReport,
+  type TextEvalReport,
 } from '@redrob/harness';
 
 /**
@@ -33,7 +35,28 @@ function failuresFromArtifact(artifact: unknown): FailureRecord[] {
   if (schema === 'redrob-multi-turn/v1') {
     return failuresFromMultiTurn(artifact as unknown as MultiTurnReport);
   }
+  if (schema === 'redrob-text-eval/v1') {
+    return failuresFromTextEval(artifact as unknown as TextEvalReport);
+  }
   return [];
+}
+
+/** Split combined text-eval artifacts into one report reference per model. */
+export async function collectTextEvalReports(
+  store: RunStore,
+  runId: string,
+): Promise<Array<{ model: string; report: TextEvalReport }>> {
+  const out: Array<{ model: string; report: TextEvalReport }> = [];
+  for (const name of await store.listArtifacts(runId)) {
+    const artifact = await store.readArtifact(runId, name);
+    if (!artifact || typeof artifact !== 'object' || Array.isArray(artifact)) continue;
+    const report = artifact as unknown as TextEvalReport;
+    if (report.schema !== 'redrob-text-eval/v1') continue;
+    for (const target of report.targets) {
+      if (target.kind === 'model') out.push({ model: target.targetId, report });
+    }
+  }
+  return out;
 }
 
 export async function collectRunFailures(

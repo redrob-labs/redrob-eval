@@ -155,6 +155,8 @@ export type {
   EvalRunMeta,
 } from './lib/eval/types';
 export { ROUTER_TARGET_ID } from './lib/eval/types';
+export { buildTextEvalReport } from './lib/eval/artifact';
+export type { TextEvalReport } from './lib/eval/artifact';
 export { summarizeTarget, enrichSummaries, pickLargeBaseline, mean } from './lib/eval/aggregate';
 export { buildEvalPrompt, maxTokensForTask } from './lib/eval/prompts';
 export {
@@ -386,6 +388,7 @@ export {
   applyAnnotations,
   classifyToolRoutingExample,
   failuresFromMultiTurn,
+  failuresFromTextEval,
   failuresFromToolRouting,
   filterFailures,
   promptRequest,
@@ -418,6 +421,7 @@ export {
   powerWarnings,
   wilsonInterval,
 } from './lib/stats/compare-runs';
+export { compareTextEvalModels } from './lib/stats/compare-text';
 export type {
   CompareModelsResult,
   ModelRate,

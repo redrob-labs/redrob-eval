@@ -75,6 +75,7 @@ export interface Interval {
 
 export interface CompareResponse {
   metric: string;
+  availableMetrics?: string[];
   rates: Array<{ model: string; rate: number; successes: number; n: number; interval: Interval }>;
   pairs: Array<{
     a: { model: string };

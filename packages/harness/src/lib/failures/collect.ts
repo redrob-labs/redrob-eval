@@ -1,4 +1,5 @@
 import type { MultiTurnReport } from '../multi-turn/types';
+import type { TextEvalReport } from '../eval/artifact';
 import type { ToolRoutingExampleRecord, ToolRoutingReport } from '../tool-routing/types';
 
 import type { FailureKind, FailureRecord, FailureTally } from './types';
@@ -168,6 +169,46 @@ export function failuresFromMultiTurn(report: MultiTurnReport): FailureRecord[] 
         capability: turn.capability,
         actual: clip(turn.reply),
         prompt: clip(turn.sent, 200),
+      });
+    }
+  }
+  return out;
+}
+
+/** Failures from a deterministic text benchmark, one record per model/sample. */
+export function failuresFromTextEval(report: TextEvalReport): FailureRecord[] {
+  const prompts = new Map((report.meta.prompts ?? []).map((prompt) => [prompt.id, prompt]));
+  const binary = report.meta.metric === 'accuracy' || report.meta.metric === 'gsm8k_exact';
+  const out: FailureRecord[] = [];
+  for (const target of report.targets) {
+    if (target.kind !== 'model') continue;
+    for (const sample of target.sampleResults) {
+      const prompt = prompts.get(sample.sampleId);
+      let kind: FailureKind | null = null;
+      let detail = '';
+      if (sample.error) {
+        kind = 'call_error';
+        detail = sample.error;
+      } else if (!sample.prediction.trim()) {
+        kind = 'empty_response';
+        detail = 'the model returned no visible answer';
+      } else if (sample.score < 1) {
+        kind = binary || sample.score === 0 ? 'wrong_answer' : 'partial_answer';
+        detail = binary
+          ? `reference did not match (${report.meta.metric})`
+          : `partial match: ${(sample.score * 100).toFixed(0)}% (${report.meta.metric})`;
+      }
+      if (!kind) continue;
+      out.push({
+        id: `${target.targetId}|${sample.sampleId}`,
+        kind,
+        detail,
+        source: 'text-eval',
+        model: target.targetId,
+        item: sample.sampleId,
+        actual: clip(sample.prediction),
+        ...(prompt?.gold ? { expected: prompt.gold } : {}),
+        ...(prompt?.input ? { prompt: clip(prompt.input, 500) } : {}),
       });
     }
   }

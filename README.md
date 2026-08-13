@@ -7,7 +7,7 @@
 
 Open-source **LLM evaluation workbench** (Next.js App Router, Apache 2.0): generate verifiable evaluation prompts from parametric templates, compare any model from any source on your own task, settle quality by blind human preference, evolve configurations under a quality floor, and serve self-hosted models on your GPU.
 
-The product is four modules plus settings: **Compare · Evolve · Deploy · Generate**. Compare is the front door - frontier APIs, OpenRouter, and your own vLLM endpoints all sit in the same list, on text or image, with audio slotting in as one more modality. Generate makes the items the other three run on. Costs, where they appear at all, are **% of a baseline**, never absolute currency. Provider keys stay server-side.
+The product is five modules plus settings: **Generate · Compare · Analyze · Evolve · Deploy**. The primary workflow is Generate a deterministic text benchmark, Compare hosted APIs or your own vLLM endpoints, then Analyze the evidence. Deploy is an optional model source and Evolve starts the improvement loop. Image comparison is intentionally out of the product surface for now; its backend adapters remain for later wiring. Costs, where they appear at all, are **% of a baseline**, never absolute currency. Provider keys stay server-side.
 
 ## Findings
 
@@ -67,7 +67,7 @@ Nothing else is required for a clean checkout - evaluation runs offline against 
 
 | Module | Path | Purpose |
 |------|------|---------|
-| **Compare** | `/` or `/compare` | Run any model from any source live on a catalog dataset or your own prompts, on text or image; rank by measured quality, latency, TTFT and throughput; settle unscored tasks with a blind preference tournament; turn those votes into a routing policy. Task **Tool routing** evaluates the picked models with one shared JSON contract on six-, eighteen-, and fifty-tool scenarios across selectable languages (fertility optional). |
+| **Compare** | `/` or `/compare` | Run any text model from any source live on a catalog dataset or generated/custom reference set; rank by measured quality, latency, TTFT and throughput; retain every sample for Analyze. Task **Tool routing** evaluates the picked models with one shared JSON contract on six-, eighteen-, and fifty-tool scenarios across selectable languages (fertility optional). |
 | **Evolve** | `/evolve` | GEPA search over instruction / demos / model / `script_policy` / `frame_policy` under a quality floor; catalog datasets or custom goal+rubric (LLM judge or checklist QWK); export baseline-vs-evolved report |
 | **Deploy** | `/deploy` | Serve self-hosted S+L on your GPU host over SSH - measure, start, health, benchmark, resumable terminal |
 | **Generate** | `/generate` | Browse parametric task templates and their locales, sample instances from content-derived seeds, and run a cross-locale study to a validated results artifact; export either, or hand the prompts straight to Compare |
@@ -121,7 +121,7 @@ native-speaker review, none has had one, and a publishable artifact refuses to b
 
 ### Compare's four stages
 
-1. **Setup** - pick a modality (text, image, or tool routing), pick models across every source (curated, OpenRouter, direct frontier, self-hosted vLLM), then a catalog dataset, an image prompt suite, or your own prompts pasted or uploaded as JSONL. Tool routing uses the SLM registry, served model id, and stub fixtures instead.
+1. **Setup** - pick a text benchmark (catalog, generated handoff, custom JSONL, or Tool routing) and models across every source (curated, OpenRouter, direct frontier, self-hosted vLLM). Generated sets with deterministic references arrive pre-filled and automatically scored.
 2. **Run** - streams live over SSE. Quality is scored only when the task has reference answers; latency, TTFT and throughput are always measured on this run. No cost column, because published pricing is never real time.
 3. **Preference** - one single-elimination bracket per prompt. Two answers at a time with model names hidden, winner advances, champion takes the prompt. Non-power-of-two fields pad with byes; a model that errored on a prompt loses by walkover. For image, "let the judge decide" hands a match to a vision model and you can still vote the rest. Votes append to `eval/tournaments/{runId}/votes.jsonl`.
 4. **Optimize route** - name a fast model and a fallback. Every prompt the fast one won or tied becomes a `small` label, the rest escalate. These land in the same `RoutingExample` corpus the metric-derived collector fills, so `/api/routing/export` and the training path are unchanged - the supervision is just human now instead of metric.
@@ -162,6 +162,8 @@ On **Evolve**, pick a catalog dataset or **Custom goal** (goal + rubric + input-
 
 ## Docs
 
+- [Primary workflow](docs/workflow.md) - Generate → Compare → Analyze, optional Deploy,
+  deterministic reference scoring, and the evidence retained between modules
 - [Contributing](CONTRIBUTING.md) - setup, and the branching model: `main` is production and only
   takes releases, `develop` is what you branch from and target
 - [Security](SECURITY.md)

@@ -235,8 +235,11 @@ export const en = {
   'compare.run.next': 'Next',
   'compare.run.nextHint':
     'Run a blind preference tournament to get human win labels per prompt, then turn those labels into a routing policy.',
+  'compare.run.analyzeHint':
+    'Open the complete evidence in Analyze: references, predictions, failures, confidence intervals, and paired model differences.',
   'compare.run.preferenceNeedsTwo': 'Preference needs at least two models with answers.',
   'compare.run.startPreference': 'Start preference tournament',
+  'compare.run.analyze': 'Analyze this run',
 
   'compare.prompts.details': 'Details',
   'compare.prompts.show': 'Prompt',
@@ -552,6 +555,8 @@ export const en = {
   'generate.templates.clipboardUnreachable': 'could not reach the clipboard',
   'generate.templates.sendToCompareHint':
     'Sending these to Compare runs them as custom prompts. There are no reference answers on that path, so rank the answers with the preference tournament. The verifier stays here, with the set.',
+  'generate.templates.sendToCompareScoredHint':
+    'These instances carry deterministic reference answers. Compare will score them automatically, then hand the complete run to Analyze.',
   'generate.templates.instanceLabel': 'instance {index}',
   'generate.templates.seed': 'seed',
   'generate.templates.prompt': 'Prompt',

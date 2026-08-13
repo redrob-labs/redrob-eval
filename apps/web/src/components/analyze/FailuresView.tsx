@@ -25,6 +25,9 @@ const KINDS = [
   'correction_ignored',
   'desynced',
   'call_error',
+  'wrong_answer',
+  'partial_answer',
+  'empty_response',
   'other',
 ];
 

@@ -233,8 +233,11 @@ export const ko: Record<MessageKey, string> = {
   'compare.run.next': '다음',
   'compare.run.nextHint':
     '블라인드 선호도 토너먼트로 프롬프트별 인간 승패 라벨을 얻은 뒤, 이 라벨을 라우팅 정책으로 전환하세요.',
+  'compare.run.analyzeHint':
+    '참조 정답, 예측, 실패, 신뢰구간, 모델 간 짝지은 차이를 분석에서 확인하세요.',
   'compare.run.preferenceNeedsTwo': '선호도 평가에는 답변이 있는 모델이 2개 이상 필요합니다.',
   'compare.run.startPreference': '선호도 토너먼트 시작',
+  'compare.run.analyze': '이 실행 분석',
 
   'compare.prompts.details': '상세',
   'compare.prompts.show': '프롬프트',
@@ -546,6 +549,8 @@ export const ko: Record<MessageKey, string> = {
   'generate.templates.clipboardUnreachable': '클립보드에 접근할 수 없습니다',
   'generate.templates.sendToCompareHint':
     '비교로 보내면 커스텀 프롬프트로 실행됩니다. 이 경로에는 정답이 없으므로 선호도 토너먼트로 답변 순위를 정하세요. 검증기는 이 세트와 함께 여기에 남습니다.',
+  'generate.templates.sendToCompareScoredHint':
+    '이 인스턴스에는 결정론적 참조 정답이 있습니다. 비교에서 자동으로 채점한 뒤 전체 실행을 분석으로 넘깁니다.',
   'generate.templates.instanceLabel': '인스턴스 {index}',
   'generate.templates.seed': '시드',
   'generate.templates.prompt': '프롬프트',

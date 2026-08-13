@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os';
 import { join, resolve, sep } from 'node:path';
 
 import { findRepoRoot, readStudyConfigs, studyWithPython } from '@redrob/harness/generate';
+import { generateBridgeOptions } from '@/lib/generate/bridge';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -75,9 +76,10 @@ export async function POST(request: Request) {
 
   const outDirectory = await mkdtemp(join(tmpdir(), 'redrob-study-'));
   try {
+    const bridge = await generateBridgeOptions(root);
     const outcome = await studyWithPython(
       { configPath: absolute, outDirectory, createdAt: PINNED_CREATED_AT, publish: true },
-      { cwd: root, timeoutMs: 600_000 },
+      { ...bridge.options, timeoutMs: 600_000 },
     );
     if (!outcome.available) {
       return Response.json({ error: outcome.reason, detail: outcome.detail }, { status: 503 });

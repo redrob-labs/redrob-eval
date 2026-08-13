@@ -3,7 +3,9 @@ import path from 'node:path';
 
 import { applyFilter } from './filter';
 import { assertSafeRunId, captureProvenance, makeRunId } from './provenance';
+import { assertSafeArtifactName } from './types';
 import type {
+  Json,
   NewRun,
   NewRunEvent,
   RunEvent,
@@ -161,6 +163,45 @@ export class FsRunStore implements RunStore {
         .split('\n')
         .filter((l) => l.trim())
         .map((l) => JSON.parse(l) as RunEvent);
+    } catch {
+      return [];
+    }
+  }
+
+  private artifactDir(id: string): string {
+    return path.join(this.dir(id), 'artifacts');
+  }
+
+  async putArtifact(id: string, name: string, data: Json): Promise<void> {
+    const dir = this.artifactDir(id);
+    await fs.mkdir(dir, { recursive: true });
+    const file = path.join(dir, `${assertSafeArtifactName(name)}.json`);
+    // Written to a sibling and renamed: an artifact is often megabytes, and a
+    // reader that catches it half-written would see invalid JSON.
+    const temp = `${file}.tmp`;
+    await fs.writeFile(temp, `${JSON.stringify(data)}\n`, 'utf8');
+    await fs.rename(temp, file);
+  }
+
+  async readArtifact(id: string, name: string): Promise<Json | null> {
+    try {
+      const raw = await fs.readFile(
+        path.join(this.artifactDir(id), `${assertSafeArtifactName(name)}.json`),
+        'utf8',
+      );
+      return JSON.parse(raw) as Json;
+    } catch {
+      return null;
+    }
+  }
+
+  async listArtifacts(id: string): Promise<string[]> {
+    try {
+      const entries = await fs.readdir(this.artifactDir(id));
+      return entries
+        .filter((e) => e.endsWith('.json'))
+        .map((e) => e.slice(0, -'.json'.length))
+        .sort();
     } catch {
       return [];
     }

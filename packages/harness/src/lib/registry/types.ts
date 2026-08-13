@@ -152,6 +152,30 @@ export interface RunStore {
   update(id: string, patch: RunPatch): Promise<RunRecord>;
   appendEvents(id: string, events: NewRunEvent[]): Promise<void>;
   readEvents(id: string): Promise<RunEvent[]>;
+  /**
+   * Attach a run's full output under a name, replacing any previous one.
+   *
+   * `summary` is for the handful of numbers a listing shows; this is for the
+   * body of evidence behind them - every prompt, reply and score. Without it a
+   * run can say 6% of replies failed to parse but never which ones, and error
+   * analysis is guesswork. It is also what a reproduction bundle is made of.
+   */
+  putArtifact(id: string, name: string, data: Json): Promise<void>;
+  readArtifact(id: string, name: string): Promise<Json | null>;
+  listArtifacts(id: string): Promise<string[]>;
   /** Release handles. Safe to call more than once. */
   close(): Promise<void>;
+}
+
+const ARTIFACT_NAME_RE = /^[a-z0-9][a-z0-9._-]{0,120}$/i;
+
+/**
+ * Artifact names become filenames in the filesystem driver, so they are
+ * validated rather than trusted - the same reason run ids are.
+ */
+export function assertSafeArtifactName(name: string): string {
+  if (!ARTIFACT_NAME_RE.test(name) || name.includes('..')) {
+    throw new Error(`Invalid artifact name: ${name}`);
+  }
+  return name;
 }

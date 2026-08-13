@@ -194,6 +194,39 @@ for (const driver of drivers) {
     });
   });
 
+  test(`[${driver.name}] a run keeps its full output as a named artifact`, async () => {
+    await withStore(async (store) => {
+      const run = await store.create(seed());
+      assert.deepEqual(await store.listArtifacts(run.id), []);
+      assert.equal(await store.readArtifact(run.id, 'report'), null);
+
+      // The body of evidence: bigger and differently shaped from the summary.
+      const report = { schema: 'x/v1', examples: [{ raw: 'a' }, { raw: 'b' }] };
+      await store.putArtifact(run.id, 'report', report);
+      await store.putArtifact(run.id, 'cell-abc123', { n: 1 });
+      assert.deepEqual(await store.listArtifacts(run.id), ['cell-abc123', 'report']);
+      assert.deepEqual(await store.readArtifact(run.id, 'report'), report);
+
+      // Writing the same name again replaces it rather than accumulating.
+      await store.putArtifact(run.id, 'report', { schema: 'x/v1', examples: [] });
+      assert.deepEqual(await store.readArtifact(run.id, 'report'), {
+        schema: 'x/v1',
+        examples: [],
+      });
+      assert.equal((await store.listArtifacts(run.id)).length, 2);
+
+      // Names reach the filesystem, so they are validated, not trusted.
+      await assert.rejects(
+        () => store.putArtifact(run.id, '../escape', { a: 1 }),
+        /Invalid artifact name/,
+      );
+      await assert.rejects(
+        () => store.putArtifact(run.id, 'nested/name', { a: 1 }),
+        /Invalid artifact name/,
+      );
+    });
+  });
+
   test(`[${driver.name}] the module payload is stored, never interpreted`, async () => {
     await withStore(async (store) => {
       // Deliberately a shape the registry knows nothing about.

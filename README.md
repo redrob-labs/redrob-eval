@@ -170,6 +170,8 @@ On **Evolve**, pick a catalog dataset or **Custom goal** (goal + rubric + input-
   `yarn runs` gives you, and why storage is a configuration value
 - [Resumable job queue](docs/job-queue.md) - run a grid of models x datasets x conditions under a
   concurrency budget, respect per-provider rate limits, and resume where an interrupted run left off
+- [Failure analysis](docs/failure-analysis.md) - why a model was wrong rather than how often: the
+  shared taxonomy, what `yarn failures` shows, and which failures a prompt fix would clear
 - [Preference](docs/preference.md) - blind brackets, ranking and elimination, and how votes become
   routing labels
 - [Multi-turn](docs/multi-turn.md) - scripted conversations for text and tools, scored by

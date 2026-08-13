@@ -4348,9 +4348,21 @@ body.is-pane-resizing * {
 /* Analyze workspace */
 
 .az-page {
+  --az-gap: 0.85rem;
   display: flex;
   flex-direction: column;
-  gap: 0.85rem;
+  gap: var(--az-gap);
+}
+
+/* Run detail nests two levels of containers between the page and its cards, so
+   each one has to carry the page's rhythm or the cards inside it stack flush. */
+.az-detail-page,
+.az-failures,
+.az-compare {
+  display: flex;
+  flex-direction: column;
+  gap: var(--az-gap, 0.85rem);
+  min-width: 0;
 }
 
 .az-filters {
@@ -4398,9 +4410,12 @@ body.is-pane-resizing * {
 .az-status-cancelled,
 .az-status-queued { color: var(--muted); }
 
+/* Tabs have no bottom edge and top-only corners, so they are meant to sit on the
+   panel they open. The page gap under them is cancelled, not inherited. */
 .az-tabs {
   display: flex;
   gap: 0.35rem;
+  margin-bottom: calc(var(--az-gap, 0.85rem) * -1);
 }
 
 .az-tab {

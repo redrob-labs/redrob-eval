@@ -103,14 +103,51 @@ The request is shown **without the tool catalogue** — a contract prompt is the
 same page of JSON schemas on every task, and printing it buries the one line
 that differs.
 
+## Cohorts: re-run only what you were looking at
+
+A triage session whose conclusions live in a terminal scrollback did not happen.
+Save the current selection, then re-run just those items — a change meant to fix
+twelve items should not cost an hour of grid to check:
+
+```bash
+yarn failures --run <id> --kind envelope --model llama-3.2-3b --save-cohort "llama wrappers"
+yarn cohort list
+yarn cohort show <cohortId>
+yarn cohort rerun <cohortId>
+#   1 now pass · 11 still fail · 0 could not be run
+```
+
+A cohort is a registry run of its own, so it is listable with `yarn runs`, carries
+provenance, and can be handed straight to the [queue](job-queue.md) — a cohort
+*is* a cell list, which is what the queue consumes. Both the filter and the
+members it selected are stored: the filter so the selection is reproducible, the
+members so that re-deriving it later cannot silently change the cohort.
+
+## Correcting the classifier
+
+The taxonomy is derived, and derived classifications are sometimes wrong:
+
+```bash
+yarn failures --run <id> --annotate 'ministral-3b|en-full-directions' \
+  --as wrong_tool --note "verbatim copy issue, not an argument-format issue"
+```
+
+The reader's verdict wins, and the derived kind is kept beside it:
+
+```
+wrong_tool (was bad_arguments)  ministral-3b-2512  en-full-directions (en)
+note      verbatim copy issue, not an argument-format issue
+```
+
+Keeping both is the point. A classifier that is corrected the same way again and
+again is telling you to fix the classifier, and an override that erased what it
+said would hide that.
+
 ## Not done yet
 
-- **No cohorts.** Saving a filtered set of failures and re-running just those
-  cells is the obvious next step, and composes directly with the
-  [job queue](job-queue.md): a cohort is a cell list.
-- **No manual tagging.** The taxonomy is derived, not annotated. A researcher
-  disagreeing with a classification currently has nowhere to record that.
 - **No web workspace.** This is a CLI. The side-by-side view wants a screen.
+- **Annotations are per run.** Correcting the same item in a later run does not
+  inherit the earlier verdict.
 
 ## Related
 

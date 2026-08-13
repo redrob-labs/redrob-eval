@@ -382,20 +382,49 @@ export type {
 
 // Failure analysis: why a model was wrong, not just how often
 export {
+  annotateFailure,
+  applyAnnotations,
   classifyToolRoutingExample,
   failuresFromMultiTurn,
   failuresFromToolRouting,
   filterFailures,
+  promptRequest,
+  readAnnotations,
+  readCohort,
+  saveCohort,
   tallyFailures,
+  ANNOTATIONS_ARTIFACT,
+  COHORT_KIND,
   FAILURE_KINDS,
   RECOVERABLE_KINDS,
 } from './lib/failures';
 export type {
+  Annotation,
+  Cohort,
+  CohortMember,
   FailureFilter,
   FailureKind,
   FailureRecord,
   FailureTally,
 } from './lib/failures';
+
+// Statistics: whether a difference between two models is real
+export {
+  compareModels,
+  outcomesByItem,
+  holmAdjust,
+  mcnemar,
+  pairedBootstrapDiff,
+  powerWarnings,
+  wilsonInterval,
+} from './lib/stats/compare-runs';
+export type {
+  CompareModelsResult,
+  ModelRate,
+  PairComparison,
+  ToolRoutingMetric,
+} from './lib/stats/compare-runs';
+export type { Interval, McNemarResult, PairedDiffResult } from './lib/stats';
 
 // The verb that binds the two: run a grid, checkpoint it, resume where it stopped
 export { runRegistryMatrix, readMatrixCells } from './lib/matrix-run';

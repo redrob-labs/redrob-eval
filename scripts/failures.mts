@@ -10,16 +10,22 @@
  *   yarn failures --run <id> --model granite-4.1-8b --language ko
  *   yarn failures --run <id> --show 3          # side by side, in full
  *   yarn failures --run <id> --json out.json
+ *   yarn failures --run <id> --kind format --save-cohort "llama wrappers"
+ *   yarn failures --run <id> --annotate '<model>|<item>' --as bad_arguments --note "…"
  *
  * Reads the artifacts the run stored, so it never re-calls a model.
  */
 import { writeFileSync } from 'node:fs';
 
 import {
+  annotateFailure,
+  applyAnnotations,
   createRunStore,
   failuresFromMultiTurn,
   failuresFromToolRouting,
   filterFailures,
+  readAnnotations,
+  saveCohort,
   tallyFailures,
   RECOVERABLE_KINDS,
 } from '@redrob/harness';
@@ -77,18 +83,56 @@ try {
     }
   }
 
+  // A researcher's verdict wins over the classifier's, and the derived kind is
+  // kept beside it so a classifier that is always corrected the same way shows.
+  const annotations = await readAnnotations(store, runId);
+  const annotated = applyAnnotations(failures, annotations);
+
   const kinds = arg('kind')
     ?.split(',')
     .map((k) => k.trim())
     .filter(Boolean) as FailureKind[] | undefined;
-  const filtered = filterFailures(failures, {
+  const filter = {
     ...(kinds?.length ? { kind: kinds } : {}),
     ...(arg('model') ? { model: arg('model')! } : {}),
     ...(arg('language') ? { language: arg('language')! } : {}),
     ...(arg('tool') ? { tool: arg('tool')! } : {}),
     ...(arg('search') ? { search: arg('search')! } : {}),
     ...(arg('turn') ? { turn: Number(arg('turn')) } : {}),
-  });
+  };
+  const filtered = filterFailures(annotated, filter) as typeof annotated;
+
+  // Annotate one failure and stop: a verdict is a write, not a listing.
+  const annotateId = arg('annotate');
+  if (annotateId) {
+    const target = annotated.find((f) => f.id === annotateId);
+    if (!target) {
+      console.error(`No failure with id ${annotateId} in this run.`);
+      process.exit(1);
+    }
+    const as = arg('as') as FailureKind | undefined;
+    await annotateFailure(store, runId, {
+      failureId: annotateId,
+      ...(as ? { kind: as } : {}),
+      ...(arg('note') ? { note: arg('note')! } : {}),
+    });
+    console.log(`annotated ${annotateId}${as ? ` as ${as}` : ''}`);
+    process.exit(0);
+  }
+
+  // Save the current selection as a cohort, so the items can be re-run later.
+  const cohortName = arg('save-cohort');
+  if (cohortName) {
+    const cohort = await saveCohort(store, {
+      name: cohortName,
+      sourceRunId: runId,
+      filter,
+      failures: filtered,
+    });
+    console.log(`saved cohort ${cohort.id} · ${cohort.members.length} member(s)`);
+    console.log(`  re-run it with: yarn cohort rerun ${cohort.id}`);
+    process.exit(0);
+  }
 
   console.log(`run ${runId}${run.label ? `  ${run.label}` : ''}`);
   console.log(
@@ -119,7 +163,11 @@ try {
     for (const f of filtered.slice(0, show)) {
       console.log('');
       console.log('─'.repeat(78));
-      console.log(`${f.kind}  ${f.model}  ${f.item}${f.language ? ` (${f.language})` : ''}`);
+      const reclassified = f.derivedKind ? ` (was ${f.derivedKind})` : '';
+      console.log(
+        `${f.kind}${reclassified}  ${f.model}  ${f.item}${f.language ? ` (${f.language})` : ''}`,
+      );
+      if (f.note) console.log(`note      ${f.note}`);
       if (f.turn) console.log(`turn ${f.turn}${f.capability ? ` · ${f.capability}` : ''}`);
       console.log(`why       ${f.detail}`);
       if (f.expected) console.log(`expected  ${f.expected}`);
@@ -130,12 +178,18 @@ try {
     console.log('');
     for (const f of filtered.slice(0, 40)) {
       const where = `${f.item}${f.language ? `/${f.language}` : ''}${f.turn ? `#${f.turn}` : ''}`;
-      console.log(`${f.kind.padEnd(19)} ${where.padEnd(28)} ${f.model.padEnd(34)} ${f.detail}`);
+      const mark = f.annotated ? '*' : ' ';
+      console.log(
+        `${mark}${f.kind.padEnd(18)} ${where.padEnd(28)} ${f.model.padEnd(34)} ${f.detail}`,
+      );
     }
+    if (filtered.some((f) => f.annotated)) console.log('\n* corrected by hand');
     if (filtered.length > 40) {
       console.log(`\n… ${filtered.length - 40} more. Narrow with --kind / --model, or --json.`);
     }
     console.log('\nUse --show N to see the prompt and the reply in full.');
+    console.log('Save this selection with --save-cohort "<name>", or correct one with');
+    console.log('  --annotate <failure id> --as <kind> --note "…"');
   }
 
   const out = arg('json');

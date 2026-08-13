@@ -116,6 +116,21 @@ The general rule: strictness decides the score, diagnostics decide what the
 score means. Loosening the first would flatter the models; leaving out the
 second invites the wrong conclusion about them.
 
+## Reading the numbers
+
+Each metric skips the examples it does not apply to — absence accuracy is over
+the absence tasks only, argument accuracy over the calls that parsed — so
+`tool-routing:live` prints the denominator next to every rate. Averaging rates
+across slices without them silently assumes equal denominators.
+
+`--limit N` samples by **even stride**, not by prefix. The fixture file is
+ordered by scenario, so the first N tasks of a language are its first few
+scenarios rather than a sample of it, and the absence cases are not spread
+evenly through them. An early prefix run of 30 English tasks computed its
+absence rate over five items, which is the small-denominator problem the
+enlarged set exists to escape. Cite full-set runs; use `--limit` for smoke
+tests.
+
 ## Related
 
 - [Multi-turn](multi-turn.md) — the same tool contract carried across a conversation

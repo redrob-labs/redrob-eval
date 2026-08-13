@@ -62,10 +62,23 @@ const languages = (arg('languages') ?? 'en,hi,hi-Latn,ko')
 /** Tasks per language. The full set is 81 each, which is a lot of tokens. */
 const limit = Number(arg('limit') ?? '0') || 0;
 
-const tasks = languages.flatMap((lang) => {
-  const forLang = stubTasksForLanguage(lang);
-  return limit > 0 ? forLang.slice(0, limit) : forLang;
-});
+/**
+ * Take a subset by even stride rather than by prefix.
+ *
+ * The fixture file is ordered by scenario, so the first N tasks of a language
+ * are not a sample of it - they are its first few scenarios, and the absence
+ * cases are not spread evenly through them. A prefix run reported an absence
+ * rate over five items, which is the small-denominator problem this dataset
+ * was enlarged to escape. A stride keeps the mix of calls, absences and
+ * toolsets close to the full set's, and it is deterministic.
+ */
+function sample<T>(items: T[], take: number): T[] {
+  if (take <= 0 || take >= items.length) return items;
+  const step = items.length / take;
+  return Array.from({ length: take }, (_, i) => items[Math.floor(i * step)]!);
+}
+
+const tasks = languages.flatMap((lang) => sample(stubTasksForLanguage(lang), limit));
 console.error(
   `${tasks.length} tasks (${languages.join(', ')}) x ${models.length} model(s), contract only`,
 );
@@ -116,6 +129,9 @@ function overall(report: ToolRoutingReport) {
   }
   return {
     n,
+    toolN,
+    argN,
+    absN,
     toolSelect: toolN ? toolHit / toolN : null,
     argExact: argN ? argHit / argN : null,
     absence: absN ? absHit / absN : null,
@@ -124,6 +140,8 @@ function overall(report: ToolRoutingReport) {
   };
 }
 
+// Denominators are printed next to every rate. Each metric skips the examples
+// it does not apply to, and a rate over five items is not a result.
 console.log('');
 console.log('| model | n | tool select | args exact | absence | parse fail | envelope |');
 console.log('| --- | --- | --- | --- | --- | --- | --- |');
@@ -134,8 +152,8 @@ for (const r of reports) {
   }
   const o = overall(r.report);
   console.log(
-    `| ${r.model} | ${o.n} | ${pct(o.toolSelect)} | ${pct(o.argExact)} | ${pct(o.absence)} | ` +
-      `${pct(o.parseFail)} | ${o.envelopeErrors} |`,
+    `| ${r.model} | ${o.n} | ${pct(o.toolSelect)} (${o.toolN}) | ${pct(o.argExact)} (${o.argN}) | ` +
+      `${pct(o.absence)} (${o.absN}) | ${pct(o.parseFail)} | ${o.envelopeErrors} |`,
   );
 }
 

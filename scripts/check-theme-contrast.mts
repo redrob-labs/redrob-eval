@@ -11,7 +11,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { MINIMUM, PAIRS, ratioFor, readBlocks } from './theme-contrast.mts';
+import { CONSOLE_FLOOR, MINIMUM, PAIRS, floorFor, ratioFor, readBlocks } from './theme-contrast.mts';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const css = readFileSync(join(here, '..', 'apps', 'web', 'src', 'app', 'globals.css'), 'utf8');
@@ -24,7 +24,7 @@ const TOLERANCE = 0.02;
 const rows = PAIRS.map(([fg, bg, kind, backdrop]) => {
   const lightRatio = ratioFor(fg, bg, light, backdrop);
   const darkRatio = ratioFor(fg, bg, dark, backdrop);
-  const floor = Math.min(MINIMUM[kind], lightRatio);
+  const floor = floorFor(fg, bg, kind, lightRatio);
   return { fg, bg, kind, lightRatio, darkRatio, floor, ok: darkRatio >= floor - TOLERANCE };
 });
 
@@ -43,6 +43,16 @@ if (belowWcag.length) {
   console.log(
     '\nInherited from the light theme, so dark is only held to matching them:\n' +
       belowWcag.map((r) => `  ${r.fg} on ${r.bg} (${r.lightRatio.toFixed(2)}:1)`).join('\n'),
+  );
+}
+
+const fromConsole = rows.filter((r) => CONSOLE_FLOOR[`${r.fg} on ${r.bg}`] !== undefined);
+if (fromConsole.length) {
+  console.log(
+    "\nFloor is Console's value, not this file's (see CONSOLE_FLOOR):\n" +
+      fromConsole
+        .map((r) => `  ${r.fg} on ${r.bg} (${CONSOLE_FLOOR[`${r.fg} on ${r.bg}`]}:1)`)
+        .join('\n'),
   );
 }
 

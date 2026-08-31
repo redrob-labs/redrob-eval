@@ -54,6 +54,10 @@ export function resolve(value: string, tokens: Tokens, depth = 0): Rgba {
 
   if (v.startsWith('#')) return parseHex(v);
 
+  // The one CSS colour keyword the token layer uses. It is the second operand of every
+  // `color-mix` that produces a translucent wash, so without it those tokens cannot be read.
+  if (v === 'transparent') return [0, 0, 0, 0];
+
   const rgba = v.match(/^rgba?\(([^)]+)\)$/);
   if (rgba) {
     const parts = rgba[1].split(',').map((p) => parseFloat(p.trim()));
@@ -72,8 +76,14 @@ export function resolve(value: string, tokens: Tokens, depth = 0): Rgba {
     const a = resolve(mix[1], tokens, depth + 1);
     const b = resolve(mix[3], tokens, depth + 1);
     const p = parseFloat(mix[2]) / 100;
-    const mixed = [0, 1, 2].map((i) => a[i] * p + b[i] * (1 - p));
-    return [mixed[0], mixed[1], mixed[2], 1];
+    // `color-mix` in a rectangular space interpolates premultiplied, which is what makes
+    // `color-mix(in srgb, white 10%, transparent)` a 10% white rather than a 10% grey. With
+    // two opaque operands the premultiplication cancels and this is the plain weighted mean.
+    const alpha = a[3] * p + b[3] * (1 - p);
+    const rgb = [0, 1, 2].map((i) =>
+      alpha === 0 ? 0 : (a[i] * a[3] * p + b[i] * b[3] * (1 - p)) / alpha,
+    );
+    return [rgb[0], rgb[1], rgb[2], alpha];
   }
 
   throw new Error(`cannot resolve ${v}`);
@@ -116,31 +126,58 @@ export function ratioFor(fg: string, bg: string, tokens: Tokens, backdrop?: stri
  */
 export const MINIMUM: Record<Kind, number> = { text: 4.5, large: 3, ui: 3, surface: 1.25 };
 
+/**
+ * Pairings whose floor is Redrob Console's value rather than this file's.
+ *
+ * The brand's grayscale has three steps at the dark end and no more: Gray 9 is the page,
+ * Gray 8 is the next one up, and the raised panel is a mix of the two because there is
+ * nothing between them. That leaves a Gray 8 border drawn on a Gray 8/Gray 9 panel at
+ * 1.18:1, and Console ships exactly that, because the alternative is to pick a border
+ * colour the brand does not contain.
+ *
+ * Recorded rather than fixed, and recorded per pairing rather than by lowering the floor,
+ * so the exemption cannot quietly grow: `design-tokens.test.mts` asserts that the tokens
+ * either side of it still hold Console's values, which is what makes this number Console's
+ * and not ours. Two more dark steps in the brand scale would retire it.
+ *
+ * Keyed `fg on bg`, valued with the floor to use instead of `MINIMUM[kind]`.
+ */
+export const CONSOLE_FLOOR: Record<string, number> = {
+  '--line on --panel': 1.18,
+};
+
+/** The floor a pairing has to clear in dark: the stricter of WCAG and what light manages. */
+export function floorFor(fg: string, bg: string, kind: Kind, lightRatio: number): number {
+  return Math.min(CONSOLE_FLOOR[`${fg} on ${bg}`] ?? MINIMUM[kind], lightRatio);
+}
+
 export const PAIRS: Pair[] = [
   ['--ink', '--bg', 'text'],
   ['--ink', '--panel', 'text'],
   ['--ink', '--surface-sunken', 'text'],
   ['--ink', '--surface-hover', 'text'],
-  ['--muted', '--panel', 'text'],
-  ['--muted', '--bg', 'text'],
-  ['--muted', '--surface-sunken', 'text'],
-  ['--brand', '--panel', 'text'],
-  ['--brand', '--bg', 'text'],
+  ['--muted-foreground', '--panel', 'text'],
+  ['--muted-foreground', '--bg', 'text'],
+  ['--muted-foreground', '--surface-sunken', 'text'],
+  // `--brand` is the fill, the border and the ring; `--brand-deep` is the same colour as
+  // text, and it is the one held to 4.5:1. Blue 5 on a raised dark panel is 4.4:1, which is
+  // exactly why the two are separate roles.
   ['--brand-deep', '--panel', 'text'],
-  ['--brand-ink', '--brand-tint', 'text'],
+  ['--brand-deep', '--bg', 'text'],
+  ['--brand-deep', '--surface-sunken', 'text'],
+  ['--brand-deep', '--brand-tint', 'text'],
   ['--ok', '--panel', 'text'],
   ['--ok', '--ok-tint', 'text'],
   ['--warn', '--panel', 'text'],
   ['--warn', '--warn-tint', 'text'],
   ['--danger', '--panel', 'text'],
   ['--danger', '--danger-tint', 'text'],
-  ['--on-solid', '--brand-solid', 'text'],
-  ['--on-solid', '--brand-solid-hover', 'text'],
+  ['--on-solid', '--brand', 'text'],
+  ['--on-solid', '--brand-hover', 'text'],
   ['--on-solid', '--danger-solid', 'text'],
   ['--ink', '--warn-tint', 'text'],
   ['--ink', '--danger-tint', 'text'],
   ['--ink', '--ok-tint', 'text'],
-  ['--ink', '--accent-tint', 'text'],
   ['--ink', '--brand-tint', 'text'],
 
   ['--titlebar-ink', '--titlebar', 'text'],
@@ -151,9 +188,12 @@ export const PAIRS: Pair[] = [
   ['--titlebar-accent', '--titlebar', 'text'],
   ['--titlebar-ok', '--titlebar', 'text'],
   ['--titlebar-bad', '--titlebar', 'text'],
+  // The progress bar is drawn on the titlebar, which is dark in both themes, so its two
+  // ends take the bright spectrum levels in both rather than the light-theme steps.
+  ['--progress-start', '--titlebar', 'ui'],
+  ['--progress-end', '--titlebar', 'ui'],
 
   ['--chart-tick', '--panel', 'ui'],
-  ['--chart-axis', '--panel', 'ui'],
   ['--chart-label', '--panel', 'text'],
   ['--chart-faint', '--panel', 'ui'],
   ['--series-neutral', '--panel', 'ui'],
@@ -162,9 +202,13 @@ export const PAIRS: Pair[] = [
   ['--brand', '--panel', 'ui'],
   ['--miss', '--panel', 'ui'],
 
+  // The visual boundary of a control, which WCAG 1.4.11 governs and a decorative border
+  // does not. It is the reason `--input` is a step away from `--border`.
+  ['--ghost-line', '--panel', 'ui'],
+  ['--ghost-line', '--bg', 'ui'],
+
   ['--line', '--panel', 'surface'],
   ['--line-strong', '--panel', 'surface'],
-  ['--brand-solid', '--panel', 'ui'],
   ['--panel', '--bg', 'surface'],
   ['--titlebar', '--bg', 'surface'],
   // The edge under the titlebar, composited onto the bar it is drawn on.

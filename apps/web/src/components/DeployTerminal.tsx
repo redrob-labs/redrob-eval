@@ -68,20 +68,22 @@ export const DeployTerminal = forwardRef<
 
       // xterm paints to a canvas, so it cannot read `var()` the way the rest of the UI
       // does; the values are resolved once here instead. The surface behind it uses the
-      // same two tokens, so reading them is what keeps the canvas and its frame from
+      // same tokens, so reading them is what keeps the canvas and its frame from
       // drifting apart. A terminal stays dark in both themes -- that is what a terminal
-      // looks like -- so there is nothing to re-resolve when the theme changes.
+      // looks like -- so there is nothing to re-resolve when the theme changes. The
+      // fallbacks are the brand values the tokens hold (Redrob Black and Blue 4), so a
+      // browser that somehow returns nothing still paints the brand rather than a guess.
       const styles = getComputedStyle(document.documentElement);
       const token = (name: string, fallback: string) =>
         styles.getPropertyValue(name).trim() || fallback;
 
       const term = new Terminal({
         convertEol: true,
-        fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+        fontFamily: token('--font-mono', 'ui-monospace, monospace'),
         fontSize: 13,
         theme: {
-          background: token('--terminal-bg', '#0b0f14'),
-          cursor: token('--terminal-cursor', '#6f8bff'),
+          background: token('--terminal-bg', '#0a0b0c'),
+          cursor: token('--terminal-cursor', '#8aafff'),
         },
         cursorBlink: true,
         scrollback: 20000,

@@ -288,7 +288,7 @@ export function EvolutionParetoChart({
               <Scatter
                 name="Infeasible"
                 data={infeasible}
-                fill="var(--chart-axis)"
+                fill="var(--series-neutral)"
                 isAnimationActive={false}
               >
                 {infeasible.map((entry) => (

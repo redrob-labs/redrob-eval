@@ -19,6 +19,7 @@ import { test } from 'node:test';
 import {
   MINIMUM,
   PAIRS,
+  floorFor,
   ratioFor,
   readBlocks,
   type Kind,
@@ -62,13 +63,14 @@ test('the dark palette overrides the light one rather than replacing it', () => 
  * failed -- hairline borders, muted grey on the page background -- and the only way to
  * pass would be to restyle the light theme, which is not what adding a dark mode is for.
  * So each pairing is judged against the stricter of its WCAG floor and what light
- * manages.
+ * manages, and for the pairings in `CONSOLE_FLOOR` the WCAG floor is replaced by the
+ * value Redrob Console ships, for the reason given there.
  */
 for (const [fg, bg, kind, backdrop] of PAIRS) {
   test(`dark: ${fg} on ${bg}`, () => {
     const lightRatio = ratioFor(fg, bg, light, backdrop);
     const darkRatio = ratioFor(fg, bg, dark, backdrop);
-    const floor = Math.min(MINIMUM[kind as Kind], lightRatio);
+    const floor = floorFor(fg, bg, kind as Kind, lightRatio);
     assert.ok(
       darkRatio >= floor - TOLERANCE,
       `${fg} on ${bg} is ${darkRatio.toFixed(2)}:1 in dark, below the ` +

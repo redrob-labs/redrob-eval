@@ -207,7 +207,7 @@ export function EvolutionProgressChart({
               type="number"
               domain={[1, Math.max(rows.length, 1)]}
               allowDecimals={false}
-              tick={{ fill: 'var(--chart-axis)', fontSize: 11 }}
+              tick={{ fill: 'var(--chart-tick)', fontSize: 11 }}
               axisLine={{ stroke: 'var(--line)' }}
               tickLine={false}
             />
@@ -215,7 +215,7 @@ export function EvolutionProgressChart({
               type="number"
               domain={yDomain}
               width={36}
-              tick={{ fill: 'var(--chart-axis)', fontSize: 11 }}
+              tick={{ fill: 'var(--chart-tick)', fontSize: 11 }}
               axisLine={false}
               tickLine={false}
               tickFormatter={(v: number) => `${Math.round(v)}%`}

@@ -1,0 +1,17 @@
+# Pull request policy: at most 3 open pull requests per author, and a maintainer review may be
+# requested only after the author has reviewed their own pull request. Rules and defaults live in
+# redrob-labs/.github/.github/workflows/pr-policy.yml; pass `with:` to change them for this
+# repository.
+
+name: PR policy
+
+on:
+  pull_request_target:
+    types: [opened, reopened, review_requested]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  policy:
+    uses: redrob-labs/.github/.github/workflows/pr-policy.yml@main

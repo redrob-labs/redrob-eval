@@ -87,6 +87,14 @@ test('slot 1 remote builders use base+1 port and s1 unit', () => {
     assert.match(serviceControl('start', 1), /listening on 0\.0\.0\.0:8001/);
     assert.match(serviceControl('start', 1), /ufw allow 8001\/tcp/);
     assert.match(serviceControl('start', 1), /firewall-cmd --permanent --add-port=8001\/tcp/);
+    // A slot that cannot load must stop retrying, and Start must be able to
+    // retry it once the cause is fixed.
+    assert.match(unitFile(1), /\[Unit\][^[]*StartLimitIntervalSec=1800/);
+    assert.match(unitFile(1), /\[Unit\][^[]*StartLimitBurst=3/);
+    assert.match(
+      serviceControl('start', 1),
+      /reset-failed redrob-vllm-s1\.service[\s\S]*restart redrob-vllm-s1\.service/,
+    );
     assert.match(installScript(), /ufw allow 8000\/tcp/);
     assert.match(installScript(), /ufw allow 8001\/tcp/);
     assert.match(installScript(), /ufw allow 8007\/tcp/);

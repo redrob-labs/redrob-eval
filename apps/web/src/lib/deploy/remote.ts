@@ -72,6 +72,13 @@ export function unitFile(slot: DeploySlot | number = 0): string {
 Description=Redrob vLLM slot ${s.index}
 After=network-online.target
 Wants=network-online.target
+# systemd's default start limit is 5 starts in 10s, which RestartSec=5 plus a
+# model load can never reach, so a slot that cannot come up (VRAM taken by
+# another slot, a bad measured.env) reloaded its weights forever and kept
+# contending for the card that Measure was sizing other slots against. The
+# window is long enough to hold three slow loads; Start clears it.
+StartLimitIntervalSec=1800
+StartLimitBurst=3
 
 [Service]
 Type=simple
@@ -315,6 +322,9 @@ systemctl daemon-reload
 # installed before multi-slot firewall provisioning was added.
 ${openFirewallPort(s.port)}
 systemctl enable ${s.unit} 2>/dev/null || true
+# A unit that hit its start limit refuses restart until the failure is cleared,
+# and pressing Start is the user saying the cause is fixed.
+systemctl reset-failed ${s.unit} 2>/dev/null || true
 systemctl restart ${s.unit}
 systemctl is-active ${s.unit} || true
 echo "NOTE: listening on ${BIND_HOST}:${s.port} as ${s.servedName}; persistent host-firewall access enabled. VLLM_API_KEY is required."
